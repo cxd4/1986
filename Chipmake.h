@@ -35,7 +35,8 @@ _int32 instr_index;
 uint32	CPUdelayPC;
 int		CPUdelay;
 
-uint16 CodeStart;         //Array element location that starts off the code.
+uint32 FastLoopAddr; //Debugger variable. Allows user to goto next instruction outside loop when
+                     //loop condition is satisfied without the need to view each instruction.
 
 //char* MainCPU[64];
 _int64 MainCPUReg[32];

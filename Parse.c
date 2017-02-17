@@ -8,7 +8,6 @@
 //The Parse() names denote the bit length of each field.
 //ex: Parse6_20_6(): field0=6, field1=20, field2=6.
 void Parse6_26(); //for J and JAL opcodes.
-void Parse6_20_6();
 void Parse6_5_5_16();
 void Parse6_5_5_10_6();
 void Parse6_5_5_5_5_6();
@@ -97,30 +96,6 @@ uint32 first4bits;
 	instr_index += first4bits;
 //	printf("instr_index = %X\n", instr_index);
 	//while(!kbhit());
-}
-
-
-//SPECIAL: Instr. encoded by function field when opcode field = SPECIAL
-//31---------26------------------------------------------5--------0
-//| = SPECIAL |                                         | function|
-//------6----------------------------------------------------6-----
-void Parse6_20_6() {
-	uint8 function;
-	char* FunctionStr;
-
-//	address = InstructionPointer;
-	InstructionPointer++;
-	InstructionPointer++;
-	InstructionPointer++;
-	function = (uint8)InstructionPointer;
-	function = function << 2;
-	function = function >> 2;
-	
-#ifdef _DEBUG
-	FunctionStr = DebugSpecial(function);
-	printf( "%5s (working on it)\n", FunctionStr);
-#endif
-	InstructionPointer++;
 }
 
 //REGIMM: Instr. encoded by function field when opcode field = REGIMM

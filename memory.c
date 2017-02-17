@@ -5,6 +5,7 @@
 
 int StoreMemory(void* regValue);
 int LoadMemory(void* targetReg);
+uint32 GetPhysicalAddress(uint32 Address);
 
 int StoreMemory(void* regValue) {
 	uint32 Address;
@@ -52,4 +53,11 @@ int LoadMemory(void* targetReg) {
 		if (Address < 0x04900000) Address -= 0x04800000; targetReg = SI[Address];      return(1); //Serial interface	
 		//if (Address < 0x01000000); return(1);//TODO: Fill this memory if necessary
 	}
+}
+
+uint32 GetPhysicalAddress(uint32 Address) {
+	if (Address >= 0x80000400 && Address <= 0x9FFFFFFF)      //kseg0
+		return(Address - 0x80000400);
+	else if (Address >= 0xA0000000 && Address <= 0xBFFFFFFF) //kseg1
+		return(Address - 0xA0000000);
 }

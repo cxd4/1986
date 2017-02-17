@@ -9,10 +9,10 @@
 #include "chipmake.h"
 #include "mainregs.h"
 
-#define DOUBLEMASKRIGHT 0x0000ffff
-#define DOUBLEMASKLEFT 0xffff0000
-#define WORDMASKRIGHT 0x00ff
-#define WORDMASKLEFT 0xff00
+#define DOUBLEMASKMOST 0x00000000ffffffff
+#define DOUBLEMASKLEAST 0xffffffff00000000
+#define WORDMASKMOST 0xffffffff0000ffff
+#define WORDMASKLEAST 0xffffffffffff0000
 
 #ifdef _DEBUG
 extern char* DebugMainCPU();
@@ -131,28 +131,25 @@ LoadMemory((_int64)MainCPUReg[rt_ft]);
 //         DoubleWord (64 Bits) from memory to the least significant bits
 //         of rt
 // left[rt] = right[doubleword[offset+base]]
-
 void ldl() {
-
 _int64 targetDouble; //Double Word to be loaded from memory
-
-Parse6_5_5_16();
+	Parse6_5_5_16();
 #ifdef _DEBUG
- printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
-DebugMainCPUReg(rt_ft), offset_immediate,
-DebugMainCPUReg(rs_base_fmt));
-
+	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+	DebugMainCPUReg(rt_ft), offset_immediate,
+	DebugMainCPUReg(rs_base_fmt));
 #endif
-
 //Mask the least significant bits of rt
-MainCPUReg[rt_ft] = MainCPUReg[rt_ft] & DOUBLEMASKLEFT;
+//MainCPUReg[rt_ft] = MainCPUReg[rt_ft] & DOUBLEMASKLEFT;
 //Load and Mask the most significant bits of the doubleWord
-targetDouble =
-buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
-targetDouble = targetDouble & DOUBLEMASKRIGHT;
+//targetDouble =
+//buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+//targetDouble = targetDouble & DOUBLEMASKRIGHT;
 //Combine the resulting bits
-MainCPUReg[rt_ft] = MainCPUReg[rt_ft] | targetDouble;
-
+//MainCPUReg[rt_ft] = MainCPUReg[rt_ft] | targetDouble;
+LoadMemory((_int64)targetDouble);
+MainCPUReg[rt_ft] = (MainCPUReg[rt_ft] & DOUBLEMASKLEAST)|
+                    ((targetDouble & DOUBLEMASKLEAST) >> 32);
 }
 
 //15 april 99 Eudaemon
@@ -164,6 +161,7 @@ MainCPUReg[rt_ft] = MainCPUReg[rt_ft] | targetDouble;
 // Format: LDR rt, offset(base)
 // Pupose: Loads the Least significant bits from a
 //         DoubleWord (64 Bits) from memory to the Most significant bits
+
 //         of rt
 // right[rt] = left[doubleword[offset+base]]
 
@@ -180,14 +178,17 @@ DebugMainCPUReg(rs_base_fmt));
 #endif
 
 //Mask the most significant bits of rt
-MainCPUReg[rt_ft] = MainCPUReg[rt_ft] & DOUBLEMASKRIGHT;
+//MainCPUReg[rt_ft] = MainCPUReg[rt_ft] & DOUBLEMASKRIGHT;
 //Load and Mask the least significant bits of the doubleWord
-targetDouble =
-buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
-targetDouble = targetDouble & DOUBLEMASKLEFT;
+//targetDouble =
+//buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+//targetDouble = targetDouble & DOUBLEMASKLEFT;
 //Combine the resulting bits
-MainCPUReg[rt_ft] = MainCPUReg[rt_ft] | targetDouble;
+//MainCPUReg[rt_ft] = MainCPUReg[rt_ft] | targetDouble;
 
+LoadMemory((_int64)targetDouble);
+MainCPUReg[rt_ft] = (MainCPUReg[rt_ft] & DOUBLEMASKMOST)|
+                   ((targetDouble & DOUBLEMASKMOST) << 32);
 }
 
 //15 april 99 Eudaemon
@@ -332,7 +333,7 @@ DebugMainCPUReg(rs_base_fmt));
 //targetWord =
 //buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
 //MainCPUReg[rt_ft] = targetWord;
-LoadMemory(MainCPUReg[rt_ft]);
+LoadMemory((_int32)MainCPUReg[rt_ft]);
 }
 
 //15 april 99 Eudaemon
@@ -352,21 +353,24 @@ _int32 targetWord; //Word to load to rt
 
 Parse6_5_5_16();
 #ifdef _DEBUG
- printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
-DebugMainCPUReg(rt_ft), offset_immediate,
-DebugMainCPUReg(rs_base_fmt));
+  printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+ DebugMainCPUReg(rt_ft), offset_immediate,
+ DebugMainCPUReg(rs_base_fmt));
 
 #endif
 
 //Mask the least significant bits of rt
-MainCPUReg[rt_ft] = MainCPUReg[rt_ft] & WORDMASKLEFT;
+//MainCPUReg[rt_ft] = MainCPUReg[rt_ft] & WORDMASKLEFT;
 //Load and Mask the most significant bits of the Word
-targetWord =
-buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
-targetWord = targetWord & WORDMASKRIGHT;
+//targetWord =
+//buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+//targetWord = targetWord & WORDMASKRIGHT;
 //Combine the resulting bits
-MainCPUReg[rt_ft] = MainCPUReg[rt_ft] | targetWord;
+//MainCPUReg[rt_ft] = MainCPUReg[rt_ft] | targetWord;
 
+LoadMemory((_int32)targetWord);
+ MainCPUReg[rt_ft] = (MainCPUReg[rt_ft] & WORDMASKLEAST)|
+                    ((targetWord & WORDMASKLEAST) >> 16);
 }
 
 //15 april 99 Eudaemon
@@ -393,15 +397,20 @@ DebugMainCPUReg(rs_base_fmt));
 #endif
 
 //Mask the most significant bits of rt
-MainCPUReg[rt_ft] = MainCPUReg[rt_ft] & WORDMASKRIGHT;
+//MainCPUReg[rt_ft] = MainCPUReg[rt_ft] & WORDMASKRIGHT;
 //Load and Mask the least significant bits of the Word
-targetWord =
-buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
-targetWord = targetWord & WORDMASKLEFT;
+//targetWord =
+//buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+//targetWord = targetWord & WORDMASKLEFT;
 //Combine the resulting bits
-MainCPUReg[rt_ft] = MainCPUReg[rt_ft] | targetWord;
+//MainCPUReg[rt_ft] = MainCPUReg[rt_ft] | targetWord;
+
+LoadMemory((_int32)targetWord);
+MainCPUReg[rt_ft] = (MainCPUReg[rt_ft] & WORDMASKMOST)|
+                     ((targetWord & WORDMASKMOST) << 16);
 
 }
+
 
 //15 april 99 Eudaemon
 //--------------------------------------------------------------
@@ -561,7 +570,7 @@ Parse6_5_5_16();
 	if (UpdateViewPort)
 	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
 #endif
-	StoreMemory(MainCPUReg[rt_ft]);
+	StoreMemory((_int32)MainCPUReg[rt_ft]);
 }
 
 void swl() {
@@ -973,7 +982,7 @@ void bgez() {
 	if (MainCPUReg[rs_base_fmt] >= 0)
 	{
 
-		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelayPC = pc + 4 + offset_immediate*4;
 		CPUdelay = 1;
 	}
 #ifdef _DEBUG
@@ -997,7 +1006,7 @@ void bgezall() {
 	if (MainCPUReg[rs_base_fmt] >= 0)
 	{
 		MainCPUReg[RA] = pc + 8;
-		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelayPC = pc + 4 + offset_immediate*4;
 		CPUdelay = 1;
 	}
 	else
@@ -1024,7 +1033,7 @@ void bgezl() {
 	if (MainCPUReg[rs_base_fmt] >= 0)
 	{
 		MainCPUReg[RA] = pc + 8;
-		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelayPC = pc + 4 + offset_immediate*4;
 		CPUdelay = 1;
 	}
 	else
@@ -1050,7 +1059,7 @@ void bltz() {
 	if (MainCPUReg[rs_base_fmt] < 0)
 	{
 
-		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelayPC = pc + 4 + offset_immediate*4;
 		CPUdelay = 1;
 	}
 #ifdef _DEBUG
@@ -1072,7 +1081,7 @@ void bltzal() {
 	if (MainCPUReg[rs_base_fmt] < 0)
 	{
 		MainCPUReg[RA] = pc + 8;
-		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelayPC = pc + 4 + offset_immediate*4;
 		CPUdelay = 1;
 	}
 #ifdef _DEBUG
@@ -1095,7 +1104,7 @@ void bltzall() {
 	if (MainCPUReg[rs_base_fmt] < 0)
 	{
 		MainCPUReg[RA] = pc + 8;
-		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelayPC = pc + 4 + offset_immediate*4;
 		CPUdelay = 1;
 	}
 	else
@@ -1121,7 +1130,7 @@ void bltzl() {
 	Parse6_5_5_16();
 	if (MainCPUReg[rs_base_fmt] < 0)
 	{
-		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelayPC = pc + 4 + offset_immediate*4;
 		CPUdelay = 1;
 	}
 	else
@@ -1148,7 +1157,7 @@ void bgezal() {
 	if (MainCPUReg[rs_base_fmt] >= 0)
 	{
 		MainCPUReg[RA] = pc + 8;
-		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelayPC = pc + 4 + offset_immediate*4;
 		CPUdelay = 1;
 	}
 #ifdef _DEBUG
@@ -1756,7 +1765,7 @@ void beq() {
 	Parse6_5_5_16();
 	if (MainCPUReg[rs_base_fmt] == MainCPUReg[rt_ft])
 	{
-		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelayPC = pc + 4 + offset_immediate*4;
 		CPUdelay = 1;
 	}
 #ifdef _DEBUG
@@ -1781,7 +1790,7 @@ void beql() {
 	Parse6_5_5_16();
 	if (MainCPUReg[rs_base_fmt] == MainCPUReg[rt_ft])
 	{
-		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelayPC = pc + 4 + offset_immediate*4;
 		CPUdelay = 1;
 	}
 	else
@@ -1808,10 +1817,11 @@ void bne() {
 	Parse6_5_5_16();
 	if (MainCPUReg[rs_base_fmt] != MainCPUReg[rt_ft])
 	{
-		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelayPC = pc + 4 + offset_immediate*4;
 		CPUdelay = 1;
 	}
 #ifdef _DEBUG
+	FastLoopAddr = pc;
 	if (UpdateViewPort)
 	printf("%X: %s\t%s,%s,%04Xh\n", pc, DebugMainCPU(),
 DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft),
@@ -1834,7 +1844,7 @@ void bnel() {
 	Parse6_5_5_16();
 	if (MainCPUReg[rs_base_fmt] != MainCPUReg[rt_ft])
 	{
-		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelayPC = pc + 4 + offset_immediate*4;
 		CPUdelay = 1;
 	}
 	else

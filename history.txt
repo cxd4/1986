@@ -13,7 +13,14 @@ Legend
 --	Code updates/revisions
 _____________________________________________________________________________
 
-v0.0.4
+
+v0.0.4B (Released for testing. Testing is needed on load/store instructions)
+    -- Opcodes updated:
+          LDL, LDR, LWL, LWR (Eudaemon)
+    -- Jump/branch fixes (schibo)
+    -- Various load/store opcode repairs (schibo)
+
+v0.0.4A
     -- Improvement to delay slot (steb)
        New opcodes added: 
           JALR, BGEZ, BGEZALL, BGEZL, BLTZ, BLTZAL, BLTZALL, 

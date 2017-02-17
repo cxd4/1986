@@ -24,6 +24,7 @@ void CleanUp();
 void ByteSwap(uint32 beginByte, uint32 endByte);
 void Step_CPU();
 extern void DebuggerUI();
+extern uint32 GetPhysicalAddress(uint32 Address);
 
 void ReadRomData(char* RomPath)
 {
@@ -50,7 +51,7 @@ void ReadRomData(char* RomPath)
 
 void RunOpcode()
 {
-	Instruction = *InstructionPointer++;
+	Instruction = *InstructionPointer;
 	Opcode = Instruction >> 26;
 
 	if (Opcode > 25) 
@@ -90,7 +91,6 @@ void RunOpcode()
 #ifdef _DEBUG
 			printf("%X: Opcode = %d (working on it)\n", pc, Opcode);
 #endif
-			InstructionPointer++; break;
 		}
 	else {
 		switch (Opcode) {
@@ -121,7 +121,6 @@ void RunOpcode()
 #ifdef _DEBUG			
 			printf("%X: Opcode = %d (working on it)\n", pc, Opcode);
 #endif
-	        InstructionPointer++; break;
 		}
 	}
 }
@@ -281,13 +280,21 @@ void Step_CPU()
 	{
 		case 0 :	//No delay
 			pc+=4;
+			InstructionPointer++;
 			break;
 		case 1 :	//execute delay instruction
 			pc+=4;
+			InstructionPointer++;
 			CPUdelay = 2;
 			break;
 		case 2:		//Do the jump now
 			pc = CPUdelayPC;
+			if (MainStartAddr == 0xA4000040)
+				InstructionPointer = &buffer[pc-0xA4000000];  //boot code
+			else
+				InstructionPointer = &buffer[pc-MainStartAddr+4096]; //game code
+			
+			//printf("GetPhysicalAddress = %x\n", InstructionPointer);
 			CPUdelay = 0;
 			break;
 	}
@@ -350,9 +357,9 @@ void main(int argc, char** argv[])
 	//This code does the boot code.
 	pc = MainStartAddr = 0xA4000040;
 	//Point InstructionPointer to beginning of Boot Code
-	CodeStart = 64;
-	InstructionPointer = &buffer[CodeStart];
+	InstructionPointer = &buffer[64];
 
+//Execute boot code. Uncomment the /* */ below to do it.
 
 #ifdef _DEBUG
 		printf("\nBoot code disassembly:\n");
@@ -369,8 +376,7 @@ void main(int argc, char** argv[])
 
 	pc = MainStartAddr = 0x80000400;
 	//Point InstructionPointer to beginning of Main Code
-	CodeStart = 4096;
-	InstructionPointer = &buffer[CodeStart];
+	InstructionPointer = &buffer[4096];
 
 #ifdef _DEBUG
 	printf("\nMain code disassembly:\n");

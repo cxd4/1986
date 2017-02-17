@@ -59,11 +59,26 @@ void DebuggerUI()
 {
 	COORD CursorXY = {9, 8};
 
-	SetConsoleCursorPosition(hMainScreen, CursorXY);
-	while (!kbhit());
-	UserCommand = getche();
+	if (UserCommand != 'z') {
+		SetConsoleCursorPosition(hMainScreen, CursorXY);
+		while (!kbhit());
+		UserCommand = getche();
+	}
 	switch (UserCommand) 
 	{
+		case 'z' : //Zip through loop and see the end result. (Very useful)
+			//My idea here is to be able to quickly run loops that repeat for a long time.
+			//When the loop exits, control is given back to the user.
+			//I'd like to see this improved. :)
+			UpdateViewPort = 0;
+			if (MainCPUReg[T1] == 0) {
+				UpdateViewPort = 1;
+				UserCommand = "";
+				RefreshConsole();
+			}
+			else			
+				Step_CPU();
+			break;
 		case 'n' : Step_CPU(); break;
 		case 'w' : //forward one screen 
 		{
