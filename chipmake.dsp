@@ -90,11 +90,27 @@ SOURCE=.\Debugger.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\DoFPU.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\DoInstructions.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\DoTLB.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\DoVector.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\main.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Mainregs.h
 # End Source File
 # Begin Source File
 

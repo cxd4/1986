@@ -3,6 +3,13 @@
 #define uint32 unsigned __int32
 #define uint64 unsigned __int64
 
+//Lets FPU know data size
+long* dummy_long; //same as _int32? (we may not need this)
+float* dummy_single;
+double* dummy_double;
+short* dummy_word;
+
+
 //#ifdef _DEBUG
 	_int64 Counter;
 //#endif
@@ -19,13 +26,14 @@ uint32* InstructionPointer;
 uint32 Instruction;
 
 _int8 Opcode;
-uint8 SpecialOp;
-
+uint8 function;          //Special function or float function
 uint8 rt_ft;			 //this field is rt or ft
 uint8 rd_fs;             //this field is rd or fs
 uint8 sa_fd;             //this field is sa or fd
 uint8 rs_base_fmt;       //this field is rs or base or format 
 _int16 offset_immediate; //this field is offset or immediate
+uint8 nd, tf;            //these are 1-bit fields for bc1 ops
+
 uint32 address;
 uint32 pc;               //program counter. (Keeps addresses.)
 uint32 MainStartAddr;    //Start Address of Main Code

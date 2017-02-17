@@ -98,13 +98,16 @@ uint32 first4bits;
 	//while(!kbhit());
 }
 
-//REGIMM: Instr. encoded by function field when opcode field = REGIMM
-//example:
-//-----------------------------------------------------------------
-//| BGEZ      | Branch on Greater than or Equal to Zero           |
-//|-----------|---------------------------------------------------|
-//|  opcode   |  field1 | field2  |       offset/immediate        |
-//------6----------5---------5-------------------16----------------
+/*
+  Parse6_5_5_16() Example
+  REGIMM: Instr. encoded by function field when opcode field = REGIMM
+  example:
+  -----------------------------------------------------------------
+  | BGEZ      | Branch on Greater than or Equal to Zero           |
+  |-----------|---------------------------------------------------|
+  |  opcode   |  field1 | field2  |       offset/immediate        |
+  ------6----------5---------5-------------------16----------------
+*/
 void Parse6_5_5_16() {
 	rs_base_fmt = Instruction >> 21;
 	rs_base_fmt = rs_base_fmt << 3;
@@ -115,15 +118,17 @@ void Parse6_5_5_16() {
 	offset_immediate = Instruction;
 }
 
-//Parse6_5_5_5_5_6 example:
-//-----------------------------------------------------------------
-//| ABS.fmt   | floating-point ABSolute value                     |
-//|-----------|---------------------------------------------------|
-//|  010001   |   fmt   |{rt}00000|   fs    |   fd    | 000101 (5)|
-//------6----------5---------5---------5---------5----------6------
-//Assume we already know what the first & last fields are.
-//Note: I'm cheezily using this as Parse6_5_5_11 also for now.
-//Hey, it works. :)
+/*
+  Parse6_5_5_5_5_6 example:
+  -----------------------------------------------------------------
+  | ABS.fmt   | floating-point ABSolute value                     |
+  |-----------|---------------------------------------------------|
+  |  010001   |   fmt   |{rt}00000|   fs    |   fd    | 000101 (5)|
+  ------6----------5---------5---------5---------5----------6------
+  Assume we already know what the first & last fields are.
+  Note: I'm cheezily using this as Parse6_5_5_11 also for now.
+  Hey, it works. :)
+*/
 void Parse6_5_5_5_5_6() {
 	rs_base_fmt = Instruction >> 21;
 	rs_base_fmt = rs_base_fmt << 3;

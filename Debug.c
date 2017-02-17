@@ -7,10 +7,16 @@
 #include <string.h>
 
 //Function Declarations
-char* DebugMainCPU();
+char* DebugBC1(uint8 function);
 char* DebugCOP0( uint8 fmt );
-char* DebugSpecial( uint8 function );
+char* DebugFPU(uint8 function);
+char* DebugMainCPU();
 char* DebugRegimm(uint8 s);
+char* DebugRSPLoad();
+char* DebugRSPStore();
+char* DebugSpecial( uint8 function );
+char* DebugTLB();
+char* DebugVector();
 
 char* DebugMainCPU() {
 	char* OpcodeStr;
@@ -121,15 +127,15 @@ char* DebugMainCPUReg(uint8 rt) {
 //Debug CoProcessor0 (COP0) Opcodes
 char* DebugCOP0( uint8 fmt ) {
 	switch( fmt ) {
-	case MFC0  : return( "MFC0" );
-	case DMFC0 : return( "DMFC0" );
-	case CFC0  : return( "CFC0" );
-	case MTC0  : return( "MTC0" );
-	case DMTC0 : return( "DMTC0" );
-	case CTC0  : return( "CTC0" );
-	case BC0   : return( "BC0" );
-	case TLB   : return( "TLB" );
-	default    : return( "!fmt!" );
+	case MFC  : return( "MFC0" );
+	case DMFC : return( "DMFC0" );
+	case CFC  : return( "CFC0" );
+	case MTC  : return( "MTC0" );
+	case DMTC : return( "DMTC0" );
+	case CTC  : return( "CTC0" );
+	case BC   : return( "BC0" );
+	case TLB  : return( "TLB" );
+	default   : return( "!fmt!" );
 	}
 }
 
@@ -249,6 +255,171 @@ char* DebugRegimm(uint8 Instruction) {
 	case BLTZALL : return("BLTZALL");
 	case BGEZALL : return("BGEZALL");
 	default      : return("!!!!!");
+	}
+}
+
+//BC1
+char* DebugBC1(uint8 function) {
+	switch( function ) {
+	case BC1F     : return("BC1F");
+	case BC1T     : return("BC1T");
+	case BC1FL    : return("BC1FL");
+	case BC1TL    : return("BC1TL");
+	default       : return("!BC!");
+	}
+}
+
+
+//COP1 Functions
+char* DebugFPU(uint8 function) {
+	switch( function ) {
+	case ADD_F   : return("ADD_F");
+	case SUB_F   : return("SUB_F");
+	case MUL     : return("MUL");
+	case DIV_F   : return("DIV_F");
+	case SQRT    : return("SQRT");
+	case ABS     : return("ABS");
+	case MOV     : return("MOV");
+	case NEG     : return("NEG");
+	case ROUND_L : return("ROUND.L");
+	case TRUNC_L : return("TRUNC.L");
+	case CEIL_L  : return("CEIL.L");
+	case FLOOR_L : return("FLOOR.L");
+	case ROUND_W : return("ROUND.W");
+	case TRUNC_W : return("TRUNC.W");
+	case CEIL_W  : return("CEIL.W");
+	case FLOOR_W : return("FLOOR.W");
+	case CVT_S   : return("CVT.S");
+	case CVT_D   : return("CVT.D");
+	case CVT_W   : return("CVT.W");
+	case CVT_L   : return("CVT.L");
+	case C_F     : return("C.F");
+	case C_UN    : return("C.UN");
+	case C_EQ    : return("C.EQ");
+	case C_UEQ   : return("C.UEQ");
+	case C_OLD   : return("C.OLD");
+	case C_ULT   : return("C.ULT");
+	case C_OLE   : return("C.OLE");
+	case C_ULE   : return("C.ULE");
+	case C_SF    : return("C.SF");
+	case C_NGLE  : return("C.NGLE");
+	case C_SEQ   : return("C.SEQ");
+	case C_NGL   : return("C.NGL");
+	case C_LT    : return("C.LT");
+	case C_NGE   : return("C.NGE");
+	case C_LE    : return("C.LE");
+	case C_NGT   : return("C.NGT");
+	default      : return("!FPU!");
+	}
+}
+
+//RSP Load
+char* DebugRSPLoad() {
+	switch(rd_fs) {
+	case LBV : return("LBV");
+	case LSV : return("LSV");
+	case LLV : return("LLV");
+	case LDV : return("LDV");
+	case LQV : return("LQV");
+	case LRV : return("LRV");
+	case LPV : return("LPV");
+	case LUV : return("LUV");
+	case LHV : return("LHV");
+	case LFV : return("LFV");
+	case LWV : return("LWV");
+	case LTV : return("LTV");
+	default  : return("!RSPLOAD!");
+	}
+}
+
+//RSP Store
+char* DebugRSPStore() {
+	switch(rd_fs) {
+	case SBV : return("SBV");
+	case SSV : return("SSV");
+	case SLV : return("SLV");
+	case SDV : return("SDV");
+	case SQV : return("SQV");
+	case SRV : return("SRV");
+	case SPV : return("SPV");
+	case SUV : return("SUV");
+	case SHV : return("SHV");
+	case SFV : return("SFV");
+	case SWV : return("SWV");
+	case STV : return("STV");
+	default  : return("!RSPSTORE!");
+	}
+}
+
+char* DebugVector(uint8 function) {
+	switch(function) {
+	case VMULF : return("VMULF");
+	case VMULU : return("VMULU");
+	case VRNDP : return("VRNDP");
+	case VMULQ : return("VMULQ");
+	case VMUDL : return("VMUDL");
+	case VMUDM : return("VMUDM");
+	case VMUDN : return("VMUDN");
+	case VMUDH : return("VMUDH");
+	case VMACF : return("VMACF");
+	case VMACU : return("VMACU");
+	case VRNDN : return("VMRDN");
+	case VMACQ : return("VMACQ");
+	case VMADL : return("VMADL");
+	case VMADM : return("VMADM");
+	case VMADN : return("VMADN");
+	case VMADH : return("VMADH");
+	case VADD  : return("VADD");
+	case VSUB  : return("VSUB");
+
+	case VSUT  : return("VSUT");//may not exist
+
+	case VABS  : return("VABS");
+	case VADDC : return("VADDC");
+	case VSUBC : return("VSUBC");
+
+	case VADDB : return("VADDB");//
+	case VSUBB : return("VSUBB");//
+	case VACCB : return("VACCB");//
+	case VSUCB : return("VSUCB");//these 7 may not exist
+	case VSAD  : return("VSAD");//
+	case VSAC  : return("VSAC");//
+	case VSUM  : return("VSUM");//
+
+	case VSAW  : return("VSAW");
+	case VLT   : return("VLT");
+	case VEQ   : return("VEQ");
+	case VNE   : return("VNE");
+	case VGE   : return("VGE");
+	case VCL   : return("VCL");
+	case VCH   : return("VCH");
+	case VCR   : return("VCR");
+	case VMRG  : return("VMRG");
+	case VAND  : return("VAND");
+	case VNAND : return("VNAND");
+	case VOR   : return("VOR");
+	case VNOR  : return("VNOR");
+	case VXOR  : return("VXOR");
+	case VNXOR : return("VXNOR");
+	case VRCP  : return("VRCP");
+	case VRCPL : return("VRCPL");
+	case VRCPH : return("VRCPH");
+	case VMOV  : return("VMOV");
+	case VRSQ  : return("VRSQ");
+	case VRSQL : return("VRSQL");
+	case VRSQH : return("VRSQH");
+	default    : return("!VECTOR!");
+	}
+}
+
+char* DebugTLB() {
+	switch(rs_base_fmt) {
+	case TLBR  : return("TLBR");
+	case TLBWI : return("TLBWI");
+	case TLBWR : return("TLBWR");
+	case TLBP  : return("TLBP");
+	case ERET  : return("ERET");
+	default    : return("!TLB!");
 	}
 }
 

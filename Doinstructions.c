@@ -594,30 +594,6 @@ Parse6_5_5_16();
 
 //////////////////////////////////////////////////////////////////////
 
-void cfc0() {
-#ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugCOP0(rs_base_fmt), DebugMainCPUReg(rt_ft), DebugCOP0Reg(rd_fs));
-#endif
-}
-
-void ctc0() {
-#ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugCOP0(rs_base_fmt), DebugMainCPUReg(rt_ft), DebugCOP0Reg(rd_fs));
-#endif
-}
-
-void dmfc0() {
-#ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugCOP0(rs_base_fmt), DebugMainCPUReg(rt_ft), DebugCOP0Reg(rd_fs));
-#endif
-}
-
-void dmtc0() {
-#ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugCOP0(rs_base_fmt), DebugMainCPUReg(rt_ft), DebugCOP0Reg(rd_fs));
-#endif
-}
-
 //SB 11/4/99
 //-----------------------------------------------------------------
 //| MFC0      | Move word From CP0                                |
@@ -651,92 +627,6 @@ void mtc0() {
 #ifdef _DEBUG
 	printf("%X: %s\t%s,%s\n", pc, DebugCOP0(rs_base_fmt),
 DebugMainCPUReg(rt_ft), DebugCOP0Reg(rd_fs));
-#endif
-}
-
-//////////////////////////////////////////////////////////////////////
-
-//				COP1 Instructions 
-//    syntax:   Op rt, fs
-
-//////////////////////////////////////////////////////////////////////
-
-void cfc1() {
-#ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugCOP0(rs_base_fmt), DebugMainCPUReg(rt_ft), DebugCOP0Reg(rd_fs));
-#endif
-}
-
-void ctc1() {
-#ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugCOP0(rs_base_fmt), DebugMainCPUReg(rt_ft), DebugCOP0Reg(rd_fs));
-#endif
-}
-
-void dmfc1() {
-#ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugCOP0(rs_base_fmt), DebugMainCPUReg(rt_ft), DebugCOP0Reg(rd_fs));
-#endif
-}
-
-void dmtc1() {
-#ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugCOP0(rs_base_fmt), DebugMainCPUReg(rt_ft), DebugCOP0Reg(rd_fs));
-#endif
-}
-
-void mfc1() {
-#ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugCOP0(rs_base_fmt), DebugMainCPUReg(rt_ft), DebugCOP0Reg(rd_fs));
-#endif
-}
-
-void mtc1() {
-#ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugCOP0(rs_base_fmt), DebugMainCPUReg(rt_ft), DebugCOP0Reg(rd_fs));
-#endif
-}
-
-//////////////////////////////////////////////////////////////////////
-
-//			COP2 Instructions (floats) 
-//  syntax: Op rt, rd
-
-//////////////////////////////////////////////////////////////////////
-
-void cfc2() {
-#ifdef _DEBUG
-	printf("%X: %s\t%Xh,%Xh %s\n", pc, DebugCOP0(rs_base_fmt), rt_ft, rd_fs);
-#endif
-}
-
-void ctc2() {
-#ifdef _DEBUG
-	printf("%X: %s\t%Xh,%Xh %s\n", pc, DebugCOP0(rs_base_fmt), rt_ft, rd_fs);
-#endif
-}
-
-void dmfc2() {
-#ifdef _DEBUG
-	printf("%X: %s\t%Xh,%Xh %s\n", pc, DebugCOP0(rs_base_fmt), rt_ft, rd_fs);
-#endif
-}
-
-void dmtc2() {
-#ifdef _DEBUG
-	printf("%X: %s\t%Xh,%Xh %s\n", pc, DebugCOP0(rs_base_fmt), rt_ft, rd_fs);
-#endif
-}
-
-void mfc2() {
-#ifdef _DEBUG
-	printf("%X: %s\t%Xh,%Xh %s\n", pc, DebugCOP0(rs_base_fmt), rt_ft, rd_fs);
-#endif
-}
-
-void mtc2() {
-#ifdef _DEBUG
-	printf("%X: %s\t%Xh,%Xh %s\n", pc, DebugCOP0(rs_base_fmt), rt_ft, rd_fs);
 #endif
 }
 
@@ -1230,7 +1120,7 @@ void jalr() {
 	CPUdelay = 1;
 	MainCPUReg[rd_fs] = pc + 8;
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(SpecialOp),
+	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(function),
 DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rd_fs));
 #endif
 }
@@ -1258,7 +1148,7 @@ void add() {
 	MainCPUReg[rd_fs] = MainCPUReg[rs_base_fmt] + MainCPUReg[rt_ft];
 
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
@@ -1278,7 +1168,7 @@ void addu() {
 (unsigned)MainCPUReg[rt_ft];
 
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp),
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function),
 DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt),
 DebugMainCPUReg(rt_ft));
 #endif
@@ -1297,7 +1187,7 @@ void and() {
 	Parse6_5_5_5_5_6();
 	MainCPUReg[rd_fs] = MainCPUReg[rs_base_fmt] & MainCPUReg[rt_ft];
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp),
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function),
 DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt),
 DebugMainCPUReg(rt_ft));
 #endif
@@ -1317,31 +1207,31 @@ void dadd() {
 Parse6_5_5_5_5_6();
 	MainCPUReg[rd_fs] = (_int64)MainCPUReg[rs_base_fmt] + (_int64)MainCPUReg[rt_ft];
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void daddu() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void dsllv() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void dsub() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void dsubu() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
@@ -1358,7 +1248,7 @@ void nor() {
 	Parse6_5_5_5_5_6();
 	MainCPUReg[rd_fs] = ~(MainCPUReg[rs_base_fmt] | MainCPUReg[rt_ft]);
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
@@ -1375,7 +1265,7 @@ void or() {
 	Parse6_5_5_5_5_6();
 	MainCPUReg[rd_fs] = MainCPUReg[rs_base_fmt] | MainCPUReg[rt_ft];
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp),
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function),
 DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt),
 DebugMainCPUReg(rt_ft));
 #endif
@@ -1397,7 +1287,7 @@ void slt() {
 	else
 		MainCPUReg[rd_fs] = 0;
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp),
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function),
 DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt),
 DebugMainCPUReg(rt_ft));
 #endif
@@ -1419,7 +1309,7 @@ void sltu() {
 	else
 		MainCPUReg[rd_fs] = 0;
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp),
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function),
 DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt),
 DebugMainCPUReg(rt_ft));
 #endif
@@ -1427,19 +1317,19 @@ DebugMainCPUReg(rt_ft));
 
 void sllv() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void srav() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void srlv() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
@@ -1448,7 +1338,7 @@ void sub() {
 Parse6_5_5_5_5_6();
 	MainCPUReg[rd_fs] = MainCPUReg[rs_base_fmt] - MainCPUReg[rt_ft];
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
@@ -1457,7 +1347,7 @@ void subu() {
 Parse6_5_5_5_5_6();
 	MainCPUReg[rd_fs] = MainCPUReg[rs_base_fmt] - (unsigned)MainCPUReg[rt_ft];
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
@@ -1474,7 +1364,7 @@ void xor() {
 	Parse6_5_5_5_5_6();
 	MainCPUReg[rd_fs] = MainCPUReg[rs_base_fmt] ^ MainCPUReg[rt_ft];
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp),
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function),
 DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt),
 DebugMainCPUReg(rt_ft));
 #endif
@@ -1489,49 +1379,49 @@ DebugMainCPUReg(rt_ft));
 
 void dsll() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void dsll32() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void dsra() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void dsra32() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void dsrav() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void dsrl() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void dsrl32() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void dsrlv() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
@@ -1557,7 +1447,7 @@ Parse6_5_5_5_5_6();
 	if (rd_fs + rs_base_fmt + rt_ft == 0)
 		printf("%X: NOP\n", pc);
 	else
-		printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+		printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
@@ -1575,7 +1465,7 @@ void sra() {
 Parse6_5_5_5_5_6();
 	MainCPUReg[rd_fs] = MainCPUReg[rt_ft] >> MainCPUReg[sa_fd];
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
@@ -1593,7 +1483,7 @@ void srl() {
 Parse6_5_5_5_5_6();
 	MainCPUReg[rd_fs] = (unsigned)MainCPUReg[rt_ft] >> MainCPUReg[sa_fd];
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
@@ -1605,85 +1495,85 @@ Parse6_5_5_5_5_6();
 //////////////////////////////////////////////////////////////////////
 void ddiv() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void ddivu() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void Div() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void divu() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void dmult() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void dmultu() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void mult() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void multu() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void teq() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void tge() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void tgeu() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void tlt() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void tltu() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void tne() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
@@ -1696,13 +1586,13 @@ void tne() {
 
 void mfhi() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs));
+	printf("%X: %s\t%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs));
 #endif
 }
 
 void mflo() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs));
+	printf("%X: %s\t%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rd_fs));
 #endif
 }
 
@@ -1715,13 +1605,13 @@ void mflo() {
 
 void mthi() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rs_base_fmt));
+	printf("%X: %s\t%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rs_base_fmt));
 #endif
 }
 
 void mtlo() {
 #ifdef _DEBUG
-	printf("%X: %s\t%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rs_base_fmt));
+	printf("%X: %s\t%s\n", pc, DebugSpecial(function), DebugMainCPUReg(rs_base_fmt));
 #endif
 }
 
@@ -1739,7 +1629,7 @@ void jr() {
 	CPUdelay = 1;
 
 #ifdef _DEBUG
-	printf("%X: %s\t%s\n", pc, DebugSpecial(SpecialOp),
+	printf("%X: %s\t%s\n", pc, DebugSpecial(function),
 DebugMainCPUReg(rs_base_fmt));
 #endif
 }
@@ -1855,41 +1745,6 @@ void bnel() {
 	printf("%X: %s\t%s,%s,%04Xh\n", pc, DebugMainCPU(),
 DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft),
 offset_immediate);
-#endif
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-//			More MainCPU Instructions
-//  syntax: Op ft, offset(bsae)
-//
-//////////////////////////////////////////////////////////////////////
-
-void ldc1() {
-Parse6_5_5_16();
-#ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
-#endif
-}
-
-void lwc1() {
-Parse6_5_5_16();
-#ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
-#endif
-}
-
-void sdc1() {
-Parse6_5_5_16();
-#ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
-#endif
-}
-
-void swc1() {
-Parse6_5_5_16();
-#ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
 #endif
 }
 

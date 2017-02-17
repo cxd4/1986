@@ -1,5 +1,6 @@
-//1964: The Nintendo64 Emulator by Deku Nut
-//Started 3/10/1999
+//1964: The Open Source Nintendo64 Emulator 
+//started 3/10/1999 by Joel M. (schibo)
+//First Version Released as Open Source: 4/9/1999
 //main.c
 
 #include <stdio.h>
@@ -15,14 +16,23 @@
 
 //function declarations
 void ReadRomData(char* RomPath);
-void RunOpcode();
-//void DoMainCPUOpcode();
-void DoCOPx(int COPn);
-void DoRegimm();
-void DoSpecial() ;
-void CleanUp();
 void ByteSwap(uint32 beginByte, uint32 endByte);
+//void DoMainCPUOpcode();
+
 void Step_CPU();
+void RunOpcode();
+void CleanUp();
+
+void DoBC1();
+void DoCOPx(int COPn);
+void DoFPU();
+void DoRegimm();
+void DoSpecial();
+void DoRSPStore();
+void DoRSPLoad();
+void DoTLB();
+void DoVector();
+
 extern void DebuggerUI();
 extern uint32 GetPhysicalAddress(uint32 Address);
 
@@ -85,6 +95,9 @@ void RunOpcode()
 		case SDC1 : sdc1(); break;
 		case SWC1 : swc1(); break;
 
+		case LWC2 : DoRSPLoad(); break;
+		case SWC2 : DoRSPStore(); break;
+
 		case CACHE : cache(); break;
 
 		default  : 
@@ -129,60 +142,117 @@ void DoCOPx(int COPn) {
 	Parse6_5_5_5_5_6();
 	switch(COPn) {
 	case 0 : switch(rs_base_fmt) {
-			case CFC0  : cfc0();  break;
-			case CTC0  : ctc0();  break;
-			case DMFC0 : dmfc0(); break;
-			case DMTC0 : dmtc0(); break;
-			case MFC0  : mfc0();  break;
-			case MTC0  : mtc0();  break;
+			//case CFC  : cfc0();  break; 
+			//case CTC  : ctc0();  break;
+			//case DMFC : dmfc0(); break;
+			//case DMTC : dmtc0(); break;
+			case MFC  : mfc0();  break;
+			case MTC  : mtc0();  break;
+			case TLB  : DoTLB(); break;
 			default    : ;
 #ifdef _DEBUG				
 				printf("!!COPO!!\n");
 #endif
 			} break;
 	case 1 : switch(rs_base_fmt) {
-			case CFC1  : cfc1();  break;
-			case CTC1  : ctc1();  break;
-			case DMFC1 : dmfc1(); break;
-			case DMTC1 : dmtc1(); break;
-			case MFC1  : mfc1();  break;
-			case MTC1  : mtc1();  break;
+			case CFC     : cfc1();  break;
+			case CTC     : ctc1();  break;
+			case DMFC    : dmfc1(); break;
+			case DMTC    : dmtc1(); break;
+			case MFC     : mfc1();  break;
+			case MTC     : mtc1();  break;
+			case BC      : DoBC1();  break;
+			case S_INSTR : DoFPU(dummy_single);  break;
+			case D_INSTR : DoFPU(dummy_double); break;
+			case W_INSTR : DoFPU(dummy_word);   break;
+			case L_INSTR : DoFPU(dummy_long);   break;
+
 			default    : ;
 #ifdef _DEBUG				
 				printf("!!COP1!!\n");
 #endif
 			} break;
-	case 2 : switch(rs_base_fmt) {
-			case CFC2  : cfc2();  break;
-			case CTC2  : ctc2();  break;
-			case DMFC2 : dmfc2(); break;
-			case DMTC2 : dmtc2(); break;
-			case MFC2  : mfc2();  break;
-			case MTC2  : mtc2();  break;
+	case 2 : if (rs_base_fmt > 15) DoVector();
+		    else switch(rs_base_fmt) {
+//			case CFC  : cfc2();  break;        //according to anarko's docs,
+//			case CTC  : ctc2();  break;        //none of these exist in r4300i
+//			case DMFC : dmfc2(); break;        //(i think)
+//			case DMTC : dmtc2(); break;
+//			case MFC  : mfc2();  break;
+//			case MTC  : mtc2();  break;
 			
-			case LDC2  : ldc2();  break;
-			case LWC2  : lwc2();  break;
-			case SDC2  : sdc2();  break;
-			case SWC2  : swc2();  break;
+//			case LDC2  : ldc2();       break;
+//			case LWC2  : DoRSPLoad();  break;
+//			case SDC2  : DoRSPStore(); break;
+//			case SWC2  : swc2();       break;
 			default    : ;
 #ifdef _DEBUG				
 				printf("!!COP2!!\n");
 #endif
 		} break;
-	default : ; //No need to Jump to next instr, 'cause Parse already did
+	default : ; //No need to Jump to next instr, 'cause Parse already did.
+		        //Above comment makes no sense anymore, but i need it. :)
 #ifdef _DEBUG		
 		printf("!!COP %d does not exist!!\n", COPn);
 #endif
 	}
 }
 
+void DoFPU() {
+	Parse6_5_5_5_5_6();
+	//The FPU op (function) is the last 6 bits of the 32bit instruction
+	if ( rs_base_fmt < 47) switch(rs_base_fmt) {
+		case ADD_F   : add_f(); //0
+		case SUB_F   : sub_f(); //1
+		case MUL     : mul();   //2
+		case DIV_F   : div_f(); //3
+		case SQRT    : sqrt();  //4
+		case ABS     : Abs();   //5
+		case MOV     : mov();   //6
+		case NEG     : neg();   //7
+		case ROUND_L : round(dummy_long); //8
+		case TRUNC_L : trunc(dummy_long); //9
+		case CEIL_L  : Ceil(dummy_long);  //10
+		case FLOOR_L : Floor(dummy_long); //11
+		case ROUND_W : round(dummy_word); //12
+		case TRUNC_W : trunc(dummy_word); //13
+		case CEIL_W  : Ceil(dummy_word);  //14
+		case FLOOR_W : Floor(dummy_word); //15
+		case CVT_S   : Cvt(dummy_single); //32
+		case CVT_D   : Cvt(dummy_double); //33
+		case CVT_W   : Cvt(dummy_word);   //36
+		case CVT_L   : Cvt(dummy_long);   //37
+		default      : ;
+#ifdef _DEBUG
+		printf("!!FPU!!\n");
+#endif
+	}
+	else 
+		c_cond();         //48-63
+	
+}
+
+void DoBC1() {
+	/*Parse6_5_3_1_1_16(); TODO: Would you create this parser? I madeglobal ND, TF*/
+	switch(rs_base_fmt) {
+	case BC1F  : bc1f();  //0
+	case BC1T  : bc1t();  //1
+	case BC1FL : bc1fl(); //2
+	case BC1TL : bc1tl(); //3
+	default    : ;
+#ifdef _DEBUG
+		printf("!!BC1!!!\n");
+#endif
+	}
+}
+
 void DoSpecial() {
-	//The special op is the last 6 bits of the 32bit instruction
-	SpecialOp = Instruction << 2;
-	SpecialOp = SpecialOp >> 2;
-	//printf("SpecialOp = %d, %s\n", SpecialOp, DebugSpecial(SpecialOp));
+	//The special op (function) is the last 6 bits of the 32bit instruction
+	function = Instruction << 2;
+	function = function >> 2;
+	//printf("SpecialOp = %d, %s\n", function, DebugSpecial(function));
 	Parse6_5_5_5_5_6(); //Careful: this is only for these cases right now.
-	switch (SpecialOp) {
+	switch (function) {
 		case JALR  : jalr();  break;
 		case ADD   : add();   break;
 		case ADDU  : addu();  break;
@@ -240,7 +310,7 @@ void DoSpecial() {
 
 		default   : ;
 #ifdef _DEBUG			
-		printf("!!!!!\n");
+		printf("!!SPECIAL!!\n");
 #endif
 	}
 }
@@ -265,7 +335,140 @@ void DoRegimm() {
 	case TNEI    : tnei();    break;
 	default      : ;
 #ifdef _DEBUG		
-		printf("!!!!!\n");
+		printf("!!REGIMM!!\n");
+#endif
+	}
+}
+
+void DoRSPLoad() {
+	Parse6_5_5_5_5_6(); //TODO: Make Parse 6_5_15_6
+	switch(rd_fs) {
+	case LBV : lbv(); break;
+	case LSV : lsv(); break;
+	case LLV : llv(); break;
+	case LDV : ldv(); break;
+	case LQV : lqv(); break;
+	case LRV : lrv(); break;
+	case LPV : lpv(); break;
+	case LUV : luv(); break;
+	case LHV : lhv(); break;
+	case LFV : lfv(); break;
+	case LWV : lwv(); break;
+	case LTV : ltv(); break;
+	default  : ;
+#ifdef _DEBUG
+		printf("!!RSP LOAD!!\n");
+#endif
+	}
+}
+
+void DoRSPStore() {
+	Parse6_5_5_5_5_6(); //TODO: Make Parse 6_5_15_6
+	switch(rd_fs) {
+	case SBV : sbv(); break; //0
+	case SSV : ssv(); break; //1
+	case SLV : slv(); break; //2
+	case SDV : sdv(); break; //3
+	case SQV : sqv(); break; //4
+	case SRV : srv(); break; //5
+	case SPV : spv(); break; //6
+	case SUV : suv(); break; //7
+	case SHV : shv(); break; //8
+	case SFV : sfv(); break; //9
+	case SWV : swv(); break; //10
+	case STV : stv(); break; //11
+	default  : ;
+#ifdef _DEBUG
+		printf("!!RSP STORE!!\n");
+#endif
+	}
+}
+
+void DoTLB() {
+	switch(rs_base_fmt) {
+	case TLBR  : tlbr();  break;
+	case TLBWI : tlbwi(); break;
+	case TLBWR : tlbwr(); break;
+	case TLBP  : tlbp();  break;
+	case ERET  : eret();  break;
+	default  : ;
+#ifdef _DEBUG
+		printf("!!TLB!!\n");
+#endif
+	}
+}
+
+void DoVector() {
+	//The Vector opcode (function) is the last 6 bits of the 32bit instruction
+	function = Instruction << 2;
+	function = function >> 2;	
+	if (function < 33)
+		switch(function) {
+		case VMULF : vmulf(); //0
+		case VMULU : vmulu(); //1
+		case VRNDP : vrndp(); //2
+		case VMULQ : vmulq(); //3
+		case VMUDL : vmudl(); //4
+		case VMUDM : vmudm(); //5
+		case VMUDN : vmudn(); //6
+		case VMUDH : vmudh(); //7
+		case VMACF : vmacf(); //8
+		case VMACU : vmacu(); //9
+		case VRNDN : vrndn(); //10
+		case VMACQ : vmacq(); //11
+		case VMADL : vmadl(); //12
+		case VMADM : vmadm(); //13
+		case VMADN : vmadn(); //14
+		case VMADH : vmadh(); //15
+		case VADD  : vadd();  //16
+		case VSUB  : vsub();  //17
+
+		//case VSUT  : vsut();  //18 may not exist
+
+		case VABS  : vabs();  //19
+		case VADDC : vaddc(); //20
+		case VSUBC : vsubc(); //21
+
+		//case VADDB : vaddb(); //22
+		//case VSUBB : vsubb(); //23
+		//case VACCB : vaccb(); //24
+		//case VSUCB : vsucb(); //25 these 7 may not exist
+		//case VSAD  : vsad();  //26
+		//case VSAC  : vsac();  //27
+		//case VSUM  : vsum();  //28
+
+		case VSAW  : vsaw();  //29 
+		case VLT   : vlt();   //32
+		default  : ;
+#ifdef _DEBUG
+		printf("!!VECTOR!!\n");
+#endif
+	} 
+	else
+		switch (function) {
+		case VEQ   : veq();   //33
+		case VNE   : vne();   //34
+		case VGE   : vge();   //35
+		case VCL   : vcl();   //36
+		case VCH   : vch();   //37
+		case VCR   : vcr();   //38
+		case VMRG  : vmrg();  //39
+		case VAND  : vand();  //40
+		case VNAND : vnand(); //41
+		case VOR   : vor();   //42
+		case VNOR  : vnor();  //43
+		case VXOR  : vxor();  //44
+		case VNXOR : vxnor(); //45
+		case VRCP  : vrcp();  //48
+		case VRCPL : vrcpl(); //49
+		case VRCPH : vrcph(); //50
+		case VMOV  : vmov();  //51
+		case VRSQ  : vrsq();  //52
+		case VRSQL : vrsql(); //53
+		case VRSQH : vrsqh(); //54
+		default  : ;
+#ifdef _DEBUG
+		printf("!!VECTOR!!\n");
 #endif
 	}
 }
