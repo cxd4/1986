@@ -1,5 +1,6 @@
-//1964: The Nintendo64 Emulator by Deku Nut
-//Started 3/10/1999
+//1964: The Nintendo64 Emulator Started 3/10/1999 by Joel M. aka Deku Nut (schibo)
+//Open source released 4/9/1999 
+
 //main.c
 
 #include <stdio.h>
@@ -330,14 +331,21 @@ void main(int argc, char** argv[])
 #ifdef _DEBUG
 	printf("\nMain code disassembly:\n");
 #endif
-	//Disassemble Main Code
-	while (!kbhit()); getch();
+
 	for(;;) {
+
+#ifdef _DEBUG
+		if (UpdateViewPort) RefreshConsole();
+		if (UserCommand == 'n'){
+#endif
+
 		RunOpcode();
 		pc+=4; //increment program counter
+
 #ifdef _DEBUG
-	if (UpdateViewPort)	RefreshConsole();
+		}
 #endif
+
 	}
 	CleanUp();
 }

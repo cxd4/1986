@@ -8,6 +8,17 @@ code. :)
 This file is comprehensive- including all major and minor
 revisions possible.
 
+v0.0.3B
+    -- Virtual memory addressing vastly improved. (schibo)
+    -- Improved debugger. CoProcessor registers now visible. (schibo)
+       New commands- n=next instruction
+                     left arrow = back one screen
+                     right arrow = forward one screen
+                     (more to come)
+v0.0.3A
+     -- New opcodes added: {untested}
+           LDL, LDR, LH, LHU, LL, LLD, 
+           LWL, LWR, LWU, SB, SC, SCD (Eudaemon) 
 v0.0.3
      -- New opcodes added: 
 	   SLTI, SLTIU, NOR, ADD  (steb)
@@ -15,8 +26,6 @@ v0.0.3
            LB, LBU, LD (Eudaemon)
      -- ROM is specified as command line parameter (steb)
      -- Ok...MainCPUReg[] & Coprocessors are now _int64. ;) (schibo)
-     -- (more to come)
-
 v0.0.2
      -- New opcodes added:
            XORI, ADDU, AND, OR, SLT, SLTU, XOR, MFCO, MTCO    (steb)
@@ -31,9 +40,10 @@ v0.0.1
            Simple debugger added. Shows MainCPU Regs only.
 
 
-Additional Thanks
------------------
+Additional Thanks (in chronological order)
+------------------------------------------
 anarko, whose brilliant N64 Toolkit documentation made this project possible!
-Mkelly09 for the cool 1964 logo!
 Adrox, darkreign, and LUIGI for immediate publicity!
+Mkelly09 for the cool 1964 logo!
+zilmar for continually productive chats!
 (More to come)

@@ -9,6 +9,11 @@
 #include "chipmake.h"
 #include "mainregs.h"
 
+#define DOUBLEMASKRIGHT 0x0000ffff
+#define DOUBLEMASKLEFT 0xffff0000
+#define WORDMASKRIGHT 0x00ff
+#define WORDMASKLEFT 0xff00
+
 #ifdef _DEBUG
 extern char* DebugMainCPU();
 extern char* DebugMainCPUReg();
@@ -18,6 +23,9 @@ extern char* DebugRegimm(uint8 Instruction);
 extern char* DebugSpecial(uint8 function);
 extern uint8 UpdateViewPort;
 #endif _DEBUG
+
+extern int LoadMemory(_int64* targetReg);
+extern int StoreMemory(unsigned long regValue);
 
 extern void RunOpcode();
 
@@ -85,7 +93,7 @@ MainCPUReg[rt_ft] = targetByte;
 
 }
 
-//Eudaemon Apr 14, 1999
+//15 april 99 Eudaemon
 //--------------------------------------------------------------
 //| LD            |  Load DoubleWord         |
 //--------------------------------------------------------------
@@ -112,101 +120,398 @@ MainCPUReg[rt_ft] = targetDouble;
 
 }
 
+//15 april 99 Eudaemon
+//--------------------------------------------------------------
+//| LDL            |  Load DoubleWord Left         |
+//--------------------------------------------------------------
+//|011010 (26) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format: LDL rt, offset(base)
+// Pupose: Loads the most significant bits from a
+//         DoubleWord (64 Bits) from memory to the least significant bits
+//         of rt
+// left[rt] = right[doubleword[offset+base]]
 
 void ldl() {
+
+_int64 targetDouble; //Double Word to be loaded from memory
+
 Parse6_5_5_16();
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
+ printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), offset_immediate,
+DebugMainCPUReg(rs_base_fmt));
+
 #endif
+
+//Mask the least significant bits of rt
+MainCPUReg[rt_ft] = MainCPUReg[rt_ft] & DOUBLEMASKLEFT;
+//Load and Mask the most significant bits of the doubleWord
+targetDouble =
+buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+targetDouble = targetDouble & DOUBLEMASKRIGHT;
+//Combine the resulting bits
+MainCPUReg[rt_ft] = MainCPUReg[rt_ft] | targetDouble;
+
 }
+
+//15 april 99 Eudaemon
+//--------------------------------------------------------------
+//| LDR            |  Load DoubleWord Right         |
+//--------------------------------------------------------------
+//|011011 (27) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format: LDR rt, offset(base)
+// Pupose: Loads the Least significant bits from a
+//         DoubleWord (64 Bits) from memory to the Most significant bits
+//         of rt
+// right[rt] = left[doubleword[offset+base]]
 
 void ldr() {
+
+_int64 targetDouble; //Double Word to be loaded from memory
+
 Parse6_5_5_16();
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
+ printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), offset_immediate,
+DebugMainCPUReg(rs_base_fmt));
+
 #endif
+
+//Mask the most significant bits of rt
+MainCPUReg[rt_ft] = MainCPUReg[rt_ft] & DOUBLEMASKRIGHT;
+//Load and Mask the least significant bits of the doubleWord
+targetDouble =
+buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+targetDouble = targetDouble & DOUBLEMASKLEFT;
+//Combine the resulting bits
+MainCPUReg[rt_ft] = MainCPUReg[rt_ft] | targetDouble;
+
 }
+
+//15 april 99 Eudaemon
+//--------------------------------------------------------------
+//| LH            |  Load Halfword         |
+//--------------------------------------------------------------
+//|100001 (33) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format: LH rt, offset(base)
+// Pupose: Loads a halfword to rt
+// rt = halfword[offset+base]
 
 void lh() {
+
+_int16 targetHalf; //Half Word to load to rt
+
 Parse6_5_5_16();
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
+ printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), offset_immediate,
+DebugMainCPUReg(rs_base_fmt));
+
 #endif
+
+targetHalf =
+buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+MainCPUReg[rt_ft] = targetHalf;
+
 }
+
+//15 april 99 Eudaemon
+//--------------------------------------------------------------
+//| LHU            |  Load Halfword Unsigned        |
+//--------------------------------------------------------------
+//|100101 (37) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format: LHU rt, offset(base)
+// Pupose: Loads a unsigned halfword to rt
+// rt = (unsigned)halfword[offset+base]
 
 void lhu() {
+
+uint16 targetHalf; //unsigned Halfword to load to rt
+
 Parse6_5_5_16();
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
+ printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), offset_immediate,
+DebugMainCPUReg(rs_base_fmt));
+
 #endif
+
+targetHalf =
+buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+MainCPUReg[rt_ft] = targetHalf;
+
 }
+
+//15 april 99 Eudaemon
+//Is this correct?
+//--------------------------------------------------------------
+//| LL            |  Load Linked Word       |
+//--------------------------------------------------------------
+//|110000 (48) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format: LL rt, offset(base)
+// Pupose: Loads a word to rt for load-modify-write
+// rt = word[offset+base]
 
 void ll() {
+
+_int32 targetWord; //Word to load to rt
+
 Parse6_5_5_16();
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
+ printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), offset_immediate,
+DebugMainCPUReg(rs_base_fmt));
+
 #endif
+
+targetWord =
+buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+MainCPUReg[rt_ft] = targetWord;
+
 }
+
+//15 april 99 Eudaemon
+//Is this correct?
+//--------------------------------------------------------------
+//| LLD            |  Load Linked DoubleWord       |
+//--------------------------------------------------------------
+//|110100 (52) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format: LLD rt, offset(base)
+// Pupose: Loads a doubleword to rt for atomic read-modify-write
+// rt = Doubleword[offset+base]
 
 void lld() {
+
+_int64 targetDouble; //Double to be read from
+
 Parse6_5_5_16();
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
+ printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), offset_immediate,
+DebugMainCPUReg(rs_base_fmt));
+
 #endif
+
+targetDouble =
+buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+MainCPUReg[rt_ft] = targetDouble;
+
 }
+
+//15 april 99 Eudaemon
+//--------------------------------------------------------------
+//| LW            |  Load Word         |
+//--------------------------------------------------------------
+//|100011 (35) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format: LW rt, offset(base)
+// Pupose: Loads a Word to rt
+// rt = word[offset+base]
 
 void lw() {
-uint32* tempPtr;
+
+//_int32 targetWord; //Word to load to rt
+
 Parse6_5_5_16();
-tempPtr = &buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
-MainCPUReg[rt_ft] = *tempPtr;
 
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
-//	printf("*tempPtr = %X\n", *tempPtr);
+printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), offset_immediate,
+DebugMainCPUReg(rs_base_fmt));
+
+// printf("*tempPtr = %X\n", *tempPtr);
 #endif
+
+//targetWord =
+//buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+//MainCPUReg[rt_ft] = targetWord;
+LoadMemory(MainCPUReg[rt_ft]);
 }
+
+//15 april 99 Eudaemon
+//--------------------------------------------------------------
+//| LWL            |  Load Word Left        |
+//--------------------------------------------------------------
+//|100010 (34) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format: LWL rt, offset(base)
+// Pupose: Loads the most significant bits of a Word to
+//         the least significant bits rt
+// left[rt] = right[word[offset+base]]
 
 void lwl() {
+
+_int32 targetWord; //Word to load to rt
+
 Parse6_5_5_16();
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
+ printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), offset_immediate,
+DebugMainCPUReg(rs_base_fmt));
+
 #endif
+
+//Mask the least significant bits of rt
+MainCPUReg[rt_ft] = MainCPUReg[rt_ft] & WORDMASKLEFT;
+//Load and Mask the most significant bits of the Word
+targetWord =
+buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+targetWord = targetWord & WORDMASKRIGHT;
+//Combine the resulting bits
+MainCPUReg[rt_ft] = MainCPUReg[rt_ft] | targetWord;
+
 }
+
+//15 april 99 Eudaemon
+//--------------------------------------------------------------
+//| LWR            |  Load Word Right        |
+//--------------------------------------------------------------
+//|100110 (38) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format: LWR rt, offset(base)
+// Pupose: Loads the Least significant bits of a Word to
+//         the most significant bits rt
+// right[rt] = left[word[offset+base]]
 
 void lwr() {
+
+_int32 targetWord; //Word to load to rt
+
 Parse6_5_5_16();
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
+ printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), offset_immediate,
+DebugMainCPUReg(rs_base_fmt));
+
 #endif
+
+//Mask the most significant bits of rt
+MainCPUReg[rt_ft] = MainCPUReg[rt_ft] & WORDMASKRIGHT;
+//Load and Mask the least significant bits of the Word
+targetWord =
+buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+targetWord = targetWord & WORDMASKLEFT;
+//Combine the resulting bits
+MainCPUReg[rt_ft] = MainCPUReg[rt_ft] | targetWord;
+
 }
+
+//15 april 99 Eudaemon
+//--------------------------------------------------------------
+//| LWU            |  Load Word Unsigned        |
+//--------------------------------------------------------------
+//|100111 (39) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format: LWU rt, offset(base)
+// Pupose: Loads an unsigned Word to rt
+// rt = (unsigned)word[offset+base]
 
 void lwu() {
+
+uint32 targetWord; //Word to be loaded to rt
+
 Parse6_5_5_16();
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
+ printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), offset_immediate,
+DebugMainCPUReg(rs_base_fmt));
+
 #endif
+
+targetWord =
+buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+MainCPUReg[rt_ft] = targetWord;
+
 }
+
+//15 april 99 Eudaemon
+//--------------------------------------------------------------
+//| SB            |  Store Byte       |
+//--------------------------------------------------------------
+//|101000 (40) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format: SB rt, offset(base)
+// Pupose: Store a byte to memory
+// byte[base+offset]=rt
 
 void sb() {
+
+_int8* ptrByte; //Pointer to byte to store
+
 Parse6_5_5_16();
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
+ printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), offset_immediate,
+DebugMainCPUReg(rs_base_fmt));
+
 #endif
+ptrByte =
+&buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+*ptrByte = MainCPUReg[rt_ft];
+
 }
+
+//15 april 99 Eudaemon
+//--------------------------------------------------------------
+//| SC            |  Store Conditional Word       |
+//--------------------------------------------------------------
+//|111000 (56) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format: SC rt, offset(base)
+// Pupose: Store a word to memory to complete an atomic read-modify-write
+// word[base+offset]=rt
 
 void sc() {
+
+_int32* ptrWord;
+
 Parse6_5_5_16();
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
+ printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), offset_immediate,
+DebugMainCPUReg(rs_base_fmt));
+
 #endif
+
+ptrWord =
+&buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+*ptrWord = MainCPUReg[rt_ft];
+
 }
 
+//15 april 99 Eudaemon
+//--------------------------------------------------------------
+//| SCD            |  Store Conditional DoubleWord       |
+//--------------------------------------------------------------
+//|111100 (60) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format: SC rt, offset(base)
+// Pupose: Store a doubleword to memory to complete an atomic read-modify-write
+// doubleword[base+offset]=rt
+
 void scd() {
+
+_int32* ptrdoubleWord;
+
 Parse6_5_5_16();
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
+ printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), offset_immediate,
+DebugMainCPUReg(rs_base_fmt));
+
 #endif
+
+ptrdoubleWord =
+&buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+*ptrdoubleWord = MainCPUReg[rt_ft];
+
+
 }
 
 void sd() {
@@ -247,15 +552,13 @@ Parse6_5_5_16();
 // Purpose: To store a word to memory.
 // Descrip: word[base+offset] = rt
 void sw() {
-uint32* tempPtr;
+//uint32* tempPtr;
 Parse6_5_5_16();
 #ifdef _DEBUG
 	if (UpdateViewPort)
 	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
 #endif
-
-tempPtr = &buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
-*tempPtr = MainCPUReg[rt_ft];
+	StoreMemory(MainCPUReg[rt_ft]);
 }
 
 void swl() {

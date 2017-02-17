@@ -98,6 +98,10 @@ SOURCE=.\main.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\memory.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\Parse.c
 # End Source File
 # End Target
