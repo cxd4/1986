@@ -241,15 +241,39 @@ void dmtc0() {
 #endif
 }
 
+//SB 11/4/99
+//-----------------------------------------------------------------
+//| MFC0      | Move word From CP0                                |
+//|-----------|---------------------------------------------------|
+//|  010000   |00000 (0)|   rt    |   fs    |    0000 0000 000    |
+//------6----------5---------5---------5--------------11-----------
+// Format:  MFC0 rt, rd
+// Purpose: To copy a word from an FPR to a GPR.
+// Descrip: rt = COP rd
 void mfc0() {
+	Parse6_5_5_5_5_6(); // TODO : FIXME!
+	MainCPUReg[rt_ft] = COP0Reg[rd_fs];
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugCOP0(rs_base_fmt), DebugMainCPUReg(rt_ft), DebugCOP0Reg(rd_fs));
+	printf("%X: %s\t%s,%s\n", pc, DebugCOP0(rs_base_fmt),
+DebugMainCPUReg(rt_ft), DebugCOP0Reg(rd_fs));
 #endif
 }
 
+//SB 11/4/99
+//-----------------------------------------------------------------
+//| MTC0      | Move word to CP0                                  |
+//|-----------|---------------------------------------------------|
+//|  010000   |00100 (4)|   rt    |   fs    |    0000 0000 000    |
+//------6----------5---------5---------5--------------11-----------
+// Format:  MTC0 rt, rd
+// Purpose: To copy a word from a GPR to an FPR.
+// Descrip: COP rd = rt
 void mtc0() {
+	Parse6_5_5_5_5_6(); // TODO : FIXME!
+	COP0Reg[rd_fs] = MainCPUReg[rt_ft];
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugCOP0(rs_base_fmt), DebugMainCPUReg(rt_ft), DebugCOP0Reg(rd_fs));
+	printf("%X: %s\t%s,%s\n", pc, DebugCOP0(rs_base_fmt),
+DebugMainCPUReg(rt_ft), DebugCOP0Reg(rd_fs));
 #endif
 }
 
@@ -482,10 +506,22 @@ Parse6_5_5_16();
 #endif
 }
 
+//SB 11/4/99
+//-----------------------------------------------------------------
+//| XORI      | eXclusive OR Immediate                            |
+//|-----------|---------------------------------------------------|
+//|001110 (14)|   rs    |   rt    |           immediate           |
+//------6----------5---------5-------------------16----------------
+// Format:  XORI rt, rs, immediate
+// Purpose: To do a bitwise logical EXCLUSIVE OR with a constant.
+// Descrip: rd = (rs XOR immediate)
 void xori() {
-Parse6_5_5_16();
+	Parse6_5_5_16();
+	MainCPUReg[rd_fs] = MainCPUReg[rs_base_fmt] ^ offset_immediate;
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%s,%04Xh\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), DebugMainCPUReg(rs_base_fmt), offset_immediate);
+	printf("%X: %s\t%2s,%s,%04Xh\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), DebugMainCPUReg(rs_base_fmt),
+offset_immediate);
 #endif
 }
 
@@ -621,15 +657,43 @@ void add() {
 #endif
 }
 
+//SB 11/4/99
+//-----------------------------------------------------------------
+//| ADDU      | ADD Unsigned word                                 |
+//|-----------|---------------------------------------------------|
+//|  000000   |   rs    |   rt    |    rd   |  00000  |100001 (33)|
+//------6----------5---------5---------5---------5----------6------
+// Format:  ADDU rd, rs, rt
+// Purpose: To add 32-bit integers.
+// Descrip: rd = rs + rt
 void addu() {
+	Parse6_5_5_5_5_6();
+	MainCPUReg[rd_fs] = MainCPUReg[rs_base_fmt] +
+(unsigned)MainCPUReg[rt_ft];
+
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp),
+DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt),
+DebugMainCPUReg(rt_ft));
 #endif
 }
 
+//SB 11/4/99
+//-----------------------------------------------------------------
+//| AND       | AND                                               |
+//|-----------|---------------------------------------------------|
+//|  000000   |   rs    |   rt    |    rd   |  00000  |100100 (36)|
+//------6----------5---------5---------5---------5----------6------
+// Format:  AND rd, rs, rt
+// Purpose: To do a bitwise logical AND.
+// Descrip: rd = (rs AND rt)
 void and() {
+	Parse6_5_5_5_5_6();
+	MainCPUReg[rd_fs] = MainCPUReg[rs_base_fmt] & MainCPUReg[rt_ft];
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp),
+DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt),
+DebugMainCPUReg(rt_ft));
 #endif
 }
 
@@ -669,25 +733,70 @@ void nor() {
 #endif
 }
 
+//SB 11/4/99
+//-----------------------------------------------------------------
+//| OR        | OR                                                |
+//|-----------|---------------------------------------------------|
+//|  000000   |   rs    |   rt    |    rd   |  00000  |100101 (37)|
+//------6----------5---------5---------5---------5----------6------
+// Format:  OR rd, rs, rt
+// Purpose: To do a bitwise logical OR.
+// Descrip: rd = (rs OR rt)
 void or() {
+	Parse6_5_5_5_5_6();
+	MainCPUReg[rd_fs] = MainCPUReg[rs_base_fmt] | MainCPUReg[rt_ft];
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp),
+DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt),
+DebugMainCPUReg(rt_ft));
 #endif
 }
 
+//-----------------------------------------------------------------
+//| SLT       | Set on Less Than                                  |
+//|-----------|---------------------------------------------------|
+//|  000000   |   rs    |   rt    |    rd   |  00000  |101010 (42)|
+//------6----------5---------5---------5---------5----------6------
+// Format:  SLT rd, rs, rt
+// Purpose: To record the result of a less-than comparison.
+// Descrip: if rs < rt then rd = 1 else rd = 0
+
 void slt() {
+	Parse6_5_5_5_5_6();
+	if (MainCPUReg[rs_base_fmt] < MainCPUReg[rt_ft])
+		MainCPUReg[rd_fs] = 1;
+	else
+		MainCPUReg[rd_fs] = 0;
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp),
+DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt),
+DebugMainCPUReg(rt_ft));
+#endif
+}
+
+//SB 11/4/99
+//-----------------------------------------------------------------
+//| SLTU      | Set on Less Than Unsigned                         |
+//|-----------|---------------------------------------------------|
+//|  000000   |   rs    |   rt    |    rd   |  00000  |101011 (43)|
+//------6----------5---------5---------5---------5----------6------
+// Format:  SLTU rd, rs, rt
+// Purpose: To record the result of an unsigned less-than comparison.
+// Descrip: if rs < rt then rd = 1 else rd = 0
+void sltu() {
+	Parse6_5_5_5_5_6();
+	if ((unsigned)MainCPUReg[rs_base_fmt] < (unsigned)MainCPUReg[rt_ft])
+		MainCPUReg[rd_fs] = 1;
+	else
+		MainCPUReg[rd_fs] = 0;
+#ifdef _DEBUG
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp),
+DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt),
+DebugMainCPUReg(rt_ft));
 #endif
 }
 
 void sllv() {
-#ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
-#endif
-}
-
-void sltu() {
 #ifdef _DEBUG
 	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
@@ -717,9 +826,22 @@ void subu() {
 #endif
 }
 
+//SB 11/4/99
+//-----------------------------------------------------------------
+//| XOR       | eXclusive OR                                      |
+//|-----------|---------------------------------------------------|
+//|  000000   |   rs    |   rt    |    rd   |  00000  |100110 (38)|
+//------6----------5---------5---------5---------5----------6------
+// Format:  XOR rd, rs, rt
+// Purpose: To do a bitwise logical EXCLUSIVE OR.
+// Descrip: rd = (rs XOR rt)
 void xor() {
+	Parse6_5_5_5_5_6();
+	MainCPUReg[rd_fs] = MainCPUReg[rs_base_fmt] ^ MainCPUReg[rt_ft];
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
+	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp),
+DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt),
+DebugMainCPUReg(rt_ft));
 #endif
 }
 

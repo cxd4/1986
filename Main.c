@@ -20,7 +20,6 @@ void RunOpcode();
 void DoCOPx(int COPn);
 void DoRegimm();
 void DoSpecial() ;
-void JumpToNextInstruction();
 void CleanUp();
 void ByteSwap(uint32 beginByte, uint32 endByte);
 
@@ -89,7 +88,7 @@ void RunOpcode()
 #ifdef _DEBUG
 			printf("%X: Opcode = %d (working on it)\n", pc, Opcode);
 #endif
-			JumpToNextInstruction(); break;
+			InstructionPointer++; break;
 		}
 	else {
 		switch (Opcode) {
@@ -119,17 +118,9 @@ void RunOpcode()
 #ifdef _DEBUG			
 			printf("%X: Opcode = %d (working on it)\n", pc, Opcode);
 #endif
-	        JumpToNextInstruction(); break;
+	        InstructionPointer++; break;
 		}
 	}
-}
-
-//Jump to the next instruction for unimplemented opcodes.
-void JumpToNextInstruction() {
-	InstructionPointer++;
-	InstructionPointer++;
-	InstructionPointer++;
-	InstructionPointer++;	
 }
 
 void DoCOPx(int COPn) {

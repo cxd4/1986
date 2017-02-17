@@ -33,7 +33,9 @@ uint16 CodeStart;         //Array element location that starts off the code.
 uint32 MainCPUReg[32];
 
 //char* COP0[16];
-char* COP0Reg[32];
+uint32 COP0Reg[32];
+uint32 COP1Reg[32];
+uint32 COP2Reg[32];
 
 //Types of instructions
 #define MAINCPU_INSTR 0
@@ -41,4 +43,3 @@ char* COP0Reg[32];
 #define COP2_INSTR    2
 #define COP3_INSTR    3
 #define REGIMM_INSTR  4
-

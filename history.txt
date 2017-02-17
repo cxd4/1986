@@ -1,0 +1,22 @@
+1964 Version History
+--------------------
+
+v0.0.2
+     -- New opcodes added: {untested}
+           XORI, ADDU, AND, OR, SLT, SLTU, XOR, MFCO, MTCO    (steb)
+     -- Fixed "JumpToNextInstruction()" - no longer needed.   (Deku Nut)
+        Fixed another nono of mine: COP0Reg[32] is now of type uint32. Sorry for
+        the confusion. (Deku Nut)
+        Removed COPO.C - Pointless file.
+
+v0.0.1
+     -- 1964 released as open source on internet: (Deku Nut)
+           Most opcodes decoded; only a handful implemented.
+           Simple debugger added. Shows MainCPU Regs only.
+
+
+Additional Thanks
+-----------------
+Mkelly09 for the cool 1964 logo!
+Adrox, darkreign, and LUIGI for immediate publicity!
+(More to come)

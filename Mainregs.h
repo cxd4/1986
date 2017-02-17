@@ -180,7 +180,7 @@
 // 11 |  ---  |  ---  |  ---  |  ---  |  ---  |  ---  |  ---  |  ---  |
 // hi |-------|-------|-------|-------|-------|-------|-------|-------|
 //     *1 = BC instr, see BC0 list         *2 = TLB instr, see TLB list
-//CoProcessor1 (COP1) Instructions
+//CoProcessor1 (COP0) Instructions
 #define MFC0 0
 #define DMFC0 1
 #define CFC0 2
