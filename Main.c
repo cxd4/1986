@@ -100,7 +100,7 @@ void RunOpcode()
 
 		case CACHE : cache(); break;
 
-		default  : 
+		default  : ;
 #ifdef _DEBUG
 			printf("%X: Opcode = %d (working on it)\n", pc, Opcode);
 #endif
@@ -130,7 +130,7 @@ void RunOpcode()
 		
 		case LUI     : lui();    break;
 		case JAL     : jal();    break;
-		default      :
+		default      : ;
 #ifdef _DEBUG			
 			printf("%X: Opcode = %d (working on it)\n", pc, Opcode);
 #endif
@@ -206,7 +206,7 @@ void DoFPU() {
 		case SUB_F   : sub_f(); //1
 		case MUL     : mul();   //2
 		case DIV_F   : div_f(); //3
-		case SQRT    : sqrt();  //4
+		case SQRT    : Sqrt();  //4
 		case ABS     : Abs();   //5
 		case MOV     : mov();   //6
 		case NEG     : neg();   //7
@@ -466,7 +466,7 @@ void DoVector() {
 		case VRSQ  : vrsq();  //52
 		case VRSQL : vrsql(); //53
 		case VRSQH : vrsqh(); //54
-		default  : ;
+		default    : ;
 #ifdef _DEBUG
 		printf("!!VECTOR!!\n");
 #endif
@@ -490,7 +490,7 @@ void Step_CPU()
 			InstructionPointer++;
 			CPUdelay = 2;
 			break;
-		case 2:		//Do the jump now
+		case 2 :	//Do the jump now
 			pc = CPUdelayPC;
 			if (MainStartAddr == 0xA4000040)
 				InstructionPointer = &buffer[pc-0xA4000000];  //boot code
@@ -504,6 +504,7 @@ void Step_CPU()
 
 #ifdef _DEBUG
 	if (UpdateViewPort) RefreshConsole();
+	//printf("\nCPUdelay = %d. pc = %08X\n\n", CPUdelay, pc);
 #endif
 }
 
@@ -519,6 +520,7 @@ void main(int argc, char** argv[])
 	if (argc < 2) {
 		printf("No ROM specified.\n");
 		printf("Using %s as default for now.\n", RomPath);
+		printf("If you do not have %s in c:\\, I will crash now. Thank you :)\n", RomPath);
 	}
 	else
 		RomPath = argv[1];
@@ -526,7 +528,6 @@ void main(int argc, char** argv[])
 	printf("Loading... Please wait.\n");
   	ReadRomData(RomPath);
 	InstructionPointer = &buffer[0];
-
 	//CHEEZY PATCHES
 	MainCPUReg[RA] = 0x80000520; //Bootcode probably does this 
 	//MainCPUReg[RA] = 0x03ff0000; //but boot code bombs right now.
@@ -568,7 +569,8 @@ void main(int argc, char** argv[])
 		printf("\nBoot code disassembly:\n");
 #endif
 	//Disassemble Boot Code
-	endbootPC = MainStartAddr+1008*4; //1008 instructions in the boot code 
+
+endbootPC = MainStartAddr+1008*4; //1008 instructions in the boot code 
 	while (pc != endbootPC) { 
 #ifdef _DEBUG
 	DebuggerUI();

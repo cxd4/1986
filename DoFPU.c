@@ -476,7 +476,7 @@ Parse6_5_5_16();
           SQRT.D fd, fs
  Purpose: To compute the square root of an FP value.
 */
-void sqrt() {
+void Sqrt() {
 #ifdef _DEBUG
 #endif
 }

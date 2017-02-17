@@ -7,9 +7,8 @@
 #include <string.h>
 #include "mainregs.h"
 #include "chipmake.h"
+#include "handles.h"
 
-HANDLE hSaved;
-HANDLE hMainScreen;
 FILE* returnString;
 
 #define CONSOLE_INIT 0
@@ -25,6 +24,7 @@ void PrintString(int X, int Y, char* theString);
 void DumpRegisters(int VisibleChip);
 void InitMainScreen();
 void PrintDebugScreen(int WhichView);
+void DebuggerMain(void);
 
 //these #defines control which processor is shown in the debugger window
 #define MAINCPU_IN_VIEW 0
@@ -75,6 +75,7 @@ void DebuggerUI()
 				UpdateViewPort = 1;
 				UserCommand = "";
 				RefreshConsole();
+				//Step_CPU();
 			}
 			else			
 				Step_CPU();
@@ -108,6 +109,7 @@ void RefreshConsole() {
 	WriteConsoleOutput (hMainScreen, viewport, csize, c0, &rect);
 	PrintDebugScreen(Chip_In_View);
 	DumpRegisters(Chip_In_View);
+//	SetConsoleActiveScreenBuffer(hSaved);
 }
 
 void DebuggerMain(void) {
@@ -124,6 +126,7 @@ void DebuggerMain(void) {
 	InitMainScreen();
 	handle_console(SHOW_MAIN_SCREEN);
 	RefreshConsole();
+//	SetConsoleActiveScreenBuffer(hSaved); //new
 }
 
 void InitMainScreen() {
@@ -468,7 +471,6 @@ void freeconsole() {
 }
 
 void InitViewPort() {
-	//c0 = {0,0};
 	end_line = 25;
 	begin_line = 9;	
 	viewport = malloc (sizeof(CHAR_INFO) *  (end_line-begin_line) * COLS);
@@ -481,3 +483,4 @@ void InitViewPort() {
     rect.Bottom = end_line;
 }
 #endif //end #ifdef _DEBUG
+

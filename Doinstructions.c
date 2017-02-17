@@ -532,27 +532,86 @@ Parse6_5_5_16();
 StoreMemory((_int64)MainCPUReg[rt_ft]);
 }
 
+// 22 april 99 Eudaemon
+//--------------------------------------------------------------
+//| SDL            |  Store DoubleWord Left      |
+//--------------------------------------------------------------
+//|101100 (44) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format: SDL rt, offset(base)
+// Pupose: Store the most significant part of doubleword from a
+// register to the lest significant bits a memory address.
+// right[doubleword[base+offset]]=left[rt]
+//This is as fast as I can make it right now.. maybe we need direct
+//access to memory for these functions
 void sdl() {
+
+_int64 targetDouble; //Double Word to be loaded from memory
+
 Parse6_5_5_16();
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
+ printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), offset_immediate,
+DebugMainCPUReg(rs_base_fmt));
+
 #endif
+
+LoadMemory((_int64)targetDouble);
+targetDouble = ((MainCPUReg[rt_ft] & DOUBLEMASKLEAST) >> 32)|
+                    (targetDouble & DOUBLEMASKLEAST);
+StoreMemory((_int64)targetDouble);
+
 }
 
+// 22 april 99 Eudaemon
+//--------------------------------------------------------------
+//| SDR            |  Store DoubleWord Right      |
+//--------------------------------------------------------------
+//|101101 (45) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format: SDR rt, offset(base)
+// Pupose: Store the least significant part of doubleword from a
+// register to the most significant bits a memory address.
+// left[doubleword[base+offset]]=right[rt]
+// This is as fast as I can make it right now.. maybe we need direct
+// access to memory for these functions
 void sdr() {
+
+_int64 targetDouble; //Double Word to be loaded from memory
+
 Parse6_5_5_16();
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
+ printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), offset_immediate,
+DebugMainCPUReg(rs_base_fmt));
+
 #endif
+
+LoadMemory((_int64)targetDouble);
+targetDouble = ((MainCPUReg[rt_ft] & DOUBLEMASKMOST) << 32)|
+                    (targetDouble & DOUBLEMASKMOST);
+StoreMemory((_int64)targetDouble);
+
 }
 
+//--------------------------------------------------------------
+//| SH            |  Store HalfWord      |
+//--------------------------------------------------------------
+//|101001 (41) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format: SH rt, offset(base)
+// Pupose: Store Halfword from register to memory
+// halfword[base+offset]=[rt]
 void sh() {
 //_int16* ptrHword;
 Parse6_5_5_16();
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
+ printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), offset_immediate,
+DebugMainCPUReg(rs_base_fmt));
+
 #endif
-StoreMemory(MainCPUReg[rt_ft]);
+StoreMemory((_int16)MainCPUReg[rt_ft]);
 }
 
 //-----------------------------------------------------------------
@@ -573,18 +632,67 @@ Parse6_5_5_16();
 	StoreMemory((_int32)MainCPUReg[rt_ft]);
 }
 
+// 22 april 99 Eudaemon
+//--------------------------------------------------------------
+//| SWL            |  Store Word Left      |
+//--------------------------------------------------------------
+//|101010 (42) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format: SWL rt, offset(base)
+// Pupose: Store the most significant part of word from a register to
+//          the least significant bits a memory address.
+// right[word[base+offset]]=left[rt]
+// This is as fast as I can make it right now.. maybe we need direct
+// access to memory for these functions
+
 void swl() {
+
+_int32 targetWord; //Target word for loading
+
 Parse6_5_5_16();
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
+ printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), offset_immediate,
+DebugMainCPUReg(rs_base_fmt));
+
 #endif
+
+LoadMemory((_int32)targetWord);
+targetWord = ((MainCPUReg[rt_ft] & WORDMASKLEAST) >> 16)|
+                    (targetWord & WORDMASKLEAST);
+StoreMemory((_int32)targetWord);
 }
 
+// 22 april 99 Eudaemon
+//--------------------------------------------------------------
+//| SWR            |  Store Word Right      |
+//--------------------------------------------------------------
+//|101110 (46) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format: SWR rt, offset(base)
+// Pupose: Store the least significant part of word from a register to
+//          the most significant bits a memory address.
+// left[word[base+offset]]=right[rt]
+// This is as fast as I can make it right now.. maybe we need direct
+// access to memory for these functions
+
 void swr() {
+
+_int32 targetWord; //Target word for loading
+
 Parse6_5_5_16();
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
+ printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), offset_immediate,
+DebugMainCPUReg(rs_base_fmt));
+
 #endif
+
+LoadMemory((_int32)targetWord);
+targetWord = ((MainCPUReg[rt_ft] & WORDMASKMOST) << 16)|
+                    (targetWord & WORDMASKMOST);
+StoreMemory((_int32)targetWord);
+
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -749,7 +857,7 @@ Parse6_5_5_16();
 //Themedes 18/4/99
 void daddi() {
 Parse6_5_5_16();
-	MainCPUReg[rd_fs] = (uint64)MainCPUReg[rs_base_fmt] + offset_immediate;
+	MainCPUReg[rt_ft] = MainCPUReg[rs_base_fmt] + offset_immediate;
 #ifdef _DEBUG
 	printf("%X: %s\t%2s,%s,%04Xh\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), DebugMainCPUReg(rs_base_fmt), offset_immediate);
 #endif
@@ -767,7 +875,7 @@ Parse6_5_5_16();
 //Themedes 18/4/99
 void daddiu() {
 Parse6_5_5_16();
-	MainCPUReg[rt_ft] = MainCPUReg[rs_base_fmt] + (uint64)offset_immediate;
+	MainCPUReg[rt_ft] = MainCPUReg[rs_base_fmt] + (unsigned)offset_immediate;
 #ifdef _DEBUG
 	printf("%X: %s\t%2s,%s,%04Xh\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), DebugMainCPUReg(rs_base_fmt), (unsigned)offset_immediate);
 #endif
@@ -791,6 +899,8 @@ Parse6_5_5_16();
 #endif
 }
 
+//are docs wrong? 
+//should be rt=1 else rt=0
 //SB 11/4/99
 //-----------------------------------------------------------------
 //| SLTI      | Set on Less Than Immediate                        |
@@ -804,14 +914,17 @@ Parse6_5_5_16();
 void slti() {
 Parse6_5_5_16();
 	if (MainCPUReg[rs_base_fmt] < offset_immediate)
-		MainCPUReg[rd_fs] = 1;
+		MainCPUReg[rt_ft] = 1;
 	else
-		MainCPUReg[rd_fs] = 0;
+		MainCPUReg[rt_ft] = 0;
 #ifdef _DEBUG
 	printf("%X: %s\t%2s,%s,%04Xh\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), DebugMainCPUReg(rs_base_fmt), offset_immediate);
 #endif
 }
 
+
+//are docs wrong? 
+//should be rt=1 else rt=0
 //SB 11/4/99
 //-----------------------------------------------------------------
 //| SLTIU     | Set on Less Than Immediate Unsigned               |
@@ -825,9 +938,9 @@ Parse6_5_5_16();
 void sltiu() {
 Parse6_5_5_16();
 	if ((unsigned)MainCPUReg[rs_base_fmt] < (unsigned)offset_immediate)
-		MainCPUReg[rd_fs] = 1;
+		MainCPUReg[rt_ft] = 1;
 	else
-		MainCPUReg[rd_fs] = 0;
+		MainCPUReg[rt_ft] = 0;
 #ifdef _DEBUG
 	printf("%X: %s\t%2s,%s,%04Xh\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), DebugMainCPUReg(rs_base_fmt), offset_immediate);
 #endif
@@ -844,7 +957,7 @@ Parse6_5_5_16();
 // Descrip: rd = (rs XOR immediate)
 void xori() {
 	Parse6_5_5_16();
-	MainCPUReg[rd_fs] = MainCPUReg[rs_base_fmt] ^ offset_immediate;
+	MainCPUReg[rt_ft] = MainCPUReg[rs_base_fmt] ^ offset_immediate;
 #ifdef _DEBUG
 	printf("%X: %s\t%2s,%s,%04Xh\n", pc, DebugMainCPU(),
 DebugMainCPUReg(rt_ft), DebugMainCPUReg(rs_base_fmt),
@@ -887,8 +1000,7 @@ DebugMainCPUReg(rs_base_fmt), offset_immediate);
 //|  000001   |   rs    |10011(19)|            offset             |
 //------6----------5---------5-------------------16----------------
 // Format:  BGEZALL rs, offset
-// Purpose: To test a GPR then do a PC-relative conditional procedure
-call;
+// Purpose: To test a GPR then do a PC-relative conditional procedure call;
 //          execute the delay slot only if the branch is taken.
 // Descrip: branch if rs >= 0 (signed) (return address in ra)
 void bgezall() {
@@ -902,6 +1014,7 @@ void bgezall() {
 	else
 	{
 		pc += 4; //skip delay instruction
+		InstructionPointer++;
 	}
 #ifdef _DEBUG
 	printf("%X: %s\t%s,%04Xh\n", pc, DebugRegimm(rt_ft),
@@ -929,6 +1042,7 @@ void bgezl() {
 	else
 	{
 		pc += 4; //skip delay instruction
+		InstructionPointer++;
 	}
 #ifdef _DEBUG
 	printf("%X: %s\t%s,%04Xh\n", pc, DebugRegimm(rt_ft),
@@ -1000,6 +1114,7 @@ void bltzall() {
 	else
 	{
 		pc += 4; //skip delay instruction
+		InstructionPointer++;
 	}
 #ifdef _DEBUG
 	printf("%X: %s\t%s,%04Xh\n", pc, DebugRegimm(rt_ft),
@@ -1026,6 +1141,7 @@ void bltzl() {
 	else
 	{
 		pc += 4; //skip delay instruction
+		InstructionPointer++;
 	}
 #ifdef _DEBUG
 	printf("%X: %s\t%s,%04Xh\n", pc, DebugRegimm(rt_ft),
@@ -1685,7 +1801,8 @@ void beql() {
 	}
 	else
 	{
-		pc += 4;
+		pc += 4; //Ignore delay slot
+		InstructionPointer++;
 	}
 #ifdef _DEBUG
 	printf("%X: %s\t%s,%s,%04Xh\n", pc, DebugMainCPU(),
@@ -1739,7 +1856,8 @@ void bnel() {
 	}
 	else
 	{
-		pc += 4;
+		pc += 4; //ignore delay slot
+		InstructionPointer++;
 	}
 #ifdef _DEBUG
 	printf("%X: %s\t%s,%s,%04Xh\n", pc, DebugMainCPU(),

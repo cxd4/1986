@@ -3,12 +3,20 @@
 #define uint32 unsigned __int32
 #define uint64 unsigned __int64
 
+//#ifdef _DEBUG
+//#include <windows.h>
+//#endif
+
 //Lets FPU know data size
 long* dummy_long; //same as _int32? (we may not need this)
 float* dummy_single;
 double* dummy_double;
 short* dummy_word;
 
+//#ifdef _DEBUG
+//HANDLE hSaved;
+//HANDLE hMainScreen;
+//#endif
 
 //#ifdef _DEBUG
 	_int64 Counter;

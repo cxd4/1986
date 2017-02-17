@@ -14,6 +14,14 @@ Legend
 _____________________________________________________________________________
 
 
+v0.0.6
+    -- Implemented optional Windows GUI template
+       to demonstrate conditional compilation and to further
+       GUI development. GUI help is welcome. :) (schibo)
+       Updated SLTI, SLTIU, XORI. (schibo)
+    -- New opcodes:
+          SDL, SDR, SH, SWL, SWR (Eudaemon)
+
 v0.0.5
     -- anarko's new n64 docs v1.1 released yesterday. 
        Updates made to 1964. COP2 opcodes removed. 

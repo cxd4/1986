@@ -12,7 +12,7 @@ extern void Parse6_20_6();
 extern void RefreshConsole();
 extern void DebuggerMain();
 extern void freeconsole();
-extern uint8 UpdateViewPort; //Whether or not to update the console
+extern unsigned _int8 UpdateViewPort; //Whether or not to update the console
 #endif
 
 //Main Processor Opcodes
