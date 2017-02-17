@@ -30,26 +30,88 @@ extern void Parse6_26();
 //         syntax: Op rt, offset(base)         
 //////////////////////////////////////////////////////////////////////
 
+//Eudaemon Apr 14, 1999
+//--------------------------------------------------------------
+//| LB            |  Load Byte       |
+//--------------------------------------------------------------
+//|100000 (32) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format:  LB rt, offset(base)
+// Purpose: Loads Byte from Memory to rt as a signed value
+// rt = byte[base+offset]
 void lb() {
+
+_int8 targetByte ; // Byte that will be read from memory (signed)
+
 Parse6_5_5_16();
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
+ printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), offset_immediate,
+DebugMainCPUReg(rs_base_fmt));
+
 #endif
+
+targetByte =
+buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+MainCPUReg[rt_ft] = targetByte;
+
 }
+
+//Eudaemon Apr 14, 1999
+//--------------------------------------------------------------
+//| LBU            |  Load Byte (unsigned)         |
+//--------------------------------------------------------------
+//|100100 (36) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format: LBU rt, offset(base)
+// Purpose: Load an unsigned byte from memory to rt
+// rt = (unsigned)byte[base+offset]
 
 void lbu() {
+
+uint8 targetByte;  // Byte that will be read from memory
+
 Parse6_5_5_16();
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
+ printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft), offset_immediate,
+DebugMainCPUReg(rs_base_fmt));
+
 #endif
+
+targetByte =
+buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+MainCPUReg[rt_ft] = targetByte;
+
 }
 
+//Eudaemon Apr 14, 1999
+//--------------------------------------------------------------
+//| LD            |  Load DoubleWord         |
+//--------------------------------------------------------------
+//|100100 (36) | Base |          rt        |        offset   |
+//|-------6--------|---5----|--------5-------|-----16--------|
+// Format: LD rt, offset(base)
+// Pupose: Loads a DoubleWord (64 Bits) from memory to rt
+// rt = doubleword[offset+base]
+
 void ld() {
+
+_int64 targetDouble; //Double Word to be loaded from memory
+
 Parse6_5_5_16();
 #ifdef _DEBUG
-	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
+ printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rt_ft),
+offset_immediate, DebugMainCPUReg(rs_base_fmt));
 #endif
+
+targetDouble =
+buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+MainCPUReg[rt_ft] = targetDouble;
+
 }
+
 
 void ldl() {
 Parse6_5_5_16();
@@ -460,8 +522,10 @@ Parse6_5_5_16();
 #endif
 }
 
+//Themedes
 void andi() {
 Parse6_5_5_16();
+	MainCPUReg[rt_ft] = MainCPUReg[rs_base_fmt] & offset_immediate;
 #ifdef _DEBUG
 	printf("%X: %s\t%2s,%s,%04Xh\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), DebugMainCPUReg(rs_base_fmt), offset_immediate);
 #endif
@@ -492,15 +556,43 @@ Parse6_5_5_16();
 #endif
 }
 
+//SB 11/4/99
+//-----------------------------------------------------------------
+//| SLTI      | Set on Less Than Immediate                        |
+//|-----------|---------------------------------------------------|
+//|001010 (10)|    rs   |   rt    |            immediate          |
+//------6----------5---------5-------------------16----------------
+// Format:  SLTI rt, rs, immediate
+// Purpose: To record the result of a less-than comparison with a constant.
+// Descrip: if rs < immediate then rd = 1 else rd = 0
+
 void slti() {
 Parse6_5_5_16();
+	if (MainCPUReg[rs_base_fmt] < offset_immediate)
+		MainCPUReg[rd_fs] = 1;
+	else
+		MainCPUReg[rd_fs] = 0;
 #ifdef _DEBUG
 	printf("%X: %s\t%2s,%s,%04Xh\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), DebugMainCPUReg(rs_base_fmt), offset_immediate);
 #endif
 }
 
+//SB 11/4/99
+//-----------------------------------------------------------------
+//| SLTIU     | Set on Less Than Immediate Unsigned               |
+//|-----------|---------------------------------------------------|
+//|001011 (11)|   rs    |   rt    |            immediate          |
+//------6----------5---------5-------------------16----------------
+// Format:  SLTIU rt, rs, immediate
+// Purpose: To record the result of an unsigned less-than
+//          comparison with a constant.
+// Descrip: if rs < immediate then rd = 1 else rd = 0
 void sltiu() {
 Parse6_5_5_16();
+	if ((unsigned)MainCPUReg[rs_base_fmt] < (unsigned)offset_immediate)
+		MainCPUReg[rd_fs] = 1;
+	else
+		MainCPUReg[rd_fs] = 0;
 #ifdef _DEBUG
 	printf("%X: %s\t%2s,%s,%04Xh\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), DebugMainCPUReg(rs_base_fmt), offset_immediate);
 #endif
@@ -651,11 +743,26 @@ void jalr() {
 //
 //////////////////////////////////////////////////////////////////////
 
+//SB 11/4/99
+//-----------------------------------------------------------------
+//| ADD       | ADD word                                          |
+//|-----------|---------------------------------------------------|
+//|  000000   |   rs    |   rt    |   rd    |  00000  |100000 (32)|
+//------6----------5---------5---------5---------5----------6------
+// Format:  ADD rd, rs, rt
+// Purpose: To add 32-bit integers. If overflow occurs, then trap.
+// Comment: ADD rd, r0, rs is equal to a MOVE rd, rs
+// Descrip: rd = rs + rt
+
 void add() {
+	Parse6_5_5_5_5_6();
+	MainCPUReg[rd_fs] = MainCPUReg[rs_base_fmt] + MainCPUReg[rt_ft];
+
 #ifdef _DEBUG
 	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
+
 
 //SB 11/4/99
 //-----------------------------------------------------------------
@@ -727,7 +834,18 @@ void dsubu() {
 #endif
 }
 
+//SB 11/4/99
+//-----------------------------------------------------------------
+//| NOR       | Not OR                                            |
+//|-----------|---------------------------------------------------|
+//|  000000   |   rs    |   rt    |    rd   |  00000  |100111 (39)|
+//------6----------5---------5---------5---------5----------6------
+// Format:  NOR rd, rs, rt
+// Purpose: To do a bitwise logical NOT OR.
+// Descrip: rd = (rs NOR rt)
 void nor() {
+	Parse6_5_5_5_5_6();
+	MainCPUReg[rd_fs] = ~(MainCPUReg[rs_base_fmt] | MainCPUReg[rt_ft]);
 #ifdef _DEBUG
 	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
@@ -814,13 +932,19 @@ void srlv() {
 #endif
 }
 
+//Themedes 
 void sub() {
+Parse6_5_5_5_5_6();
+	MainCPUReg[rd_fs] = MainCPUReg[rs_base_fmt] - MainCPUReg[rt_ft];
 #ifdef _DEBUG
 	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
+//Themedes 
 void subu() {
+Parse6_5_5_5_5_6();
+	MainCPUReg[rd_fs] = MainCPUReg[rs_base_fmt] - (unsigned)MainCPUReg[rt_ft];
 #ifdef _DEBUG
 	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif

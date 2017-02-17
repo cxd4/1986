@@ -30,12 +30,12 @@ _int32 instr_index;
 uint16 CodeStart;         //Array element location that starts off the code.
 
 //char* MainCPU[64];
-uint32 MainCPUReg[32];
+_int64 MainCPUReg[32];
 
 //char* COP0[16];
-uint32 COP0Reg[32];
-uint32 COP1Reg[32];
-uint32 COP2Reg[32];
+_int64 COP0Reg[32];
+_int64 COP1Reg[32];
+_int64 COP2Reg[32];
 
 //Types of instructions
 #define MAINCPU_INSTR 0

@@ -1,22 +1,39 @@
 1964 Version History
 --------------------
 
+Note: Opcodes come in fast, so credit is given on a first-come basis
+for accurate opcodes. Let me know if I've overlooked anything with your 
+code. :)
+
+This file is comprehensive- including all major and minor
+revisions possible.
+
+v0.0.3
+     -- New opcodes added: 
+	   SLTI, SLTIU, NOR, ADD  (steb)
+           ANDI, SUB, SUBU (Themedes)
+           LB, LBU, LD (Eudaemon)
+     -- ROM is specified as command line parameter (steb)
+     -- Ok...MainCPUReg[] & Coprocessors are now _int64. ;) (schibo)
+     -- (more to come)
+
 v0.0.2
-     -- New opcodes added: {untested}
+     -- New opcodes added:
            XORI, ADDU, AND, OR, SLT, SLTU, XOR, MFCO, MTCO    (steb)
-     -- Fixed "JumpToNextInstruction()" - no longer needed.   (Deku Nut)
-        Fixed another nono of mine: COP0Reg[32] is now of type uint32. Sorry for
-        the confusion. (Deku Nut)
-        Removed COPO.C - Pointless file.
+     -- Fixed "JumpToNextInstruction()" - no longer needed.   (schibo)
+        Fixed another nono of mine: COP0Reg[32] is now of type int32.
+        Sorry for the confusion.
+     -- Removed COP0.C - Pointless file.
 
 v0.0.1
-     -- 1964 released as open source on internet: (Deku Nut)
+     -- 1964 released as open source on internet: (schibo)
            Most opcodes decoded; only a handful implemented.
            Simple debugger added. Shows MainCPU Regs only.
 
 
 Additional Thanks
 -----------------
+anarko, whose brilliant N64 Toolkit documentation made this project possible!
 Mkelly09 for the cool 1964 logo!
 Adrox, darkreign, and LUIGI for immediate publicity!
 (More to come)

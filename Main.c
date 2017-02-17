@@ -39,8 +39,8 @@ void ReadRomData(char* RomPath)
 		fclose( stream );
 	}
 	else {
-		printf( "File could not be opened\n" );
-		fclose(stream);
+		printf( "File could not be opened.\n" );
+		//fclose(stream); //This line was a nono.
 		exit(0);
 	}
 	fclose(stream);
@@ -268,12 +268,22 @@ void DoRegimm() {
 	}
 }
 
-void main(void)
+void main(int argc, char** argv[])
 {
 	char* RomPath;
 	int k;
 
-	RomPath = "c:\\mariok~1.v64";
+	//This is the default ROM path. You can set it to whatever you
+	//need it to be.
+	RomPath = "c:\\Mariok~1.v64";
+	if (argc < 2) {
+		printf("No ROM specified.\n");
+		printf("Using %s as default for now.\n", RomPath);
+	}
+	else
+		RomPath = argv[1];
+
+	printf("Loading... Please wait.\n");
   	ReadRomData(RomPath);
 	InstructionPointer = &buffer[0];
 
