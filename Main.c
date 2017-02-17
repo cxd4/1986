@@ -1,6 +1,5 @@
-//1964: The Nintendo64 Emulator Started 3/10/1999 by Joel M. aka Deku Nut (schibo)
-//Open source released 4/9/1999 
-
+//1964: The Nintendo64 Emulator by Deku Nut
+//Started 3/10/1999
 //main.c
 
 #include <stdio.h>
@@ -23,6 +22,8 @@ void DoRegimm();
 void DoSpecial() ;
 void CleanUp();
 void ByteSwap(uint32 beginByte, uint32 endByte);
+void Step_CPU();
+extern void DebuggerUI();
 
 void ReadRomData(char* RomPath)
 {
@@ -104,17 +105,18 @@ void RunOpcode()
 		case BNE     : bne();  break;  //5
 		case BNEL    : bnel(); break;  //21
 
-		case ADDI    : addi();  break;
-		case ADDIU   : addiu(); break;
-		case ANDI    : andi();  break;
-		case DADDI   : daddi(); break;
-		case ORI     : ori();   break;
-		case SLTI    : slti();  break;
-		case SLTIU   : sltiu(); break;
-		case XORI    : xori();  break;
+		case ADDI    : addi();   break;
+		case ADDIU   : addiu();  break;
+		case ANDI    : andi();   break;
+		case DADDI   : daddi();  break;
+		case DADDIU  : daddiu(); break;
+		case ORI     : ori();    break;
+		case SLTI    : slti();   break;
+		case SLTIU   : sltiu();  break;
+		case XORI    : xori();   break;
 		
-		case LUI     : lui();   break;
-		case JAL     : jal();   break;
+		case LUI     : lui();    break;
+		case JAL     : jal();    break;
 		default      :
 #ifdef _DEBUG			
 			printf("%X: Opcode = %d (working on it)\n", pc, Opcode);
@@ -269,14 +271,41 @@ void DoRegimm() {
 	}
 }
 
+void Step_CPU()
+{
+	//TODO : Exceptions + interrupts here
+	RunOpcode();
+
+	//Check Delay slot here...
+	switch (CPUdelay)
+	{
+		case 0 :	//No delay
+			pc+=4;
+			break;
+		case 1 :	//execute delay instruction
+			pc+=4;
+			CPUdelay = 2;
+			break;
+		case 2:		//Do the jump now
+			pc = CPUdelayPC;
+			CPUdelay = 0;
+			break;
+	}
+
+#ifdef _DEBUG
+	if (UpdateViewPort) RefreshConsole();
+#endif
+}
+
 void main(int argc, char** argv[])
 {
+	uint32 endbootPC;
 	char* RomPath;
 	int k;
 
 	//This is the default ROM path. You can set it to whatever you
 	//need it to be.
-	RomPath = "c:\\Mariok~1.v64";
+	RomPath = "c:\\fire.bin";
 	if (argc < 2) {
 		printf("No ROM specified.\n");
 		printf("Using %s as default for now.\n", RomPath);
@@ -292,6 +321,17 @@ void main(int argc, char** argv[])
 	MainCPUReg[RA] = 0x80000520; //Bootcode probably does this 
 	//MainCPUReg[RA] = 0x03ff0000; //but boot code bombs right now.
 	//MainCPUReg[RA] = 0x800004C4;
+
+	//SB 16/4/99
+	COP0Reg[CONFIG]	= 0x00066463;
+	COP0Reg[STATUS]	= 0x70400004;
+	COP0Reg[RANDOM]	= 0x0000002F;
+	COP0Reg[PREVID]	= 0x00000b00;
+
+	MainCPUReg[S4]	= 0x00000001;
+	MainCPUReg[S6]	= 0x0000003F;
+	MainCPUReg[SP]	= 0x00400000;
+
 #ifdef _DEBUG
 	UpdateViewPort = 1; //Allow Console Refresh
 	DebuggerMain();
@@ -313,15 +353,19 @@ void main(int argc, char** argv[])
 	CodeStart = 64;
 	InstructionPointer = &buffer[CodeStart];
 
-	//Disassemble Boot Code (uncomment below to do it)
-//	for (k=0; k<1008; k++) { //1008 instructions in the boot code 
-//						     //after the header
-//		RunOpcode();
-//		pc+=4;
-//#ifdef _DEBUG
-//	if (UpdateViewPort) RefreshConsole();
-//#endif
-//	} //end for
+
+#ifdef _DEBUG
+		printf("\nBoot code disassembly:\n");
+#endif
+	//Disassemble Boot Code
+	endbootPC = MainStartAddr+1008*4; //1008 instructions in the boot code 
+	while (pc != endbootPC) { 
+#ifdef _DEBUG
+	DebuggerUI();
+#else	
+	Step_CPU();
+#endif
+	}
 
 	pc = MainStartAddr = 0x80000400;
 	//Point InstructionPointer to beginning of Main Code
@@ -332,21 +376,14 @@ void main(int argc, char** argv[])
 	printf("\nMain code disassembly:\n");
 #endif
 
-	for(;;) {
-
+	for(;;)	{
 #ifdef _DEBUG
-		if (UpdateViewPort) RefreshConsole();
-		if (UserCommand == 'n'){
+	DebuggerUI();
+#else	
+	Step_CPU();
 #endif
-
-		RunOpcode();
-		pc+=4; //increment program counter
-
-#ifdef _DEBUG
-		}
-#endif
-
 	}
+	
 	CleanUp();
 }
 

@@ -3,10 +3,10 @@
 
 #include "chipmake.h"
 
-int StoreMemory(unsigned long regValue);
-int LoadMemory(_int64* targetReg);
+int StoreMemory(void* regValue);
+int LoadMemory(void* targetReg);
 
-int StoreMemory(unsigned long regValue) {
+int StoreMemory(void* regValue) {
 	uint32 Address;
 	uint32* tempPtr;
 	
@@ -30,7 +30,7 @@ int StoreMemory(unsigned long regValue) {
 	}
 }
 
-int LoadMemory(_int64* targetReg) {
+int LoadMemory(void* targetReg) {
 	uint32 Address;
 	
 	//Remap mirrored memory

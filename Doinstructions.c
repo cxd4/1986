@@ -49,7 +49,7 @@ extern void Parse6_26();
 // rt = byte[base+offset]
 void lb() {
 
-_int8 targetByte ; // Byte that will be read from memory (signed)
+//_int8 targetByte ; // Byte that will be read from memory (signed)
 
 Parse6_5_5_16();
 #ifdef _DEBUG
@@ -59,10 +59,10 @@ DebugMainCPUReg(rs_base_fmt));
 
 #endif
 
-targetByte =
-buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
-MainCPUReg[rt_ft] = targetByte;
-
+//targetByte =
+//buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+//MainCPUReg[rt_ft] = targetByte;
+LoadMemory((_int8)MainCPUReg[rt_ft]);
 }
 
 //Eudaemon Apr 14, 1999
@@ -77,7 +77,7 @@ MainCPUReg[rt_ft] = targetByte;
 
 void lbu() {
 
-uint8 targetByte;  // Byte that will be read from memory
+//uint8 targetByte;  // Byte that will be read from memory
 
 Parse6_5_5_16();
 #ifdef _DEBUG
@@ -87,10 +87,10 @@ DebugMainCPUReg(rs_base_fmt));
 
 #endif
 
-targetByte =
-buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
-MainCPUReg[rt_ft] = targetByte;
-
+//targetByte =
+//buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+//MainCPUReg[rt_ft] = targetByte;
+LoadMemory((uint8)MainCPUReg[rt_ft]);
 }
 
 //15 april 99 Eudaemon
@@ -105,7 +105,7 @@ MainCPUReg[rt_ft] = targetByte;
 
 void ld() {
 
-_int64 targetDouble; //Double Word to be loaded from memory
+//_int64 targetDouble; //Double Word to be loaded from memory
 
 Parse6_5_5_16();
 #ifdef _DEBUG
@@ -114,10 +114,10 @@ DebugMainCPUReg(rt_ft),
 offset_immediate, DebugMainCPUReg(rs_base_fmt));
 #endif
 
-targetDouble =
-buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
-MainCPUReg[rt_ft] = targetDouble;
-
+//targetDouble =
+//buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+//MainCPUReg[rt_ft] = targetDouble;
+LoadMemory((_int64)MainCPUReg[rt_ft]);
 }
 
 //15 april 99 Eudaemon
@@ -202,7 +202,7 @@ MainCPUReg[rt_ft] = MainCPUReg[rt_ft] | targetDouble;
 
 void lh() {
 
-_int16 targetHalf; //Half Word to load to rt
+//_int16 targetHalf; //Half Word to load to rt
 
 Parse6_5_5_16();
 #ifdef _DEBUG
@@ -212,10 +212,10 @@ DebugMainCPUReg(rs_base_fmt));
 
 #endif
 
-targetHalf =
-buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
-MainCPUReg[rt_ft] = targetHalf;
-
+//targetHalf =
+//buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+//MainCPUReg[rt_ft] = targetHalf;
+LoadMemory((_int16)MainCPUReg[rt_ft]);
 }
 
 //15 april 99 Eudaemon
@@ -230,7 +230,7 @@ MainCPUReg[rt_ft] = targetHalf;
 
 void lhu() {
 
-uint16 targetHalf; //unsigned Halfword to load to rt
+//uint16 targetHalf; //unsigned Halfword to load to rt
 
 Parse6_5_5_16();
 #ifdef _DEBUG
@@ -240,10 +240,10 @@ DebugMainCPUReg(rs_base_fmt));
 
 #endif
 
-targetHalf =
-buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
-MainCPUReg[rt_ft] = targetHalf;
-
+//targetHalf =
+//buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+//MainCPUReg[rt_ft] = targetHalf;
+LoadMemory((uint16)MainCPUReg[rt_ft]);
 }
 
 //15 april 99 Eudaemon
@@ -259,7 +259,7 @@ MainCPUReg[rt_ft] = targetHalf;
 
 void ll() {
 
-_int32 targetWord; //Word to load to rt
+//_int32 targetWord; //Word to load to rt
 
 Parse6_5_5_16();
 #ifdef _DEBUG
@@ -269,10 +269,10 @@ DebugMainCPUReg(rs_base_fmt));
 
 #endif
 
-targetWord =
-buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
-MainCPUReg[rt_ft] = targetWord;
-
+//targetWord =
+//buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+//MainCPUReg[rt_ft] = targetWord;
+LoadMemory((_int32)MainCPUReg[rt_ft]);
 }
 
 //15 april 99 Eudaemon
@@ -288,7 +288,7 @@ MainCPUReg[rt_ft] = targetWord;
 
 void lld() {
 
-_int64 targetDouble; //Double to be read from
+//_int64 targetDouble; //Double to be read from
 
 Parse6_5_5_16();
 #ifdef _DEBUG
@@ -298,11 +298,12 @@ DebugMainCPUReg(rs_base_fmt));
 
 #endif
 
-targetDouble =
-buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
-MainCPUReg[rt_ft] = targetDouble;
-
+//targetDouble =
+//buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+//MainCPUReg[rt_ft] = targetDouble;
+LoadMemory((_int64)MainCPUReg[rt_ft]);
 }
+
 
 //15 april 99 Eudaemon
 //--------------------------------------------------------------
@@ -414,7 +415,7 @@ MainCPUReg[rt_ft] = MainCPUReg[rt_ft] | targetWord;
 
 void lwu() {
 
-uint32 targetWord; //Word to be loaded to rt
+//uint32 targetWord; //Word to be loaded to rt
 
 Parse6_5_5_16();
 #ifdef _DEBUG
@@ -424,10 +425,10 @@ DebugMainCPUReg(rs_base_fmt));
 
 #endif
 
-targetWord =
-buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
-MainCPUReg[rt_ft] = targetWord;
-
+//targetWord =
+//buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+//MainCPUReg[rt_ft] = targetWord;
+LoadMemory((uint32)MainCPUReg[rt_ft]);
 }
 
 //15 april 99 Eudaemon
@@ -442,7 +443,7 @@ MainCPUReg[rt_ft] = targetWord;
 
 void sb() {
 
-_int8* ptrByte; //Pointer to byte to store
+//_int8* ptrByte; //Pointer to byte to store
 
 Parse6_5_5_16();
 #ifdef _DEBUG
@@ -451,10 +452,10 @@ DebugMainCPUReg(rt_ft), offset_immediate,
 DebugMainCPUReg(rs_base_fmt));
 
 #endif
-ptrByte =
-&buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
-*ptrByte = MainCPUReg[rt_ft];
-
+//ptrByte =
+//&buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+//*ptrByte = MainCPUReg[rt_ft];
+StoreMemory((_int8)MainCPUReg[rt_ft]);
 }
 
 //15 april 99 Eudaemon
@@ -469,7 +470,7 @@ ptrByte =
 
 void sc() {
 
-_int32* ptrWord;
+//_int32* ptrWord;
 
 Parse6_5_5_16();
 #ifdef _DEBUG
@@ -479,10 +480,10 @@ DebugMainCPUReg(rs_base_fmt));
 
 #endif
 
-ptrWord =
-&buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
-*ptrWord = MainCPUReg[rt_ft];
-
+//ptrWord =
+//&buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+//*ptrWord = MainCPUReg[rt_ft];
+StoreMemory((_int32)MainCPUReg[rt_ft]);
 }
 
 //15 april 99 Eudaemon
@@ -497,7 +498,7 @@ ptrWord =
 
 void scd() {
 
-_int32* ptrdoubleWord;
+//_int32* ptrdoubleWord;
 
 Parse6_5_5_16();
 #ifdef _DEBUG
@@ -507,18 +508,19 @@ DebugMainCPUReg(rs_base_fmt));
 
 #endif
 
-ptrdoubleWord =
-&buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
-*ptrdoubleWord = MainCPUReg[rt_ft];
-
-
+//ptrdoubleWord =
+//&buffer[MainCPUReg[rs_base_fmt]+offset_immediate-MainStartAddr];
+//*ptrdoubleWord = MainCPUReg[rt_ft];
+StoreMemory((_int64)MainCPUReg[rt_ft]);
 }
 
 void sd() {
+//_int64* ptrDouble;
 Parse6_5_5_16();
 #ifdef _DEBUG
 	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
 #endif
+StoreMemory((_int64)MainCPUReg[rt_ft]);
 }
 
 void sdl() {
@@ -536,12 +538,13 @@ Parse6_5_5_16();
 }
 
 void sh() {
+//_int16* ptrHword;
 Parse6_5_5_16();
 #ifdef _DEBUG
 	printf("%X: %s\t%2s,%04Xh(%s)\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), offset_immediate, DebugMainCPUReg(rs_base_fmt));
 #endif
+StoreMemory(MainCPUReg[rt_ft]);
 }
-
 
 //-----------------------------------------------------------------
 //| SW        | Store Word                                        |
@@ -834,10 +837,40 @@ Parse6_5_5_16();
 #endif
 }
 
+//-----------------------------------------------------------------
+//| DADDI     | Doubleword ADD Immediate                          |
+//|-----------|---------------------------------------------------|
+//|011000 (24)|   rs    |   rt    |          immediate            |
+//------6----------5---------5-------------------16----------------
+//Format:  DADDI rt, rs, immediate
+// Purpose: To add a constant to a 64-bit integer.
+//         If overflow occurs, then trap.
+// Descrip: rt = rs + immediate
+
+//Themedes 18/4/99
 void daddi() {
 Parse6_5_5_16();
+	MainCPUReg[rd_fs] = (uint64)MainCPUReg[rs_base_fmt] + offset_immediate;
 #ifdef _DEBUG
 	printf("%X: %s\t%2s,%s,%04Xh\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), DebugMainCPUReg(rs_base_fmt), offset_immediate);
+#endif
+}
+
+//-----------------------------------------------------------------
+//| DADDIU    | Doubleword ADD Immediate Unsigned                 |
+//|-----------|---------------------------------------------------|
+//|011001 (25)|   rs    |   rt    |          immediate            |
+//------6----------5---------5-------------------16----------------
+// Format:  DADDIU rt, rs, immediate
+// Purpose: To add a constant to a 64-bit integer.
+// Descrip: rt = rs + immediate
+
+//Themedes 18/4/99
+void daddiu() {
+Parse6_5_5_16();
+	MainCPUReg[rt_ft] = MainCPUReg[rs_base_fmt] + (uint64)offset_immediate;
+#ifdef _DEBUG
+	printf("%X: %s\t%2s,%s,%04Xh\n", pc, DebugMainCPU(), DebugMainCPUReg(rt_ft), DebugMainCPUReg(rs_base_fmt), (unsigned)offset_immediate);
 #endif
 }
 
@@ -927,59 +960,200 @@ offset_immediate);
 //
 //////////////////////////////////////////////////////////////////////
 
+//-----------------------------------------------------------------
+//| BGEZ      | Branch on Greater than or Equal to Zero           |
+//|-----------|---------------------------------------------------|
+//|  000001   |   rs    |00001 (1)|            offset             |
+//------6----------5---------5-------------------16----------------
+// Format:  BGEZ rs, offset
+// Purpose: To test a GPR then do a PC-relative conditional branch.
+// Descrip: branch if rs >= 0 (signed)
 void bgez() {
-//Parse6_5_5_16();
+	Parse6_5_5_16();
+	if (MainCPUReg[rs_base_fmt] >= 0)
+	{
+
+		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelay = 1;
+	}
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%04Xh\n", pc, DebugRegimm(rt_ft), DebugMainCPUReg(rs_base_fmt), offset_immediate);
+	printf("%X: %s\t%s,%04Xh\n", pc, DebugRegimm(rt_ft),
+DebugMainCPUReg(rs_base_fmt), offset_immediate);
 #endif
 }
 
+//-----------------------------------------------------------------
+//| BGEZALL   | Branch on Greater than or Equal to Zero And Link Likley
+//|-----------|---------------------------------------------------|
+//|  000001   |   rs    |10011(19)|            offset             |
+//------6----------5---------5-------------------16----------------
+// Format:  BGEZALL rs, offset
+// Purpose: To test a GPR then do a PC-relative conditional procedure
+call;
+//          execute the delay slot only if the branch is taken.
+// Descrip: branch if rs >= 0 (signed) (return address in ra)
 void bgezall() {
-//Parse6_5_5_16();
+	Parse6_5_5_16();
+	if (MainCPUReg[rs_base_fmt] >= 0)
+	{
+		MainCPUReg[RA] = pc + 8;
+		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelay = 1;
+	}
+	else
+	{
+		pc += 4; //skip delay instruction
+	}
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%04Xh\n", pc, DebugRegimm(rt_ft), DebugMainCPUReg(rs_base_fmt), offset_immediate);
+	printf("%X: %s\t%s,%04Xh\n", pc, DebugRegimm(rt_ft),
+DebugMainCPUReg(rs_base_fmt), offset_immediate);
 #endif
 }
 
+//-----------------------------------------------------------------
+//| BGEZL     | Branch on Greater than or Equal to Zero Likley    |
+//|-----------|---------------------------------------------------|
+//|  000001   |   rs    |00011 (3)|            offset             |
+//------6----------5---------5-------------------16----------------
+// Format:  BGEZL rs, offset
+// Purpose: To test a GPR then do a PC-relative conditional branch;
+//          execute the delay slot only if the branch is taken.
+// Descrip: branch if rs >= 0 (signed)
 void bgezl() {
-//Parse6_5_5_16();
+	Parse6_5_5_16();
+	if (MainCPUReg[rs_base_fmt] >= 0)
+	{
+		MainCPUReg[RA] = pc + 8;
+		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelay = 1;
+	}
+	else
+	{
+		pc += 4; //skip delay instruction
+	}
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%04Xh\n", pc, DebugRegimm(rt_ft), DebugMainCPUReg(rs_base_fmt), offset_immediate);
+	printf("%X: %s\t%s,%04Xh\n", pc, DebugRegimm(rt_ft),
+DebugMainCPUReg(rs_base_fmt), offset_immediate);
 #endif
 }
 
+//-----------------------------------------------------------------
+//| BLTZ      | Branch on Less Than Zero                          |
+//|-----------|---------------------------------------------------|
+//|  000001   |   rs    |  00000  |            offset             |
+//------6----------5---------5-------------------16----------------
+// Format:  BLTZ rs, offset
+// Purpose: To test a GPR then do a PC-relative conditional branch.
+// Descrip: branch if rs < 0 (signed)
 void bltz() {
-//Parse6_5_5_16();
+	Parse6_5_5_16();
+	if (MainCPUReg[rs_base_fmt] < 0)
+	{
+
+		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelay = 1;
+	}
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%04Xh\n", pc, DebugRegimm(rt_ft), DebugMainCPUReg(rs_base_fmt), offset_immediate);
+	printf("%X: %s\t%s,%04Xh\n", pc, DebugRegimm(rt_ft),
+DebugMainCPUReg(rs_base_fmt), offset_immediate);
 #endif
 }
 
+//-----------------------------------------------------------------
+//| BLTZAL    | Branch on Less Than Zero And Link                 |
+//|-----------|---------------------------------------------------|
+//|  000001   |   rs    |  10000  |            offset             |
+//------6----------5---------5-------------------16----------------
+// Format:  BLTZAL rs, offset
+// Purpose: To test a GPR then do a PC-relative conditional procedure call.
+// Descrip: branch if rs < 0 (signed) (return address in ra)
 void bltzal() {
-//Parse6_5_5_16();
+	Parse6_5_5_16();
+	if (MainCPUReg[rs_base_fmt] < 0)
+	{
+		MainCPUReg[RA] = pc + 8;
+		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelay = 1;
+	}
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%04Xh\n", pc, DebugRegimm(rt_ft), DebugMainCPUReg(rs_base_fmt), offset_immediate);
+	printf("%X: %s\t%s,%04Xh\n", pc, DebugRegimm(rt_ft),
+DebugMainCPUReg(rs_base_fmt), offset_immediate);
 #endif
 }
 
+//-----------------------------------------------------------------
+//| BLTZALL   | Branch on Less Than Zero And Link Likley          |
+//|-----------|---------------------------------------------------|
+//|  000001   |   rs    |  10010  |            offset             |
+//------6----------5---------5-------------------16----------------
+// Format:  BLTZALL rs, offset
+// Purpose: To test a GPR then do a PC-relative conditional procedure
+//          call; execute the delay slot only if the branch is taken.
+// Descrip: branch if rs < 0 (signed) (return address in ra)
 void bltzall() {
-//Parse6_5_5_16();
+	Parse6_5_5_16();
+	if (MainCPUReg[rs_base_fmt] < 0)
+	{
+		MainCPUReg[RA] = pc + 8;
+		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelay = 1;
+	}
+	else
+	{
+		pc += 4; //skip delay instruction
+	}
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%04Xh\n", pc, DebugRegimm(rt_ft), DebugMainCPUReg(rs_base_fmt), offset_immediate);
+	printf("%X: %s\t%s,%04Xh\n", pc, DebugRegimm(rt_ft),
+DebugMainCPUReg(rs_base_fmt), offset_immediate);
 #endif
 }
 
+//-----------------------------------------------------------------
+//| BLTZL     | Branch on Less Than Zero Likley                   |
+//|-----------|---------------------------------------------------|
+//|  000001   |   rs    |00010 (2)|            offset             |
+//------6----------5---------5-------------------16----------------
+// Format:  BLTZL rs, offset
+// Purpose: To test a GPR then do a PC-relative conditional branch;
+//            execute the delay slot only if the branch is taken.
+// Descrip: branch if rs < 0 (signed)
 void bltzl() {
-//Parse6_5_5_16();
+	Parse6_5_5_16();
+	if (MainCPUReg[rs_base_fmt] < 0)
+	{
+		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelay = 1;
+	}
+	else
+	{
+		pc += 4; //skip delay instruction
+	}
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%04Xh\n", pc, DebugRegimm(rt_ft), DebugMainCPUReg(rs_base_fmt), offset_immediate);
+	printf("%X: %s\t%s,%04Xh\n", pc, DebugRegimm(rt_ft),
+DebugMainCPUReg(rs_base_fmt), offset_immediate);
 #endif
 }
 
+//-----------------------------------------------------------------
+//| BGEZAL    | Branch on Greater than or Equal to Zero And Link  |
+//|-----------|---------------------------------------------------|
+//|  000001   |   rs    |10001(17)|            offset             |
+//------6----------5---------5-------------------16----------------
+// Format:  BGEZAL rs, offset
+// Purpose: To test a GPR then do a PC-relative conditional procedure call.
+// Comment: BGEZAL r0, offset is equal to a BAL offset
+// Descrip: branch if rs >= 0 (signed) (return address in ra)
 void bgezal() {
-//Parse6_5_5_16();
+	Parse6_5_5_16();
+	if (MainCPUReg[rs_base_fmt] >= 0)
+	{
+		MainCPUReg[RA] = pc + 8;
+		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelay = 1;
+	}
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%04Xh\n", pc, DebugRegimm(rt_ft), DebugMainCPUReg(rs_base_fmt), offset_immediate);
+	printf("%X: %s\t%s,%04Xh\n", pc, DebugRegimm(rt_ft),
+DebugMainCPUReg(rs_base_fmt), offset_immediate);
 #endif
 }
 
@@ -1032,10 +1206,23 @@ void tnei() {
 #endif
 }
 
-//Special Instruction JALR (syntax: JALR rs, rd)
+//steb Apr 18, 1999
+//-----------------------------------------------------------------
+//| JALR      | Jump And Link Register                            |
+//|-----------|---------------------------------------------------|
+//|  000000   |   rs    |  00000  |   rd    |  00000  |001001 (9) |
+//------6----------5---------5---------5---------5----------6------
+// Format:  JALR rs, rd
+// Purpose: To procedure call to an instruction address in a register.
+// Descrip: return address in rd
 void jalr() {
+	Parse6_5_5_5_5_6();
+	CPUdelayPC = rs_base_fmt;
+	CPUdelay = 1;
+	MainCPUReg[rd_fs] = pc + 8;
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rd_fs));
+	printf("%X: %s\t%s,%s\n", pc, DebugSpecial(SpecialOp),
+DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rd_fs));
 #endif
 }
 
@@ -1107,7 +1294,19 @@ DebugMainCPUReg(rt_ft));
 #endif
 }
 
+//-----------------------------------------------------------------
+//| DADD      | Doubleword ADD                                    |
+//|-----------|---------------------------------------------------|
+//|  000000   |   rs    |   rt    |    rd   |  00000  |101100 (44)|
+//------6----------5---------5---------5---------5----------6------
+// Format:  DADD rd, rs, rt
+// Purpose: To add 64-bit integers. If overflow occurs, then trap.
+// Descrip: rd = rs + rt
+
+//Themedes 17/4/99
 void dadd() {
+Parse6_5_5_5_5_6();
+	MainCPUReg[rd_fs] = (_int64)MainCPUReg[rs_base_fmt] + (_int64)MainCPUReg[rt_ft];
 #ifdef _DEBUG
 	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
@@ -1327,7 +1526,24 @@ void dsrlv() {
 #endif
 }
 
+//-----------------------------------------------------------------
+//| SLL       | Shift word Left Logical                           |
+//|-----------|---------------------------------------------------|
+//|  000000   |  00000  |   rt    |    rd   |   sa    |000000 (0) |
+//------6----------5---------5---------5---------5----------6------
+// Format:  SLL rd, rt, sa
+// Purpose: To left shift a word by a fixed number of bits.
+// Comment: SLL r0, r0, 0 is equal to a NOP (No OPeration)
+// Descrip: rd = rt << sa
+
+
+//The shift is a logical shift if the left operand is 
+//an unsigned quantity;otherwise, it is an arithmetic shift.
+
+//Themedes 19/4/99
 void sll() {
+Parse6_5_5_5_5_6();
+	MainCPUReg[rd_fs] = (unsigned)MainCPUReg[rt_ft] << MainCPUReg[sa_fd];
 #ifdef _DEBUG
 	if (rd_fs + rs_base_fmt + rt_ft == 0)
 		printf("%X: NOP\n", pc);
@@ -1336,13 +1552,37 @@ void sll() {
 #endif
 }
 
+//-----------------------------------------------------------------
+//| SRA       | Shift word Right Arithmetic                       |
+//|-----------|---------------------------------------------------|
+//|  000000   |  00000  |   rt    |    rd   |   sa    |000011 (3) |
+//------6----------5---------5---------5---------5----------6------
+// Format:  SRA rd, rt, sa
+// Purpose: To arithmetic right shift a word by a fixed number of bits.
+// Descrip: rd = rt >> sa
+
+//Themedes 19/4/99
 void sra() {
+Parse6_5_5_5_5_6();
+	MainCPUReg[rd_fs] = MainCPUReg[rt_ft] >> MainCPUReg[sa_fd];
 #ifdef _DEBUG
 	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
 }
 
+//-----------------------------------------------------------------
+//| SRL       | Shift word Right Logical                          |
+//|-----------|---------------------------------------------------|
+//|  000000   |  00000  |   rt    |    rd   |   sa    |000010 (2) |
+//------6----------5---------5---------5---------5----------6------
+// Format:  SRL rd, rt, sa
+// Purpose: To logical right shift a word by a fixed number of bits.
+// Descrip: rd = rt >> sa
+
+//Themedes 19/4/99
 void srl() {
+Parse6_5_5_5_5_6();
+	MainCPUReg[rd_fs] = (unsigned)MainCPUReg[rt_ft] >> MainCPUReg[sa_fd];
 #ifdef _DEBUG
 	printf("%X: %s\t%s,%s,%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rd_fs), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft));
 #endif
@@ -1476,7 +1716,6 @@ void mtlo() {
 #endif
 }
 
-
 //-----------------------------------------------------------------
 //| JR        | Jump Register                                     |
 //|-----------|---------------------------------------------------|
@@ -1485,29 +1724,16 @@ void mtlo() {
 // Format:  JR rs
 // Purpose: To branch to an instruction address in a register.
 void jr() {
-	uint8 rs;
+	Parse6_26();
+
+	CPUdelayPC = MainCPUReg[rs_base_fmt];
+	CPUdelay = 1;
+
 #ifdef _DEBUG
-	printf("%X: %s\t%s\n", pc, DebugSpecial(SpecialOp), DebugMainCPUReg(rs_base_fmt));
+	printf("%X: %s\t%s\n", pc, DebugSpecial(SpecialOp),
+DebugMainCPUReg(rs_base_fmt));
 #endif
-#ifndef DISASM 
-//  I know this is strange, but we need to do the NEXT opcode 
-//	before actually jumping. 
-	rs = rs_base_fmt;
-	pc+=4;
-	//Opcode = *InstructionPointer >> 2;
-	RunOpcode(); //Do the next Opcode.
-
-	pc = MainCPUReg[rs];
-	//Pointer goes to where we are now.
-	InstructionPointer = &buffer[pc-MainStartAddr+CodeStart];
-	pc-=4;
-#endif
-//By default, pc increases by 4, which explains the -4 here.
-//This makes for less code than conditionally adding 4 at each opcode
-//and may be quicker. (We'll see.)
-//Be sure to do -4 at each jump and branch instruction.
 }
-
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1527,48 +1753,47 @@ void jr() {
 //          BEQ r0, r0, offset is equal to a B offset
 // Descrip: branch if rs = rt
 void beq() {
-//_int16 Offset;
-
-Parse6_5_5_16();
-
-#ifdef _DEBUG
-	if (UpdateViewPort)
-	printf("%X: %s\t%s,%s,%04Xh\n", pc, DebugMainCPU(), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft), offset_immediate);
-#endif
-
-#ifndef DISASM 
-//  I know this is strange, but we need to do the NEXT opcode 
-//	before actually jumping. 
-	if (MainCPUReg[rs_base_fmt] == MainCPUReg[rt_ft]) {
-		pc+=4;
-		Counter = offset_immediate*4 + pc;
-#ifdef _DEBUG
-		if (Counter < 0) UpdateViewPort = 0;
-#endif
-		Opcode = *InstructionPointer >> 2;
-		RunOpcode(); //Do the next Opcode.
-
-		InstructionPointer = &buffer[Counter-MainStartAddr+CodeStart];
-		pc = Counter - 4;
+	Parse6_5_5_16();
+	if (MainCPUReg[rs_base_fmt] == MainCPUReg[rt_ft])
+	{
+		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelay = 1;
 	}
 #ifdef _DEBUG
-	else
-		UpdateViewPort = 1;
-#endif // end #ifdef _DEBUG
-#endif //end #ifdef DISASM
-//By default, pc increases by 4, which explains the -4 here.
-//This makes for less code than conditionally adding 4 at each opcode
-//and may be quicker. (We'll see.)
-//Be sure to do -4 at each jump and branch instruction.
-}
-
-void beql() {
-Parse6_5_5_16();
-#ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%04Xh\n", pc, DebugMainCPU(), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft), offset_immediate);
+	if (UpdateViewPort)
+	printf("%X: %s\t%s,%s,%04Xh\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft),
+offset_immediate);
 #endif
 }
 
+//-----------------------------------------------------------------
+//| BEQL      | Branch on EQual Likley                            |
+//|-----------|---------------------------------------------------|
+//|010100 (20)|   rs    |   rt    |            offset             |
+//------6----------5---------5-------------------16----------------
+// Format:  BEQL rs, rt, offset
+// Purpose: To compare GPRs then do a PC-relative conditional branch;
+//          execute the delay slot only if the branch is taken.
+// Comment: BEQL rs, r0, offset is equal to a BEQZL rs, offset
+// Descrip: branch if rs = rt
+void beql() {
+	Parse6_5_5_16();
+	if (MainCPUReg[rs_base_fmt] == MainCPUReg[rt_ft])
+	{
+		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelay = 1;
+	}
+	else
+	{
+		pc += 4;
+	}
+#ifdef _DEBUG
+	printf("%X: %s\t%s,%s,%04Xh\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft),
+offset_immediate);
+#endif
+}
 
 //-----------------------------------------------------------------
 //| BNE       | Branch on Not Equal                               |
@@ -1580,48 +1805,46 @@ Parse6_5_5_16();
 // Comment: BNE rs, r0, offset is equal to a BNEZ rs, offset
 // Descrip: branch if rs <> rt
 void bne() {
-//_int16 Offset;
-
-Parse6_5_5_16();
-
-#ifdef _DEBUG
-	if (UpdateViewPort)
-	printf("%X: %s\t%s,%s,%04Xh\n", pc, DebugMainCPU(), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft), offset_immediate*4 + pc+4);
-#endif
-
-#ifndef DISASM 
-//  I know this is strange, but we need to do the NEXT opcode 
-//	before actually jumping. 
-	if (MainCPUReg[rs_base_fmt] != MainCPUReg[rt_ft]) {
-		pc+=4;
-		Counter = offset_immediate*4 + pc;
-#ifdef _DEBUG
-		if (Counter < pc) UpdateViewPort = 0;
-		//printf("Counter = %X\n", Counter);
-		//printf("pc =      %X\n", Counter);
-#endif
-		//Instruction = *InstructionPointer++;
-		//Opcode = Instruction >> 26;
-		RunOpcode(); //Do the next Opcode.
-
-		InstructionPointer = &buffer[Counter-MainStartAddr+CodeStart];
-		pc = Counter - 4;
+	Parse6_5_5_16();
+	if (MainCPUReg[rs_base_fmt] != MainCPUReg[rt_ft])
+	{
+		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelay = 1;
 	}
 #ifdef _DEBUG
-	else
-		UpdateViewPort = 1;
-#endif // end #ifdef _DEBUG
-#endif //end #ifdef DISASM
-//By default, pc increases by 4, which explains the -4 here.
-//This makes for less code than conditionally adding 4 at each opcode
-//and may be quicker. (We'll see.)
-//Be sure to do -4 at each jump and branch instruction.
+	if (UpdateViewPort)
+	printf("%X: %s\t%s,%s,%04Xh\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft),
+offset_immediate*4 +
+pc+4);
+#endif
 }
 
+//-----------------------------------------------------------------
+//| BNEL      | Branch on Not Equal Likley                        |
+//|-----------|---------------------------------------------------|
+//|010101 (21)|   rs    |   rt    |            offset             |
+//------6----------5---------5-------------------16----------------
+// Format:  BNEL rs, rt, offset
+// Purpose: To compare GPRs then do a PC-relative conditional branch;
+//          execute the delay slot only if the branch is taken.
+// Comment: BNEL rs, r0, offset is equal to a BNEZL rs, offset
+// Descrip: branch if rs <> rt
 void bnel() {
-Parse6_5_5_16();
+	Parse6_5_5_16();
+	if (MainCPUReg[rs_base_fmt] != MainCPUReg[rt_ft])
+	{
+		CPUdelayPC = pc + 4 + offset_immediate;
+		CPUdelay = 1;
+	}
+	else
+	{
+		pc += 4;
+	}
 #ifdef _DEBUG
-	printf("%X: %s\t%s,%s,%04Xh\n", pc, DebugMainCPU(), DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft), offset_immediate);
+	printf("%X: %s\t%s,%s,%04Xh\n", pc, DebugMainCPU(),
+DebugMainCPUReg(rs_base_fmt), DebugMainCPUReg(rt_ft),
+offset_immediate);
 #endif
 }
 
@@ -1676,47 +1899,16 @@ Parse6_5_5_16();
 // Purpose: To procedure call within the current 256 MB aligned region.
 // Descrip: return address in ra
 
-//This baby is the heart of the high-level emulation.
-//We perform functions based on the instr_index.
-
 void jal() {
-Parse6_26();
+	Parse6_26();
+
+	CPUdelayPC = instr_index;
+	CPUdelay = 1;
+	MainCPUReg[RA] = pc + 8;
 
 #ifdef _DEBUG
 	printf("%X: %s\t%08X\n", pc, DebugMainCPU(), instr_index);
 #endif
-
-#ifndef DISASM 
-//  I know this is strange, but we need to do the NEXT opcode 
-//	before actually jumping. 
-	//rs = rs_base_fmt;
-	
-	//Set RA register to return address.
-//	MainCPUReg[RA] = pc + 8;
-	
-	pc+=4;
-	Opcode = *InstructionPointer >> 2;
-	RunOpcode(); //Do the next Opcode.
-	
-	//pc = MainCPUReg[rs];
-	//Pointer goes to where we are now.
-	//here's the heart of the high level stuff.
-	switch(instr_index) {
-	case 0x800CC0C0 : ; break; // osInitialize.
-//	case 0x800CBF70 : ; break; // osCreateThread #10.
-	case 0x800CC360 : ; break; // osStartThread #11.
-	case 0x80000450 : ; break; //unknown. Ignore.
-	default :
-		pc = instr_index;
-		InstructionPointer = &buffer[instr_index-MainStartAddr+CodeStart];
-		pc-=4;
-	}
-	
-#endif
-//By default, pc increases by 4, which explains the -4 here.
-//This makes for less code than conditionally adding 4 at each opcode
-//and may be quicker. (We'll see.)
-//Be sure to do -4 at each jump and branch instruction.
 }
 
 //////////////////////////////////////////////////////////////////////

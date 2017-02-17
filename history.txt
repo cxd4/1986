@@ -3,22 +3,41 @@
 
 Note: Opcodes come in fast, so credit is given on a first-come basis
 for accurate opcodes. Let me know if I've overlooked anything with your 
-code. :)
-
-This file is comprehensive- including all major and minor
+code. :) This file is comprehensive- including all major and minor
 revisions possible.
+_____________________________________________________________________________
+Legend
+------
+
+**	Convention altered
+--	Code updates/revisions
+_____________________________________________________________________________
+
+v0.0.4
+    -- Improvement to delay slot (steb)
+       New opcodes added: 
+          JALR, BGEZ, BGEZALL, BGEZL, BLTZ, BLTZAL, BLTZALL, 
+          BLTZL, BGEZAL, JR, JAL, BEQ, BEQL, BNE, BNEL (steb)
+    ** Type cast target param when calling 
+       LoadMemory(void* target),StoreMemory()
+    -- Opcodes revised for new syntax: (Themedes)
+          LB, LDU, LD, LH, LHU, LL, LLD, 
+          LWU, SB, SC, SCD, SD, SH
+    -- New opcodes added:
+          DADDIU, DADDI, DADD, DADDU, SLL, SRA, SRL (Themedes)
 
 v0.0.3B
-    -- Virtual memory addressing vastly improved. (schibo)
-    -- Improved debugger. CoProcessor registers now visible. (schibo)
+    -- Virtual memory addressing vastly improved (schibo)
+    -- Improved debugger. CoProcessor registers now visible (schibo)
        New commands- n=next instruction
                      left arrow = back one screen
                      right arrow = forward one screen
-                     (more to come)
+
 v0.0.3A
-     -- New opcodes added: {untested}
+     -- New opcodes added:
            LDL, LDR, LH, LHU, LL, LLD, 
            LWL, LWR, LWU, SB, SC, SCD (Eudaemon) 
+
 v0.0.3
      -- New opcodes added: 
 	   SLTI, SLTIU, NOR, ADD  (steb)
@@ -26,6 +45,7 @@ v0.0.3
            LB, LBU, LD (Eudaemon)
      -- ROM is specified as command line parameter (steb)
      -- Ok...MainCPUReg[] & Coprocessors are now _int64. ;) (schibo)
+
 v0.0.2
      -- New opcodes added:
            XORI, ADDU, AND, OR, SLT, SLTU, XOR, MFCO, MTCO    (steb)
@@ -38,7 +58,7 @@ v0.0.1
      -- 1964 released as open source on internet: (schibo)
            Most opcodes decoded; only a handful implemented.
            Simple debugger added. Shows MainCPU Regs only.
-
+_____________________________________________________________________________
 
 Additional Thanks (in chronological order)
 ------------------------------------------

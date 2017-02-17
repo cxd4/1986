@@ -19,6 +19,7 @@ FILE* returnString;
 
 #define COLS 80
 #define ROWS 25
+
 void handle_console (unsigned char action);
 void PrintString(int X, int Y, char* theString);
 void DumpRegisters(int VisibleChip);
@@ -45,54 +46,56 @@ int starty;
 unsigned char begin_line;
 unsigned char end_line;
 uint8 UpdateViewPort;
+void DebuggerUI();
 void InitViewPort();
+void RefreshConsole();
+
 COORD csize, c0 = {0,0}; 
 SMALL_RECT rect;
 
-void RefreshConsole() {
-		char CommandStr[2];
+extern void Step_CPU();
 
-		ReadConsoleOutput (hSaved, viewport, csize, c0, &rect);
-	    WriteConsoleOutput (hMainScreen, viewport, csize, c0, &rect);
-		switch(UserCommand) {
-			case 224 : //arrow key
+void DebuggerUI() 
+{
+	COORD CursorXY = {9, 8};
+
+	SetConsoleCursorPosition(hMainScreen, CursorXY);
+	while (!kbhit());
+	UserCommand = getche();
+	switch (UserCommand) 
+	{
+		case 'n' : Step_CPU(); break;
+		case 'w' : //forward one screen 
+		{
+			Chip_In_View += 1; 
+			if (Chip_In_View > 3) Chip_In_View = 3;
+			else 
 			{
-				UserCommand = getch();
-				switch(UserCommand) 
-				{
-					case 77 : //right arrow
-					{ 
-						Chip_In_View += 1; 
-						if (Chip_In_View > 3) Chip_In_View = 3;
-						else 
-						{
-							PrintDebugScreen(Chip_In_View);
-							DumpRegisters(Chip_In_View);
-						} 
-					} break; //case right arrow
-					case 75 : //left arrow
-					{ 
-						Chip_In_View -= 1; 
-						if (Chip_In_View < 0) Chip_In_View = 0;
-						else 
-						{
-							PrintDebugScreen(Chip_In_View);
-							DumpRegisters(Chip_In_View);
-						} 
-					} break; //case left arrow (75)
-				} //end switch
-			} //end case arrow key (224)
-			
-			default : DumpRegisters(Chip_In_View);
-		} //end switch
-		while (!kbhit()); 
-		UserCommand = getch();
-		sprintf(CommandStr, "%c", UserCommand);
-		PrintString(9, 8, CommandStr);
+				PrintDebugScreen(Chip_In_View);
+				DumpRegisters(Chip_In_View);
+			} 
+		} break;
+		case 'q' : //back one screen
+		{ 
+			Chip_In_View -= 1; 
+			if (Chip_In_View < 0) Chip_In_View = 0;
+			else 
+			{
+				PrintDebugScreen(Chip_In_View);
+				DumpRegisters(Chip_In_View);
+			} 
+		} break;
+	} 
+}
+
+void RefreshConsole() {
+	ReadConsoleOutput (hSaved, viewport, csize, c0, &rect);
+	WriteConsoleOutput (hMainScreen, viewport, csize, c0, &rect);
+	PrintDebugScreen(Chip_In_View);
+	DumpRegisters(Chip_In_View);
 }
 
 void DebuggerMain(void) {
-	
 	Chip_In_View = MAINCPU_IN_VIEW; //specify which chip is to be displayed in debugger
 	Counter = 0;
 	pchar = (CHAR_INFO*)malloc (sizeof(CHAR_INFO) *  80);
@@ -105,6 +108,7 @@ void DebuggerMain(void) {
 	handle_console(SHOW_SCREEN_1);	
 	InitMainScreen();
 	handle_console(SHOW_MAIN_SCREEN);
+	RefreshConsole();
 }
 
 void InitMainScreen() {
@@ -136,7 +140,6 @@ void InitMainScreen() {
 }
 
 void PrintDebugScreen(int WhichView) {
-
 	switch(WhichView) {
 	case MAINCPU_IN_VIEW : {
 		PrintString(0, 0, "   r0:00000000:........  t0:........  s0:........  t8:........   pc:........    ");

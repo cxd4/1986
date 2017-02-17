@@ -3,13 +3,13 @@
 #define uint32 unsigned __int32
 #define uint64 unsigned __int64
 
-#ifdef _DEBUG
-	unsigned char UserCommand;
-#endif
-
 //#ifdef _DEBUG
 	_int64 Counter;
 //#endif
+
+#ifdef _DEBUG
+	unsigned char UserCommand;
+#endif
 
 //globals
 //The buffer data type is arbitrary. What matters is the 
@@ -31,9 +31,16 @@ uint32 pc;               //program counter. (Keeps addresses.)
 uint32 MainStartAddr;    //Start Address of Main Code
 _int32 instr_index;
 
+//SB 16/4/99
+uint32	CPUdelayPC;
+int		CPUdelay;
+
 uint16 CodeStart;         //Array element location that starts off the code.
 
+//char* MainCPU[64];
 _int64 MainCPUReg[32];
+
+//char* COP0[16];
 _int64 COP0Reg[32];
 _int64 COP1Reg[32];
 _int64 COP2Reg[32];

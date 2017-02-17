@@ -7,5 +7,5 @@ Command Set:
     COMMAND     WHAT IT DOES
 -------------------------------------------------------
           n     do Next instruction
- Left Arrow     switch processor view back one screen (Views are r4300i, COP0, COP1, COP2)
-Right Arrow     switch processor view forward one screen
+          q     switch processor view back one screen (Views are r4300i, COP0, COP1, COP2)
+          w     switch processor view forward one screen
