@@ -44,7 +44,6 @@ the property of anarko.
 //#define SAFE_DYNAREC 1 
 
 
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include "r4300i.h"
 #include "globals.h"
@@ -57,8 +56,9 @@ extern void WinDynDebugPrintInstruction(uint32 Instruction);
 extern void __cdecl DisplayError (char * Message, ...);
 extern void Trigger_VIInterrupt();
 extern void CheckEm();
+extern uint32 TranslateTLBAddress(uint32 address);
 
-RETURN_TYPE dyn_UNUSED(OP_PARAMS) {	DisplayError("Found an unused");return(Dest);}
+RETURN_TYPE dyn_UNUSED(OP_PARAMS) {	DisplayError("%08X: Found an unused", pc);return(Dest);}
 
 //---------------------------------------------------------------------------------------
 
@@ -146,6 +146,7 @@ RETURN_TYPE Dyn_Intr_Common(uint8* Dest)
 	COP0Reg[EPC] = pc;
 	COP0Reg[STATUS] |= EXL;			// set EXL = 1 
 
+
 	if (!AlreadyRecompiled)
 	{
 		TempDest = Dest;	
@@ -157,6 +158,7 @@ RETURN_TYPE Dyn_Intr_Common(uint8* Dest)
 		Dest = TempDest;
 		AlreadyRecompiled = 1;
 	}
+
 
 	COP0Reg[CAUSE] &= NOT_BD;		/* clear BD		  */
 	COP0Reg[CAUSE] &= NOT_EXCCODE;	/* clear EXCCode  */
@@ -236,35 +238,55 @@ RETURN_TYPE dyn_r4300i_jr(OP_PARAMS)
 RETURN_TYPE dyn_r4300i_beq(OP_PARAMS) 
 {
 	uint32 PrevLabelTrue,	PrevLabelFalse;
-	uint8 *LabelTrue,		*LabelFalse;
-#ifdef ADDRESS_RESOLUTION
-	uint32* BranchToJump;	uint32* BranchToContinue;
-#endif
-
+	uint8 *LabelTrue, *LabelFalse;		
+	JUMP_CONTINUE_DEFS
 	uint32 RSArg = RS_BASE_FMT;
 	uint32 TempRS = (uint32)&GPR[RSArg];
 	uint32 TempRT = RT_FT;
 
+
 	if (TempRT == 0)
 	{
-		if (RSArg == 0)	/* B */
+		if (RSArg == 0)	// B
 		{
-			JumpLocal8(Dest, LabelTrue)
-			PrevLabelTrue = (uint32)Dest;
+
+#ifdef USE_BRANCH_SPEEDHACKS
+				DO_SPEEDHACK
+#endif
+				INCREMENT_COUNT(Dest)
+				_asm {add pc, 4}
+				*InstructionPointer++;
+
+				// Get Delay
+				Dest = FetchDelay((pc + (OFFSET_IMMEDIATE << 2)), Dest);
+
+#ifdef ADDRESS_RESOLUTION
+				// jmp $BranchToJump
+				JumpEAX32(Dest, BranchToJump)
+				// $BranchToJump:
+				*BranchToJump = (uint32)Dest;
+				SetVariable(Dest, &LocationJumpedFrom, BranchToJump)
+#endif
+
+				AsmReturn
+				KEEP_RECOMPILING = 0;
 		}
-		else			/* BEQZ */
+		else			// BEQZ
 		{
-			CompMIPS64RegTo0(Dest, TempRS)
+			CompMIPS32RegTo0(Dest, TempRS)
+			NearJumpConditionLabel8(Dest, LabelFalse, JNE_NEAR)
+			PrevLabelFalse = (uint32)Dest;
+
+			CompMIPS32RegTo0(Dest, (uint32*)TempRS+1)
 			NearJumpConditionLabel8(Dest, LabelTrue, JE_NEAR)
 			PrevLabelTrue = (uint32)Dest;
+
+			SETUP_DELAY_SLOTS_UNLIKELY_TF
 		}
-			JumpLocal8(Dest, LabelFalse)
-			PrevLabelFalse = (uint32)Dest;	
 	}
-	else				/* BEQ */
+	else				// BEQ
 	{
 		TempRT = (uint32)&GPR[TempRT];
-
 		CompMIPS64RegToMIPS64Reg_LO(Dest, TempRS, TempRT)
 		NearJumpConditionLabel8(Dest, LabelFalse, JNE_NEAR)
 		PrevLabelFalse = (uint32)Dest; //Mark
@@ -272,9 +294,10 @@ RETURN_TYPE dyn_r4300i_beq(OP_PARAMS)
 		CompMIPS64RegToMIPS64Reg_HI(Dest, TempRS, TempRT)
 		NearJumpConditionLabel8(Dest, LabelTrue, JE_NEAR)
 		PrevLabelTrue = (uint32)Dest; //Mark
-
+		
+		SETUP_DELAY_SLOTS_UNLIKELY_TF
 	}
-	SETUP_DELAY_SLOTS_UNLIKELY_TF
+
 	return(Dest);
 }
 
@@ -295,32 +318,52 @@ RETURN_TYPE dyn_r4300i_beq(OP_PARAMS)
 RETURN_TYPE dyn_r4300i_beql(OP_PARAMS) 
 {
 	uint32 PrevLabelTrue,	PrevLabelFalse;
-	uint8 *LabelTrue,		*LabelFalse;
-#ifdef ADDRESS_RESOLUTION
-	uint32* BranchToJump;	uint32* BranchToContinue;
-#endif
-
+	uint8 *LabelTrue, *LabelFalse;		
+	JUMP_CONTINUE_DEFS
 	uint32 RSArg = RS_BASE_FMT;
 	uint32 TempRS = (uint32)&GPR[RSArg];
 	uint32 TempRT = RT_FT;
 
-	if (TempRT == 0) /* BEQZL */
+	if (TempRT == 0)
 	{
-		if (RSArg == 0)	/* BL */
+		if (RSArg == 0)	/* B */
 		{
-			JumpLocal8(Dest, LabelTrue)
-			PrevLabelTrue = (uint32)Dest;
+
+#ifdef USE_BRANCH_SPEEDHACKS
+				DO_SPEEDHACK
+#endif
+				INCREMENT_COUNT(Dest)
+				_asm {add pc, 4}
+				*InstructionPointer++;
+
+				// Get Delay
+				Dest = FetchDelay((pc + (OFFSET_IMMEDIATE << 2)), Dest);
+
+#ifdef ADDRESS_RESOLUTION
+				// jmp $BranchToJump
+				JumpEAX32(Dest, BranchToJump)
+				// $BranchToJump:
+				*BranchToJump = (uint32)Dest;
+				SetVariable(Dest, &LocationJumpedFrom, BranchToJump)
+#endif
+
+				AsmReturn
+				KEEP_RECOMPILING = 0;
 		}
-		else			/* BEQZL */
+		else			/* BEQZ */
 		{
-			CompMIPS64RegTo0(Dest, TempRS)
+			CompMIPS32RegTo0(Dest, TempRS)
+			NearJumpConditionLabel8(Dest, LabelFalse, JNE_NEAR)
+			PrevLabelFalse = (uint32)Dest;
+
+			CompMIPS32RegTo0(Dest, (uint32*)TempRS+1)
 			NearJumpConditionLabel8(Dest, LabelTrue, JE_NEAR)
 			PrevLabelTrue = (uint32)Dest;
+
+			SETUP_DELAY_SLOTS_LIKELY_TF
 		}
-			JumpLocal8(Dest, LabelFalse)
-			PrevLabelFalse = (uint32)Dest;	
 	}
-	else			/* BEQL */
+	else				/* BEQ */
 	{
 		TempRT = (uint32)&GPR[TempRT];
 
@@ -331,10 +374,10 @@ RETURN_TYPE dyn_r4300i_beql(OP_PARAMS)
 		CompMIPS64RegToMIPS64Reg_HI(Dest, TempRS, TempRT)
 		NearJumpConditionLabel8(Dest, LabelTrue, JE_NEAR)
 		PrevLabelTrue = (uint32)Dest; //Mark
-
+		
+		SETUP_DELAY_SLOTS_LIKELY_TF
 	}
 
-	SETUP_DELAY_SLOTS_LIKELY_TF
 	return(Dest);
 }
 
@@ -355,21 +398,21 @@ RETURN_TYPE dyn_r4300i_bne(OP_PARAMS)
 {
 	uint32 PrevLabelTrue,	PrevLabelFalse;
 	uint8 *LabelTrue,		*LabelFalse;
-#ifdef ADDRESS_RESOLUTION
-	uint32* BranchToJump;	uint32* BranchToContinue;
-#endif
+
+	JUMP_CONTINUE_DEFS
 
 	uint32 TempRS = (uint32)&GPR[RS_BASE_FMT];
 	uint32 TempRT = RT_FT;
 		
 	if (TempRT == 0) /* BNEZ */
 	{
-		CompMIPS64RegTo0(Dest, TempRS)
+		CompMIPS32RegTo0(Dest, TempRS)
 		NearJumpConditionLabel8(Dest, LabelTrue, JNE_NEAR)
-		PrevLabelTrue = (uint32)Dest;
+		PrevLabelTrue = (uint32)Dest; //Mark
 
-		JumpLocal8(Dest, LabelFalse)
-		PrevLabelFalse = (uint32)Dest;
+		CompMIPS32RegTo0(Dest, (uint32*)TempRS+1)
+		NearJumpConditionLabel8(Dest, LabelFalse, JE_NEAR)
+		PrevLabelFalse = (uint32)Dest; //Mark
 	}
 	else			/* BNE */
 	{
@@ -406,21 +449,20 @@ RETURN_TYPE dyn_r4300i_bnel(OP_PARAMS)
 {
 	uint32 PrevLabelTrue,	PrevLabelFalse;
 	uint8 *LabelTrue,	*LabelFalse;
-#ifdef ADDRESS_RESOLUTION
-	uint32* BranchToJump;	uint32* BranchToContinue;
-#endif
+	JUMP_CONTINUE_DEFS
 
 	uint32 TempRS = (uint32)&GPR[RS_BASE_FMT];
 	uint32 TempRT = RT_FT;
 
 	if (TempRT == 0) /* BNEZL */
 	{
-		CompMIPS64RegTo0(Dest, TempRS)
+		CompMIPS32RegTo0(Dest, TempRS)
 		NearJumpConditionLabel8(Dest, LabelTrue, JNE_NEAR)
-		PrevLabelTrue = (uint32)Dest;
+		PrevLabelTrue = (uint32)Dest; //Mark
 
-		JumpLocal8(Dest, LabelFalse)
-		PrevLabelFalse = (uint32)Dest;	
+		CompMIPS32RegTo0(Dest, (uint32*)TempRS+1)
+		NearJumpConditionLabel8(Dest, LabelFalse, JE_NEAR)
+		PrevLabelFalse = (uint32)Dest; //Mark
 	}
 	else			/* BNEL */
 	{
@@ -571,11 +613,10 @@ RETURN_TYPE dyn_r4300i_jalr(OP_PARAMS)
 
 //---------------------------------------------------------------------------------------
 
-#ifdef ADDRESS_RESOLUTION
 #define BC1(OPERATION)										\
 	uint32 PrevLabelTrue,	PrevLabelFalse;					\
 	uint8 *LabelTrue,		*LabelFalse;					\
-	uint32* BranchToJump;	uint32* BranchToContinue;		\
+	JUMP_CONTINUE_DEFS										\
 															\
 	/* mov eax, COP1Con[31] */								\
 	PUTDST8KNOWN(Dest, 0xA1)								\
@@ -593,28 +634,7 @@ RETURN_TYPE dyn_r4300i_jalr(OP_PARAMS)
 															\
 	JumpLocal8(Dest, LabelTrue)								\
 	PrevLabelTrue = (uint32)Dest; /*Mark*/
-#else
-#define BC1(OPERATION)										\
-	uint32 PrevLabelTrue,	PrevLabelFalse;					\
-	uint8 *LabelTrue,		*LabelFalse;					\
-															\
-	/* mov eax, COP1Con[31] */								\
-	PUTDST8KNOWN(Dest, 0xA1)								\
-	PUTDST32(Dest, (uint32)&COP1Con[31])					\
-															\
-	/* and eax, 0x00800000h */								\
-	PUTDST8KNOWN(Dest, 0x25)								\
-	PUTDST32KNOWN(Dest, 0x00800000)							\
-															\
-	/* test eax, eax */										\
-	PUTDST16KNOWN(Dest, 0xC085)								\
-															\
-	NearJumpConditionLabel8(Dest, LabelFalse, OPERATION)	\
-	PrevLabelFalse = (uint32)Dest; /*Mark*/					\
-															\
-	JumpLocal8(Dest, LabelTrue)								\
-	PrevLabelTrue = (uint32)Dest; /*Mark*/
-#endif
+
 
 RETURN_TYPE dyn_r4300i_COP1_bc1f(OP_PARAMS) {	BC1(JNE_NEAR)	SETUP_DELAY_SLOTS_UNLIKELY_TF	return(Dest);}
 RETURN_TYPE dyn_r4300i_COP1_bc1fl(OP_PARAMS){	BC1(JNE_NEAR)	SETUP_DELAY_SLOTS_LIKELY_TF		return(Dest);}
@@ -624,35 +644,45 @@ RETURN_TYPE dyn_r4300i_COP1_bc1tl(OP_PARAMS){	BC1(JE_NEAR)	SETUP_DELAY_SLOTS_LIK
 
 RETURN_TYPE dyn_r4300i_COP0_eret(OP_PARAMS)
 {
-//	C_CALL(Dest, r4300i_COP0_eret); AsmReturn KEEP_RECOMPILING = 0;
+//	C_CALL(Dest, r4300i_COP0_eret); AsmReturn KEEP_RECOMPILING = 0;	return(Dest);
+
+	uint8 *LabelOne;
+	uint32 PrevLabelOne;
+	uint8 *LabelTwo;
+	uint32 PrevLabelTwo;
 
 /*
 1656:     if ((COP0Reg[STATUS] & 0x00000004))
 00416E33 8B 15 B0 AA 85 00    mov         edx,dword ptr [_COP0Reg+30h (0085aab0)]
+004..... 8B DA                mov         ebx,edx
 00416E39 83 E2 04             and         edx,4
 00416E3C 85 D2                test        edx,edx
 00416E3E 74 1B                je          dyn_r4300i_COP0_eret+6Bh (00416e5b)
 */
-PUTDST16KNOWN(Dest, 0x158b)		PUTDST32(Dest, (uint32)&COP0Reg[STATUS])
-PUTDST32KNOWN(Dest, 0x8504e283)	PUTDST16KNOWN(Dest, 0x74d2)
-PUTDST8KNOWN(Dest, 0x1b)
+
+	PUTDST16KNOWN(Dest, 0x158b)		PUTDST32(Dest, (uint32)&COP0Reg[STATUS])
+	PUTDST16KNOWN(Dest, 0xDA8B)
+	PUTDST32KNOWN(Dest, 0x8504e283)	PUTDST8KNOWN(Dest, 0xd2)
+	NearJumpConditionLabel8(Dest, LabelOne, JE_NEAR)
+	PrevLabelOne = (uint32)Dest;
 /*
 1657:     {
 1658:         pc = COP0Reg[ERROREPC];
 00416E40 A1 F8 AA 85 00       mov         eax,[_COP0Reg+78h (0085aaf8)]
 00416E45 A3 24 AF C5 00       mov         [_pc (00c5af24)],eax
 */
-PUTDST8KNOWN(Dest, 0xa1)		PUTDST32(Dest, (uint32)&COP0Reg[ERROREPC])
-PUTDST8KNOWN(Dest, 0xa3)		PUTDST32(Dest, (uint32)&pc)
+	PUTDST8KNOWN(Dest, 0xa1)		PUTDST32(Dest, (uint32)&COP0Reg[ERROREPC])
+	PUTDST8KNOWN(Dest, 0xa3)		PUTDST32(Dest, (uint32)&pc)
 /*
 1661:         COP0Reg[STATUS] &= 0xFFFFFFFB; // 0xFFFFFFFB same as ~0x00000004;
-00416E4A 8B 0D B0 AA 85 00    mov         ecx,dword ptr [_COP0Reg+30h (0085aab0)]
+004..... 8B CB                mov         ecx,ebx
 00416E50 83 E1 FB             and         ecx,0FBh
 00416E53 89 0D B0 AA 85 00    mov         dword ptr [_COP0Reg+30h (0085aab0)],ecx
 */
-PUTDST16KNOWN(Dest, 0x0d8b)		PUTDST32(Dest, (uint32)&COP0Reg[STATUS])
-PUTDST16KNOWN(Dest, 0xe183)		PUTDST8KNOWN(Dest, 0xfb)
-PUTDST16KNOWN(Dest, 0x0d89)		PUTDST32(Dest, (uint32)&COP0Reg[STATUS])
+
+	PUTDST16KNOWN(Dest, 0xcb8b)
+	PUTDST16KNOWN(Dest, 0xe183)		PUTDST8KNOWN(Dest, 0xfb)
+	PUTDST16KNOWN(Dest, 0x0d89)		PUTDST32(Dest, (uint32)&COP0Reg[STATUS])
 /*
 1662:     }
 1663:     else
@@ -662,22 +692,36 @@ PUTDST16KNOWN(Dest, 0x0d89)		PUTDST32(Dest, (uint32)&COP0Reg[STATUS])
 00416E5B 8B 15 B8 AA 85 00    mov         edx,dword ptr [_COP0Reg+38h (0085aab8)]
 00416E61 89 15 24 AF C5 00    mov         dword ptr [_pc (00c5af24)],edx
 */
-PUTDST32KNOWN(Dest, 0x158b18eb)	PUTDST32(Dest, (uint32)&COP0Reg[EPC])
-PUTDST16KNOWN(Dest, 0x1589)		PUTDST32(Dest, (uint32)&pc)
+
+	JumpLocal8(Dest, LabelTwo)//PUTDST16KNOWN(Dest, 0x18EB)
+	PrevLabelTwo = (uint32)Dest;
+
+*LabelOne = (uint8)(Dest - PrevLabelOne);
+
+	PUTDST16KNOWN(Dest, 0x158b)		PUTDST32(Dest, (uint32)&COP0Reg[EPC])
+	PUTDST16KNOWN(Dest, 0x1589)		PUTDST32(Dest, (uint32)&pc)
 /*
 1668:         COP0Reg[STATUS] &= 0xFFFFFFFD; //0xFFFFFFFD same as ~0x00000002
-00416E67 A1 B0 AA 85 00       mov         eax,[_COP0Reg+30h (0085aab0)]
-00416E6C 24 FD                and         al,0FDh
-00416E6E A3 B0 AA 85 00       mov         [_COP0Reg+30h (0085aab0)],eax
+00416E67 80 E3 FD             and         bl,0FDh
+0040E28B 89 1D A0 2C 6B 00    mov         dword ptr [_COP0Reg (006b2ca0)],ebx
+
 1669:     }
+_LabelTwo:
 1670:     LLbit   = 0;
-00416E73 C7 05 68 AA 85 00 00 mov         dword ptr [_LLbit (0085aa68)],0
+00416E73 33 C0                xor         eax,eax
+00416E75 A3 84 2C 6B 00       mov         [_LLbit (006b2c84)],eax
 1671:
 */
-PUTDST8KNOWN(Dest, 0xa1)		PUTDST32(Dest, (uint32)&COP0Reg[STATUS])
-PUTDST16KNOWN(Dest, 0xfd24)		PUTDST8KNOWN(Dest, 0xa3)
-PUTDST32(Dest, (uint32)&COP0Reg[STATUS])
-PUTDST16KNOWN(Dest, 0x05c7)		PUTDST32(Dest, (uint32)&LLbit)	PUTDST32KNOWN(Dest, 0)
+	
+//	PUTDST8KNOWN(Dest, 0xa1)		PUTDST32(Dest, (uint32)&COP0Reg[STATUS])
+//	PUTDST16KNOWN(Dest, 0xfd24)		PUTDST8KNOWN(Dest, 0xa3)
+//	PUTDST32(Dest, (uint32)&COP0Reg[STATUS])
+
+	PUTDST32KNOWN(Dest, 0xe89fde380)	PUTDST8KNOWN(Dest, 0x1d)	PUTDST32(Dest, (uint32)&COP0Reg[STATUS])
+
+*LabelTwo = (uint8)(Dest - PrevLabelTwo);
+
+	PUTDST16KNOWN(Dest, 0xC033)	PUTDST8KNOWN(Dest, 0xA3) PUTDST32(Dest, (uint32)&LLbit)
 
 	AsmReturn
 	KEEP_RECOMPILING = 0;
@@ -741,7 +785,98 @@ RETURN_TYPE dyn_r4300i_ld(OP_PARAMS){	INTERPRET(r4300i_ld)	return(Dest);}
 RETURN_TYPE dyn_r4300i_ldc1(OP_PARAMS){	INTERPRET(r4300i_ldc1)	return(Dest);}
 RETURN_TYPE dyn_r4300i_sd(OP_PARAMS){	INTERPRET(r4300i_sd)	return(Dest);}
 RETURN_TYPE dyn_r4300i_sdc1(OP_PARAMS){	INTERPRET(r4300i_sdc1)	return(Dest);}
-RETURN_TYPE dyn_r4300i_lw(OP_PARAMS){	INTERPRET(r4300i_lw)	return(Dest);}
+
+RETURN_TYPE dyn_r4300i_lw(OP_PARAMS)
+{	
+#ifdef WINDEBUG_1964
+	INTERPRET(r4300i_lw)	return(Dest);
+#else
+
+	uint32 PrevLabelOne;
+	uint8 *LabelOne;
+	uint32 PrevLabelTwo;
+	uint8 *LabelTwo;
+	uint32 PrevLabelThree;
+	uint8 *LabelThree;
+	uint32 rt_ft = RT_FT;
+
+	uint32 RTAddr = (uint32)&GPR[rt_ft];
+
+//723:      uint32 QuerAddr;
+//724:      QuerAddr = (uint32)((_int32)GPR[RS_BASE_FMT] + (_int32)OFFSET_IMMEDIATE);
+//0040EE3F 8B 0D 40 2E AB 00    mov         ecx,dword ptr [_GPR (00ab2e40)]
+//0040EE45 81 C1 78 56 34 12    add         ecx,12345678h
+
+	PUTDST16KNOWN(Dest, 0x0D8B)	PUTDST32(Dest, (uint32)&GPR[RS_BASE_FMT])
+	PUTDST16KNOWN(Dest, 0xC181)	PUTDST32(Dest, (_int32)OFFSET_IMMEDIATE)
+
+
+
+//0040EEA4 8B D1                mov         edx,ecx
+//0040EEA6 81 E2 00 00 00 C0    and         edx,0C0000000h
+//0040EEAC 81 FA 00 00 00 80    cmp         edx,80000000h
+//								je			LabelOne
+
+	PUTDST32KNOWN(Dest, 0xE281D18B)	PUTDST32KNOWN(Dest, 0xC0000000)
+	PUTDST16KNOWN(Dest, 0xFA81)		PUTDST32KNOWN(Dest, 0x80000000)
+	NearJumpConditionLabel8(Dest, LabelOne, JE_NEAR)
+	PrevLabelOne = (uint32)Dest;
+
+//00427104 E8 6D AB FD FF       call        @ILT+3185(@TranslateTLBAddress@4) (00401c76)
+//0040EED0 8B C8                mov         ecx,eax
+
+	C_CALL(Dest, (uint32)&TranslateTLBAddress)
+	PUTDST16KNOWN(Dest, 0xC88B)
+
+*LabelOne  = (uint8)(Dest - PrevLabelOne);
+
+
+//731:      if (((QuerAddr & 0x04000000) != 0))
+//0041675E 8B D9                mov         ebx,ecx
+//00416760 81 E3 00 00 00 04    and         ebx,004000000h
+//00416766 85 DB                test        ebx,ebx
+//0040EE8B 74 0D                je          dyn_r4300i_lw+6Ah (0040ee9a)
+
+	PUTDST32KNOWN(Dest, 0xE381D98B)	PUTDST32KNOWN(Dest, 0x04000000)
+	PUTDST16KNOWN(Dest, 0xDB85)
+	NearJumpConditionLabel8(Dest, LabelTwo, JE_NEAR)
+	PrevLabelTwo = (uint32)Dest;
+
+//732:          Check_LW(QuerAddr, rt_ft);
+//0040EECB BA 05 00 00 00       mov         edx,5 (rt_ft)
+//0040EE93 E8 EB 2A FF FF       call        @ILT+2430(@Check_LW@8) (00401983)
+//733:      else
+//0040EE98 EB 30                jmp         dyn_r4300i_lw+9Ah (0040eeca)
+//734:          GPR[rt_ft] = LOAD_SWORD_PARAM(QuerAddr);
+
+	PUTDST8KNOWN(Dest, 0xBA)		PUTDST32(Dest, rt_ft)
+	C_CALL(Dest, (uint32)&Check_LW)
+	JumpLocal8(Dest, LabelThree)
+	PrevLabelThree = (uint32)Dest;
+
+*LabelTwo  = (uint8)(Dest - PrevLabelTwo);
+
+//004271F5 8B C1                mov         eax,ecx
+//004271F7 C1 E8 10             shr         eax,10h
+//004271FA 81 E1 FF FF 00 00    and         ecx,0FFFFh
+//00427200 8B 14 85 E0 43 0F 01 mov         edx,dword ptr [eax*4+sDWORD_R]
+//00427207 8B 04 0A             mov         eax,dword ptr [edx+ecx]
+// CDQ_STORE(Dest, RTAddr)
+
+	PUTDST32KNOWN(Dest, 0xE8C1C18B)
+	PUTDST32KNOWN(Dest, 0xFFE18110)
+	PUTDST32KNOWN(Dest, 0x8B0000FF)
+	PUTDST16KNOWN(Dest, 0x8514)			PUTDST32(Dest, (uint32)&sDWORD_R)
+	PUTDST16KNOWN(Dest, 0x048B)			PUTDST8KNOWN(Dest, 0x0A)
+	CDQ_STORE(Dest, RTAddr)
+
+*LabelThree = (uint8)(Dest - PrevLabelThree);
+
+	return(Dest);
+#endif
+}
+
+
 RETURN_TYPE dyn_r4300i_sw(OP_PARAMS){	INTERPRET(r4300i_sw)	return(Dest);}
 RETURN_TYPE dyn_r4300i_swc1(OP_PARAMS){	INTERPRET(r4300i_swc1)	return(Dest);}
 RETURN_TYPE dyn_r4300i_sb(OP_PARAMS){	INTERPRET(r4300i_sb)	return(Dest);}
@@ -751,34 +886,52 @@ RETURN_TYPE dyn_r4300i_sh(OP_PARAMS){	INTERPRET(r4300i_sh)	return(Dest);}
 
 RETURN_TYPE dyn_r4300i_slti(OP_PARAMS)
 {
-#ifdef WINDEBUG_1964
-	INTERPRET(r4300i_slti)
-#else
-	
+
 	_int64 ConstInt		= (_int64)OFFSET_IMMEDIATE;
 	uint32 RTAddr		= (uint32)&GPR[RT_FT];
 	uint32 RTAddrPlus4	= RTAddr+4;
 	uint32 RSAddr		= (uint32)&GPR[RS_BASE_FMT];
 
+	uint8* LabelOne, *LabelTwo, *LabelThree, *LabelFour;
+	uint32 PrevLabelOne, PrevLabelTwo, PrevLabelThree, PrevLabelFour;
+
+//0040E294 33 C0                xor         eax,eax
 //004119E7 81 3D E4 01 4B 00 11 cmp         dword ptr [_GPR+4 (004b01e4)],11111111h
 //004119F1 7F 1A                jg          dyn_r4300i_slti+47h (00411a17)
 //004119F3 7C 0C                jl          dyn_r4300i_slti+31h (00411a01)
 //004119F5 81 3D E0 01 4B 00 88 cmp         dword ptr [_GPR (004b01e0)],88888888h
 //004119FF 73 0C                jae         dyn_r4300i_slti+47h (00411a17)
 //00411A01 C7 05 E8 01 4B 00 01 mov         dword ptr [_GPR+8 (004b01e8)],1
-//00411A15 EB 0A                jmp         dyn_r4300i_slti+5Bh (00411a2b)
-//00411A17 C7 05 E8 01 4B 00 00 mov         dword ptr [_GPR+8 (004b01e8)],0
-//00411A21 C7 05 EC 01 4B 00 00 mov         dword ptr [_GPR+0Ch (004b01ec)],0
-	 PUTDST16KNOWN(Dest, 0x3D81)			PUTDST32(Dest, RSAddr+4)	PUTDST32(Dest, (ConstInt >> 32))
-	PUTDST32KNOWN(Dest, 0x0C7C1A7F)
+//00411A15 EB 0A                jmp         dyn_r4300i_slti+5Bh (00411a21)
+//0040E296 A3 84 2C 6B 00       mov         [RTAddr],eax
+//0040E296 A3 84 2C 6B 00       mov         [RTAddrPlus4],eax
+
+	PUTDST16KNOWN(Dest, 0xC033)
+	PUTDST16KNOWN(Dest, 0x3D81)			PUTDST32(Dest, RSAddr+4)	PUTDST32(Dest, (ConstInt >> 32))
+
+	NearJumpConditionLabel8(Dest, LabelTwo, JG_NEAR)
+	PrevLabelTwo = (uint32)Dest;
+	NearJumpConditionLabel8(Dest, LabelOne, JL_NEAR)
+	PrevLabelOne = (uint32)Dest;
 
 	PUTDST16KNOWN(Dest, 0x3D81)				PUTDST32(Dest, RSAddr)		PUTDST32(Dest, (uint32)ConstInt)
-	PUTDST32KNOWN(Dest, 0x05C70C73)			PUTDST32(Dest, RTAddr)		PUTDST32KNOWN(Dest, 0x1)
+	NearJumpConditionLabel8(Dest, LabelThree, JAE_NEAR)
+	PrevLabelThree = (uint32)Dest;
 
-	PUTDST32KNOWN(Dest, 0x05C70AEB)			PUTDST32(Dest, RTAddr)		PUTDST32KNOWN(Dest, 0x0)
-	PUTDST16KNOWN(Dest, 0x05C7)				PUTDST32(Dest, RTAddrPlus4)	PUTDST32KNOWN(Dest, 0x0)
+*LabelOne = (uint8)(Dest - PrevLabelOne);		
+	PUTDST16KNOWN(Dest, 0x05C7)			PUTDST32(Dest, RTAddr)		PUTDST32KNOWN(Dest, 0x1)
+	JumpLocal8(Dest, LabelFour)
+	PrevLabelFour = (uint32)Dest;
 
-  #endif
+*LabelTwo = (uint8)(Dest - PrevLabelTwo);
+*LabelThree = (uint8)(Dest - PrevLabelThree);
+
+	PUTDST8KNOWN(Dest, 0xA3) PUTDST32(Dest, RTAddr)
+
+*LabelFour = (uint8)(Dest - PrevLabelFour);
+
+	PUTDST8KNOWN(Dest, 0xA3) PUTDST32(Dest, RTAddrPlus4)
+
 	return(Dest);
 }
 
@@ -786,14 +939,15 @@ RETURN_TYPE dyn_r4300i_slti(OP_PARAMS)
 
 RETURN_TYPE dyn_r4300i_sltiu(OP_PARAMS)
 {
-#ifdef WINDEBUG_1964
-  INTERPRET(r4300i_sltiu)
-#else
-	uint64 Const64		= (uint64)(_int64)OFFSET_IMMEDIATE;
+	uint64 ConstInt		= (uint64)(_int64)OFFSET_IMMEDIATE;
 	uint32 RSAddr		= (uint32)&GPR[RS_BASE_FMT];
 	uint32 RTAddr		= (uint32)&GPR[RT_FT];
 	uint32 RTAddrPlus4	= RTAddr+4;
+	
+	uint8* LabelOne, *LabelTwo, *LabelThree, *LabelFour;
+	uint32 PrevLabelOne, PrevLabelTwo, PrevLabelThree, PrevLabelFour;
 
+//0040E294 33 C0                xor         eax,eax
 //0041A797 81 3D 84 7A 4A 00 11 cmp         dword ptr [_GPR+4 (004a7a84)],11111111h
 //0041A7A1 77 1A                ja          dyn_r4300i_sltiu+47h (0041a7c7)
 //0041A7A3 72 0C                jb          dyn_r4300i_sltiu+31h (0041a7b1)
@@ -801,18 +955,35 @@ RETURN_TYPE dyn_r4300i_sltiu(OP_PARAMS)
 //0041A7AF 73 0C                jae         dyn_r4300i_sltiu+47h (0041a7c7)
 //0041A7B1 C7 05 90 7A 4A 00 01 mov         dword ptr [_GPR+10h (004a7a90)],1
 //0041A7C5 EB 0A                jmp         dyn_r4300i_sltiu+5Bh (0041a7db)
-//0041A7C7 C7 05 90 7A 4A 00 00 mov         dword ptr [_GPR+10h (004a7a90)],0
-//0041A7D1 C7 05 94 7A 4A 00 00 mov         dword ptr [_GPR+14h (004a7a94)],0
+//0040E296 A3 84 2C 6B 00       mov         [RTAddr],eax
+//0040E296 A3 84 2C 6B 00       mov         [RTAddrPlus4],eax
 
-	PUTDST16KNOWN(Dest, 0x3D81)			PUTDST32(Dest, RSAddr+4)	PUTDST32(Dest, (uint32)(Const64 >> 32))
-	PUTDST32KNOWN(Dest, 0x0C721A77)	
-	PUTDST16KNOWN(Dest, 0x3D81)			PUTDST32(Dest, RSAddr)		PUTDST32(Dest, (uint32)(Const64))
-	
-	PUTDST32KNOWN(Dest, 0x05C70C73)		PUTDST32(Dest, RTAddr)		PUTDST32KNOWN(Dest, 0x1)
+	PUTDST16KNOWN(Dest, 0xC033)
+	PUTDST16KNOWN(Dest, 0x3D81)			PUTDST32(Dest, RSAddr+4)	PUTDST32(Dest, (ConstInt >> 32))
 
-	PUTDST32KNOWN(Dest, 0x05C70AEB)		PUTDST32(Dest, RTAddr)		PUTDST32KNOWN(Dest, 0x0)
-	PUTDST16KNOWN(Dest, 0x05C7)			PUTDST32(Dest, RTAddrPlus4)	PUTDST32KNOWN(Dest, 0x0)
-#endif
+	NearJumpConditionLabel8(Dest, LabelTwo, JA_NEAR)
+	PrevLabelTwo = (uint32)Dest;
+	NearJumpConditionLabel8(Dest, LabelOne, JB_NEAR)
+	PrevLabelOne = (uint32)Dest;
+
+	PUTDST16KNOWN(Dest, 0x3D81)				PUTDST32(Dest, RSAddr)		PUTDST32(Dest, (uint32)ConstInt)
+	NearJumpConditionLabel8(Dest, LabelThree, JAE_NEAR)
+	PrevLabelThree = (uint32)Dest;
+
+*LabelOne = (uint8)(Dest - PrevLabelOne);		
+	PUTDST16KNOWN(Dest, 0x05C7)			PUTDST32(Dest, RTAddr)		PUTDST32KNOWN(Dest, 0x1)
+	JumpLocal8(Dest, LabelFour)
+	PrevLabelFour = (uint32)Dest;
+
+*LabelTwo = (uint8)(Dest - PrevLabelTwo);
+*LabelThree = (uint8)(Dest - PrevLabelThree);
+
+	PUTDST8KNOWN(Dest, 0xA3) PUTDST32(Dest, RTAddr)
+
+*LabelFour = (uint8)(Dest - PrevLabelFour);
+
+	PUTDST8KNOWN(Dest, 0xA3) PUTDST32(Dest, RTAddrPlus4)
+
 	return(Dest);
 }
 
@@ -820,13 +991,13 @@ RETURN_TYPE dyn_r4300i_sltiu(OP_PARAMS)
 
 RETURN_TYPE dyn_r4300i_sltu(OP_PARAMS)
 {
-#ifdef WINDEBUG_1964
-	INTERPRET(r4300i_sltu)
-#else
 	uint32 RSAddr		= (uint32)&GPR[RS_BASE_FMT];
 	uint32 RTAddr		= (uint32)&GPR[RT_FT];
 	uint32 RDAddr		= (uint32)&GPR[RD_FS];
 	uint32 RDAddrPlus4	= RDAddr+4;
+	
+	uint8* LabelOne, *LabelTwo, *LabelThree, *LabelFour;
+	uint32 PrevLabelOne, PrevLabelTwo, PrevLabelThree, PrevLabelFour;
 	
 //0041A6C9 A1 84 7A 4A 00       mov         eax,[_GPR+4 (004a7a84)]
 //0041A6CE 3B 05 94 7A 4A 00    cmp         eax,dword ptr [_GPR+14h (004a7a94)]
@@ -837,21 +1008,92 @@ RETURN_TYPE dyn_r4300i_sltu(OP_PARAMS)
 //0041A6E4 73 16                jae         dyn_r4300i_sltu+3Ch (0041a6fc)
 //0041A6E6 C7 05 80 7B 4A 00 01 mov         dword ptr [GPR+XX (004a7b80)],1
 //0041A6FA EB 14                jmp         dyn_r4300i_sltu+50h (0041a710)
-//0041A6FC C7 05 80 7B 4A 00 00 mov         dword ptr [GPR+XX (004a7b80)],0
-//0041A706 C7 05 84 7B 4A 00 00 mov         dword ptr [GPR+XX+4 (004a7b84)],0
+//0040E296 A3 84 2C 6B 00       mov         [RDAddr],eax
+//0040E296 A3 84 2C 6B 00       mov         [RDAddrPlus4],eax
 
 	PUTDST8KNOWN(Dest, 0xA1)			PUTDST32(Dest, RSAddr+4)
 	PUTDST16KNOWN(Dest, 0x053B)			PUTDST32(Dest, RTAddr+4)
-	PUTDST32KNOWN(Dest, 0x0E721C77)		
 
+	NearJumpConditionLabel8(Dest, LabelTwo, JA_NEAR)
+	PrevLabelTwo = (uint32)Dest;
+	NearJumpConditionLabel8(Dest, LabelOne, JB_NEAR)
+	PrevLabelOne = (uint32)Dest;
+	
 	PUTDST16KNOWN(Dest, 0x0D8B)			PUTDST32(Dest, RSAddr)
 	PUTDST16KNOWN(Dest, 0x0D3B)			PUTDST32(Dest, RTAddr)
 
-	PUTDST32KNOWN(Dest, 0x05C70C73)		PUTDST32(Dest, RDAddr)			PUTDST32KNOWN(Dest, 0x1)
+	NearJumpConditionLabel8(Dest, LabelThree, JAE_NEAR)
+	PrevLabelThree = (uint32)Dest;
 
-	PUTDST32KNOWN(Dest, 0x05C70AEB)		PUTDST32(Dest, RDAddr)			PUTDST32KNOWN(Dest, 0x0)
-	PUTDST16KNOWN(Dest, 0x05C7)			PUTDST32(Dest, RDAddrPlus4)		PUTDST32KNOWN(Dest, 0x0)
-#endif
+*LabelOne = (uint8)(Dest - PrevLabelOne);
+
+	PUTDST16KNOWN(Dest, 0x05C7)			PUTDST32(Dest, RDAddr)			PUTDST32KNOWN(Dest, 0x1)
+	JumpLocal8(Dest, LabelFour)
+	PrevLabelFour = (uint32)Dest;
+
+*LabelTwo = (uint8)(Dest - PrevLabelTwo);
+*LabelThree = (uint8)(Dest - PrevLabelThree);
+
+	PUTDST16KNOWN(Dest, 0xC033)	PUTDST8KNOWN(Dest, 0xA3) PUTDST32(Dest, RDAddr)
+
+*LabelFour = (uint8)(Dest - PrevLabelFour);		
+
+	PUTDST16KNOWN(Dest, 0xC033)	PUTDST8KNOWN(Dest, 0xA3) PUTDST32(Dest, RDAddrPlus4)
+
+	return(Dest);
+}
+
+//---------------------------------------------------------------------------------------
+
+RETURN_TYPE dyn_r4300i_slt(OP_PARAMS)		{
+	uint32 RSAddr		= (uint32)&GPR[RS_BASE_FMT];
+	uint32 RTAddr		= (uint32)&GPR[RT_FT];
+	uint32 RDAddr		= (uint32)&GPR[RD_FS];
+	uint32 RDAddrPlus4	= RDAddr+4;
+	
+	uint8* LabelOne, *LabelTwo, *LabelThree, *LabelFour;
+	uint32 PrevLabelOne, PrevLabelTwo, PrevLabelThree, PrevLabelFour;
+	
+//0041A6C9 A1 84 7A 4A 00       mov         eax,[_GPR+4 (004a7a84)]
+//0041A6CE 3B 05 94 7A 4A 00    cmp         eax,dword ptr [_GPR+14h (004a7a94)]
+//0041A6D4 77 1C                ja          dyn_r4300i_sltu+3Ch (0041a6fc)
+//0041A6D6 72 0E                jb          dyn_r4300i_sltu+26h (0041a6e6)
+//0041A6D8 8B 0D 80 7A 4A 00    mov         ecx,dword ptr [_GPR (004a7a80)]
+//0041A6DE 3B 0D 90 7A 4A 00    cmp         ecx,dword ptr [_GPR+10h (004a7a90)]
+//0041A6E4 73 16                jae         dyn_r4300i_sltu+3Ch (0041a6fc)
+//0041A6E6 C7 05 80 7B 4A 00 01 mov         dword ptr [GPR+XX (004a7b80)],1
+//0041A6FA EB 14                jmp         dyn_r4300i_sltu+50h (0041a710)
+//0040E296 A3 84 2C 6B 00       mov         [RDAddr],eax
+//0040E296 A3 84 2C 6B 00       mov         [RDAddrPlus4],eax
+
+	PUTDST8KNOWN(Dest, 0xA1)			PUTDST32(Dest, RSAddr+4)
+	PUTDST16KNOWN(Dest, 0x053B)			PUTDST32(Dest, RTAddr+4)
+
+	NearJumpConditionLabel8(Dest, LabelTwo, JG_NEAR)
+	PrevLabelTwo = (uint32)Dest;
+	NearJumpConditionLabel8(Dest, LabelOne, JL_NEAR)
+	PrevLabelOne = (uint32)Dest;
+	
+	PUTDST16KNOWN(Dest, 0x0D8B)			PUTDST32(Dest, RSAddr)
+	PUTDST16KNOWN(Dest, 0x0D3B)			PUTDST32(Dest, RTAddr)
+
+	NearJumpConditionLabel8(Dest, LabelThree, JAE_NEAR)
+	PrevLabelThree = (uint32)Dest;
+
+*LabelOne = (uint8)(Dest - PrevLabelOne);
+
+	PUTDST16KNOWN(Dest, 0x05C7)			PUTDST32(Dest, RDAddr)			PUTDST32KNOWN(Dest, 0x1)
+	JumpLocal8(Dest, LabelFour)
+	PrevLabelFour = (uint32)Dest;
+
+*LabelTwo = (uint8)(Dest - PrevLabelTwo);
+*LabelThree = (uint8)(Dest - PrevLabelThree);
+
+	PUTDST16KNOWN(Dest, 0xC033)	PUTDST8KNOWN(Dest, 0xA3) PUTDST32(Dest, RDAddr)
+
+*LabelFour = (uint8)(Dest - PrevLabelFour);		
+	PUTDST16KNOWN(Dest, 0xC033)	PUTDST8KNOWN(Dest, 0xA3) PUTDST32(Dest, RDAddrPlus4)
+
 	return(Dest);
 }
 
@@ -873,41 +1115,6 @@ RETURN_TYPE dyn_r4300i_srav(OP_PARAMS)
 	
 	PUTDST16KNOWN(Dest, 0xF8D3)
 	CDQ_STORE(Dest, RDAddr)
-	return(Dest);
-}
-
-//---------------------------------------------------------------------------------------
-
-RETURN_TYPE dyn_r4300i_slt(OP_PARAMS)		{
-
-	uint32 RSAddr = (uint32)&GPR[RS_BASE_FMT];
-	uint32 RTAddr = (uint32)&GPR[RT_FT];
-	uint32 RDAddr = (uint32)&GPR[RD_FS];
-	uint32 RDAddrPlus4 = RDAddr + 4;
-
-//	004260A9 A1 E4 51 4B 00       mov         eax,[_GPR+4 (004b51e4)]
-//	004260AE 3B 05 EC 51 4B 00    cmp         eax,dword ptr [_GPR+0Ch (004b51ec)]
-//	004260B4 7F 1C                jg          r4300i_slt+3Ch (004260dc)
-//	004260B6 7C 0E                jl          r4300i_slt+26h (004260c6)
-//	004260B8 8B 0D E0 51 4B 00    mov         ecx,dword ptr [_GPR (004b51e0)]
-//	004260BE 3B 0D E8 51 4B 00    cmp         ecx,dword ptr [_GPR+8 (004b51e8)]
-//	004260C4 73 0C                jae         r4300i_slt+3Ch (004260dc)
-//	004260C6 C7 05 F0 51 4B 00 01 mov         dword ptr [_GPR+10h (004b51f0)],1
-//	004260DA EB 0A                jmp         r4300i_slt+50h (004260f0)
-//	004260DC C7 05 F8 51 4B 00 00 mov         dword ptr [_GPR+18h (004b51f8)],0
-//	004260E6 C7 05 FC 51 4B 00 00 mov         dword ptr [_GPR+1Ch (004b51fc)],0
-
-	PUTDST8KNOWN(Dest, 0xA1)				PUTDST32(Dest, RSAddr+4)
-	PUTDST16KNOWN(Dest, 0x053B)				PUTDST32(Dest, RTAddr+4)
-	PUTDST32KNOWN(Dest, 0x0E7C1C7F)
-
-	PUTDST16KNOWN(Dest, 0x0D8B)				PUTDST32(Dest, RSAddr)
-	PUTDST16KNOWN(Dest, 0x0D3B)				PUTDST32(Dest, RTAddr)
-
-	PUTDST32KNOWN(Dest, 0x05C70C73)			PUTDST32(Dest, RDAddr)		PUTDST32KNOWN(Dest, 0x01)
-
-	PUTDST32KNOWN(Dest, 0x05C70AEB)			PUTDST32(Dest, RDAddr)		PUTDST32KNOWN(Dest, 0x00)
-	PUTDST16KNOWN(Dest, 0x05C7)				PUTDST32(Dest, RDAddrPlus4)	PUTDST32KNOWN(Dest, 0x00)
 	return(Dest);
 }
 
@@ -1159,19 +1366,46 @@ RETURN_TYPE dyn_r4300i_COP0_mtc0(OP_PARAMS)
 	uint32 rt_ft = RT_FT;
 	uint32 RTAddr     = (uint32)&GPR[rt_ft];
 
-//0041CDE9 A1 80 61 4A 00       mov         eax,[_GPR (004a6180)]
-//0041CDEE A3 E0 5E 4A 00       mov         [_COP0Reg (004a5ee0)],eax
 
-	if (rt_ft == 0) {
-		PUTDST16KNOWN(Dest, 0x05C7)
-		PUTDST32(Dest, RTAddr)
-		PUTDST32(Dest, 0x00000000)
+	if (rt_ft == 0)
+	{
+		//0040E294 33 C0                xor         eax,eax
+		//0040E296 A3 84 2C 6B 00       mov         [_GPR (006b2c84)],eax
+		
+		PUTDST16KNOWN(Dest, 0xC033)	PUTDST8KNOWN(Dest, 0xA3) PUTDST32(Dest, (uint32)&COP0Reg[RD_FS])
 	}
 	else
 	{
+		//0041CDE9 A1 80 61 4A 00       mov         eax,[_GPR (004a6180)]
+		//0041CDEE A3 E0 5E 4A 00       mov         [_COP0Reg (004a5ee0)],eax
+
 		PUTDST8KNOWN(Dest, 0xA1)		PUTDST32(Dest, RTAddr)
 		PUTDST8KNOWN(Dest, 0xA3)		PUTDST32(Dest, 	(uint32)&COP0Reg[RD_FS])
 	}
+	return(Dest);
+}
+
+
+//---------------------------------------------------------------------------------------
+
+RETURN_TYPE dyn_r4300i_COP1_mtc1(OP_PARAMS)
+{
+	uint32 rt_ft = RT_FT;
+	uint32 RTAddr     = (uint32)&GPR[rt_ft];
+
+	if (rt_ft == 0)
+	{
+		PUTDST16KNOWN(Dest, 0xC033)	PUTDST8KNOWN(Dest, 0xA3) PUTDST32(Dest, (uint32)&COP1Reg[RD_FS])
+	}
+	else
+	{
+		//0041D1D9 A1 E8 51 4B 00       mov         eax,[_GPR+8 (004b51e8)]
+		//0041D1DE A3 20 50 4B 00       mov         [_COP1Reg (004b5020)],eax
+		
+		PUTDST8KNOWN(Dest, 0xA1)		PUTDST32(Dest, RTAddr)
+		PUTDST8KNOWN(Dest, 0xA3)		PUTDST32(Dest, (uint32)&COP1Reg[RD_FS])
+	}
+
 	return(Dest);
 }
 
@@ -1273,19 +1507,6 @@ RETURN_TYPE dyn_r4300i_lui(OP_PARAMS)
 
 	PUTDST16KNOWN(Dest, 0x05C7)	PUTDST32(Dest, RTAddr)		PUTDST32(Dest, Imm[0])
 	PUTDST16KNOWN(Dest, 0x05C7)	PUTDST32(Dest, RTAddr+4)	PUTDST32(Dest, Imm[1])
-
-	return(Dest);
-}
-
-//---------------------------------------------------------------------------------------
-
-RETURN_TYPE dyn_r4300i_COP1_mtc1(OP_PARAMS)
-{
-
-//0041D1D9 A1 E8 51 4B 00       mov         eax,[_GPR+8 (004b51e8)]
-//0041D1DE A3 20 50 4B 00       mov         [_COP1Reg (004b5020)],eax
-	PUTDST8KNOWN(Dest, 0xA1)		PUTDST32(Dest, (uint32)&GPR[RT_FT])
-	PUTDST8KNOWN(Dest, 0xA3)		PUTDST32(Dest, (uint32)&COP1Reg[RD_FS])
 
 	return(Dest);
 }
@@ -1623,12 +1844,13 @@ RETURN_TYPE dyn_r4300i_dsll32(OP_PARAMS)
 //0040C679 A1 20 21 A9 00       mov         eax,[_GPR (00a92120)]
 //0040C67E C1 E0 1F             shl         eax,1Fh
 //0040C681 A3 34 21 A9 00       mov         [_GPR+14h (00a92134)],eax
-//0040C686 C7 05 30 21 A9 00 00 mov         dword ptr [_GPR+10h (00a92130)],0
+//0040E294 33 C0                xor         eax,eax
+//0040E296 A3 84 2C 6B 00       mov         [_GPR (006b2c84)],eax
 
 	PUTDST8KNOWN(Dest, 0xA1)	PUTDST32(Dest, (uint32)&GPR[RT_FT])
 	PUTDST16KNOWN(Dest, 0xE0C1)	PUTDST8(Dest, SA_FD)
 	PUTDST8KNOWN(Dest, 0xA3)	PUTDST32(Dest, (uint32)&GPR[RD_FS]+4)
-	PUTDST16KNOWN(Dest, 0x05C7)	PUTDST32(Dest, (uint32)&GPR[RD_FS]  )	PUTDST32KNOWN(Dest, 0x00000000)
+	PUTDST16KNOWN(Dest, 0xC033)	PUTDST8KNOWN(Dest, 0xA3) PUTDST32(Dest, (uint32)&GPR[RD_FS])
 
 	return(Dest);
 }

@@ -5,7 +5,7 @@
 // 09/24/99 - gerrit - i've completely rewritten the controller code to fix some
 // weirdness and deal with eeproms
 
-#include <stdio.h>
+
 #include <windows.h>
 #include "controller.h"
 #include "globals.h"
@@ -148,13 +148,13 @@ void CheckControllers(void)
 					case RD_MEMPACK:
 						// temp hack to work around unsupported commands
 						//printf("PIF: ignoring unsupported mempack command\n");
-						(*pifWord) |= kPIFErr_noMemPack;
+//						(*pifWord) |= kPIFErr_noMemPack;
 						goto exit;
 						break;
 					case WR_MEMPACK:
 						// temp hack to work around unsupported commands
 						//printf("PIF: ignoring unsupported mempack command\n");
-						(*pifWord) |= kPIFErr_noMemPack;
+//						(*pifWord) |= kPIFErr_noMemPack;
 						goto exit;
 						break;
 					default:

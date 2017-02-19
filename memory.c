@@ -29,13 +29,10 @@ code comments are taken directly from anarko's n64toolkit with consent and are
 the property of anarko.
 */
 
-#define WIN32_LEAN_AND_MEAN
-#include <stdio.h>
 #include <windows.h>
 #include "globals.h"
 #include "r4300i.h"
 #include <memory.h>
-
 #include <process.h>
 #include <malloc.h>
 #include "interrupt.h"
@@ -136,13 +133,13 @@ void r4300i_Reset()
     memset(C1A1,    0, sizeof(C1A1)   );
     memset(C2A2,    0, sizeof(C2A2)   );
     memset(GIO_REG, 0, sizeof(GIO_REG));
-    memset(PIF,     0, sizeof(PIF)    );    
-    r4300i_Init();    
+    memset(PIF,     0, sizeof(PIF)    );
+    r4300i_Init();
 
     CPUdelayPC = 0;
 
     /* Copy boot code to SP_DMEM */
-    memcpy(SP_DMEM, ROM_Image, 0x1000);
+    memcpy((uint8*)&SP_DMEM, ROM_Image, 0x1000);
     pc = 0xA4000040;
 }
 
@@ -162,7 +159,6 @@ uint32 TranslateTLBAddress(uint32 address)
 
 		// skip unused entries
 		if (theTLB->valid == 0)								continue;
-
 		if ( ((theTLB->EntryLo0 | theTLB->EntryLo1)) == 0)	continue;
 
 		// compare upper bits

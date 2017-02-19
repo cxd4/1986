@@ -29,9 +29,10 @@
 #include "dynarec/dynarec.h"
 #include "interrupt.h"
 #include "r4300i.h"
-#include "win32/windebug.h"
 #include "win32/DLL_Video.h"
-#include "plugins.h"
+#ifdef WINDEBUG_1964
+#include "win32/windebug.h"
+#endif
 
 
 void RunTheInterpreter();
@@ -75,8 +76,7 @@ void RunTheInterpreter()
 	
 	SetThreadPriority(CPUThreadHandle, MY_THREAD_PRIORITY);
 
-	VIDEO_InitiateGFX(Gfx_Info);
-	VIDEO_RomOpen(); //This needs to be called before emulation..find out the initialization issue...
+	VIDEO_RomOpen();
 
 _NSAKEY:
 
@@ -102,8 +102,6 @@ _NSAKEY:
 	if (COP0Reg[COUNT] >= VI_INTERRUPTCOUNT)
 		Trigger_VIInterrupt();
 
-//	CheckForTimedEvents();
-
 	// check for pending interrupts
 	if ((COP0Reg[CAUSE] & COP0Reg[STATUS] & 0x0000FF00) != 0) {
 		if (((COP0Reg[STATUS] & 0x00000006)) == 0)
@@ -128,8 +126,8 @@ void (__cdecl RunTheDynamicRecompiler)(void *pVoid)
 	static uint8* Dest;
 
 	SetThreadPriority(CPUThreadHandle, MY_THREAD_PRIORITY);
-	VIDEO_InitiateGFX(Gfx_Info);
-	VIDEO_RomOpen(); //This needs to be called before emulation..find out the initialization issue...
+
+	VIDEO_RomOpen();
 
 	Dest = (uint8*)VirtualAlloc(NULL, 16*1024*1024, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 

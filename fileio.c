@@ -28,18 +28,14 @@ by my friend anarko and RSP info has been provided by zilmar :). Most source
 code comments are taken directly from anarko's n64toolkit with consent and are 
 the property of anarko.
 
-   This is version 0.4.9
+   This is version 0.5.0
    refer to readme.txt 
    for latest changes
 */
 
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "zlib/unzip.h"
 #include <direct.h>
 #include "globals.h"
@@ -48,11 +44,7 @@ the property of anarko.
 void ReadRomData(char* RomPath);
 void ReadZippedRomData(char* RomPath);
 void ByteSwap(uint32 Size, uint8* Image);
-
 int LoadGNUDistConditions(char* ConditionsBuf);
-
-
-void CleanUp();
 
 /* External functions */
 extern void DebuggerUI();
@@ -63,6 +55,7 @@ extern void InitMemoryLookupTables();
 void ReadRomData(char* RomPath)
 {
 	FILE* fp;
+	unsigned long gROMLength; //size in bytes of the ROM
 
 	if(stricmp(&RomPath[strlen(RomPath) - 4], ".zip") == 0)
 	{
@@ -71,13 +64,12 @@ void ReadRomData(char* RomPath)
 	}
 
 	free(ROM_Image);
-	
+
 	fp = fopen(RomPath, "rb");
 	rewind(fp);
 	fseek(fp, 0, SEEK_END);
 	gROMLength = ftell(fp);
-	
-	
+
     /* pad with zeros to fill the displacement */
 	if (((gROMLength & 0xFFFF)) == 0)
 		gAllocationLength = gROMLength;
@@ -92,7 +84,7 @@ void ReadRomData(char* RomPath)
     }
 
 	InitMemoryLookupTables();
-	
+
 	fseek(fp, 0, SEEK_SET); //set pointer to beginning of file
 	if( fp != NULL )   {
 		fread( ROM_Image, sizeof( uint8 ), gROMLength, fp );
@@ -100,7 +92,7 @@ void ReadRomData(char* RomPath)
 		ByteSwap(gAllocationLength, ROM_Image);
 
 		/* Copy boot code to SP_DMEM */
-		memcpy(SP_DMEM, ROM_Image, 0x1000);
+		memcpy((uint8*)&SP_DMEM, ROM_Image, 0x1000);
 	} else {
 		DisplayError( "File could not be opened." );
 		exit(0);
@@ -113,8 +105,8 @@ void ReadRomData(char* RomPath)
 
 void ReadZippedRomData(char* RomPath)
 {
-  unzFile fp;
-
+	unzFile fp;
+	unsigned long gROMLength; //size in bytes of the ROM
 	free(ROM_Image);
 	
   if(fp = unzOpen(RomPath))
@@ -152,9 +144,9 @@ void ReadZippedRomData(char* RomPath)
 				unzClose(fp);
 				exit( 0 );
             }
-            
+
             InitMemoryLookupTables();
-            
+
             if(unzOpenCurrentFile(fp)== UNZ_OK)
             {
 				if(unzReadCurrentFile(fp, ROM_Image, sizeof( uint8 ) * gROMLength) == (int)(sizeof( uint8 ) * gROMLength))
@@ -162,7 +154,7 @@ void ReadZippedRomData(char* RomPath)
 					ByteSwap(gAllocationLength, ROM_Image);
                 
 					/* Copy boot code to SP_DMEM */
-					memcpy(SP_DMEM, ROM_Image, 0x1000);
+					memcpy((uint8*)&SP_DMEM, ROM_Image, 0x1000);
 					unzClose(fp);
 					return;
 				}
@@ -193,10 +185,6 @@ void ReadZippedRomData(char* RomPath)
     }
     unzClose(fp);
   }
-}
-
-void CleanUp() {
-	free(ROM_Image);
 }
 
 //---------------------------------------------------------------------------------------
@@ -230,11 +218,12 @@ _LABEL2:
 			_asm {
 				sub         ebx,8
 			}								
-_LABEL3:					
+
 			_asm {								
 				cmp         ebx,0
 				je          _LABELEXIT
 			}
+_LABEL3:
 			_asm {
 				//Yup i copied this asm routine twice..to cut down on the looping by 50%
 				add         edx,4

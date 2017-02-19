@@ -21,14 +21,19 @@
  |  email      : schibo@emuhq.com                                               |
  |  paper mail :                                                                |
  |______________________________________________________________________________|
-*/
 
-/*
+
 The project is a direct documentation-to-code translation of the n64toolkit 
 by my friend anarko and RSP info has been provided by zilmar :). Most source
 code comments are taken directly from anarko's n64toolkit with consent and are 
 the property of anarko.
 */
+
+#ifdef WINDEBUG_1964
+
+#ifndef _WINDEBUG_H__1964_
+#define _WINDEBUG_H__1964_
+
 
 #include <windows.h>
 
@@ -84,3 +89,7 @@ extern void UpdateCOP2Vec4();
 
 extern void WinDynDebugPrintInstruction(unsigned __int32 Instruction);
 //char* tempStr; /* generic temporary string */
+
+#endif// _WINDEBUG_H__1964_
+
+#endif// WINDEBUG_1964

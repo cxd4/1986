@@ -29,8 +29,6 @@ code comments are taken directly from anarko's n64toolkit with consent and are
 the property of anarko.
 */
 
-#include <stdio.h>
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
 #include <memory.h>
@@ -38,6 +36,7 @@ the property of anarko.
 #include "globals.h"
 
 #ifdef DEBUG_COMMON
+#include <stdio.h>
 extern void RefreshOpList(char *opcode);
 #endif
 extern uint32 CalculateAddress(uint32 Addr);

@@ -29,19 +29,18 @@ code comments are taken directly from anarko's n64toolkit with consent and are
 the property of anarko.
 */
 
-int EMU_STATUS;
-#define PAUSED  1
-
 #include <windows.h>
 #include <commdlg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <direct.h>
 #include "wingui.h"
+#include <shellapi.h>
 #include "..\globals.h"
-#include "plugins.h"
 #include "DLL_Video.h"
 #include "DLL_Audio.h"
 #include "DLL_Input.h"
+#include "registry.h"
 
 extern HANDLE CPUThreadHandle;
 
@@ -52,19 +51,22 @@ int ActiveApp;
 #endif
 
 int repeat;
-char szBaseWindowTitle[] = "1964 0.4.9";
+char szBaseWindowTitle[] = "1964 0.5.0";
 
 extern void r4300i_Reset();
 extern void RunEmulator(unsigned _int32 WhichCore);
 extern BOOL CloseCPUThread();
+
+extern void ReadConfiguration();
+extern void WriteConfiguration();
+
 
 void Pause();
 void Kill();
 void Play();
 void Reset();
 void OpenROM();
-void SwitchVideoMode();
-
+void GetPluginDir(char* Directory);
 
 HACCEL hAccelTable = (HACCEL)"WINGUI_ACC";
 BOOL fFreeResult;
@@ -73,15 +75,49 @@ BOOL fFreeResult;
 
 void LoadPlugins()
 {
-	LoadAudioPlugin("steb_aud");
-	LoadVideoPlugin("1964ogl");
-//	LoadVideoPlugin("NooTe_D3D");
-  LoadInputPlugin("NooTe_DI");
+	char AudioPath[_MAX_PATH];
+	char VideoPath[_MAX_PATH];
+	char InputPath[_MAX_PATH];
+	char StartPath[_MAX_PATH];
+
+	GetPluginDir(StartPath);
+	
+	strcpy(AudioPath, StartPath);
+	if (strcmp(gRegSettings.AudioPlugin, "") == 0)
+	{
+		strcpy(gRegSettings.AudioPlugin, "steb_aud.dll");
+		strcat(AudioPath, gRegSettings.AudioPlugin);
+	}
+	else
+		strcat(AudioPath, gRegSettings.AudioPlugin);
+	LoadAudioPlugin(AudioPath);
+
+	strcpy(VideoPath, StartPath);
+	if (strcmp(gRegSettings.VideoPlugin, "") == 0)
+	{
+		strcpy(gRegSettings.VideoPlugin, "1964ogl.dll");
+		strcat(VideoPath, gRegSettings.VideoPlugin);
+	}
+	else
+		strcat(VideoPath, gRegSettings.VideoPlugin);
+	LoadVideoPlugin(VideoPath);
+	
+	
+	strcpy(InputPath, StartPath);
+	if (strcmp(gRegSettings.InputPlugin, "") == 0)
+	{
+		strcpy(gRegSettings.InputPlugin, "NooTe_DI.dll");
+		strcat(InputPath, gRegSettings.InputPlugin);
+	}
+	else											
+		strcat(InputPath, gRegSettings.InputPlugin);
+	LoadInputPlugin(InputPath);
 
 	if (!(AUDIO_Initialize)(hwnd))	DisplayError("No sound availiable");
 }
 
 //---------------------------------------------------------------------------------------
+
 
 void FreePlugins()
 {
@@ -116,7 +152,7 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCm
 
 	hwnd = InitWin98UI(hInstance, nCmdShow);
 		if (hwnd == NULL)
-			exit(1);
+			DisplayError("Could not get a windows handle.");
 		
 
 	ShowWindow(hwnd, nCmdShow);
@@ -124,12 +160,20 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCm
 
 	Gfx_Info.hWnd					= hwnd;
 	Gfx_Info.hStatusBar				= NULL;
+	Gfx_Info.MemoryBswaped			= TRUE;
 	Gfx_Info.RDRAM					= (__int8*)&RDRAM[0];
-	Gfx_Info.DMEM					= (__int8*)&SP_REG[0];
-	Gfx_Info.MI_INTR_RG				= (unsigned __int32*)&MI_INTR_REG_R;
-	Gfx_Info.VI_STATUS_RG			= &VI_STATUS_REG;
-	Gfx_Info.VI_ORIGIN_RG			= &VI_ORIGIN_REG;
-	Gfx_Info.VI_WIDTH_RG			= &VI_WIDTH_REG;
+	Gfx_Info.DMEM					= (__int8*)&SP_DMEM;
+	Gfx_Info.IMEM					= (__int8*)&SP_IMEM;
+	Gfx_Info.MI_INTR_RG				= &MI_INTR_REG_R;
+	Gfx_Info.DPC_START_RG			= &DPC_START_REG;
+	Gfx_Info.DPC_END_RG				= &DPC_END_REG;
+	Gfx_Info.DPC_CURRENT_RG			= &DPC_CURRENT_REG;
+	Gfx_Info.DPC_STATUS_RG			= &DPC_STATUS_REG;
+	Gfx_Info.DPC_CLOCK_RG			= &DPC_CLOCK_REG;
+	Gfx_Info.DPC_BUFBUSY_RG			= &DPC_BUFBUSY_REG;
+	Gfx_Info.DPC_PIPEBUSY_RG		= &DPC_PIPEBUSY_REG;
+	Gfx_Info.DPC_TMEM_RG			= &DPC_TMEM_REG;
+
 	Gfx_Info.VI_STATUS_RG			= &VI_STATUS_REG;
 	Gfx_Info.VI_ORIGIN_RG			= &VI_ORIGIN_REG;
 	Gfx_Info.VI_WIDTH_RG			= &VI_WIDTH_REG;
@@ -147,9 +191,11 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCm
 	Gfx_Info.CheckInterrupts		= CheckInterrupts;
 
 	r4300i_Init();
-	LoadPlugins();
+	ReadConfiguration();				//System registry settings
 
-	INPUT_Initialize(hwnd, hInstance);
+	LoadPlugins();
+	INPUT_Initialize(hwnd, hInst);	//Input DLL Initialization
+	VIDEO_InitiateGFX(Gfx_Info);		//GFX DLL Initialization
 
 	Rom_Loaded = TRUE;
 
@@ -207,7 +253,7 @@ BOOL WinLoadRom()
     ofn.nFilterIndex		= 1;
     ofn.lpstrFile			= szFileName;
     ofn.nMaxFile			= MAXFILENAME;
-    ofn.lpstrInitialDir		= AppPath;
+    ofn.lpstrInitialDir		= gRegSettings.ROMPath;
     ofn.lpstrFileTitle		= szFileTitle;
     ofn.nMaxFileTitle		= MAXFILENAME;
     ofn.lpstrTitle			= "Open Image";
@@ -232,6 +278,8 @@ BOOL WinLoadRom()
 	MessageBox(hwnd, "Rom Loaded. Click the Rom->Play menu to begin\n", "OK!",MB_OK);
 #endif
 
+	_getcwd( gRegSettings.ROMPath, PATH_LEN );
+	WriteConfiguration();
 	return TRUE;	
 }
 
@@ -296,16 +344,109 @@ HWND InitWin98UI(HANDLE hInstance, int nCmdShow)
 
 //---------------------------------------------------------------------------------------
 
+void GetPluginDir(char* Directory) {
+	char path_buffer[_MAX_PATH], drive[_MAX_DRIVE], dir[_MAX_DIR];
+	char fname[_MAX_FNAME],ext[_MAX_EXT];
+	GetModuleFileName(NULL,path_buffer,sizeof(path_buffer));
+	_splitpath(path_buffer,drive,dir,fname,ext);
+	strcpy(Directory,drive);
+	strcat(Directory,dir);
+	strcat(Directory,"Plugin\\");
+}
+
+//---------------------------------------------------------------------------------------
+
+void   (__cdecl* GetDllInfo )( PLUGIN_INFO *) = NULL;
+void   (__cdecl* DLL_About)(HWND) = NULL;
 LRESULT APIENTRY PluginsDialog(HWND hDlg, unsigned message, WORD wParam, LONG lParam)
 {
+	PLUGIN_INFO Plugin_Info;
+	HINSTANCE	hinstLib = NULL;
+	WIN32_FIND_DATA libaa;
+	int ComboItemNum;
+
+	int h=0, i=0, j=0, bDONE = 0;
+
+	HANDLE FindFirst;
+	char libname[300];
+	char PluginName[300];
+	char StartPath[_MAX_PATH];
+	char SearchPath[_MAX_PATH];
+	int index;
+
+	GetPluginDir(StartPath);
+	strcpy(SearchPath, StartPath);
+	strcat(SearchPath, "*.dll");
+
 	switch (message) {
-        case WM_INITDIALOG:
+        int KeepLooping = 1;
+	
+		case WM_INITDIALOG:
+			FindFirst = FindFirstFile(SearchPath, &libaa);
+
+			if (FindFirst == INVALID_HANDLE_VALUE)
+			{ 
+				DisplayError("No plugins detected. Plugins belong in Plugin subfolder of 1964 folder."); 
+				return(FALSE); 
+			}
+			/* Reset combo boxes content */
+			SendDlgItemMessage(hDlg, IDC_COMBO_VIDEO, CB_RESETCONTENT, 0, 0);
+			SendDlgItemMessage(hDlg, IDC_COMBO_INPUT, CB_RESETCONTENT, 0, 0);
+			SendDlgItemMessage(hDlg, IDC_COMBO_AUDIO, CB_RESETCONTENT, 0, 0);
+
+			/* Populate combo boxes with Plugin Info */
+			while (KeepLooping)
+			{
+				strcpy(PluginName, StartPath);
+				strcat(PluginName, libaa.cFileName);
+				hinstLib = LoadLibrary(PluginName);
+				
+				GetDllInfo = (void   (__cdecl*)(PLUGIN_INFO *))	GetProcAddress(hinstLib, "GetDllInfo");
+				GetDllInfo(&Plugin_Info);
+
+				switch (Plugin_Info.Type)
+				{
+					case PLUGIN_TYPE_GFX		: 
+						index = SendDlgItemMessage(hDlg, IDC_COMBO_VIDEO, CB_ADDSTRING, 0, Plugin_Info.Name);
+						if ( _stricmp(libaa.cFileName, gRegSettings.VideoPlugin) == 0 )
+							SendDlgItemMessage(hDlg, IDC_COMBO_VIDEO, CB_SETCURSEL, (WPARAM)index, (LPARAM)0);
+						break;
+
+					case PLUGIN_TYPE_CONTROLLER :
+						index = SendDlgItemMessage(hDlg, IDC_COMBO_INPUT, CB_ADDSTRING, 0, Plugin_Info.Name);
+						if ( _stricmp(libaa.cFileName, gRegSettings.InputPlugin) == 0 )
+							SendDlgItemMessage(hDlg, IDC_COMBO_INPUT, CB_SETCURSEL, (WPARAM)index, (LPARAM)0);
+						break;
+
+					case PLUGIN_TYPE_AUDIO		:
+						index = SendDlgItemMessage(hDlg, IDC_COMBO_AUDIO, CB_ADDSTRING, 0, Plugin_Info.Name);
+						if ( _stricmp(libaa.cFileName, gRegSettings.AudioPlugin) == 0 )
+							SendDlgItemMessage(hDlg, IDC_COMBO_AUDIO, CB_SETCURSEL, (WPARAM)index, (LPARAM)0);
+						break;
+				
+				}
+
+			
+				FreeLibrary(libname);
+				hinstLib = NULL;
+				KeepLooping = FindNextFile(FindFirst, &libaa);
+				GetDllInfo = NULL;
+				*PluginName = NULL;
+			}
+
 			return (TRUE);
 
         case WM_COMMAND:
 			switch (wParam)
 			{
 				case IDOK:
+				{
+					WriteConfiguration(); 
+					EndDialog(hDlg, TRUE);
+					MessageBox(NULL, "If you have switched plugins, you will need to close 1964 now and open in again. Otherwise, the emu will wig out.", "Note: Please Restart 1964", MB_ICONINFORMATION);
+					LoadPlugins();
+					return (TRUE);
+				}
 				case IDCANCEL:
                 {
 					EndDialog(hDlg, TRUE);
@@ -313,12 +454,105 @@ LRESULT APIENTRY PluginsDialog(HWND hDlg, unsigned message, WORD wParam, LONG lP
 				}
 				case  IDC_DI_CONFIG: INPUT_DllConfig(hDlg);	break;
 				case  IDC_DI_ABOUT : INPUT_About(hDlg);		break;
+				case  IDC_DI_TEST  : INPUT_Test(hDlg);		break;
 
 				case IDC_VID_CONFIG: VIDEO_DllConfig(hDlg);	break;
 				case IDC_VID_ABOUT : VIDEO_About(hDlg);		break;
+				case IDC_VID_TEST  : VIDEO_Test(hDlg);		break;
+
+				case IDC_AUD_CONFIG: AUDIO_DllConfig(hDlg);	break;
+				case IDC_AUD_ABOUT : AUDIO_About(hDlg);		break;
+				case IDC_AUD_TEST  : AUDIO_Test(hDlg);		break;
 
             }
-            break;
+		
+		case CBN_SELCHANGE: 
+			FreeLibrary(libname);
+			ComboItemNum = SendDlgItemMessage(hDlg, IDC_COMBO_VIDEO, CB_GETCURSEL, 0, 0);
+			FindFirst = FindFirstFile(SearchPath, &libaa);
+			while (bDONE == 0)
+			{
+				strcpy(PluginName, StartPath);
+				strcat(PluginName, libaa.cFileName);
+				hinstLib = LoadLibrary(PluginName);
+				GetDllInfo = (void   (__cdecl*)(PLUGIN_INFO *))	GetProcAddress(hinstLib, "GetDllInfo");
+				GetDllInfo(&Plugin_Info);
+				switch (Plugin_Info.Type)
+				{
+				case PLUGIN_TYPE_GFX		: 
+					VIDEO_Test		= (void (__cdecl*)(HWND))	GetProcAddress(hinstLib, "DllTest"); 
+					VIDEO_About		= (void (__cdecl*)(HWND))	GetProcAddress(hinstLib, "DllAbout"); 
+					VIDEO_DllConfig	= (void (__cdecl*)(HWND))	GetProcAddress(hinstLib, "DllConfig");
+					h++;
+					break;
+				}
+			
+				if (h > ComboItemNum) bDONE = 1;
+				else FindNextFile(FindFirst, &libaa);
+				GetDllInfo = NULL;
+				hinstLib = NULL;
+			}
+			bDONE = 0;
+			strcpy(gRegSettings.VideoPlugin, libaa.cFileName);
+
+
+
+			FreeLibrary(libname);
+			ComboItemNum = SendDlgItemMessage(hDlg, IDC_COMBO_AUDIO, CB_GETCURSEL, 0, 0);
+			FindFirst = FindFirstFile(SearchPath, &libaa);
+			while (bDONE == 0)
+			{
+				strcpy(PluginName, StartPath);
+				strcat(PluginName, libaa.cFileName);
+				hinstLib = LoadLibrary(PluginName);
+				GetDllInfo = (void   (__cdecl*)(PLUGIN_INFO *))	GetProcAddress(hinstLib, "GetDllInfo");
+				GetDllInfo(&Plugin_Info);
+				switch (Plugin_Info.Type)
+				{
+				case PLUGIN_TYPE_AUDIO	    : 
+					AUDIO_Test		= (void (__cdecl*)(HWND))	GetProcAddress(hinstLib, "DllTest"); 
+					AUDIO_About		= (void (__cdecl*)(HWND))	GetProcAddress(hinstLib, "DllAbout"); 
+					AUDIO_DllConfig	= (void (__cdecl*)(HWND))	GetProcAddress(hinstLib, "DllConfig");
+					j++;
+					break;
+				}
+				if (j > ComboItemNum) bDONE = 1;
+				else FindNextFile(FindFirst, &libaa);
+				GetDllInfo = NULL;
+				hinstLib = NULL;
+			}
+			bDONE = 0;
+			strcpy(gRegSettings.AudioPlugin, libaa.cFileName);
+
+
+			
+			FreeLibrary(libname);
+			ComboItemNum = SendDlgItemMessage(hDlg, IDC_COMBO_INPUT, CB_GETCURSEL, 0, 0);
+			FindFirst = FindFirstFile(SearchPath, &libaa);
+			while (bDONE == 0)
+			{
+				strcpy(PluginName, StartPath);
+				strcat(PluginName, libaa.cFileName);
+				hinstLib = LoadLibrary(PluginName);
+				GetDllInfo = (void   (__cdecl*)(PLUGIN_INFO *))	GetProcAddress(hinstLib, "GetDllInfo");
+				GetDllInfo(&Plugin_Info);
+				switch (Plugin_Info.Type)
+				{
+				case PLUGIN_TYPE_CONTROLLER : 
+					INPUT_Test		= (void (__cdecl*)(HWND))	GetProcAddress(hinstLib, "DllTest"); 
+					INPUT_About		= (void (__cdecl*)(HWND))	GetProcAddress(hinstLib, "DllAbout");
+					INPUT_DllConfig	= (void (__cdecl*)(HWND))	GetProcAddress(hinstLib, "DllConfig");
+					i++;
+					break;
+				}
+				if (i > ComboItemNum) bDONE = 1;
+				else FindNextFile(FindFirst, &libaa);
+				GetDllInfo = NULL;
+				hinstLib = NULL;
+			}
+			strcpy(gRegSettings.InputPlugin, libaa.cFileName);
+
+			
     }
     return (FALSE);
 }
@@ -329,7 +563,7 @@ long FAR PASCAL MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 {
     static PAINTSTRUCT ps;
 	static int ok = 0;
-
+	RECT ClientRect;
 	switch (message) 
 	{
 		case WM_PAINT:
@@ -348,6 +582,16 @@ long FAR PASCAL MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 			if(INPUT_ApplicationSyncAcquire)
 				INPUT_ApplicationSyncAcquire(hWnd,ActiveApp);
 			break;
+
+		case WM_MOVE:
+			if (VIDEO_MoveScreen != NULL)
+			if (ok == 1)
+			{
+				GetClientRect(hwnd, &ClientRect);
+				VIDEO_MoveScreen(ClientRect.left, ClientRect.top);
+			}
+			ok = 1;
+
 
 		case WM_COMMAND:
             
@@ -369,8 +613,8 @@ long FAR PASCAL MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 				case IDM_800_600	: if(VIDEO_ExtraChangeResolution) VIDEO_ExtraChangeResolution(hWnd, 800, NULL); break;
 				case IDM_1024_768	: if(VIDEO_ExtraChangeResolution) VIDEO_ExtraChangeResolution(hWnd, 1024, NULL);break;
 				case IDM_1280_1024	: if(VIDEO_ExtraChangeResolution) VIDEO_ExtraChangeResolution(hWnd, 1280, NULL);break;
-				case IDM_PLUGINS	:	DialogBox(hInst, "PLUGINS", hWnd, (DLGPROC)PluginsDialog);			break;
-				case ID_CHECKWEB	:	system("explorer.exe http://www.emuhq.com/1964"); break;
+				case IDM_PLUGINS	: DialogBox(hInst, "PLUGINS", hWnd, (DLGPROC)PluginsDialog);			break;
+				case ID_CHECKWEB	: ShellExecute( hwnd, "open", "http://www.emuhq.com/1964", NULL, NULL, SW_MAXIMIZE); break;
 
 				// NooTe 22/07/99
 				case ID_CONFIGURE_VIDEO	:	VIDEO_DllConfig(hWnd);	break;
@@ -398,9 +642,10 @@ long FAR PASCAL MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 #ifdef WINDEBUG_1964
 					CloseDebugger();
 #endif
+
 				SuspendThread(CPUThreadHandle);
 				CloseHandle(CPUThreadHandle);
-				FreePlugins();
+				//FreePlugins();
 				PostQuitMessage(0);
 				break;
 			}
@@ -409,7 +654,7 @@ long FAR PASCAL MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		case WM_CLOSE:
 			SuspendThread(CPUThreadHandle);
 			CloseHandle(CPUThreadHandle);
-			FreePlugins();
+			//FreePlugins();
 			PostQuitMessage(0);
 			break;
         default:
@@ -423,7 +668,6 @@ long FAR PASCAL MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 void Pause() 
 {
 	SuspendThread(CPUThreadHandle);
-	EMU_STATUS = PAUSED;
 }
 
 //---------------------------------------------------------------------------------------

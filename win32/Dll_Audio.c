@@ -1,7 +1,6 @@
 #include <windows.h>
-
 #include "..\globals.h"
-
+#include "registry.h"
 #include "DLL_Audio.h"
 
 HINSTANCE	hinstLibAudio = NULL; 
@@ -14,6 +13,7 @@ int    (__cdecl* AUDIO_Initialize)(HWND) = NULL;
 void   (__cdecl* AUDIO_End)() = NULL;
 void   (__cdecl* AUDIO_PlaySnd)(unsigned __int8*, unsigned __int32*) = NULL;
 _int32 (__cdecl* AUDIO_TimeLeft)(unsigned char*) = NULL;
+void   (__cdecl* AUDIO_Test )(HWND) = NULL;
 void   (__cdecl* AUDIO_About)(HWND) = NULL;
 
 BOOL LoadAudioPlugin(char *libname)
@@ -47,43 +47,42 @@ BOOL LoadAudioPlugin(char *libname)
             AUDIO_End		= (void     (__cdecl*)(void))		GetProcAddress(hinstLibAudio, "End");
             AUDIO_PlaySnd	= (void     (__cdecl*)(unsigned __int8*, unsigned __int32*))GetProcAddress(hinstLibAudio, "PlaySnd");
             AUDIO_TimeLeft	= (__int32  (__cdecl*)(UCHAR*))		GetProcAddress(hinstLibAudio, "TimeLeft");
+			AUDIO_Test		= (void		(__cdecl*)(HWND))		GetProcAddress(hinstLibAudio, "DllTest");
 			AUDIO_About     = (void     (__cdecl*)(HWND))		GetProcAddress(hinstLibAudio, "DllAbout");
 #if 0
           }
           else
           {
-            DisplayError("%s dll don't have good memory setting !", libname, Plugin_Info.Version);
-            CloseAudioPlugin();
+            DisplayError("%s has an incompatible memory config (Needs dword swapped).", libname, Plugin_Info.Version);
             return FALSE;
           }
 #endif
         }
         else
         {
-          DisplayError("%s dll is a %d version of input plugin. But this emulator need a version 1 !", libname, Plugin_Info.Version);
-          CloseAudioPlugin();
+          DisplayError("%s dll is a %d version of audio plugin spec. 1964 requires version 1.", libname, Plugin_Info.Version);
           return FALSE;
         }
       }
       else
       {
-        DisplayError("%s dll ins't a input plugin !", libname);
+        DisplayError("%s dll is not an audio plugin.", libname);
         CloseAudioPlugin();
         return FALSE;
       }
     }
     else
     {
-      DisplayError("%s dll seem to be a wrong input dll !", libname);
-      CloseAudioPlugin();
+      DisplayError("%s is a bad audio dll.", libname);
       return FALSE;
     }
 	}
 	else
 	{
-		DisplayError("%s dll not found. Please check your directory for the existence of this file.", libname);
-		CloseAudioPlugin();
-    return FALSE;
+		DisplayError("%s not found. Please check your directory for the existence of this file and use DirectX 7.", libname);
+		strcpy(gRegSettings.AudioPlugin, "");
+		WriteConfiguration();
+		return FALSE;
 	}
 
   return TRUE;

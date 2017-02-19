@@ -1,21 +1,20 @@
 #include <windows.h>
-
 #include "..\globals.h"
-
+#include "registry.h"
 #include "DLL_Video.h"
-
 
 HINSTANCE	hinstLibVideo = NULL;
 
 BOOL   (__cdecl* VIDEO_InitiateGFX)(GFX_INFO) = NULL;
-void   (__cdecl* VIDEO_ProcessDList)() = NULL;
+void   (__cdecl* VIDEO_ProcessDList)(void) = NULL;
 void   (__cdecl* VIDEO_RomOpen)(void) = NULL;
 void   (__cdecl* VIDEO_DllClose)() = NULL;
 void   (__cdecl* VIDEO_DllConfig)() = NULL;
 void   (__cdecl* VIDEO_UpdateScreen)() = NULL;
 void   (__cdecl* VIDEO_GetDllInfo )( PLUGIN_INFO *) = NULL;
+void   (__cdecl* VIDEO_Test )(HWND) = NULL;
 void   (__cdecl* VIDEO_About)(HWND) = NULL;
-
+void   (__cdecl* VIDEO_MoveScreen)(int, int) = NULL;
 void   (__cdecl* VIDEO_ExtraChangeResolution)(HWND, long, HWND) = NULL;
 
 BOOL LoadVideoPlugin(char* libname)
@@ -43,35 +42,35 @@ BOOL LoadVideoPlugin(char* libname)
 					VIDEO_RomOpen           = (void (__cdecl*)(void))       GetProcAddress(hinstLibVideo, "RomOpen");
 					VIDEO_ProcessDList		= (void (__cdecl*)(void))		GetProcAddress(hinstLibVideo, "ProcessDList");
 					VIDEO_UpdateScreen		= (void (__cdecl*)(void))		GetProcAddress(hinstLibVideo, "UpdateScreen");
+					VIDEO_Test				= (void (__cdecl*)(HWND))		GetProcAddress(hinstLibVideo, "DllTest");
 					VIDEO_About				= (void (__cdecl*)(HWND))		GetProcAddress(hinstLibVideo, "DllAbout");
+					VIDEO_MoveScreen		= (void (__cdecl*)(int, int))	GetProcAddress(hinstLibVideo, "MoveScreen");
 
 					VIDEO_ExtraChangeResolution= (void   (__cdecl*)(HWND, long, HWND)) GetProcAddress(hinstLibVideo, "ChangeWinSize");
 				}
 				else
 				{
 					DisplayError("%s dll is a %d version of gfx plugin. This emulator needs version 1!", libname, Plugin_Info.Version);
-					CloseVideoPlugin();
 					return FALSE;
 				}
 			} 
 			else 
 			{
 				DisplayError("%s dll ins't a gfx plugin !", libname);
-				CloseVideoPlugin();
 				return FALSE;
 			}
 		} 
 		else 
 		{
 			DisplayError("%s dll seem to be a wrong gfx dll !", libname);
-			CloseVideoPlugin();
 			return FALSE;
 		}
 	} 
 	else 
 	{
-		DisplayError("%s dll not found. Please check your directory for the existence of this file.", libname);
-		CloseVideoPlugin();
+		DisplayError("LoadVideoPlugin(): %s not found. Please check your directory for the existence of this file.", libname);
+		strcpy(gRegSettings.VideoPlugin, "");
+		WriteConfiguration();
 		return FALSE;
 	}
 

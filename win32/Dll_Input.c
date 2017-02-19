@@ -1,7 +1,6 @@
 #include <windows.h>
-
 #include "..\globals.h"
-
+#include "registry.h"
 #include "DLL_Input.h"
 
 
@@ -14,7 +13,9 @@ void   (__cdecl* INPUT_GetDllInfo)(PLUGIN_INFO *) = NULL;
 unsigned __int32 (__cdecl* INPUT_CheckController)(int controller) = NULL;
 BOOL   (__cdecl* INPUT_Initialize)(HWND,HINSTANCE) = NULL;
 void   (__cdecl* INPUT_ApplicationSyncAcquire)(HWND, int) = NULL;
+void   (__cdecl* INPUT_Test )(HWND) = NULL;
 void   (__cdecl* INPUT_About)(HWND) = NULL;
+
 
 BOOL LoadInputPlugin(char* libname)
 {
@@ -46,6 +47,7 @@ BOOL LoadInputPlugin(char* libname)
             INPUT_Initialize				= (BOOL (__cdecl*)(HWND,HINSTANCE))		GetProcAddress(hinstLibInput, "Initialize");
             INPUT_ApplicationSyncAcquire    = (void (__cdecl*)(HWND,int))			GetProcAddress(hinstLibInput, "ApplicationSyncAcquire");
             INPUT_CheckController			= (unsigned __int32   (__cdecl*)(int))	GetProcAddress(hinstLibInput, "CheckController");
+			INPUT_Test						= (void (__cdecl*)(HWND))				GetProcAddress(hinstLibInput, "DllTest");
 			INPUT_About						= (void (__cdecl*)(HWND))				GetProcAddress(hinstLibInput, "DllAbout");
 #if 0
           }
@@ -59,30 +61,28 @@ BOOL LoadInputPlugin(char* libname)
         }
         else
         {
-          DisplayError("%s dll is a %d version of input plugin. But this emulator needs version 1 !", libname, Plugin_Info.Version);
-          CloseInputPlugin();
+          DisplayError("%s dll is %d version of input plugin spec. 1964 requires version 1.", libname, Plugin_Info.Version);
           return FALSE;
         }
       }
       else
       {
-        DisplayError("%s dll ins't a input plugin !", libname);
-        CloseInputPlugin();
+        DisplayError("%s dll is not an input plugin.", libname);
         return FALSE;
       }
     }
     else
     {
-      DisplayError("%s dll seem to be a wrong input dll !", libname);
-      CloseInputPlugin();
+      DisplayError("%s dll is a bad input dll", libname);
       return FALSE;
     }
 	}
 	else
 	{
-		DisplayError("%s dll missing or invalid. Please check your directory for the existence of this file and use DirectX 7.", libname);
-		CloseInputPlugin();
-    return FALSE;
+		DisplayError("LoadInputPlugin(): %s missing or invalid. Please check your directory for the existence of this file and use DirectX 7.", libname);
+		strcpy(gRegSettings.InputPlugin, "");
+		WriteConfiguration();
+		return FALSE;
 	}
 
   return TRUE;

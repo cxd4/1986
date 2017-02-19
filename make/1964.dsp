@@ -44,7 +44,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /GX /ZI /I ".." /D "WIN32" /D "WINDEBUG_1964" /D "_WINDOWS" /D "_MBCS" /D "DEBUG_COMMON" /D "_DEBUG" /D "VIDEO" /Fr /YX /FD /c
-# ADD CPP /nologo /Gr /MTd /GX /ZI /I ".." /D "DYNAREC" /D "DYN_DEBUG" /D "DEBUG_COMMON" /D "WIN32" /D "WINDEBUG_1964" /D "_WINDOWS" /D "_MBCS" /D "_DEBUG" /D "VIDEO" /D "ZIP_SUPPORT" /D "HLE" /D "GRAPHICS_TRACER" /Fr /YX /FD /c
+# ADD CPP /nologo /Gr /MTd /ZI /I ".." /D "DYNAREC" /D "DYN_DEBUG" /D "DEBUG_COMMON" /D "WIN32" /D "WINDEBUG_1964" /D "_WINDOWS" /D "_MBCS" /D "_DEBUG" /D "VIDEO" /D "ZIP_SUPPORT" /D "HLE" /D "GRAPHICS_TRACER" /Fr /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /win32
 # SUBTRACT BASE MTL /mktyplib203
 # ADD MTL /nologo /D "NDEBUG" /win32
@@ -76,7 +76,7 @@ LINK32=link.exe
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /G6 /Gr /W3 /Zi /O2 /Ob2 /I ".." /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /FAs /Fr /FD /c
 # SUBTRACT BASE CPP /YX
-# ADD CPP /nologo /G6 /Gr /MT /W3 /Zi /O1 /Ob0 /I ".." /D "DYNAREC" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "HLE" /D "ZIP_SUPPORT" /D "DISABLE_ANNOYANCE" /FAs /Fr /FD /c
+# ADD CPP /nologo /G6 /Gr /MT /W3 /Zi /O1 /Ob0 /I ".." /D "DYNAREC" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "WIN32_LEAN_AND_MEAN" /D "NOSOUND" /FAs /Fr /FD /c
 # SUBTRACT CPP /YX
 # ADD BASE MTL /nologo /D "NDEBUG" /win32
 # SUBTRACT BASE MTL /mktyplib203
@@ -90,7 +90,7 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 dxguid.lib dinput.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib oleaut32.lib ole32.lib uuid.lib /nologo /subsystem:windows /pdb:none /machine:I386 /out:"../Release/1964.exe"
 # SUBTRACT BASE LINK32 /profile /debug /nodefaultlib
-# ADD LINK32 dxguid.lib dinput.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib /nologo /subsystem:windows /machine:I386 /out:"../make/Release/1964.exe"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib comdlg32.lib shell32.lib advapi32.lib /nologo /subsystem:windows /map /machine:I386 /out:"../make/Release/1964.exe"
 # SUBTRACT LINK32 /profile /debug /nodefaultlib
 
 !ENDIF 
@@ -105,6 +105,14 @@ LINK32=link.exe
 # Begin Group "Interpreter"
 
 # PROP Default_Filter ""
+# Begin Group "Header Files Interpreter"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=..\r4300i.h
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=..\FPU.c
@@ -113,7 +121,7 @@ SOURCE=..\FPU.c
 
 !ELSEIF  "$(CFG)" == "1964 - Win32 Release"
 
-# SUBTRACT CPP /D "DYNAREC" /D "HLE" /D "ZIP_SUPPORT" /D "DISABLE_ANNOYANCE"
+# SUBTRACT CPP /D "DYNAREC"
 
 !ENDIF 
 
@@ -126,7 +134,7 @@ SOURCE=..\i_chips.c
 
 !ELSEIF  "$(CFG)" == "1964 - Win32 Release"
 
-# SUBTRACT CPP /D "DYNAREC" /D "HLE" /D "ZIP_SUPPORT" /D "DISABLE_ANNOYANCE"
+# SUBTRACT CPP /D "DYNAREC"
 
 !ENDIF 
 
@@ -139,7 +147,7 @@ SOURCE=..\r4300i.c
 
 !ELSEIF  "$(CFG)" == "1964 - Win32 Release"
 
-# SUBTRACT CPP /D "DYNAREC" /D "HLE" /D "ZIP_SUPPORT" /D "DISABLE_ANNOYANCE"
+# SUBTRACT CPP /D "DYNAREC"
 
 !ENDIF 
 
@@ -152,7 +160,7 @@ SOURCE=..\tlb.c
 
 !ELSEIF  "$(CFG)" == "1964 - Win32 Release"
 
-# SUBTRACT CPP /D "DYNAREC" /D "HLE" /D "ZIP_SUPPORT" /D "DISABLE_ANNOYANCE"
+# SUBTRACT CPP /D "DYNAREC"
 
 !ENDIF 
 
@@ -161,6 +169,14 @@ SOURCE=..\tlb.c
 # Begin Group "Dynarec"
 
 # PROP Default_Filter ""
+# Begin Group "Header Files Dynarec"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=..\dynarec\dynarec.h
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=..\dynarec\dynarec.c
@@ -169,7 +185,7 @@ SOURCE=..\dynarec\dynarec.c
 
 !ELSEIF  "$(CFG)" == "1964 - Win32 Release"
 
-# SUBTRACT CPP /D "DYNAREC" /D "HLE" /D "ZIP_SUPPORT" /D "DISABLE_ANNOYANCE"
+# SUBTRACT CPP /D "DYNAREC"
 
 !ENDIF 
 
@@ -183,7 +199,7 @@ SOURCE=..\dynarec\dynarec_chips.c
 !ELSEIF  "$(CFG)" == "1964 - Win32 Release"
 
 # ADD CPP /D "SAFE_DYNAREC"
-# SUBTRACT CPP /D "DYNAREC" /D "HLE" /D "ZIP_SUPPORT" /D "DISABLE_ANNOYANCE"
+# SUBTRACT CPP /D "DYNAREC"
 
 !ENDIF 
 
@@ -192,6 +208,38 @@ SOURCE=..\dynarec\dynarec_chips.c
 # Begin Group "win32"
 
 # PROP Default_Filter ""
+# Begin Group "Header Files win32"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=..\win32\Dll_Audio.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\win32\Dll_Input.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\win32\Dll_Video.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\plugins.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\win32\registry.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\win32\windebug.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\win32\wingui.h
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=..\win32\Dll_Audio.c
@@ -206,6 +254,10 @@ SOURCE=..\win32\Dll_Video.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\win32\registry.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\win32\windebug.c
 # End Source File
 # Begin Source File
@@ -213,18 +265,29 @@ SOURCE=..\win32\windebug.c
 SOURCE=..\win32\wingui.c
 # End Source File
 # End Group
+# Begin Group "Header Files"
+
+# PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=..\controller.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\DbgPrint.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\globals.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\interrupt.h
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=..\controller.c
-
-!IF  "$(CFG)" == "1964 - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "1964 - Win32 Release"
-
-# SUBTRACT CPP /D "DYNAREC" /D "HLE" /D "ZIP_SUPPORT" /D "DISABLE_ANNOYANCE"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
@@ -234,7 +297,7 @@ SOURCE=..\DebugR4300i.c
 
 !ELSEIF  "$(CFG)" == "1964 - Win32 Release"
 
-# SUBTRACT CPP /D "DYNAREC" /D "HLE" /D "ZIP_SUPPORT" /D "DISABLE_ANNOYANCE"
+# SUBTRACT CPP /D "DYNAREC"
 
 !ENDIF 
 
@@ -247,7 +310,7 @@ SOURCE=..\dma.c
 
 !ELSEIF  "$(CFG)" == "1964 - Win32 Release"
 
-# SUBTRACT CPP /D "DYNAREC" /D "HLE" /D "ZIP_SUPPORT" /D "DISABLE_ANNOYANCE"
+# SUBTRACT CPP /D "DYNAREC"
 
 !ENDIF 
 
@@ -260,7 +323,7 @@ SOURCE=..\emulators.c
 
 !ELSEIF  "$(CFG)" == "1964 - Win32 Release"
 
-# SUBTRACT CPP /D "DYNAREC" /D "HLE" /D "ZIP_SUPPORT" /D "DISABLE_ANNOYANCE"
+# SUBTRACT CPP /D "DYNAREC"
 
 !ENDIF 
 
@@ -277,7 +340,7 @@ SOURCE=..\globals.c
 
 !ELSEIF  "$(CFG)" == "1964 - Win32 Release"
 
-# SUBTRACT CPP /D "DYNAREC" /D "HLE" /D "ZIP_SUPPORT" /D "DISABLE_ANNOYANCE"
+# SUBTRACT CPP /D "DYNAREC"
 
 !ENDIF 
 
@@ -290,7 +353,7 @@ SOURCE=..\interrupt.c
 
 !ELSEIF  "$(CFG)" == "1964 - Win32 Release"
 
-# SUBTRACT CPP /D "DYNAREC" /D "HLE" /D "ZIP_SUPPORT" /D "DISABLE_ANNOYANCE"
+# SUBTRACT CPP /D "DYNAREC"
 
 !ENDIF 
 
@@ -303,62 +366,10 @@ SOURCE=..\memory.c
 
 !ELSEIF  "$(CFG)" == "1964 - Win32 Release"
 
-# SUBTRACT CPP /D "DYNAREC" /D "HLE" /D "ZIP_SUPPORT" /D "DISABLE_ANNOYANCE"
+# SUBTRACT CPP /D "DYNAREC"
 
 !ENDIF 
 
-# End Source File
-# End Group
-# Begin Group "Header Files"
-
-# PROP Default_Filter "h;hpp;hxx;hm;inl"
-# Begin Source File
-
-SOURCE=..\controller.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\DbgPrint.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\win32\Dll_Audio.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\win32\Dll_Input.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\win32\Dll_Video.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\dynarec\dynarec.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\globals.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\interrupt.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\plugins.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\r4300i.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\win32\windebug.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\win32\wingui.h
 # End Source File
 # End Group
 # Begin Group "zlib"

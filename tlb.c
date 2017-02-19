@@ -29,7 +29,6 @@ code comments are taken from anarko's n64toolkit with consent and are
 the property of anarko.
 */
 
-#include "r4300i.h"
 #include "globals.h"
 
 /*

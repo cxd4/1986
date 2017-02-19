@@ -7,6 +7,7 @@ extern void   (__cdecl* INPUT_RomOpen)(void);
 extern void   (__cdecl* INPUT_DllClose)();
 extern void   (__cdecl* INPUT_DllConfig)();
 extern void   (__cdecl* INPUT_GetDllInfo)(PLUGIN_INFO *);
+extern void   (__cdecl* INPUT_Test )(HWND);
 extern void   (__cdecl* INPUT_About)(HWND);
 
 extern unsigned __int32 (__cdecl* INPUT_CheckController)(int controller);

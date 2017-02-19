@@ -33,6 +33,7 @@ BEGIN
     POPUP "&File"
     BEGIN
         MENUITEM "&Load ROM...\tCtrl + O",      ID_OPENROM
+        MENUITEM SEPARATOR
         MENUITEM "Check Web Site for Updates...", ID_CHECKWEB
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_EXIT
@@ -65,7 +66,6 @@ BEGIN
     END
     POPUP "&Help"
     BEGIN
-        MENUITEM "Help Contents",               ID_HELP_FINDER
         MENUITEM "About Warranty...",           ID_ABOUT_WARRANTY
         MENUITEM "Redistribution Conditions...", ID_REDISTRIBUTE
         MENUITEM SEPARATOR
@@ -121,21 +121,23 @@ ABOUTBOX DIALOGEX 0, 0, 262, 226
 STYLE WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 EXSTYLE WS_EX_ACCEPTFILES | WS_EX_TOOLWINDOW
 CAPTION "About Dat Messed 1964"
-FONT 8, "Verdana", 0, 0, 0x1
+FONT 8, "Verdana"
 BEGIN
     DEFPUSHBUTTON   "Yee!",IDOK,93,206,75,14
-    LTEXT           "Greets!: anarko, Angelo, ContraSF, Cricket, _Demo_, duddie, F|RES, FlyingNR6, hartec, Houe, hWnd, icepir8, LaC, Lemmy, Lionel, N. Waibel, rcp (Mr. && Mrs.), Scav, slacka, SpectRe, Spikez, zilmar",
+    LTEXT           "Greets!: anarko, Angelo, Azimer, ContraSF, Cricket, _Demo_, duddie, Emul8or, epsilon, F|RES, FlyingNR6, hartec, Houe, hWnd, icepir8, LaC, Lemmy, Lionel, Niki Waibel, Phrodide, rcp, RealityMan, Scav, slacka, SpectRe, Spikez, subice, TNSe, zilmar",
                     IDC_STATIC,8,26,246,43,SS_SUNKEN,WS_EX_CLIENTEDGE | 
                     WS_EX_STATICEDGE
     CTEXT           "http://www.emuhq.com/1964\nHosted by emuhq.com",
                     IDC_STATIC,7,183,247,18
-    CTEXT           "1964 Version 0.4.9 \nCopyright (c) 2000 Joel Middendorf <schibo@emuhq.com>",
+    CTEXT           "1964 Version 0.5.0 \nCopyright (c) 2000 Joel Middendorf <schibo@emuhq.com>",
                     IDC_STATIC,7,4,246,16,0,WS_EX_TRANSPARENT
     LTEXT           "1964 is not affiliated and does not claim affiliation with any company in any way. Any named company, or its logo/trademarks are the property of the respective company or companies.",
                     IDC_STATIC,9,148,244,32,SS_SUNKEN
-    CONTROL         "Project Team:\nschibo - core\nsteb - audio, controller, and much, much more!\ngerrit - OpenGL plugin for 1964 (http://www.sixtyforce.com)\nNooTe - Direct3D plugin for 1964\n\nEarly team members: Eudaemon, Themedes\nBeta test program: Pascal, EmuManiac",
+    CONTROL         "Project Team:\nschibo - emulator core (dynarec, interpreter)\nsteb - audio, DI keyboard support, and so much more\ngerrit - OpenGL plugin (http://www.sixtyforce.com)\nNooTe - Direct3D plugin, DI Joystick/Adaptoid support, zip support",
                     IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,8,73,
-                    237,72
+                    237,44
+    LTEXT           "Early team members: Eudaemon, Themedes\nBeta test program: Pascal, EmuManiac",
+                    IDC_STATIC,9,120,244,24
 END
 
 #if defined(APSTUDIO_INVOKED) || defined(_DEBUG)
@@ -543,16 +545,16 @@ END
 
 #if defined(APSTUDIO_INVOKED) || defined(_DEBUG)
 #if defined(APSTUDIO_INVOKED)
-CODELIST$(_DEBUG) DIALOGEX 0, 0, 304, 127
+CODELIST$(_DEBUG) DIALOGEX 0, 0, 304, 409
 #else
-CODELIST DIALOGEX 0, 0, 304, 127
+CODELIST DIALOGEX 0, 0, 304, 409
 #endif
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
 EXSTYLE WS_EX_TOOLWINDOW
 CAPTION "CodeList"
 FONT 8, "Courier", 0, 0, 0x1
 BEGIN
-    LISTBOX         IDC_CODELIST,44,7,212,113,NOT LBS_NOTIFY | 
+    LISTBOX         IDC_CODELIST,44,7,212,389,NOT LBS_NOTIFY | 
                     LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
 END
 #endif
@@ -953,9 +955,9 @@ END
 
 #if defined(APSTUDIO_INVOKED) || defined(_DEBUG)
 #if defined(APSTUDIO_INVOKED)
-MEMORY$(_DEBUG) DIALOGEX 0, 0, 343, 113
+MEMORY$(_DEBUG) DIALOGEX 0, 0, 341, 292
 #else
-MEMORY DIALOGEX 0, 0, 343, 113
+MEMORY DIALOGEX 0, 0, 341, 292
 #endif
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOOLWINDOW
@@ -964,7 +966,7 @@ FONT 9, "Courier New", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "Update",IDC_UPDATE,185,9,50,14,0,WS_EX_DLGMODALFRAME
     EDITTEXT        IDC_MEMEDIT,103,9,78,13,ES_UPPERCASE | ES_AUTOHSCROLL
-    LISTBOX         IDC_MEMLIST,7,29,329,77,LBS_MULTIPLESEL | 
+    LISTBOX         IDC_MEMLIST,7,29,329,257,LBS_MULTIPLESEL | 
                     LBS_NOINTEGRALHEIGHT | LBS_WANTKEYBOARDINPUT | 
                     WS_VSCROLL | WS_TABSTOP
     LTEXT           "Address: 0x",IDC_STATIC,23,11,78,8,0,WS_EX_RIGHT
@@ -978,19 +980,34 @@ BEGIN
 END
 #endif
 
-PLUGINS DIALOG DISCARDABLE  0, 0, 164, 135
+PLUGINS DIALOGEX 0, 0, 214, 268
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Configure Plugins"
 FONT 8, "MS Sans Serif"
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,51,114,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,106,114,50,14
-    GROUPBOX        "Input Plugin",IDC_STATIC,7,16,150,40
-    PUSHBUTTON      "Configure",IDC_DI_CONFIG,15,28,60,18
-    GROUPBOX        "Video Plugin",IDC_STATIC,7,63,150,42
-    PUSHBUTTON      "Configure",IDC_VID_CONFIG,14,76,60,18
-    PUSHBUTTON      "About",IDC_VID_ABOUT,83,76,60,18
-    PUSHBUTTON      "About",IDC_DI_ABOUT,83,28,60,18
+    DEFPUSHBUTTON   "OK",IDOK,105,247,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,157,247,50,14
+    GROUPBOX        "Input Plugin",IDC_STATIC,7,87,198,65
+    PUSHBUTTON      "Configure",IDC_DI_CONFIG,103,127,46,18,0,
+                    WS_EX_STATICEDGE
+    GROUPBOX        "Video Plugin",IDC_STATIC,7,14,198,65
+    PUSHBUTTON      "Configure",IDC_VID_CONFIG,103,51,45,17,0,
+                    WS_EX_STATICEDGE
+    PUSHBUTTON      "About",IDC_VID_ABOUT,152,51,46,18,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "About",IDC_DI_ABOUT,152,127,46,18,0,WS_EX_STATICEDGE
+    COMBOBOX        IDC_COMBO_VIDEO,15,26,183,50,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO_INPUT,15,102,183,50,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO_AUDIO,15,177,183,12,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Configure",IDC_AUD_CONFIG,103,201,46,18,0,
+                    WS_EX_STATICEDGE
+    PUSHBUTTON      "About",IDC_AUD_ABOUT,152,201,46,18,0,WS_EX_STATICEDGE
+    GROUPBOX        "Audio Plugin",IDC_STATIC,7,164,198,65
+    PUSHBUTTON      "Test",IDC_VID_TEST,15,51,24,17,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "Test",IDC_DI_TEST,15,127,24,17,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "Test",IDC_AUD_TEST,15,201,24,17,0,WS_EX_STATICEDGE
 END
 
 
@@ -1012,8 +1029,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,4,9,0
- PRODUCTVERSION 0,4,9,0
+ FILEVERSION 0,5,0,0
+ PRODUCTVERSION 0,5,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -1031,14 +1048,14 @@ BEGIN
             VALUE "Comments", "Emulator for the N64 Console System\0"
             VALUE "CompanyName", " \0"
             VALUE "FileDescription", "1964\0"
-            VALUE "FileVersion", "0, 4, 9, 0\0"
+            VALUE "FileVersion", "0, 5, 0, 0\0"
             VALUE "InternalName", "1964\0"
             VALUE "LegalCopyright", "Copyright © 2000 Joel Middendorf\0"
             VALUE "LegalTrademarks", "All Trademarks are the rights and property of their respective owners.\0"
             VALUE "OriginalFilename", "1964.exe\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "  1964\0"
-            VALUE "ProductVersion", "0, 4, 9, 0\0"
+            VALUE "ProductVersion", "0, 5, 0, 0\0"
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -1074,12 +1091,17 @@ BEGIN
         BOTTOMMARGIN, 220
     END
 
+    "MEMORY$(_DEBUG)", DIALOG
+    BEGIN
+        BOTTOMMARGIN, 113
+    END
+
     "PLUGINS", DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 157
+        RIGHTMARGIN, 207
         TOPMARGIN, 7
-        BOTTOMMARGIN, 128
+        BOTTOMMARGIN, 261
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -1094,7 +1116,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     1                       "11. Because the program is licensed free of charge, there is no warranty\nfor the program, to the extent permitted by applicable law.  Except when\notherwise stated in writing the copyright holders and/or other parties\nprovide the program ""as is"" without warranty of any kind, either expressed\nor implied, including, but not limited to, the implied warranties of\nmerchantability and fitness for a particular purpose.The entire risk as\nto the quality and performance of the program is with you.  Should the\nprogram prove defective, you assume the cost of all necessary servicing,\nrepair or correction."
     2                       "12. In no event unless required by applicable law or agreed to in writing\nwill any copyright holder, or any other party who may modify and/or\nredistribute the program as permitted above, be liable to you for damages,\nincluding any general, special, incidental or consequential damages arising\nout of the use or inability to use the program (including but not limited\nto loss of data or data being rendered inaccurate or losses sustained by\nyou or third parties or a failure of the program to operate with any other\nprograms), even if such holder or other party has been advised of the\npossibility of such damages."
-    4                       "1964 version 0.4.9, Copyright (C) 2000 Joel Middendorf  schibo@emuhq.com\n\n1964 comes with ABSOLUTELY NO WARRANTY; for details refer to 'Help...About Warranty'.  This is free software, and you are welcome to redistribute it under certain conditions; refer to 'Help...Redistribution Conditions' for details."
+    4                       "1964 version 0.5.0, Copyright (C) 2000 Joel Middendorf  schibo@emuhq.com\n\n1964 comes with ABSOLUTELY NO WARRANTY; for details refer to 'Help...About Warranty'.  This is free software, and you are welcome to redistribute it under certain conditions; refer to 'Help...Redistribution Conditions' for details."
 END
 
 STRINGTABLE DISCARDABLE 

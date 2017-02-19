@@ -29,27 +29,22 @@ code comments are taken from anarko's n64toolkit with consent and are
 the property of anarko.
 */
 
-#define WIN32_LEAN_AND_MEAN
-#include <stdio.h>
-#include <stdlib.h>
-#include <memory.h>
-#include <math.h>
 #include <windows.h>
-#include <time.h>
 #include "globals.h"
 #include "r4300i.h"
-#include "dbgprint.h"
 #include "interrupt.h"
-#include "win32/DLL_VIdeo.h"
+#include "win32/DLL_Video.h"
 #include "win32/DLL_Audio.h"
 
 extern uint32 TranslateTLBAddress(uint32 address);
-void DMA_AI();
+extern void DMA_AI();
 
 #define VI_INTERRUPTCOUNT			625000
 #define VI_INTERRUPTCOUNT_MINUS_ONE 624999
 
 #ifdef DEBUG_COMMON
+#include <stdio.h>
+#include "dbgprint.h"
 extern char* DebugMainCPU();
 char* DebugCOP(int n, uint32 Instruction);
 char* DebugGPR(uint32 rt);
@@ -128,8 +123,11 @@ void r4300i_lb(uint32 Instruction)
 
 void r4300i_lbu(uint32 Instruction)
 {	
+	uint32 rt_ft = RT_FT;
+
 	LOAD_TLB_FUN
-	GPR[RT_FT] = LOAD_UBYTE_PARAM(QuerAddr);
+				 (uint32)GPR[rt_ft] = LOAD_UBYTE_PARAM(QuerAddr);
+	*(uint32*)(&(uint32*)GPR[rt_ft]+1) = 0;
 }
 
 //---------------------------------------------------------------------------------------
@@ -144,16 +142,23 @@ void r4300i_lh(uint32 Instruction)
 
 void r4300i_lhu(uint32 Instruction)
 {	
+	uint32 rt_ft = RT_FT;
+	
 	LOAD_TLB_FUN
-	GPR[RT_FT] = LOAD_UHALF_PARAM(QuerAddr);
+
+				 (uint32)GPR[rt_ft] = LOAD_UHALF_PARAM(QuerAddr);
+	*(uint32*)(&(uint32*)GPR[rt_ft]+1) = 0;
 }
 
 //---------------------------------------------------------------------------------------
 
 void r4300i_lwu(uint32 Instruction)
 {	
+	uint32 rt_ft = RT_FT;
+
 	LOAD_TLB_FUN
-	GPR[RT_FT] = LOAD_UWORD_PARAM(QuerAddr);
+				 (uint32)GPR[rt_ft]    = LOAD_UWORD_PARAM(QuerAddr);;
+	*(uint32*)(&(uint32*)GPR[rt_ft]+1) = 0;
 }
 
 //---------------------------------------------------------------------------------------
@@ -506,8 +511,8 @@ uint32 rt_ft = RT_FT;
 
 	LOAD_TLB_FUN
 
-	if (((QuerAddr & 0xA4000000) != 0))
-		Check_LW(rt_ft, QuerAddr);	
+	if (((QuerAddr & 0x04000000) != 0))
+		Check_LW(QuerAddr, rt_ft);	
 	else 
 		GPR[rt_ft] = LOAD_SWORD_PARAM(QuerAddr);
 }
@@ -520,8 +525,8 @@ uint32 rt_ft = RT_FT;
 
 	LOAD_TLB_FUN
 
-	if (((QuerAddr & 0xA4000000) != 0)) 
-		Check_SW((uint32)GPR[rt_ft], QuerAddr);
+	if (((QuerAddr & 0x04000000) != 0)) 
+		Check_SW(QuerAddr, (uint32)GPR[rt_ft]);
 	else
 		LOAD_UWORD_PARAM(QuerAddr) = (uint32)GPR[rt_ft];
 }
@@ -620,8 +625,8 @@ extern void InitDynarec();
 
 void r4300i_Init()
 {
-	//zero out all registers
-	memset( GPR, 0,	sizeof(GPR));
+	//set all registers to 0
+	memset( GPR,		0,	sizeof(GPR));
 	memset( COP0Reg,	0,	sizeof(COP0Reg));
 	memset( COP1Reg,	0,	sizeof(COP1Reg));
 	HI = 0;
@@ -641,15 +646,12 @@ void r4300i_Init()
 
 	MI_VERSION_REG_R = 0x01010101;
 
-	COP0Reg[COUNT] = 0;
-
-
-InitDynarec();
+	InitDynarec();
 }
 
 //---------------------------------------------------------------------------------------
 
-void Check_LW(uint32 rt_ft, uint32 QuerAddr)
+void Check_LW(uint32 QuerAddr, uint32 rt_ft)
 {
 static int VLine;
 
@@ -673,7 +675,7 @@ static int VLine;
 
 //---------------------------------------------------------------------------------------
 
-void Check_SW(uint32 RTVal, uint32 QuerAddr) {
+void Check_SW(uint32 QuerAddr, uint32 RTVal) {
 	switch (QuerAddr) 
 	{
 /* MI_MODE_REG_ADDR      */	case 0xA4300000: WriteMI_ModeReg(RTVal)		;	break;	
@@ -691,7 +693,7 @@ void Check_SW(uint32 RTVal, uint32 QuerAddr) {
 /* SI_PIF_ADDR_WR64B_REG */ case 0xA4800010: SI_PIF_ADDR_WR64B_REG	= RTVal; DMA_Write_SI() ;		break;
 /* SI_PIF_ADDR_RD64B_REG */ case 0xA4800004: SI_PIF_ADDR_RD64B_REG	= RTVal; DMA_Read_SI()  ;		break;
 /* VI_WIDTH_REG          	case 0xA4400008: VI_WIDTH_REG			= RTVal; ResizeVideoWindow() ;  break;*/
-/* AI_LEN_REG            */	case 0xA4500004: AI_LEN_REG				= RTVal; DMA_AI(); /*(AUDIO_PlaySnd)(RDRAM,AI);*/
+/* AI_LEN_REG            */	case 0xA4500004: AI_LEN_REG				= RTVal; DMA_AI(); (AUDIO_PlaySnd)(RDRAM,AI);
 
 #ifdef DEBUG_COMMON
 			sprintf(op_str, "%08X: Play %d bytes of audio at %08X", pc, AI_LEN_REG, AI_DRAM_ADDR_REG);

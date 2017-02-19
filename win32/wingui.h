@@ -44,7 +44,6 @@ LRESULT APIENTRY About(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
 char szWindowTitle[80];
 
 void r4300i_Init();
-void CleanUp();
 void ReadRomData(char* RomPath);
 void __cdecl DisplayError (char * Message, ...);
 
@@ -52,10 +51,10 @@ BOOL Rom_Loaded;
 BOOL WinLoadRom();
 
 /* the legal stuff */
-char MainDisclaimer[320];
-char WarrantyPart1[700];
-char WarrantyPart2[700];
-char DistConditions[800]; /* GNU Redistribution Conditions */
+unsigned char MainDisclaimer[320];
+unsigned char WarrantyPart1[700];
+unsigned char WarrantyPart2[700];
+unsigned char DistConditions[800]; /* GNU Redistribution Conditions */
 extern int LoadGNUDistConditions(char* ConditionsBuf);
 LRESULT APIENTRY ConditionsDialog(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
 

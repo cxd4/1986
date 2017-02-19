@@ -32,12 +32,9 @@ uint8* sDYN_PC_LOOKUP[0xFFFF];
 
 uint32 RESET_CPU;
 
-unsigned long gROMLength; //size in bytes of the ROM
+
 
 int DebuggerEnabled; /* Flag to toggle debug printing on/off */
-
-
-uint8 ND, TF;            /* these are 1-bit fields for bc1 ops				*/
 uint32 pc;               /* program counter. (Keeps addresses.) */
 
 
@@ -61,14 +58,9 @@ _int64 HI;         /* MultHI reg */
 _int64 LO;         /* MultLO reg */
 uint32 LLbit;      /* LLbit for load link instructions */
 
-uint32 FoundHLE[1]; //Flag for HLE detection...Disables cfb when found
 
 tlb_struct		TLB[MAXTLB];
 
-uint8 RDRAM[0x00400000];
-uint8  PIF[2048];
-uint32 RDREG[262144];
-uint32 SP_REG[131074];
 uint32 DPC[8];
 uint32 DPS[4];
 uint32 MI[4];
@@ -77,14 +69,18 @@ uint32 AI[6];
 uint32 PI[13];
 uint32 RI[8];
 uint32 SI[7];
+uint32 RDREG[262144];
+uint32 SP_REG[131074];
+uint32 DynaSP_REG[131074];
 uint32 C2A1[512];
 uint32 C1A1[512];
 uint32 C2A2[512];
 uint32 GIO_REG[513];
+uint8 DynaRDRAM[0x00400000];
+uint8 RDRAM[0x00400000];
+uint8  PIF[2048];
 uint8* ROM_Image;
 
-uint8 DynaRDRAM[0x00400000];
-uint32 DynaSP_REG[131074];
 
 uint32 gAllocationLength;
 

@@ -7,6 +7,7 @@ extern void   (__cdecl* AUDIO_RomOpen)(void);
 extern void   (__cdecl* AUDIO_DllClose)();
 extern void   (__cdecl* AUDIO_DllConfig)();
 extern void   (__cdecl* AUDIO_GetDllInfo)(PLUGIN_INFO *);
+extern void   (__cdecl* AUDIO_Test )(HWND);
 extern void   (__cdecl* AUDIO_About)(HWND);
 
 //SB 2/8/99

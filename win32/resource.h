@@ -349,7 +349,9 @@
 #define IDC_VEC197                      1397
 #define IDC_VEC198                      1398
 #define IDC_COMBO2                      1398
+#define IDC_COMBO_INPUT                 1398
 #define IDC_COMBO1                      1399
+#define IDC_COMBO_VIDEO                 1399
 #define IDC_VID_CONFIG                  1400
 #define IDC_VEC201                      1401
 #define IDC_VEC202                      1402
@@ -361,9 +363,15 @@
 #define IDC_VEC205                      1405
 #define IDC_VEC206                      1406
 #define IDC_VEC207                      1407
+#define IDC_COMBO_AUDIO                 1407
 #define IDC_VEC208                      1408
+#define IDC_AUD_CONFIG                  1408
+#define IDC_AUD_ABOUT                   1409
+#define IDC_VID_TEST                    1410
 #define IDC_VEC211                      1411
+#define IDC_DI_TEST                     1411
 #define IDC_VEC212                      1412
+#define IDC_AUD_TEST                    1412
 #define IDC_VEC213                      1413
 #define IDC_VEC214                      1414
 #define IDC_VEC215                      1415
@@ -470,9 +478,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        134
+#define _APS_NEXT_RESOURCE_VALUE        136
 #define _APS_NEXT_COMMAND_VALUE         136
-#define _APS_NEXT_CONTROL_VALUE         1405
+#define _APS_NEXT_CONTROL_VALUE         1413
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

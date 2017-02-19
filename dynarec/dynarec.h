@@ -3,6 +3,8 @@
 
 //#define USE_MMX				1
 //#define ADDRESS_RESOLUTION	1
+#define USE_BRANCH_SPEEDHACKS	1
+#define USE_J_SPEEDHACK		1
 
 #ifdef USE_MMX
 #define CDQ_STORE(Dest, TO_MEM)																\
@@ -287,12 +289,9 @@ SECOND_FALSE_POINTER																\
 }	
 #endif
 
-#define USE_BRANCH_SPEEDHACKS	1
-#define USE_J_SPEEDHACK		1
-
 #ifdef  USE_BRANCH_SPEEDHACKS
 #define SETUP_DELAY_SLOTS_UNLIKELY_TF				SETUP_BRANCH_DELAYS(NO_LINK,  NOT_LIKELY, ONE_FALSE_ONLY, DO_SPEEDHACK)
-#define SETUP_DELAY_SLOTS_UNLIKELY_TFF				SETUP_BRANCH_DELAYS(NO_LINK,  NOT_LIKELY, YES_TWO_FALSES, DO_SPEEDHACK)
+#define SETUP_DELAY_SLOTS_UNLIKELY_TFF				SETUP_BRANCH_DELAYS(NO_LINK,  NOT_LIKELY, *LabelFalse2 = (uint8)(Dest - PrevLabelFalse2);, DO_SPEEDHACK)
 #define SETUP_DELAY_SLOTS_UNLIKELY_AND_LINK_TFF		SETUP_BRANCH_DELAYS(YES_LINK, NOT_LIKELY, YES_TWO_FALSES, DO_SPEEDHACK)
 #define SETUP_DELAY_SLOTS_LIKELY_TF					SETUP_BRANCH_DELAYS(NO_LINK,  YES_LIKELY, ONE_FALSE_ONLY, DO_SPEEDHACK)
 #define SETUP_DELAY_SLOTS_LIKELY_TFF				SETUP_BRANCH_DELAYS(NO_LINK,  YES_LIKELY, YES_TWO_FALSES, DO_SPEEDHACK)
@@ -348,7 +347,7 @@ __asm   mov         dword ptr [x],eax	\
 	C_CALL(Dest,(uint32)&OPCODE)
 
 
-#define AsmReturn	PUTDST8(Dest, 0xC3)
+#define AsmReturn	PUTDST8KNOWN(Dest, 0xC3)
 
 #define CompConst8ToVariable(Dest, Const, Variable)	\
 {													\
@@ -369,6 +368,21 @@ __asm   mov         dword ptr [x],eax	\
 	/* test eax, eax */						\
 	PUTDST16KNOWN(Dest, 0xC085)				\
 }
+
+#define CompMIPS32RegTo0(Dest, Register)	\
+{											\
+	/* mov, eax [Register] */				\
+	 PUTDST8KNOWN(Dest, 0xA1)				\
+	PUTDST32(Dest, Register)				\
+	/* test eax, eax */						\
+	PUTDST16KNOWN(Dest, 0xC085)				\
+}
+
+
+
+
+
+
 
 #define CompMIPS64RegToMIPS64Reg_LO(Dest, Register1, Register2)	\
 {																\
@@ -415,6 +429,14 @@ extern void HandleBreakpoint(uint32 Instruction);
 	LOADIMM32(FunctAddress)			\
 	PUTDST16KNOWN(Dest,0xd0ff)		\
 }
+/*
+#define C_CALL(Dest, FunctAddress)						\
+{														\
+	PUTDST8KNOWN(Dest, 0x9A)							\
+	PUTDST16(Dest, ((FunctAddress) >> 16))				\
+	PUTDST8(Dest, ((uint8)(FunctAddress) >> 24))		\
+}
+*/
 
 #define JumpLocal8(Dest, Label)						\
 {													\

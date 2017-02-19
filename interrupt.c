@@ -31,13 +31,13 @@ the property of anarko.
 
 
 #include <windows.h>
-#include <stdio.h>
 #include "interrupt.h"
 #include "globals.h"
 #include "win32/DLL_Video.h"
 
 #ifdef DEBUG_COMMON
-	char dbgString[80];
+#include <stdio.h>	
+char dbgString[80];
 #endif
 
 void Handle_SP(uint32 value);
@@ -252,10 +252,8 @@ void Trigger_VIInterrupt(void)
 	(MI_INTR_REG_R) |= MI_INTR_VI;
 	if ((MI_INTR_MASK_REG_R) & MI_INTR_VI)
 		COP0Reg[CAUSE] |= 0x00000400;
-	if (FoundHLE == 0)
-	{
-    VIDEO_UpdateScreen();
-	}
+
+	VIDEO_UpdateScreen();
 	COP0Reg[COUNT] = 0;
 }
 

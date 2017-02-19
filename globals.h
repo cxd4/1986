@@ -36,7 +36,6 @@ extern void __cdecl DisplayError (char * Message, ...);
 
 // little-endian memory operations
 #define QUER_ADDR QuerAddr = (uint32)((_int32)GPR[RS_BASE_FMT] + (_int32)OFFSET_IMMEDIATE)
-#define DISPLACE(X)	(((uint16)QuerAddr) >> X )
 
 #define LOAD_SBYTE_PARAM(param)		*         ((_int8*)sDWORD_R[((uint16)((param) >> 16))] + ((uint16)param ^ 3))
 #define LOAD_UBYTE_PARAM(param)		*         ((uint8*)sDWORD_R[((uint16)((param) >> 16))] + ((uint16)param ^ 3))
@@ -55,16 +54,14 @@ extern uint8* sDWORD_R[0xFFFF];
 extern uint8* sDYN_PC_LOOKUP[0xFFFF];
 
 extern uint32 gAllocationLength;
-extern unsigned long gROMLength; //size in bytes of the ROM
+
 extern uint32 RESET_CPU;
 extern int DebuggerEnabled; /* Flag to toggle debug printing on/off */
-extern uint8 ND, TF;            /* these are 1-bit fields for bc1 ops                */
 extern uint32 pc;               /* program counter. (Keeps addresses.) */
 extern uint32    CPUdelayPC;
 extern uint32    CPUdelay;
-#define PATH_LEN 80     //max characters for path
+#define PATH_LEN 300     //max characters for path
 extern char AppPath[PATH_LEN]; //used for storing application path
-extern uint32 FoundHLE[1]; //Flag for HLE detection...Disables cfb when found
 
 
 //dynarec globals
@@ -134,7 +131,6 @@ typedef struct
 
 extern tlb_struct        TLB[MAXTLB];
 
-extern uint8  RDRAM[0x00400000];
 extern uint32 RDREG[262144];
 extern uint32 SP_REG[131074];
 extern uint32 DPC[8];
@@ -149,6 +145,7 @@ extern uint32 C2A1[512];
 extern uint32 C1A1[512];
 extern uint32 C2A2[512];
 extern uint32 GIO_REG[513];
+extern uint8  RDRAM[0x00400000];
 extern uint8  PIF[2048];
 extern uint8* ROM_Image;
 
@@ -299,7 +296,8 @@ extern uint32 DynaSP_REG[131074];
         0x0408 0004 to 0x0408 0007  SP_IBIST_REG
         0x0408 0008 to 0x040F FFFF  Unused
 */
-#define SP_DMEM                (uint8*)&SP_REG[0]
+#define SP_DMEM                SP_REG[0]
+#define SP_IMEM				   SP_REG[0x400]
 #define SP_MEM_ADDR_REG        SP_REG[0x10000]
 #define SP_DRAM_ADDR_REG       SP_REG[0x10001]
 #define SP_RD_LEN_REG          SP_REG[0x10002]
@@ -308,11 +306,8 @@ extern uint32 DynaSP_REG[131074];
 #define SP_DMA_FULL_REG        SP_REG[0x10005]
 #define SP_DMA_BUSY_REG        SP_REG[0x10006]
 #define SP_SEMAPHORE_REG       SP_REG[0x10007]
-
 #define SP_PC_REG              SP_REG[0x20000]
 #define SP_IBIST_REG           SP_REG[0x20001]
-
-
 #define HLE_DMEM_TASK          SP_REG[0x03F0]
 
 

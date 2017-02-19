@@ -29,6 +29,33 @@ I: 1964 Version History
 
  ___________________________
 |                           |
+| v0.5.0 (July 04, 2000)    |
+|___________________________|
+  -- Plugins are now fully configurable from the GUI.
+     The system's user interface is very similar to PsemuPro's plugin
+     system. It was inspired by PsemuPro, but the dll specs are different.
+     As other N64 emulators become compatible to this system, you can simply
+     drop the new plugin dlls into your "Plugin" subfolder. In the future, you can 
+     expect to see a lot of plugins to choose from :). 
+
+     Currently, only the 1964 video plugins are to zilmar's plugin specifications.
+     Input and audio still use 1964 specs but will be converted to the new specs soon.
+
+  -- Users can switch to NooTe_D3D from GUI. The Direct3D is still early in dev,
+     so expect gfx issues. However, NooTe_D3D has several options including:
+        -- Full Screen
+        -- Resolution Switching
+        -- The return of cfb. If you wish to enable VI, disable HLE, and vice-versa.
+        -- More; see NooTe_D3D.txt for more info
+
+  -- A bonus game! CoinSweeperGL by Emul8or included. See coinsweep.txt in bonus subfolder 
+     for more info.
+
+     
+
+
+ ___________________________
+|                           |
 | v0.4.9 (June 12, 2000)    |
 |___________________________|
   -- 2 binaries: 1964interpreter.exe and 1964dynarec.exe
@@ -610,7 +637,7 @@ I: 1964 Version History
     -- Added benchmark mode (steb)
     -- Know issues: 
        1) "Show Header" option in Windows GUI is currently very buggy:
-              -Fields are poulated incorrectly and may crash.
+              -Fields are populated incorrectly and may crash.
               -Use the DOS version for correctness. (schibo)
 
 
@@ -716,10 +743,7 @@ _____________________________________________________________________________
 II  How to Use
 --------------
 
-    This section still needs to be written, but I think the most 
-    important information here at the moment is the controller input 
-    :) so here it is. (controllers are obviously incomplete at the 
-    moment):
+	Here is the default keyboard config. 
 
 	   START       = Enter
 
@@ -733,9 +757,14 @@ II  How to Use
            D-Pad LEFT  = DELETE
            D-Pad RIGHT = PAGE DOWN (NEXT)
 
-	   A Button    = Keypad Z
+	   Z Button    = Keypad Z
+	   A Button    = Right Ctrl
            B Button    = Keypad X
-	
+
+	If you use the NooTe_DI	plugin, you can remap the keys. You can 
+	also use a joystick and the adaptoid with NooTe_DI. For adaptoid, 
+	choose	Controller1 = Joystick and click "Set Default" button.
+
      Demos can be downloaded from www.dextrose.com. Many thanks to dextrose
      for all the demos :) 2 playable demos in 1964 include Pong and Liner.
 
@@ -774,23 +803,31 @@ IV Greets & Thanks
 
 anarko, whose N64 Toolkit documentation made this project possible.
 
-- Adrox, anarko, atila, BWB, Coolbest, darkreign, dave, EmuManiac, LUIGI, ManBeast,
-Nicotine, Zach, zerospunk, zophar
+- Adrox, anarko, atila, BWB, Coolbest, darkreign, dave, Emul8or, EmuManiac, 
+FlyingNR6, LUIGI, ManBeast,Nicotine, Zach, zerospunk, zophar
+
 The cool guys at darkmazda.com, emulation64.com, glideunderground.com, Einstein II,
 n64zone.com and anyone else I'm forgetting.
 - Ubiquity for the original 1964 logo!
 - Zico for the new web site layout and logo!
 
 
-	   Greets to all N64 authors
+	   Greets to N64 authors
         -------------------------------
-        Angelo                Ultra64
-	Lionel                  N64VM
-	N. Waibel               TrueReality
-	F|RES, icepir8          TRWinGL
-	Scav                    Pagan
-	Lemmy, LaC, hWnd        Nemu64
+        Angelo			Ultra64
+	ContraSF		Corn
+	epsilon, RealityMan	UltraHLE
+	F|RES, icepir8		TR64
+	FlyingNR6		Virtual Reality
+	Lemmy, LaC, hWnd	Nemu64
+	Lionel			N64VM
+	Niki Waibel		TrueReality
+	Phrodide, Azimer	Apollo
+	rcp, slacka		TRWin
+	Scav			Pagan
 	Subice			NSFE
+	TNSe, Sunman, Nuke|D64,
+	CruiseR			Dream64
 	
 
 Check out http://www.emuhq.com for the latest in emulation news
