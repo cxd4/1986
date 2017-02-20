@@ -52,12 +52,18 @@
 #define IDB_ABOUT_BACKGROUND            144
 #define ID_OPTIONS_DISABLESOUND         145
 #define ID_DISABLESOUND                 145
+#define IDB_HELP                        146
 #define ID_INTERPRETER                  147
+#define IDB_PROPERTY                    147
 #define ID_STATICCOMPILER               148
 #define ID_DYNAMICCOMPILER              149
+#define IDB_ROM_OPEN                    149
 #define ID_CLOSEROM                     150
+#define IDB_AUDIO                       152
 #define IDM_1600_1200                   153
+#define IDB_INPUT                       153
 #define IDM_FULLSCREEN                  154
+#define IDB_VIDEO                       154
 #define IDM_1920_1440                   155
 #define ID_DEBUGTLB                     156
 #define ID_DEBUGAUDIOTASK               157
@@ -168,6 +174,18 @@
 #define ID_PLUGINS_SCREENSHOTS          280
 #define ID_ONLINE_HELP                  281
 #define ID_CHEATS_APPLY                 282
+#define ID_DEBUG_SELFMODCODE            283
+#define ID_DEBUGPROTECTMEMORY           284
+#define ID_CPU_DYNACODECHECKING_PROTECTMEMORY 285
+#define ID_DEBUG_TLB_EXTRA              286
+#define ID_FILE_ROMDIRECTORY5           287
+#define ID_FILE_ROMDIRECTORY6           288
+#define ID_FILE_ROMDIRECTORY7           289
+#define ID_FILE_ROMDIRECTORY8           290
+#define ID_CPU_AUDIOSYNC                291
+#define ID_DEBUG_EXCEPTION_SERVICES     292
+#define ID_CPU_IMPORTPJ64STATE          293
+#define ID_CPU_EXPORTPJ64STATE          294
 #define IDC_EDIT                        401
 #define IDC_CPUR0                       1000
 #define IDC_GPR1                        1001
@@ -444,6 +462,7 @@
 #define IDC_MEMLIST                     1378
 #define IDC_UPDATE                      1379
 #define IDC_CHECK1                      1380
+#define IDC_OPCODETRACE                 1380
 #define IDC_CHECK_LOGGING               1381
 #define IDC_VEC181                      1381
 #define IDC_VEC182                      1382
@@ -474,6 +493,7 @@
 #define IDC_COMBO1                      1399
 #define IDC_COMBO_VIDEO                 1399
 #define IDC_ROMOPTION_RDRAMSIZE         1399
+#define IDC_CHEATCODE_COUNTRY           1399
 #define IDC_VID_CONFIG                  1400
 #define IDC_VEC201                      1401
 #define IDC_VEC202                      1402
@@ -549,12 +569,16 @@
 #define IDC_DEFAULTOPTIONS_CPUEMULATOR  1441
 #define IDC_VEC242                      1442
 #define IDC_DEFAULTOPTIONS_MAXVISPEED   1442
+#define IDC_ROMOPTION_LINK4KB           1442
 #define IDC_VEC243                      1443
 #define IDC_DEFAULTOPTIONS_USETLB       1443
+#define IDC_ROMOPTION_ANALYSIS          1443
 #define IDC_VEC244                      1444
 #define IDC_DEFAULTOPTIONS_CODECHECK    1444
+#define IDC_ROMOPTION_ASSUME_32BIT      1444
 #define IDC_VEC245                      1445
 #define IDC_DEFAULTOPTIONS_EEPROMSIZE   1445
+#define IDC_ROMOPTION_HLE               1445
 #define IDC_VEC246                      1446
 #define IDC_GAMESHARK_LIST              1446
 #define IDC_VEC247                      1447
@@ -569,8 +593,10 @@
 #define IDC_GAMESHARK_DEACTIVATE        1452
 #define IDC_VEC253                      1453
 #define IDC_DEFAULTOPTIONS_AUTOCHEAT    1453
+#define IDC_GAMESHARK_ACTIVATEALL       1453
 #define IDC_VEC254                      1454
 #define IDC_DEFAULTOPTIONS_ROMDIRECTORY 1454
+#define IDC_GAMESHARK_DEACTIVATEALL     1454
 #define IDC_VEC255                      1455
 #define IDC_DEFAULTOPTIONS_USELASTROMDIRECTORY 1455
 #define IDC_VEC256                      1456
@@ -590,6 +616,7 @@
 #define IDC_DEFAULTOPTIONS_STATESAVEDIRECTORY 1463
 #define IDC_VEC264                      1464
 #define IDC_DEFAULTOPTIONS_USE1964STATESAVEDIRECTORY 1464
+#define IDC_OPTIONS_USE_DEFAULT_SAVE_DIRECTORY 1464
 #define IDC_VEC265                      1465
 #define IDC_DEFAULTOPTIONS_SAVEDIRECTORY2 1465
 #define IDC_ENABLE_DETAIL_STATUS        1465
@@ -615,10 +642,13 @@
 #define IDC_VEC274                      1474
 #define IDC_MANUAL_VI                   1474
 #define IDC_DEFAULTOPTIONS_REGC         1474
+#define IDC_OPTION_AUTOFULLSCREEN       1474
 #define IDC_VEC275                      1475
 #define IDC_MANUAL_AI                   1475
 #define IDC_DEFAULTOPTIONS_FPUHACK      1475
 #define IDC_OPCODE_COMPARE              1475
+#define IDC_ENABLE_PROFILER             1475
+#define IDC_USE_INTERPRETER_REG         1475
 #define IDC_VEC276                      1476
 #define IDC_MANUAL_SP                   1476
 #define IDC_OPCODE_COMPARE2             1476
@@ -633,9 +663,13 @@
 #define IDC_VEC281                      1481
 #define IDC_VEC282                      1482
 #define IDC_VEC283                      1483
+#define IDC_CHEAT_NOTE1                 1483
+#define IDC_CHEAT_NOTE                  1483
 #define IDC_VEC284                      1484
+#define IDC_CHEAT_NOTE2                 1484
 #define IDC_VEC285                      1485
 #define IDC_VEC286                      1486
+#define IDC_DOWNLOAD_PLUGINS            1486
 #define IDC_VEC287                      1487
 #define IDC_VEC288                      1488
 #define IDC_VEC291                      1491
@@ -682,9 +716,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        146
-#define _APS_NEXT_COMMAND_VALUE         283
-#define _APS_NEXT_CONTROL_VALUE         1481
+#define _APS_NEXT_RESOURCE_VALUE        157
+#define _APS_NEXT_COMMAND_VALUE         295
+#define _APS_NEXT_CONTROL_VALUE         1487
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

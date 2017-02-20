@@ -1,1537 +1,2158 @@
-//#define SAFE_BRANCHES 1
-//#define DANGEROUS_BRANCHES 1
-//////////////////////////////////////////////////////////////////////////////////
-// small and dirty helper, hacks and cheats =)				                    //
-//////////////////////////////////////////////////////////////////////////////////
-//#define SPEED_HACK
-#include "..\options.h"
-//#include "..\dbgprint.h"
-#include "..\debug_option.h"
-#include "..\1964ini.h"
+/*$T dynaBranch.h GC 1.136 03/09/02 13:36:14 */
+
+
+/*$6
+ +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ Jump and branch opcodes
+ +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ */
+
+
+/*
+ * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * program is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version. This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details. You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
+ * authors: email: schibo@emulation64.com, rice1964@yahoo.com
+ */
+#ifndef __DYNABRANCH_H
+#define __DYNABRANCH_H
+
+#include "../debug_option.h"
+#include "../1964ini.h"
+#include "../compiler.h"
+
+/*
+ * These are defines for branches that set GPR[31] to the link value. £
+ * This does not refer to our 4k link :)
+ */
+#define LINK_YES			1
+#define LINK_NO				0
 
 #define SPEEDHACK_MISSING	DisplayError("Missing SpeedHack");
-
-extern uint32 g_translatepc;
-extern uint32* g_LookupPtr;
-extern uint32 g_pc_is_rdram;
-static uint8* tempblock;
-
-#ifdef DYNA_GET_BLOCK_SPEEDUP
-#define TLB_TRANSLATE_PC(pc)						\
-	{												\
-		if( NOT_IN_KO_K1_SEG(pc))					\
-		{											\
-				PushMap();							\
-				X86_CALL((_u32)Set_Translate_PC);	\
-				PopMap();							\
-		}											\
-		else										\
-		{											\
-			g_translatepc = pc;						\
-			if( (g_translatepc & 0x1FFFFFFF) < current_rdram_size )				\
-				g_pc_is_rdram = g_translatepc&0x007FFFFF;						\
-			else																\
-				g_pc_is_rdram = 0;												\
-			MOV_ImmToMemory(1, (unsigned long)&g_pc_is_rdram, g_pc_is_rdram);	\
-			MOV_ImmToMemory(1, (unsigned long)&g_translatepc, g_translatepc);	\
-			g_LookupPtr = (uint32*)((uint8*)sDYN_PC_LOOKUP[g_translatepc>>16] + (uint16)g_translatepc);	\
-			Try_Lookup_Ptr();																	\
-			MOV_ImmToMemory(1, (unsigned long)&g_LookupPtr, (uint32)g_LookupPtr);				\
-		}																						\
-	}
-
-#define TLB_TRANSLATE_PC_INDIRECT		\
-		PushMap();						\
-        X86_CALL((_u32)Set_Translate_PC);	\
-        PopMap();
+#define NEAR_BRANCHES		1
+#ifdef NEAR_BRANCHES
+#define SAFE_NEAR_ONLY	1
 #else
-#define TLB_TRANSLATE_PC(pc)
-#define TLB_TRANSLATE_PC_INDIRECT
+#define SAFE_NEAR_ONLY	0
 #endif
+extern uint32	*g_LookupPtr;
+extern uint32	g_pc_is_rdram;
+static uint8	*tempblock;
 
-#define SPEED_HACK								\
-    if ( __I == -1 )							\
-	{											\
-		if( pcptr[1] == 0 )						\
-		{										\
-			PushMap();							\
-			X86_CALL((_u32)DoSpeedHack);		\
-			PopMap();							\
-		}										\
-	}	
+enum { JUMP_TYPE_INDIRECT, JUMP_TYPE_DIRECT, JUMP_TYPE_BREAKOUT };
 
-
-//#define J_SPEED_HACK    
-
-#define J_SPEED_HACK                                                                            \
-                                                                                                \
-if ( (reg->pc == aValue) && (pcptr[1] == 0))                                                    \
-    {                                                                                           \
-		/*MOV_ImmToMemory(1, (_u32)&gHWS_COP0Reg[COUNT], MAGICNUMBER);*/              \
-		PushMap();                                                                               \
-        X86_CALL((_u32)DoSpeedHack);                                                            \
-        PopMap();                                                                                \
-    }
-
-extern MapConstant ConstMap[NUM_CONSTS];
-extern x86regtyp   x86reg[8];
-MapConstant TempConstMap[NUM_CONSTS];
-x86regtyp   Tempx86reg[8];
-extern _u32 cp0Counter;
-
-#ifdef ENABLE_OPCODE_DEBUGGER
-MapConstant TempConstMap_Debug[NUM_CONSTS];
-x86regtyp Tempx86reg_Debug[8];
-#endif
-
-BOOL CompilingSlot = FALSE;
-void Compile_Slot(_u32 pc)
-{
-	_u8 op;
-
-	if( CompilingSlot )
-	{
-		DisplayError("Branch in branch delay slot PC=%08X", gHWS_pc);
-		return;
+#define _OPCODE_DEBUG_BRANCH_(x) \
+	if(debug_opcode) \
+	{ \
+		MOV_ImmToMemory(1, ModRM_disp32, (uint32) & gHardwareState_Interpreter_Compare.pc, reg->pc); \
+		_SAFTY_CPU_(x) \
 	}
 
-	// Add by Rice. 2001-08-11
-	if( currentromoptions.Use_Register_Caching == USEREGC_NO )
-    {
-	    FlushAllRegisters();
-    }
+#define SET_TARGET_1_LINK(pc, target) \
+	if(currentromoptions.Link_4KB_Blocks == USE4KBLINKBLOCK_YES) \
+	{ \
+		if(IsTargetPcInTheSame4KB(pc, target)) \
+		{ \
+			current_block_entry->need_target_1 = TRUE; \
+			current_block_entry->target_1_pc = (target); \
+		} \
+	}
 
-#ifdef DEBUG_COMMON
-	//MOV_ImmToMemory(1, (unsigned long)&reg->pc, reg->pc+4);
-    FlushAllRegisters();
-	//OR_ImmToMemory(1, BD, (unsigned long)&gHWS_COP0Reg[CAUSE]);
-#endif
+#define SET_TARGET_2_LINK(pc, target) \
+	if(currentromoptions.Link_4KB_Blocks == USE4KBLINKBLOCK_YES) \
+	{ \
+		if(IsTargetPcInTheSame4KB(pc, target)) \
+		{ \
+			current_block_entry->need_target_2 = TRUE; \
+			current_block_entry->target_2_pc = (target); \
+		} \
+	}
+
+#define SPEED_HACK	if(__I == -1) \
+	{ \
+		if(compilerstatus.pcptr[1] == 0) \
+		{ \
+			PushMap(); \
+			X86_CALL((_u32) DoSpeedHack); \
+			PopMap(); \
+		} \
+	}
+
+/* define J_SPEED_HACK */
+#define J_SPEED_HACK	if((reg->pc == aValue) && compilerstatus.pcptr[1] == 0) \
+	{ \
+		/* MOV_ImmToMemory(1, ModRM_disp32, (_u32)&gHWS_COP0Reg[COUNT], max_vi_count); */ \
+		PushMap(); \
+		X86_CALL((_u32) DoSpeedHack); \
+		PopMap(); \
+	}
+
+extern MapConstant	ConstMap[NUM_CONSTS];
+extern x86regtyp	x86reg[8];
+MapConstant			TempConstMap[NUM_CONSTS];
+x86regtyp			Tempx86reg[8];
+
+MapConstant			TempConstMap_Debug[NUM_CONSTS];
+x86regtyp			Tempx86reg_Debug[8];
+
+BOOL				CompilingSlot = FALSE;
+void				Interrupts(uint32 JumpType, uint32 targetpc, uint32 DoLink, uint32 LinkVal);
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void Compile_Slot_And_Interrupts(_u32 pc, uint32 targetpc, uint32 DoLink, uint32 LinkVal)
+{
+	/*~~~*/
+	_u8 op;
+	/*~~~*/
+
+	if(CompilingSlot)
+	{
+		TRACE1("Warning, Branch in branch delay slot PC=%08X", gHWS_pc);
+
+		/*
+		 * DisplayError("Branch in branch delay slot PC=%08X", gHWS_pc); £
+		 * return;
+		 */
+	}
 
 	CompilingSlot = TRUE;
 
-#ifdef LOG_DYNA
-    LogDyna("** Compile Delay Slot\n", pc);
-#endif LOG_DYNA
+	/* this needs to be here, not below. */
+	memcpy(TempConstMap, ConstMap, sizeof(ConstMap));
+	memcpy(Tempx86reg, x86reg, sizeof(x86reg));
 
-#ifdef _USE_DEBUGGER_
-    HELP_Call((unsigned long)HELP_debug);
-#endif _USE_DEBUGGER_
+	/* Add by Rice. 2001-08-11 */
+	if(currentromoptions.Use_Register_Caching == USEREGC_NO)
+	{
+		FlushAllRegisters();
+	}
 
-    gHWS_code = pcptr[1];
-    op = (_u8)(gHWS_code >> 26);
+	LOGGING_DYNA(LogDyna("** Compile Delay Slot\n", pc));
+	{
+		/*~~~~~~~~~~~~~~~~~~~~~~*/
+		uint32	savedpc = gHWS_pc;
+		/*~~~~~~~~~~~~~~~~~~~~~~*/
 
-    memcpy(TempConstMap, ConstMap, sizeof(ConstMap));
-    memcpy(Tempx86reg, x86reg, sizeof(x86reg));
+		gHWS_pc = pc;
 
-	DYNA_LOG_INSTRUCTION;
-    
+		/* TRACE1("Branch Slot fetch code at PC=%08X", pc); */
+		gHWS_code = DynaFetchInstruction2(gHWS_pc);
+		gHWS_pc = savedpc;
+	}
+
+	op = (_u8) (gHWS_code >> 26);
+
 	dyna_instruction[op](&gHardwareState);
 
-//    if (dyna_branch == TRUE) DisplayError("Branch in delay slot!?");
-    FlushAllRegisters();
-
-#ifdef DEBUG_COMMON
-	//AND_ImmToMemory((unsigned long)&gHWS_COP0Reg[CAUSE], NOT_BD);
-#endif
-
-    memcpy(ConstMap, TempConstMap, sizeof(ConstMap));
-    memcpy(x86reg, Tempx86reg, sizeof(x86reg));
-
 	CompilingSlot = FALSE;
+	Interrupts(JUMP_TYPE_DIRECT, targetpc, DoLink, LinkVal);
+
+	memcpy(ConstMap, TempConstMap, sizeof(ConstMap));
+	memcpy(x86reg, Tempx86reg, sizeof(x86reg));
 }
 
-
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
 void Compile_Slot_Jump(_u32 pc)
 {
+	/*~~~*/
 	_u8 op;
+	/*~~~*/
 
-	if( CompilingSlot )
+	if(CompilingSlot)
 	{
 		DisplayError("Branch in branch delay slot PC=%08X", gHWS_pc);
-		return;
+		TRACE1("Branch in branch delay slot PC=%08X", gHWS_pc);
+
+		/* return; */
 	}
-
-	// Add by Rice. 2001-08-11
-	if( currentromoptions.Use_Register_Caching == USEREGC_NO )
-	    FlushAllRegisters();
-
-#ifdef DEBUG_COMMON
-	//MOV_ImmToMemory(1, (unsigned long)&reg->pc, reg->pc+4);
-    FlushAllRegisters();
-	//OR_ImmToMemory(1, BD, (unsigned long)&gHWS_COP0Reg[CAUSE]);
-#endif
 
 	CompilingSlot = TRUE;
 
-#ifdef LOG_DYNA
-	LogDyna("** Compile Delay Slot\n", pc);
-#endif LOG_DYNA
+	/* Add by Rice. 2001-08-11 */
+	if(currentromoptions.Use_Register_Caching == USEREGC_NO) FlushAllRegisters();
 
-#ifdef _USE_DEBUGGER_
-	HELP_Call((unsigned long)HELP_debug);
-#endif _USE_DEBUGGER_
+	LOGGING_DYNA(LogDyna("** Compile Delay Slot\n", pc));
+	{
+		/*~~~~~~~~~~~~~~~~~~~~~~*/
+		uint32	savedpc = gHWS_pc;
+		/*~~~~~~~~~~~~~~~~~~~~~~*/
 
-	gHWS_code = pcptr[1];
-	op = (_u8)(gHWS_code >> 26);
+		gHWS_pc = pc;
 
-	DYNA_LOG_INSTRUCTION;
+		/* TRACE1("Branch Slot fetch code at PC=%08X", pc); */
+		gHWS_code = DynaFetchInstruction2(gHWS_pc);
+		gHWS_pc = savedpc;
+	}
 
-    dyna_instruction[op](&gHardwareState);
-    FlushAllRegisters();
-#ifdef DEBUG_COMMON
-	//AND_ImmToMemory((unsigned long)&gHWS_COP0Reg[CAUSE], NOT_BD);
-#endif
-
+	op = (_u8) (gHWS_code >> 26);
+	dyna_instruction[op](&gHardwareState);
+	FlushAllRegisters();
 	CompilingSlot = FALSE;
 }
 
+extern __int32	countdown_counter;
+extern uint8	*Block;
+uint32			BlockStartAddress;
 
+void			CompareStates(uint32 Instruction);
+void			UnwireMap(void);
 
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
 
-extern void CheckTheInterrupts(_u32 count);
-extern uint32 VIcounter;
-extern uint32 g_blocksize;
-extern __int32 countdown_counter;
-extern uint32 TempPC;
-extern uint8* Block;
-uint32 BlockStartAddress;
-extern uint32 BlockStart;
-
-#define JUMP_TYPE_INDIRECT 0
-#define JUMP_TYPE_DIRECT   1
-#define JUMP_TYPE_BREAKOUT 2
-void CompareStates(uint32 Instruction);
-void Interrupts(uint32 JumpType)
+void Interrupts(uint32 JumpType, uint32 targetpc, uint32 DoLink, uint32 LinkVal)
 {
-	uint32 viCounter, COUNTCounter;
-	if( JumpType == JUMP_TYPE_BREAKOUT )
+	/*~~~~~~~~~~~~~~*/
+	uint32	viCounter;
+	/*~~~~~~~~~~~~~~*/
+
+	if(JumpType == JUMP_TYPE_BREAKOUT)
 	{
-		viCounter = cp0Counter*VICounterFactors[CounterFactor];
-		COUNTCounter = cp0Counter*CounterFactors[CounterFactor]/VICounterFactors[CounterFactor];
+		viCounter = (compilerstatus.cp0Counter * VICounterFactors[CounterFactor]);
 	}
-	else	//need to execute the delay slot instruction, so need to increase cp0Counter by 1
+	else	/* taken branches have a 3 cycle penalty */
 	{
-		viCounter = (cp0Counter+1)*VICounterFactors[CounterFactor];
-		COUNTCounter = (cp0Counter+1)*CounterFactors[CounterFactor]/VICounterFactors[CounterFactor];
+		viCounter = (compilerstatus.cp0Counter * VICounterFactors[CounterFactor]);
 	}
 
-	MOV_ImmToMemory(1, (_u32)&g_blocksize, cp0Counter+1);
-#ifdef FAST_COUNTER
-	SUB_ImmToMemory((_u32)&countdown_counter, viCounter);
+	compilerstatus.KEEP_RECOMPILING = FALSE;	/* always. */
 
-#ifdef ENABLE_OPCODE_DEBUGGER
-	if( debug_opcode == 1 && debug_opcode_block == 1 )
+	FlushAllRegisters();
+
+	/* BugFix: can't store the link val to memory until GPR[31] has been flushed! */
+	if(DoLink)
+	{
+		MOV_ImmToMemory(1, ModRM_disp8_EBP, (31 - 16) << 3, (_s32) LinkVal);
+		if(currentromoptions.Assume_32bit != ASSUME_32BIT_YES)
+			MOV_ImmToMemory(1, ModRM_disp8_EBP, 4 + ((31 - 16) << 3), (_s32) (((__int32) LinkVal) >> 31));
+	}
+
+#ifndef TEST_OPCODE_DEBUGGER_INTEGRITY23
+	if(debug_opcode == 1 && debug_opcode_block == 1)
 	{
 		MOV_ImmToReg(1, Reg_ECX, 0);
-		MOV_ImmToReg(1, Reg_EAX, (uint32)&CompareStates);
+		MOV_ImmToReg(1, Reg_EAX, (uint32) & CompareStates);
 		CALL_Reg(Reg_EAX);
 	}
 #endif
+	if(JumpType == JUMP_TYPE_BREAKOUT)
+	{
+		compilerstatus.KEEP_RECOMPILING = FALSE;
+	}
 
-    if ((TempPC == g_translatepc) && (JumpType == JUMP_TYPE_DIRECT)) //it's a loop
-    {
-        CMP_MemoryWithImm(1, (uint32)&countdown_counter, 0);
-        Jcc_auto(CC_LE, 97); //jmp true
+	if(JumpType == JUMP_TYPE_INDIRECT)
+	{
+		SUB_ImmToMemory((_u32) & countdown_counter, viCounter);
+		TLB_TRANSLATE_PC_INDIRECT();
+		RET();
+	}
+	else if(currentromoptions.Link_4KB_Blocks != USE4KBLINKBLOCK_YES)
+	{
+		SUB_ImmToMemory((_u32) & countdown_counter, viCounter);
+		MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &gHWS_pc, targetpc);
+		TLB_TRANSLATE_PC(targetpc);
+		RET();
+	}
+	else
+	{
+		if(JumpType == JUMP_TYPE_DIRECT)		/* may need to link target 1 */
+		{
+			SET_TARGET_1_LINK(compilerstatus.TempPC, targetpc);
+			if(current_block_entry->need_target_1)
+			{
+				SUB_ImmToMemory((_u32) & countdown_counter, viCounter);
+				CMP_MemoryWithImm(1, (uint32) & countdown_counter, 0);
+				Jcc_auto(CC_LE, 95);			/* jmp true */
 
-        CMP_MemoryWithImm(1, (uint32)&CPUNeedToDoOtherTask, 0);
-        Jcc_auto(CC_NE, 98); //jmp true
-/*
-        Ok, just make sure our stuff is flushed..
-        memcpy(TempConstMap, ConstMap, sizeof(ConstMap));
-        memcpy(Tempx86reg, x86reg, sizeof(x86reg));
+				JMP_Long((uint32) 0);			/* here we link to target 1's block ptr */
+				current_block_entry->jmp_to_target_1_code_addr = compilerstatus.lCodePosition - 4;
+				SetTarget(95);
 
-        FlushAllRegisters();
+				MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &gHWS_pc, targetpc);
+				TLB_TRANSLATE_PC(targetpc);
+				RET();
+			}
+			else
+			{
+				SUB_ImmToMemory((_u32) & countdown_counter, viCounter);
+				MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &gHWS_pc, targetpc);
+				TLB_TRANSLATE_PC(targetpc);
+				RET();
+			}
+		}
+		else	/* JumpType == JUMP_TYPE_BREAKOUT, may need to link target 2 */
+		{
+			SET_TARGET_2_LINK(compilerstatus.TempPC, targetpc);
+			if(current_block_entry->need_target_2)
+			{
+				SUB_ImmToMemory((_u32) & countdown_counter, viCounter);
+				CMP_MemoryWithImm(1, (uint32) & countdown_counter, 0);
+				Jcc_auto(CC_LE, 31);	/* jmp true */
 
-        memcpy(ConstMap, TempConstMap, sizeof(ConstMap));
-        memcpy(x86reg, Tempx86reg, sizeof(x86reg));
-*/
-//        DisplayError("Block = %08X", (uint32)Block);
-        MOV_ImmToMemory(1, (uint32)&BlockStartAddress, (uint32)BlockStart);
+				JMP_Long((uint32) 0);	/* here we link to target 2's block ptr */
+				current_block_entry->jmp_to_target_2_code_addr = compilerstatus.lCodePosition - 4;
+				SetTarget(31);
+				MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &gHWS_pc, targetpc);
+				TLB_TRANSLATE_PC(targetpc);
+				RET();
+			}
+			else
+			{
+				SUB_ImmToMemory((_u32) & countdown_counter, viCounter);
+				MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &gHWS_pc, targetpc);
+				TLB_TRANSLATE_PC(targetpc);
+				RET();
+			}
+		}
+	}
 
-        JMP_FAR((uint32)&BlockStartAddress);
-
-        SetTarget(97);
-        SetTarget(98);
-    }
-#else
-	ADD_ImmToMemory((_u32)&gHWS_COP0Reg[COUNT], COUNTCounter);
-	ADD_ImmToMemory((_u32)&VIcounter,viCounter);
-#endif
-
-    RET();
+	if(CompilingSlot)
+	{
+		DisplayError("Ok, CompilingSlot is still TRUE when finishing compiling the block, PC=%08X", gHWS_pc);
+	}
 }
 
-extern x86regtyp   xRD[1];
-extern x86regtyp   xRS[1];
-extern x86regtyp   xRT[1];
+extern x86regtyp		xRD[1];
+extern x86regtyp		xRS[1];
+extern x86regtyp		xRT[1];
 
-extern unsigned long lCodePosition;
-unsigned long templCodePosition;
-extern unsigned long JumpTargets[100];
-unsigned long wPosition;
-extern void SetRdRsRt64bit(OP_PARAMS);
-extern FlushedMap  FlushedRegistersMap[NUM_CONSTS];
-extern void SwitchToOpcodePass();
+unsigned long			templCodePosition;
+extern unsigned long	JumpTargets[100];
+unsigned long			wPosition;
+extern void				SetRdRsRt64bit(OP_PARAMS);
+extern FlushedMap		FlushedRegistersMap[NUM_CONSTS];
+extern void				SwitchToOpcodePass(void);
 
-//////////////////////////////////////////////////////////////////////////////////
-// branch instructions
-//////////////////////////////////////////////////////////////////////////////////
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
 void dyna4300i_bne(OP_PARAMS)
 {
-    _u32 aValue;
-    int tempPC = reg->pc;
-    int IsNear = 1; //If short, range= -128 to +127
-    int Is32bit = 0;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	_u32	aValue;
+	int		tempPC = reg->pc;
+	int		IsNear = SAFE_NEAR_ONLY;			/* If short, range= -128 to +127 */
+	int		Is32bit = 0;
+	int		tempRSIs32bit = 0;
+	int		tempRTIs32bit = 0;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-    int tempRSIs32bit = 0;
-    int tempRTIs32bit = 0;
+	CHECK_OPCODE_PASS if(gMultiPass.WhichPass == COMPILE_OPCODES_ONLY) MessageBox(NULL, "Bad", 0, 0);
+	SetRdRsRt64bit(PASS_PARAMS);
 
-    CHECK_OPCODE_PASS
-    
-    SetRdRsRt64bit(PASS_PARAMS);
-
+	compilerstatus.cp0Counter += 1;
 	_OPCODE_DEBUG_BRANCH_(r4300i_bne);
 
-#ifdef SAFE_BRANCHES
-     HELP_Call((unsigned long)HELP_bne); KEEP_RECOMPILING = FALSE; return;
-#endif
+	aValue = (reg->pc + 4 + (__I << 2));
 
-    aValue = (reg->pc + 4 + (__I << 2));
+	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
+	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
 
-    tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
-    tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
-    if (tempRSIs32bit && tempRTIs32bit)
-    {
-        Is32bit = 1;
-        xRS->Is32bit = 1;
-        xRT->Is32bit = 1;
-    }
-
-    MapRS;
-    MapRT;
-
-	CMP_Reg1WithReg2(1, xRS->x86reg, xRT->x86reg);
-_Redo:    
-    templCodePosition = lCodePosition;
-
-    if (!Is32bit)
-    {
-        Jcc_auto(CC_NE, 90); //jmp true
-        CMP_Reg1WithReg2(1, xRS->HiWordLoc, xRT->HiWordLoc);
-    }
-
-        if (IsNear == 1)
-            Jcc_Near_auto(CC_E, 91); //jmp false
-        else
-            Jcc_auto(CC_E, 91); //jmp false
-
-// true
-	if (!Is32bit)
-        SetTarget(90);
-
-        SPEED_HACK
-        reg->pc += 4;
-
-        Compile_Slot(reg->pc);
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-		TLB_TRANSLATE_PC(aValue)
-        Interrupts(JUMP_TYPE_DIRECT);
-
-//false
-	wPosition = lCodePosition - JumpTargets[91];
-    if ((wPosition > 127) && (IsNear == 0))
-    {
-        lCodePosition = templCodePosition;
-        reg->pc -= 4;
-        //Rewrite the code as a near jump. Short jump won't cut it.
-        IsNear = 1;
-        goto _Redo;
-    }
-
-    if (IsNear == 0)
-    {
-        SetTarget(91);
-    }
-    else
-    {
-        SetNearTarget(91);
-    }
-
-// end of compiled block
-#ifdef DANGEROUS_BRANCHES
-    reg->pc = tempPC;
-#else
-
-    MOV_ImmToMemory(1, (unsigned long)&reg->pc, tempPC+4);
-	TLB_TRANSLATE_PC(tempPC+4)
-
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_BREAKOUT);
-#endif
-}
-
-//////////////////////////////////////////////////////////////////////////////////
-
-void dyna4300i_beq(OP_PARAMS)
-{
-	int Is32bit = 0;
-    _u32 aValue;
-    int tempPC = reg->pc;
-
-    CHECK_OPCODE_PASS
-
-    SetRdRsRt64bit(PASS_PARAMS);
-	_OPCODE_DEBUG_BRANCH_(r4300i_beq);
-
-#ifdef SAFE_BRANCHES
-     HELP_Call((unsigned long)HELP_beq); KEEP_RECOMPILING = FALSE; return;
-#endif
-
-/*
-    if (CheckIs32Bit(xRS->mips_reg) && CheckIs32Bit(xRT->mips_reg))
-    {
-        Is32bit = 1;
-        xRS->Is32bit = 1;
-        xRT->Is32bit = 1;
-    }
-*/     
-     
-     aValue = (reg->pc + 4 + (__I << 2));
-
-    MapRS;
-    MapRT;
-	CMP_Reg1WithReg2(1,xRS->x86reg, xRT->x86reg);
-	Jcc_Near_auto(CC_NE, 91); //jmp false
-
-    CMP_Reg1WithReg2(1,xRS->HiWordLoc, xRT->HiWordLoc);
-    Jcc_Near_auto(CC_NE, 93); //jmp false*/
-
-// true
-        SPEED_HACK
-
-        reg->pc += 4;
-		Compile_Slot(reg->pc);
-
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-		TLB_TRANSLATE_PC(aValue)
-        Interrupts(JUMP_TYPE_DIRECT);
-
-//false
-	wPosition = lCodePosition - JumpTargets[91];
-//    if (wPosition > 127)
-//        DisplayError("%08X: beq: Code %d bytes is too large for a short jump. Must be <= 127 bytes.", reg->pc-4, wPosition);
-	SetNearTarget(91);
-    SetNearTarget(93);
-
-#ifdef DANGEROUS_BRANCHES
-    reg->pc = tempPC;
-#else
-
-    MOV_ImmToMemory(1, (unsigned long)&reg->pc, tempPC+4);
-	TLB_TRANSLATE_PC(tempPC+4)
-
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_BREAKOUT);
-#endif
-}
-
-//////////////////////////////////////////////////////////////////////////////////
-
-void dyna4300i_beql(OP_PARAMS)
-{
-	_u32 aValue;
-    int tempPC = reg->pc+4;
-
-    CHECK_OPCODE_PASS
-
-    SetRdRsRt64bit(PASS_PARAMS);
-	_OPCODE_DEBUG_BRANCH_(r4300i_beql);
-
-#ifdef SAFE_BRANCHES
-     HELP_Call((unsigned long)HELP_beq); KEEP_RECOMPILING = FALSE; return;
-#endif
-
-    aValue = (reg->pc + 4 + (__I << 2));
-
-    MapRS;
-    MapRT;
-	CMP_Reg1WithReg2(1,xRS->x86reg, xRT->x86reg);
-	Jcc_Near_auto(CC_NE, 91); //jmp false
-
-    CMP_Reg1WithReg2(1,xRS->HiWordLoc, xRT->HiWordLoc);
-    Jcc_Near_auto(CC_NE, 93); //jmp false*/
-
-// true
-        SPEED_HACK
-
-        reg->pc += 4;
-		Compile_Slot(reg->pc);
-
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-		TLB_TRANSLATE_PC(aValue)
-        Interrupts(JUMP_TYPE_DIRECT);
-
-//false
-	wPosition = lCodePosition - JumpTargets[91];
-//    if (wPosition > 127)
-//        DisplayError("%08X: beq: Code %d bytes is too large for a short jump. Must be <= 127 bytes.", reg->pc-4, wPosition);
-	SetNearTarget(91);
-    SetNearTarget(93);
-
-#ifdef DANGEROUS_BRANCHES
-    reg->pc = tempPC;
-    *pcptr++;
-#else
-
-    MOV_ImmToMemory(1, (unsigned long)&reg->pc, tempPC+4);
-	TLB_TRANSLATE_PC(tempPC+4)
-
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_BREAKOUT);
-#endif
-}
-
-//////////////////////////////////////////////////////////////////////////////////
-
-void dyna4300i_bnel(OP_PARAMS)
-{
-    _u32 aValue;
-    int tempPC = reg->pc+4;
-    int IsNear = 1; //If short, range= -128 to +127
-
-    CHECK_OPCODE_PASS
-
-    SetRdRsRt64bit(PASS_PARAMS);
-	_OPCODE_DEBUG_BRANCH_(r4300i_bnel);
-    
-#ifdef SAFE_BRANCHES
-     HELP_Call((unsigned long)HELP_bne); KEEP_RECOMPILING = FALSE; return;
-#endif
-
-    aValue = (reg->pc + 4 + (__I << 2));
-
-    MapRS;
-    MapRT;
-
-	CMP_Reg1WithReg2(1,xRS->x86reg, xRT->x86reg);
-_Redo:    
-    templCodePosition = lCodePosition;
-    Jcc_auto(CC_NE, 90); //jmp true
-    CMP_Reg1WithReg2(1,xRS->HiWordLoc, xRT->HiWordLoc);
-
-    if (IsNear == 1)
-        Jcc_Near_auto(CC_E, 91); //jmp false
-    else
-        Jcc_auto(CC_E, 91); //jmp false
-
-// true
-	SetTarget(90);
-
-        SPEED_HACK
-
-        reg->pc += 4;
-		Compile_Slot(reg->pc);
-
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-		TLB_TRANSLATE_PC(aValue)
-        Interrupts(JUMP_TYPE_DIRECT);
-
-//false
-	wPosition = lCodePosition - JumpTargets[91];
-    if ((wPosition > 127) && (IsNear == 0))
-    {
-        lCodePosition = templCodePosition;
-        reg->pc -= 4;
-        //Rewrite the code as a near jump. Short jump won't cut it.
-        IsNear = 1;
-        goto _Redo;
-    }
-
-    if (IsNear == 0)
-    {
-        SetTarget(91);
-    }
-    else
-    {
-        SetNearTarget(91);
-    }
-
-#ifdef DANGEROUS_BRANCHES
-    reg->pc = tempPC;
-    *pcptr++;
-#else
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, reg->pc+4);
-		TLB_TRANSLATE_PC(reg->pc+4)
-
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_BREAKOUT);
-#endif
-}
-
-
-//////////////////////////////////////////////////////////////////////////////////
-#define BLEZ_MACRO      BRANCH_MACRO(CC_G, CC_L, CC_A)
-#define BLTZ_MACRO      BRANCH_MACRO(CC_G, CC_L, CC_AE)
-#define BGEZ_MACRO      BRANCH_MACRO(CC_L, CC_G, CC_B)
-#define BGTZ_MACRO      BRANCH_MACRO(CC_L, CC_G, CC_BE)
-
-#define BRANCH_MACRO(JMP1, JMP2, JMP3)      \
-	                                        \
-    aValue = (reg->pc + 4 + (__I << 2));    \
-                                            \
-    MapRS;                                  \
-	CMP_RegWithShort(1, xRS->HiWordLoc, 0); \
-	Jcc_Near_auto(JMP1, 91); /* jmp false */\
-	Jcc_auto(JMP2, 90); /* jmp true */      \
-                                            \
-	CMP_RegWithShort(1, xRS->x86reg, 0);    \
-	Jcc_Near_auto(JMP3, 93); /* jmp false2 */
-
-
-void dyna4300i_blez(OP_PARAMS)
-{
-	_u32 aValue;
-    int tempPC = reg->pc;
-
-    CHECK_OPCODE_PASS    
-
-    SetRdRsRt64bit(PASS_PARAMS);
-	_OPCODE_DEBUG_BRANCH_(r4300i_blez);
-
-#ifdef SAFE_BRANCHES
-    HELP_Call((unsigned long)HELP_blez); KEEP_RECOMPILING = FALSE; return;
-#endif
-
-//    BLEZ_MACRO
-
-//
-    aValue = (reg->pc + 4 + (__I << 2));
-
-    MapRS;
-	CMP_RegWithShort(1, xRS->HiWordLoc, 0);
-	Jcc_Near_auto(CC_G, 91); /* jmp false */
-	Jcc_auto(CC_L, 90); /* jmp true */
-
-	CMP_RegWithShort(1, xRS->x86reg, 0);
-	Jcc_Near_auto(CC_A, 93); /* jmp false2 */
-//
-
-
-// true
-	SetTarget(90);
-		SPEED_HACK
-		reg->pc += 4;
-
-        Compile_Slot(reg->pc);
-        
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-		TLB_TRANSLATE_PC(aValue)
-        Interrupts(JUMP_TYPE_DIRECT);
-
-//false
-	SetNearTarget(91);
-    SetNearTarget(93);
-#ifdef DANGEROUS_BRANCHES
-    reg->pc = tempPC;
-#else
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, reg->pc);
-		TLB_TRANSLATE_PC(reg->pc)
-
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_BREAKOUT);
-#endif
-}
-
-//////////////////////////////////////////////////////////////////////////////////
-void dyna4300i_blezl(OP_PARAMS)
-{
-	_u32 aValue;
-    int tempPC = reg->pc+4;
-
-    CHECK_OPCODE_PASS
-
-	if( CompilingSlot )
+	if(xRS->mips_reg == xRT->mips_reg)
 	{
-		DisplayError("BLEZL in branch delay slot PC=%08X", gHWS_pc);
+		/* false */
+		Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
+		return;
+	}
+	else if((ConstMap[xRS->mips_reg].IsMapped == 1) && (ConstMap[xRT->mips_reg].IsMapped == 1))
+	{
+		if(ConstMap[xRS->mips_reg].value == ConstMap[xRT->mips_reg].value)
+		{
+			/* false */
+			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
+		}
+		else
+		{
+			/* true */
+			SPEED_HACK reg->pc += 4;
+			FlushAllRegisters();
+			Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+		}
+
 		return;
 	}
 
-    SetRdRsRt64bit(PASS_PARAMS);
+	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
+	{
+		Is32bit = 1;
+		xRS->Is32bit = 1;
+		xRT->Is32bit = 1;
+	}
+
+	MapRS;
+	MapRT;
+
+	CMP_Reg1WithReg2(1, xRS->x86reg, xRT->x86reg);
+_Redo:
+	templCodePosition = compilerstatus.lCodePosition;
+
+	if(!Is32bit)
+	{
+		Jcc_auto(CC_NE, 90);					/* jmp true */
+		CMP_Reg1WithReg2(1, xRS->HiWordLoc, xRT->HiWordLoc);
+	}
+
+	if(IsNear == 1) Jcc_Near_auto(CC_E, 91);	/* jmp false */
+	else
+		Jcc_auto(CC_E, 91);						/* jmp false */
+
+	/* true */
+	if(!Is32bit) SetTarget(90);
+
+	SPEED_HACK reg->pc += 4;
+
+	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+
+	/* false */
+	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
+	if((wPosition > 120) && (IsNear == 0))
+	{
+		compilerstatus.lCodePosition = templCodePosition;
+		reg->pc -= 4;
+
+		/* Rewrite the code as a near jump. Short jump won't cut it. */
+		IsNear = 1;
+		goto _Redo;
+	}
+
+	if(IsNear == 0)
+	{
+		SetTarget(91);
+	}
+	else
+	{
+		SetNearTarget(91);
+	}
+
+	/* end of compiled block */
+	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
+}
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void dyna4300i_beq(OP_PARAMS)
+{
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	_u32				aValue;
+	int					tempPC = reg->pc;
+	int					Use32bit = 0;
+	CHECK_OPCODE_PASS	SetRdRsRt64bit(PASS_PARAMS);
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+	_OPCODE_DEBUG_BRANCH_(r4300i_beq);
+
+	aValue = (reg->pc + 4 + (__I << 2));
+
+	if((CheckIs32Bit(__RT) && CheckIs32Bit(__RS)) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
+	{
+		xRS->Is32bit = 1;
+		xRT->Is32bit = 1;
+		Use32bit = 1;
+	}
+
+	if(xRS->mips_reg == xRT->mips_reg)
+	{
+		/* true */
+		SPEED_HACK reg->pc += 4;
+		FlushAllRegisters();
+		Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+		return;
+	}
+	else if((ConstMap[xRS->mips_reg].IsMapped == 1) && (ConstMap[xRT->mips_reg].IsMapped == 1))
+	{
+		if(ConstMap[xRS->mips_reg].value == ConstMap[xRT->mips_reg].value)
+		{
+			/* true */
+			SPEED_HACK reg->pc += 4;
+			FlushAllRegisters();
+			Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+		}
+		else
+		{
+			/* false */
+			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
+		}
+
+		return;
+	}
+	else if(ConstMap[xRS->mips_reg].IsMapped == 1)
+	{
+		MapRT;
+		CMP_RegWithImm(1, xRT->x86reg, ConstMap[xRS->mips_reg].value);
+		Jcc_Near_auto(CC_NE, 91);		/* jmp false */
+
+		if(!Use32bit)
+		{
+			CMP_RegWithImm(1, xRT->HiWordLoc, ((__int32) ConstMap[xRS->mips_reg].value >> 31));
+			Jcc_Near_auto(CC_NE, 93);	/* jmp false */
+		}
+	}
+	else if(ConstMap[xRT->mips_reg].IsMapped == 1)
+	{
+		MapRS;
+		CMP_RegWithImm(1, xRS->x86reg, ConstMap[xRT->mips_reg].value);
+		Jcc_Near_auto(CC_NE, 91);		/* jmp false */
+
+		if(!Use32bit)
+		{
+			CMP_RegWithImm(1, xRS->HiWordLoc, ((__int32) ConstMap[xRT->mips_reg].value >> 31));
+			Jcc_Near_auto(CC_NE, 93);	/* jmp false */
+		}
+	}
+	else if(xRS->mips_reg != xRT->mips_reg)
+	{
+		MapRS;
+		MapRT;
+		CMP_Reg1WithReg2(1, xRS->x86reg, xRT->x86reg);
+		Jcc_Near_auto(CC_NE, 91);		/* jmp false */
+
+		if(!Use32bit)
+		{
+			CMP_Reg1WithReg2(1, xRS->HiWordLoc, xRT->HiWordLoc);
+			Jcc_Near_auto(CC_NE, 93);	/* jmp false */
+		}
+	}
+
+	/* true */
+	SPEED_HACK reg->pc += 4;
+	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+
+	/* false */
+	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
+	SetNearTarget(91);
+	if(!Use32bit) SetNearTarget(93);
+	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
+}
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void dyna4300i_beql(OP_PARAMS)
+{
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	_u32	aValue;
+	int		tempPC = reg->pc + 4;
+	int		Use32bit = 0;
+	int		NoTest = 0;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+	CHECK_OPCODE_PASS;
+	SetRdRsRt64bit(PASS_PARAMS);
+
+	_OPCODE_DEBUG_BRANCH_(r4300i_beql);
+
+	aValue = (reg->pc + 4 + (__I << 2));
+
+	if(xRS->mips_reg == xRT->mips_reg)
+	{
+		/* true */
+		SPEED_HACK reg->pc += 4;
+		FlushAllRegisters();
+		Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+		return;
+	}
+	else if((ConstMap[xRS->mips_reg].IsMapped == 1) && (ConstMap[xRT->mips_reg].IsMapped == 1))
+	{
+		if(ConstMap[xRS->mips_reg].value == ConstMap[xRT->mips_reg].value)
+		{
+			/* true */
+			SPEED_HACK reg->pc += 4;
+			FlushAllRegisters();
+			Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+		}
+		else
+		{
+			/* false */
+			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
+		}
+
+		return;
+	}
+
+	if((CheckIs32Bit(__RT) && CheckIs32Bit(__RS)) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
+	{
+		xRS->Is32bit = 1;
+		xRT->Is32bit = 1;
+		Use32bit = 1;
+	}
+
+	if(ConstMap[xRS->mips_reg].IsMapped == 1)
+	{
+		MapRT;
+		CMP_RegWithImm(1, xRT->x86reg, ConstMap[xRS->mips_reg].value);
+		Jcc_Near_auto(CC_NE, 91);		/* jmp false */
+
+		if(!Use32bit)
+		{
+			CMP_RegWithImm(1, xRT->HiWordLoc, ((__int32) ConstMap[xRS->mips_reg].value >> 31));
+			Jcc_Near_auto(CC_NE, 93);	/* jmp false */
+		}
+	}
+	else if(ConstMap[xRT->mips_reg].IsMapped == 1)
+	{
+		MapRS;
+		CMP_RegWithImm(1, xRS->x86reg, ConstMap[xRT->mips_reg].value);
+		Jcc_Near_auto(CC_NE, 91);		/* jmp false */
+
+		if(!Use32bit)
+		{
+			CMP_RegWithImm(1, xRS->HiWordLoc, ((__int32) ConstMap[xRT->mips_reg].value >> 31));
+			Jcc_Near_auto(CC_NE, 93);	/* jmp false */
+		}
+	}
+	else if(xRS->mips_reg != xRT->mips_reg)
+	{
+		MapRS;
+		MapRT;
+		CMP_Reg1WithReg2(1, xRS->x86reg, xRT->x86reg);
+		Jcc_Near_auto(CC_NE, 91);		/* jmp false */
+
+		if(!Use32bit)
+		{
+			CMP_Reg1WithReg2(1, xRS->HiWordLoc, xRT->HiWordLoc);
+			Jcc_Near_auto(CC_NE, 93);	/* jmp false */
+		}
+	}
+
+	/* true */
+	SPEED_HACK reg->pc += 4;
+	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+
+	/* false */
+	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
+
+	/*
+	 * if (wPosition > 120) £
+	 * DisplayError("%08X: beq: Code %d bytes is too large for a short jump. Must be
+	 * <= 127 bytes.", reg->pc-4, wPosition);
+	 */
+	if(!NoTest) SetNearTarget(91);
+	if(!Use32bit) SetNearTarget(93);
+	compilerstatus.cp0Counter -= 1;
+	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
+}
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void dyna4300i_bnel(OP_PARAMS)
+{
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	_u32	aValue;
+	int		tempPC = reg->pc + 4;
+	int		IsNear = 1;			/* If short, range= -128 to +127 */
+	int		Is32bit = 0;
+	int		tempRSIs32bit = 0;
+	int		tempRTIs32bit = 0;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+	CHECK_OPCODE_PASS;
+	if(gMultiPass.WhichPass == COMPILE_OPCODES_ONLY) MessageBox(NULL, "Bad", 0, 0);
+
+	compilerstatus.cp0Counter += 1;
+	SetRdRsRt64bit(PASS_PARAMS);
+	_OPCODE_DEBUG_BRANCH_(r4300i_bnel);
+
+	aValue = (reg->pc + 4 + (__I << 2));
+
+	if(xRS->mips_reg == xRT->mips_reg)
+	{
+		/* false */
+		Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
+		return;
+	}
+	else if((ConstMap[xRS->mips_reg].IsMapped == 1) && (ConstMap[xRT->mips_reg].IsMapped == 1))
+	{
+		if(ConstMap[xRS->mips_reg].value == ConstMap[xRT->mips_reg].value)
+		{
+			/* false */
+			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
+		}
+		else
+		{
+			/* true */
+			SPEED_HACK reg->pc += 4;
+			FlushAllRegisters();
+			Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+		}
+
+		return;
+	}
+
+	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
+	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
+	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
+	{
+		Is32bit = 1;
+		xRS->Is32bit = 1;
+		xRT->Is32bit = 1;
+	}
+
+	MapRS;
+	MapRT;
+
+	CMP_Reg1WithReg2(1, xRS->x86reg, xRT->x86reg);
+_Redo:
+	templCodePosition = compilerstatus.lCodePosition;
+
+	if(!Is32bit)
+	{
+		Jcc_auto(CC_NE, 90);	/* jmp true */
+		CMP_Reg1WithReg2(1, xRS->HiWordLoc, xRT->HiWordLoc);
+	}
+
+	if(IsNear == 1) Jcc_Near_auto(CC_E, 91);	/* jmp false */
+	else
+		Jcc_auto(CC_E, 91);						/* jmp false */
+
+	/* true */
+	if(!Is32bit) SetTarget(90);
+
+	SPEED_HACK reg->pc += 4;
+
+	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+
+	/* false */
+	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
+	if((wPosition > 120) && (IsNear == 0))
+	{
+		compilerstatus.lCodePosition = templCodePosition;
+		reg->pc -= 4;
+
+		/* Rewrite the code as a near jump. Short jump won't cut it. */
+		IsNear = 1;
+		goto _Redo;
+	}
+
+	if(IsNear == 0)
+	{
+		SetTarget(91);
+	}
+	else
+	{
+		SetNearTarget(91);
+	}
+
+	/* end of compiled block */
+	compilerstatus.cp0Counter -= 1;
+	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
+}
+
+#define BLEZ_MACRO	BRANCH_MACRO(CC_G, CC_L, CC_A)
+#define BLTZ_MACRO	BRANCH_MACRO(CC_G, CC_L, CC_AE)
+#define BGEZ_MACRO	BRANCH_MACRO(CC_L, CC_G, CC_B)
+#define BGTZ_MACRO	BRANCH_MACRO(CC_L, CC_G, CC_BE)
+#define BRANCH_MACRO(JMP1, JMP2, JMP3) \
+	aValue = (reg->pc + 4 + (__I << 2)); \
+	MapRS; \
+	CMP_RegWithShort(1, xRS->HiWordLoc, 0); \
+	Jcc_Near_auto(JMP1, 91);					/* jmp false */ \
+	Jcc_auto(JMP2, 90);			/* jmp true */ \
+	CMP_RegWithShort(1, xRS->x86reg, 0); \
+	Jcc_Near_auto(JMP3, 93);	/* jmp false2 */
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+
+void dyna4300i_blez(OP_PARAMS)
+{
+	/*~~~~~~~~~~~~~~~~~~~~~~~~*/
+	_u32	aValue;
+	int		tempPC = reg->pc;
+	int		IsNear = 1;
+	int		tempRSIs32bit = 0;
+	int		tempRTIs32bit = 0;
+	int		Use32bit = 0;
+	int		templCodePosition32;
+	int		templCodePosition64;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+	CHECK_OPCODE_PASS;
+	compilerstatus.cp0Counter += 1;
+	SetRdRsRt64bit(PASS_PARAMS);
+	_OPCODE_DEBUG_BRANCH_(r4300i_blez);
+
+	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
+	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
+
+	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
+	{
+		Use32bit = 1;
+		xRS->Is32bit = 1;
+		xRT->Is32bit = 1;
+	}
+
+	aValue = (reg->pc + 4 + (__I << 2));
+
+	if(ConstMap[xRS->mips_reg].IsMapped == 1)
+	{
+		if((_int32) ConstMap[xRS->mips_reg].value <= 0)
+		{
+			/* true */
+			SPEED_HACK reg->pc += 4;
+			FlushAllRegisters();
+			Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+		}
+		else
+		{
+			/* false */
+			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
+		}
+
+		return;
+	}
+
+	MapRS;
+
+	if(!Use32bit)
+	{
+		CMP_RegWithShort(1, xRS->HiWordLoc, 0);
+		templCodePosition64 = compilerstatus.lCodePosition;
+_Redo64:
+		__asm
+		{
+			pushad
+		}
+
+		if(IsNear == 1) Jcc_Near_auto(CC_G, 91);	/* jmp false */
+		else
+			Jcc_auto(CC_G, 91);						/* jmp false */
+		Jcc_auto(CC_L, 90); /* jmp true */
+
+		CMP_RegWithShort(1, xRS->x86reg, 0);
+		if(IsNear == 1) Jcc_Near_auto(CC_A, 93);	/* jmp false */
+		else
+			Jcc_auto(CC_A, 93);						/* jmp false */
+
+		/* true */
+		SetTarget(90);
+	}
+	else
+	{
+		CMP_RegWithShort(1, xRS->x86reg, 0);
+		templCodePosition32 = compilerstatus.lCodePosition;
+_Redo32:
+		__asm
+		{
+			pushad
+		}
+
+		if(IsNear == 1) Jcc_Near_auto(CC_G, 91);	/* jmp false */
+		else
+			Jcc_auto(CC_G, 91);						/* jmp false */
+	}
+
+	/* SPEED_HACK */
+	reg->pc += 4;
+	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+
+	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
+	if((wPosition > 120) && (IsNear == 0))
+	{
+		reg->pc -= 4;
+
+		/* Rewrite the code as a near jump. Short jump won't cut it. */
+		IsNear = 1;
+		if(!Use32bit)
+		{
+			compilerstatus.lCodePosition = templCodePosition64;
+
+			__asm popad __asm jmp _Redo64
+		}
+		else
+		{
+			compilerstatus.lCodePosition = templCodePosition32;
+			__asm popad __asm jmp _Redo32
+		}
+	}
+	else
+	{
+		__asm popad
+
+		/* false */
+		if(IsNear == 0)
+		{
+			SetTarget(91);
+			if(!Use32bit) SetTarget(93);
+		}
+		else
+		{
+			SetNearTarget(91);
+			if(!Use32bit) SetNearTarget(93);
+		}
+	}
+
+	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
+}
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void dyna4300i_blezl(OP_PARAMS)
+{
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	uint32				aValue;
+	int					tempPC = reg->pc + 4;
+	int					IsNear = SAFE_NEAR_ONLY;
+	int					tempRSIs32bit = 0;
+	int					tempRTIs32bit = 0;
+	int					Use32bit = 0;
+	int					templCodePosition32;
+	int					templCodePosition64;
+	CHECK_OPCODE_PASS	SetRdRsRt64bit(PASS_PARAMS);
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
 	_OPCODE_DEBUG_BRANCH_(r4300i_blezl);
 
-#ifdef SAFE_BRANCHES
-    HELP_Call((unsigned long)HELP_blez); KEEP_RECOMPILING = FALSE; return;
-#endif
+	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
+	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
 
-//    BLEZ_MACRO
+	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
+	{
+		Use32bit = 1;
+		xRS->Is32bit = 1;
+		xRT->Is32bit = 1;
+	}
 
-//
-    aValue = (reg->pc + 4 + (__I << 2));
+	aValue = (reg->pc + 4 + (__I << 2));
 
-    MapRS;
-	CMP_RegWithShort(1, xRS->HiWordLoc, 0);
-	Jcc_Near_auto(CC_G, 91); /* jmp false */
-	Jcc_auto(CC_L, 90); /* jmp true */
+	if(ConstMap[xRS->mips_reg].IsMapped == 1)
+	{
+		if((_int32) ConstMap[xRS->mips_reg].value <= 0) /* <--bug fix here */
+		{
+			/* true */
+			SPEED_HACK reg->pc += 4;
+			FlushAllRegisters();
+			Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+		}
+		else
+		{
+			/* false */
+			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
+		}
 
-	CMP_RegWithShort(1, xRS->x86reg, 0);
-	Jcc_Near_auto(CC_A, 93); /* jmp false2 */
-//
+		return;
+	}
 
+	MapRS;
 
-// true
-	SetTarget(90);
-		SPEED_HACK
-		reg->pc += 4;
+	if(!Use32bit)
+	{
+		CMP_RegWithShort(1, xRS->HiWordLoc, 0);
+_Redo64:
+		templCodePosition64 = compilerstatus.lCodePosition;
+		if(IsNear) Jcc_Near_auto(CC_G, 91);				/* jmp false */
+		else
+			Jcc_auto(CC_G, 91);						/* jmp false */
+		Jcc_auto(CC_L, 90);							/* jmp true */
 
-        Compile_Slot(reg->pc);
-        
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-		TLB_TRANSLATE_PC(aValue)
-        Interrupts(JUMP_TYPE_DIRECT);
+		CMP_RegWithShort(1, xRS->x86reg, 0);
+		if(IsNear == 1) Jcc_Near_auto(CC_A, 93);	/* jmp false */
+		else
+			Jcc_auto(CC_A, 93);						/* jmp false */
 
-//false
-	SetNearTarget(91);
-    SetNearTarget(93);
-#ifdef DANGEROUS_BRANCHES
-    reg->pc = tempPC;
-    *pcptr++;
-#else
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, reg->pc+4);
-		TLB_TRANSLATE_PC(reg->pc+4)
+		/* true */
+		SetTarget(90);
+	}
+	else
+	{
+		CMP_RegWithShort(1, xRS->x86reg, 0);
+_Redo32:
+		templCodePosition32 = compilerstatus.lCodePosition;
+		if(IsNear == 1) Jcc_Near_auto(CC_G, 91);	/* jmp false */
+		else
+			Jcc_auto(CC_G, 91);						/* jmp false */
+	}
 
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_BREAKOUT);
-#endif
+	SPEED_HACK reg->pc += 4;
+	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+
+	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
+	if((wPosition > 120) && (IsNear == 0))
+	{
+		reg->pc -= 4;
+
+		/* Rewrite the code as a near jump. Short jump won't cut it. */
+		IsNear = 1;
+		if(!Use32bit)
+		{
+			compilerstatus.lCodePosition = templCodePosition64;
+			goto _Redo64;
+		}
+		else
+		{
+			compilerstatus.lCodePosition = templCodePosition32;
+			goto _Redo32;
+		}
+	}
+
+	/* false */
+	if(IsNear == 0)
+	{
+		SetTarget(91);
+		if(!Use32bit) SetTarget(93);
+	}
+	else
+	{
+		SetNearTarget(91);
+		if(!Use32bit) SetNearTarget(93);
+	}
+
+	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
 void dyna4300i_bgtz(OP_PARAMS)
 {
-	_u32 aValue;
-    int tempPC = reg->pc;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	_u32	aValue;
+	int		tempPC = reg->pc;
+	int		IsNear = SAFE_NEAR_ONLY;
+	int		tempRSIs32bit = 0;
+	int		tempRTIs32bit = 0;
+	int		Use32bit = 0;
+	int		templCodePosition32;
+	int		templCodePosition64;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-    CHECK_OPCODE_PASS
-
-    SetRdRsRt64bit(PASS_PARAMS);
+	CHECK_OPCODE_PASS;
+	compilerstatus.cp0Counter += 1;
+	SetRdRsRt64bit(PASS_PARAMS);
 	_OPCODE_DEBUG_BRANCH_(r4300i_bgtz);
 
-#ifdef SAFE_BRANCHES
-    HELP_Call((unsigned long)HELP_bgtz); KEEP_RECOMPILING = FALSE; return;
-#endif
+	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
+	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
+	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
+	{
+		Use32bit = 1;
+		xRS->Is32bit = 1;
+		xRT->Is32bit = 1;
+	}
 
-//    BGTZ_MACRO
-//#define BGTZ_MACRO      BRANCH_MACRO(CC_L, CC_G, CC_BE)
-//
-    aValue = (reg->pc + 4 + (__I << 2));
+	aValue = (reg->pc + 4 + (__I << 2));
 
-    MapRS;
-	CMP_RegWithShort(1, xRS->HiWordLoc, 0);
-	Jcc_Near_auto(CC_L, 91); /* jmp false */
-	Jcc_auto(CC_G, 90); /* jmp true */
+	if(ConstMap[xRS->mips_reg].IsMapped == 1)
+	{
+		if((_int32) ConstMap[xRS->mips_reg].value > 0)
+		{
+			/* true */
+			SPEED_HACK reg->pc += 4;
+			FlushAllRegisters();
+			Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+		}
+		else
+		{
+			/* false */
+			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
+		}
 
-	CMP_RegWithShort(1, xRS->x86reg, 0);
-	Jcc_Near_auto(CC_BE, 93); /* jmp false2 */
-//
-// delay Slot
-	SetTarget(90);
-		SPEED_HACK
-		reg->pc += 4;
+		return;
+	}
 
-        Compile_Slot(reg->pc);
-        
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-		TLB_TRANSLATE_PC(aValue)
-        Interrupts(JUMP_TYPE_DIRECT);
+	MapRS;
 
-	SetNearTarget(91);
-    SetNearTarget(93);
-#ifdef DANGEROUS_BRANCHES
-    reg->pc = tempPC;
-#else
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, reg->pc);
-		TLB_TRANSLATE_PC(reg->pc)
+	if(!Use32bit)
+	{
+		CMP_RegWithShort(1, xRS->HiWordLoc, 0);
+_Redo64:
+		templCodePosition64 = compilerstatus.lCodePosition;
 
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_BREAKOUT);
-#endif
+		if(IsNear == 1) Jcc_Near_auto(CC_L, 91);	/* jmp false */
+		else
+			Jcc_auto(CC_L, 91);						/* jmp false */
+		Jcc_auto(CC_G, 90); /* jmp true */
+		CMP_RegWithShort(1, xRS->x86reg, 0);
+		if(IsNear == 1) Jcc_Near_auto(CC_BE, 93);	/* jmp false2 */
+		else
+			Jcc_auto(CC_BE, 93);					/* jmp false2 */
+	}
+	else
+	{
+		CMP_RegWithShort(1, xRS->x86reg, 0);
+_Redo32:
+		templCodePosition32 = compilerstatus.lCodePosition;
+		if(IsNear == 1) Jcc_Near_auto(CC_LE, 91);	/* jmp false2 */
+		else
+			Jcc_auto(CC_LE, 91);					/* jmp false2 */
+	}
+
+	/*
+	 * £
+	 * delay Slot
+	 */
+	if(!Use32bit) SetTarget(90);
+
+	SPEED_HACK reg->pc += 4;
+	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+
+	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
+	if((wPosition > 120) && (IsNear == 0))
+	{
+		reg->pc -= 4;
+
+		/* Rewrite the code as a near jump. Short jump won't cut it. */
+		IsNear = 1;
+		if(!Use32bit)
+		{
+			compilerstatus.lCodePosition = templCodePosition64;
+			goto _Redo64;
+		}
+		else
+		{
+			compilerstatus.lCodePosition = templCodePosition32;
+			goto _Redo32;
+		}
+	}
+
+	/* false */
+	if(IsNear == 0)
+	{
+		SetTarget(91);
+		if(!Use32bit) SetTarget(93);
+	}
+	else
+	{
+		SetNearTarget(91);
+		if(!Use32bit) SetNearTarget(93);
+	}
+
+	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
 void dyna4300i_bgtzl(OP_PARAMS)
 {
-	_u32 aValue;
-    int tempPC = reg->pc+4;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	_u32	aValue;
+	int		tempPC = reg->pc + 4;
+	int		IsNear = SAFE_NEAR_ONLY;
+	int		tempRSIs32bit = 0;
+	int		tempRTIs32bit = 0;
+	int		Use32bit = 0;
+	int		templCodePosition32;
+	int		templCodePosition64;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-    CHECK_OPCODE_PASS    
-    
-    SetRdRsRt64bit(PASS_PARAMS);
+	CHECK_OPCODE_PASS;
+	compilerstatus.cp0Counter += 1;
+	SetRdRsRt64bit(PASS_PARAMS);
 	_OPCODE_DEBUG_BRANCH_(r4300i_bgtzl);
 
-#ifdef SAFE_BRANCHES
-    HELP_Call((unsigned long)HELP_bgtz); KEEP_RECOMPILING = FALSE; return;
-#endif
+	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
+	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
+	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
+	{
+		Use32bit = 1;
+		xRS->Is32bit = 1;
+		xRT->Is32bit = 1;
+	}
 
-//    BGTZ_MACRO
-//#define BGTZ_MACRO      BRANCH_MACRO(CC_L, CC_G, CC_BE)
-//
-    aValue = (reg->pc + 4 + (__I << 2));
+	/*
+	 * BGTZ_MACRO £
+	 */
+	aValue = (reg->pc + 4 + (__I << 2));
 
-    MapRS;
-	CMP_RegWithShort(1, xRS->HiWordLoc, 0);
-	Jcc_Near_auto(CC_L, 91); /* jmp false */
-	Jcc_auto(CC_G, 90); /* jmp true */
+	MapRS;
 
-	CMP_RegWithShort(1, xRS->x86reg, 0);
-	Jcc_Near_auto(CC_BE, 93); /* jmp false2 */
-//
-// delay Slot
-	SetTarget(90);
-		SPEED_HACK
-		reg->pc += 4;
+	if(!Use32bit)
+	{
+		CMP_RegWithShort(1, xRS->HiWordLoc, 0);
+_Redo64:
+		templCodePosition64 = compilerstatus.lCodePosition;
 
-        Compile_Slot(reg->pc);
-        
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-        TLB_TRANSLATE_PC(aValue)
-		Interrupts(JUMP_TYPE_DIRECT);
+		if(IsNear == 1) Jcc_Near_auto(CC_L, 91);	/* jmp false */
+		else
+			Jcc_auto(CC_L, 91);						/* jmp false */
+		Jcc_auto(CC_G, 90); /* jmp true */
+		CMP_RegWithShort(1, xRS->x86reg, 0);
+		if(IsNear == 1) Jcc_Near_auto(CC_BE, 93);	/* jmp false2 */
+		else
+			Jcc_auto(CC_BE, 93);					/* jmp false2 */
+	}
+	else
+	{
+		CMP_RegWithShort(1, xRS->x86reg, 0);
+_Redo32:
+		templCodePosition32 = compilerstatus.lCodePosition;
+		if(IsNear == 1) Jcc_Near_auto(CC_LE, 91);	/* jmp false2 */
+		else
+			Jcc_auto(CC_LE, 91);					/* jmp false2 */
+	}
 
-	SetNearTarget(91);
-    SetNearTarget(93);
-#ifdef DANGEROUS_BRANCHES
-    reg->pc = tempPC;
-    *pcptr++;
-#else
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, reg->pc+4);
-		TLB_TRANSLATE_PC(reg->pc+4)
+	/*
+	 * £
+	 * delay Slot
+	 */
+	if(!Use32bit) SetTarget(90);
 
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_BREAKOUT);
-#endif
+	SPEED_HACK reg->pc += 4;
+	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+
+	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
+	if((wPosition > 120) && (IsNear == 0))
+	{
+		reg->pc -= 4;
+
+		/* Rewrite the code as a near jump. Short jump won't cut it. */
+		IsNear = 1;
+		if(!Use32bit)
+		{
+			compilerstatus.lCodePosition = templCodePosition64;
+			goto _Redo64;
+		}
+		else
+		{
+			compilerstatus.lCodePosition = templCodePosition32;
+			goto _Redo32;
+		}
+	}
+
+	/* false */
+	if(IsNear == 0)
+	{
+		SetTarget(91);
+		if(!Use32bit) SetTarget(93);
+	}
+	else
+	{
+		SetNearTarget(91);
+		if(!Use32bit) SetNearTarget(93);
+	}
+
+	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
 void dyna4300i_regimm_bltz(OP_PARAMS)
 {
-	_u32 aValue;
-    int tempPC = reg->pc;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	_u32	aValue;
+	int		tempPC = reg->pc;
+	int		IsNear = SAFE_NEAR_ONLY;
+	int		tempRSIs32bit = 0;
+	int		tempRTIs32bit = 0;
+	int		Use32bit = 0;
+	int		templCodePosition;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-    CHECK_OPCODE_PASS    
-
-    SetRdRsRt64bit(PASS_PARAMS);
+	CHECK_OPCODE_PASS;
+	compilerstatus.cp0Counter += 1;
+	SetRdRsRt64bit(PASS_PARAMS);
 	_OPCODE_DEBUG_BRANCH_(r4300i_bltz);
 
-#ifdef SAFE_BRANCHES
-    HELP_Call((unsigned long)HELP_bltz); KEEP_RECOMPILING = FALSE; return;
-#endif
+	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
+	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
+	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
+	{
+		Use32bit = 1;
+		xRS->Is32bit = 1;
+		xRT->Is32bit = 1;
+	}
 
-    aValue = (reg->pc + 4 + (__I << 2));
+	aValue = (reg->pc + 4 + (__I << 2));
 
-    MapRS;
-	CMP_RegWithShort(1, xRS->HiWordLoc, 0);
-	Jcc_Near_auto(CC_GE, 91); /* jmp false */
+	if(ConstMap[xRS->mips_reg].IsMapped == 1)
+	{
+		if((_int32) ConstMap[xRS->mips_reg].value < 0)
+		{
+			/* true */
+			SPEED_HACK reg->pc += 4;
+			FlushAllRegisters();
+			Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+		}
+		else
+		{
+			/* false */
+			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
+		}
 
-// delay Slot
-		SPEED_HACK
-		reg->pc += 4;
+		return;
+	}
 
-        Compile_Slot(reg->pc);
-        
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-        TLB_TRANSLATE_PC(aValue)
-		Interrupts(JUMP_TYPE_DIRECT);
+	MapRS;
+	if(!Use32bit)
+		CMP_RegWithShort(1, xRS->HiWordLoc, 0);
+	else
+		CMP_RegWithShort(1, xRS->x86reg, 0);
+_Redo:
+	templCodePosition = compilerstatus.lCodePosition;
+	if(IsNear == 1) Jcc_Near_auto(CC_GE, 91);	/* jmp false */
+	else
+		Jcc_auto(CC_GE, 91);
 
-	SetNearTarget(91);
-#ifdef DANGEROUS_BRANCHES
-    reg->pc = tempPC;
-#else
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, reg->pc);
-		TLB_TRANSLATE_PC(reg->pc)
+	/* delay Slot */
+	SPEED_HACK reg->pc += 4;
+	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
+	if((wPosition > 120) && (IsNear == 0))
+	{
+		reg->pc -= 4;
 
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_BREAKOUT);
-#endif
+		/* Rewrite the code as a near jump. Short jump won't cut it. */
+		IsNear = 1;
+		compilerstatus.lCodePosition = templCodePosition;
+		goto _Redo;
+	}
+
+	if(IsNear == 1)
+		SetNearTarget(91);
+	else
+		SetTarget(91);
+	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-
-void dyna4300i_regimm_bltzl(OP_PARAMS) 
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void dyna4300i_regimm_bltzl(OP_PARAMS)
 {
-	_u32 aValue;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	_u32	aValue;
+	int		tempPC = reg->pc + 4;
+	int		IsNear = SAFE_NEAR_ONLY;
+	int		tempRSIs32bit = 0;
+	int		tempRTIs32bit = 0;
+	int		Use32bit = 0;
+	int		templCodePosition;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-    CHECK_OPCODE_PASS    
-    
-    SetRdRsRt64bit(PASS_PARAMS);
+	CHECK_OPCODE_PASS;
+	compilerstatus.cp0Counter += 1;
+	SetRdRsRt64bit(PASS_PARAMS);
 	_OPCODE_DEBUG_BRANCH_(r4300i_bltzl);
 
-#ifdef SAFE_BRANCHES
-    HELP_Call((unsigned long)HELP_bltzl); KEEP_RECOMPILING = FALSE; return;
-#endif
+	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
+	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
+	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
+	{
+		Use32bit = 1;
+		xRS->Is32bit = 1;
+		xRT->Is32bit = 1;
+	}
 
-    aValue = (reg->pc + 4 + (__I << 2));
+	aValue = (reg->pc + 4 + (__I << 2));
 
-    MapRS;
-	CMP_RegWithShort(1, xRS->HiWordLoc, 0);
-	Jcc_Near_auto(CC_GE, 91); /* jmp false */
+	MapRS;
+	if(!Use32bit)
+		CMP_RegWithShort(1, xRS->HiWordLoc, 0);
+	else
+		CMP_RegWithShort(1, xRS->x86reg, 0);
+_Redo:
+	templCodePosition = compilerstatus.lCodePosition;
+	if(IsNear == 1) Jcc_Near_auto(CC_GE, 91);	/* jmp false */
+	else
+		Jcc_auto(CC_GE, 91);
 
-// delay Slot
-		SPEED_HACK
-		reg->pc += 4;
-		Compile_Slot(reg->pc);
-		MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-        TLB_TRANSLATE_PC(aValue)
-        Interrupts(JUMP_TYPE_DIRECT);
+	/* delay Slot */
+	SPEED_HACK reg->pc += 4;
+	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
+	if((wPosition > 120) && (IsNear == 0))
+	{
+		reg->pc -= 4;
 
-	SetNearTarget(91);
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, reg->pc+4);
-		TLB_TRANSLATE_PC(reg->pc+4)
+		/* Rewrite the code as a near jump. Short jump won't cut it. */
+		IsNear = 1;
+		compilerstatus.lCodePosition = templCodePosition;
+		goto _Redo;
+	}
 
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_BREAKOUT);
+	if(IsNear == 1)
+		SetNearTarget(91);
+	else
+		SetTarget(91);
+
+	compilerstatus.cp0Counter -= 1;
+	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-
-void dyna4300i_regimm_bgez(OP_PARAMS) 
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void dyna4300i_regimm_bgez(OP_PARAMS)
 {
-	_u32 aValue;
-    CHECK_OPCODE_PASS    
-    
-    SetRdRsRt64bit(PASS_PARAMS);
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	_u32	aValue;
+	int		tempPC = reg->pc;
+	int		IsNear = SAFE_NEAR_ONLY;
+	int		tempRSIs32bit = 0;
+	int		tempRTIs32bit = 0;
+	int		Use32bit = 0;
+	int		templCodePosition32;
+	int		templCodePosition64;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+	CHECK_OPCODE_PASS;
+	compilerstatus.cp0Counter += 1;
+	SetRdRsRt64bit(PASS_PARAMS);
 	_OPCODE_DEBUG_BRANCH_(r4300i_bgez);
 
-#ifdef SAFE_BRANCHES
-    HELP_Call((unsigned long)HELP_bgez); KEEP_RECOMPILING = FALSE; return;
-#endif
+	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
+	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
+	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
+	{
+		Use32bit = 1;
+		xRS->Is32bit = 1;
+		xRT->Is32bit = 1;
+	}
 
-    BGEZ_MACRO
+	aValue = (reg->pc + 4 + (__I << 2));
 
-// delay Slot
-	SetTarget(90);
-		SPEED_HACK
-		reg->pc += 4;
-		Compile_Slot(reg->pc);
-		MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-        TLB_TRANSLATE_PC(aValue)
-        Interrupts(JUMP_TYPE_DIRECT);
+	if(ConstMap[xRS->mips_reg].IsMapped == 1)
+	{
+		if((_int32) ConstMap[xRS->mips_reg].value >= 0)
+		{
+			/* true */
+			SPEED_HACK reg->pc += 4;
+			FlushAllRegisters();
+			Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+		}
+		else
+		{
+			/* false */
+			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
+		}
 
-	SetNearTarget(91);
-	SetNearTarget(93);
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, reg->pc);
-		TLB_TRANSLATE_PC(reg->pc)
+		return;
+	}
 
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_BREAKOUT);
+	MapRS;
+	if(!Use32bit)
+	{
+		CMP_RegWithShort(1, xRS->HiWordLoc, 0);
+_Redo64:
+		templCodePosition64 = compilerstatus.lCodePosition;
+
+		if(IsNear == 1)
+			Jcc_Near_auto(CC_L, 91);
+		else
+			Jcc_auto(CC_L, 91);
+		Jcc_auto(CC_G, 90);
+
+		CMP_RegWithShort(1, xRS->x86reg, 0);
+		if(IsNear == 1)
+			Jcc_Near_auto(CC_B, 93);
+		else
+			Jcc_auto(CC_B, 93);
+	}
+	else
+	{
+		CMP_RegWithShort(1, xRS->x86reg, 0);
+_Redo32:
+		templCodePosition32 = compilerstatus.lCodePosition;
+		if(IsNear == 1) Jcc_Near_auto(CC_L, 91);	/* jmp false2 */
+		else
+			Jcc_auto(CC_L, 91);						/* jmp false2 */
+	}
+
+	/*
+	 * BRANCH_MACRO(CC_L, CC_G, CC_B) £
+	 * delay Slot
+	 */
+	if(!Use32bit) SetTarget(90);
+	SPEED_HACK reg->pc += 4;
+	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+
+	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
+	if((wPosition > 120) && (IsNear == 0))
+	{
+		reg->pc -= 4;
+
+		/* Rewrite the code as a near jump. Short jump won't cut it. */
+		IsNear = 1;
+		if(!Use32bit)
+		{
+			compilerstatus.lCodePosition = templCodePosition64;
+			goto _Redo64;
+		}
+		else
+		{
+			compilerstatus.lCodePosition = templCodePosition32;
+			goto _Redo32;
+		}
+	}
+
+	if(IsNear == 0)
+	{
+		SetTarget(91);
+		if(!Use32bit) SetTarget(93);
+	}
+	else
+	{
+		SetNearTarget(91);
+		if(!Use32bit) SetNearTarget(93);
+	}
+
+	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-
-void dyna4300i_regimm_bgezl(OP_PARAMS) 
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void dyna4300i_regimm_bgezl(OP_PARAMS)
 {
-	_u32 aValue;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	_u32	aValue;
+	int		tempPC = reg->pc + 4;
+	int		IsNear = SAFE_NEAR_ONLY;
+	int		tempRSIs32bit = 0;
+	int		tempRTIs32bit = 0;
+	int		Use32bit = 0;
+	int		templCodePosition32;
+	int		templCodePosition64;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-    CHECK_OPCODE_PASS    
-    
-    SetRdRsRt64bit(PASS_PARAMS);
+	CHECK_OPCODE_PASS;
+	compilerstatus.cp0Counter += 1;
+	SetRdRsRt64bit(PASS_PARAMS);
 	_OPCODE_DEBUG_BRANCH_(r4300i_bgezl);
 
-#ifdef SAFE_BRANCHES
-    HELP_Call((unsigned long)HELP_bgezl); KEEP_RECOMPILING = FALSE; return;
-#endif
+	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
+	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
+	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
+	{
+		Use32bit = 1;
+		xRS->Is32bit = 1;
+		xRT->Is32bit = 1;
+	}
 
-    BGEZ_MACRO
+	aValue = (reg->pc + 4 + (__I << 2));
 
-// delay Slot
-	SetTarget(90);
-		SPEED_HACK
-		reg->pc += 4;
-		Compile_Slot(reg->pc);
-		MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-        TLB_TRANSLATE_PC(aValue)
-        Interrupts(JUMP_TYPE_DIRECT);
+	if(ConstMap[xRS->mips_reg].IsMapped == 1)
+	{
+		if((_int32) ConstMap[xRS->mips_reg].value >= 0)
+		{
+			/* true */
+			SPEED_HACK reg->pc += 4;
+			FlushAllRegisters();
+			Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+		}
+		else
+		{
+			/* false */
+			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
+		}
 
-	SetNearTarget(91);
-	SetNearTarget(93);
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, reg->pc+4);
-		TLB_TRANSLATE_PC(reg->pc+4)
+		return;
+	}
 
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_BREAKOUT);
+	MapRS;
+	if(!Use32bit)
+	{
+		CMP_RegWithShort(1, xRS->HiWordLoc, 0);
+_Redo64:
+		templCodePosition64 = compilerstatus.lCodePosition;
+
+		if(IsNear == 1)
+			Jcc_Near_auto(CC_L, 91);
+		else
+			Jcc_auto(CC_L, 91);
+		Jcc_auto(CC_G, 90);
+
+		CMP_RegWithShort(1, xRS->x86reg, 0);
+		if(IsNear == 1)
+			Jcc_Near_auto(CC_B, 93);
+		else
+			Jcc_auto(CC_B, 93);
+	}
+	else
+	{
+		CMP_RegWithShort(1, xRS->x86reg, 0);
+_Redo32:
+		templCodePosition32 = compilerstatus.lCodePosition;
+		if(IsNear == 1) Jcc_Near_auto(CC_L, 91);	/* jmp false2 */
+		else
+			Jcc_auto(CC_L, 91);						/* jmp false2 */
+	}
+
+	/*
+	 * BRANCH_MACRO(CC_L, CC_G, CC_B) £
+	 * delay Slot
+	 */
+	if(!Use32bit) SetTarget(90);
+	SPEED_HACK reg->pc += 4;
+	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
+
+	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
+	if((wPosition > 120) && (IsNear == 0))
+	{
+		reg->pc -= 4;
+
+		/* Rewrite the code as a near jump. Short jump won't cut it. */
+		IsNear = 1;
+		if(!Use32bit)
+		{
+			compilerstatus.lCodePosition = templCodePosition64;
+			goto _Redo64;
+		}
+		else
+		{
+			compilerstatus.lCodePosition = templCodePosition32;
+			goto _Redo32;
+		}
+	}
+
+	if(IsNear == 0)
+	{
+		SetTarget(91);
+		if(!Use32bit) SetTarget(93);
+	}
+	else
+	{
+		SetNearTarget(91);
+		if(!Use32bit) SetNearTarget(93);
+	}
+
+	compilerstatus.cp0Counter -= 1;
+	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
 void dyna4300i_regimm_bgezal(OP_PARAMS)
 {
-	_u32 aValue;
-    _s64 LinkVal = (_s64)(_s32)reg->pc+8;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	uint32	aValue;
+	_int32	LinkVal = reg->pc + 8;
+	int		tempPC = reg->pc;
+	int		tempRSIs32bit = 0;
+	int		tempRTIs32bit = 0;
+	int		Use32bit = 0;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-    CHECK_OPCODE_PASS    
-    
-    SetRdRsRt64bit(PASS_PARAMS);
+	CHECK_OPCODE_PASS;
+	compilerstatus.cp0Counter += 1;
+	SetRdRsRt64bit(PASS_PARAMS);
 	_OPCODE_DEBUG_BRANCH_(r4300i_bgezal);
 
-#ifdef SAFE_BRANCHES
-    HELP_Call((unsigned long)HELP_bgezal); KEEP_RECOMPILING = FALSE; return;
-#endif
+	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
+	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
 
-    FlushAllRegisters();
-    MOV_ImmToMemory(1, (unsigned long)&reg->GPR[31],   (_s32)LinkVal);
-    MOV_ImmToMemory(1, (unsigned long)&reg->GPR[31]+4, (_s32)(LinkVal>>31));
-//    FlushedRegistersMap[31].Is32bit = 1;
+	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
+	{
+		Use32bit = 1;
+		xRS->Is32bit = 1;
+		xRT->Is32bit = 1;
+	}
 
-    BGEZ_MACRO
+	aValue = (reg->pc + 4 + (__I << 2));
 
-// delay Slot
-	SetTarget(90);
-		SPEED_HACK
-		reg->pc += 4;
-		Compile_Slot(reg->pc);
-		MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-        TLB_TRANSLATE_PC(aValue)
-        Interrupts(JUMP_TYPE_DIRECT);
+	if(ConstMap[xRS->mips_reg].IsMapped == 1)
+	{
+		if((_int32) ConstMap[xRS->mips_reg].value >= 0)
+		{
+			/* true */
+			SPEED_HACK reg->pc += 4;
+			FlushAllRegisters();
+			Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_YES, LinkVal);
+		}
+		else
+		{
+			/* false */
+			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_YES, LinkVal);
+		}
+
+		return;
+	}
+
+	MapRS;
+	if(!Use32bit)
+	{
+		CMP_RegWithShort(1, xRS->HiWordLoc, 0);
+		Jcc_Near_auto(CC_L, 91);
+		Jcc_auto(CC_G, 90);
+
+		CMP_RegWithShort(1, xRS->x86reg, 0);
+		Jcc_Near_auto(CC_B, 93);
+	}
+	else
+	{
+		CMP_RegWithShort(1, xRS->x86reg, 0);
+		Jcc_Near_auto(CC_L, 91);	/* jmp false */
+	}
+
+	/* delay Slot */
+	if(!Use32bit) SetTarget(90);
+	SPEED_HACK reg->pc += 4;
+	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_YES, LinkVal);
 
 	SetNearTarget(91);
-	SetNearTarget(93);
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, reg->pc);
-		TLB_TRANSLATE_PC(reg->pc)
-
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_BREAKOUT);
+	if(!Use32bit) SetNearTarget(93);
+	compilerstatus.cp0Counter -= 1;
+	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_YES, LinkVal);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
 void dyna4300i_regimm_bgezall(OP_PARAMS)
 {
-	_u32 aValue;
-    _s64 LinkVal = (_s64)(_s32)reg->pc+8;
- 
-    CHECK_OPCODE_PASS    
-    
-    SetRdRsRt64bit(PASS_PARAMS);
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	uint32	aValue;
+	_int32	LinkVal = reg->pc + 8;
+	int		tempPC = reg->pc + 4;
+	int		tempRSIs32bit = 0;
+	int		tempRTIs32bit = 0;
+	int		Use32bit = 0;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+	CHECK_OPCODE_PASS;
+	compilerstatus.cp0Counter += 1;
+	SetRdRsRt64bit(PASS_PARAMS);
 	_OPCODE_DEBUG_BRANCH_(r4300i_bgezall);
 
-#ifdef SAFE_BRANCHES
-    HELP_Call((unsigned long)HELP_bgezall); KEEP_RECOMPILING = FALSE; return;
-#endif
+	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
+	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
 
-    FlushAllRegisters();
-    MOV_ImmToMemory(1, (unsigned long)&reg->GPR[31],   (_s32)LinkVal);
-    MOV_ImmToMemory(1, (unsigned long)&reg->GPR[31]+4, (_s32)(LinkVal>>31));
-//    FlushedRegistersMap[31].Is32bit = 1;
+	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
+	{
+		Use32bit = 1;
+		xRS->Is32bit = 1;
+		xRT->Is32bit = 1;
+	}
 
-    BGEZ_MACRO
+	aValue = (reg->pc + 4 + (__I << 2));
 
-// delay Slot
-	SetTarget(90);
-		SPEED_HACK
-		reg->pc += 4;
-		Compile_Slot(reg->pc);
-		MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-        TLB_TRANSLATE_PC(aValue)
-        Interrupts(JUMP_TYPE_DIRECT);
+	MapRS;
+	if(!Use32bit)
+	{
+		CMP_RegWithShort(1, xRS->HiWordLoc, 0);
+		Jcc_Near_auto(CC_L, 91);
+		Jcc_auto(CC_G, 90);
+
+		CMP_RegWithShort(1, xRS->x86reg, 0);
+		Jcc_Near_auto(CC_B, 93);
+	}
+	else
+	{
+		CMP_RegWithShort(1, xRS->x86reg, 0);
+		Jcc_Near_auto(CC_L, 91);	/* jmp false */
+	}
+
+	/* delay Slot */
+	if(!Use32bit) SetTarget(90);
+	SPEED_HACK reg->pc += 4;
+	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_YES, LinkVal);
 
 	SetNearTarget(91);
-	SetNearTarget(93);
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, reg->pc+4);
-		TLB_TRANSLATE_PC(reg->pc+4)
-
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_BREAKOUT);
+	if(!Use32bit) SetNearTarget(93);
+	compilerstatus.cp0Counter -= 1;
+	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_YES, LinkVal);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-
+/*
+ =======================================================================================================================
+    Rice: do you know any games that use bltzal, bltzall? If so, i'll optimize these. £
+    Otherwise, I will keep them the way they are now, so that I don't risk breaking them.
+ =======================================================================================================================
+ */
 void dyna4300i_regimm_bltzal(OP_PARAMS)
 {
-	_u32 aValue;
-    _s64 LinkVal = (_s64)(_s32)reg->pc+8;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	uint32	aValue;
+	int		tempPC = reg->pc;
+	_int32	LinkVal = reg->pc + 8;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-    CHECK_OPCODE_PASS    
-    
-    SetRdRsRt64bit(PASS_PARAMS);
+	CHECK_OPCODE_PASS;
+	compilerstatus.cp0Counter += 1;
+	SetRdRsRt64bit(PASS_PARAMS);
 	_OPCODE_DEBUG_BRANCH_(r4300i_bltzal);
 
-#ifdef SAFE_BRANCHES
-   HELP_Call((unsigned long)HELP_bltzal); KEEP_RECOMPILING = FALSE; return;
-#endif
+	aValue = (reg->pc + 4 + (__I << 2));
 
-    
-    FlushAllRegisters();
-    MOV_ImmToMemory(1, (unsigned long)&reg->GPR[31],   (_s32)LinkVal);
-    MOV_ImmToMemory(1, (unsigned long)&reg->GPR[31]+4, (_s32)(LinkVal>>31));
-//    FlushedRegistersMap[31].Is32bit = 1;
-
-    aValue = (reg->pc + 4 + (__I << 2));
-
-    MapRS;
+	MapRS;
 	CMP_RegWithShort(1, xRS->HiWordLoc, 0);
-	Jcc_Near_auto(CC_GE, 91); /* jmp false */
+	Jcc_Near_auto(CC_GE, 91);	/* jmp false */
 
-// delay Slot
-		SPEED_HACK
-		reg->pc += 4;
-		Compile_Slot(reg->pc);
-		MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-        TLB_TRANSLATE_PC(aValue)
-        Interrupts(JUMP_TYPE_DIRECT);
+	/* delay Slot */
+	SPEED_HACK reg->pc += 4;
+	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_YES, LinkVal);
 
 	SetNearTarget(91);
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, reg->pc);
-		TLB_TRANSLATE_PC(reg->pc)
-
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_BREAKOUT);
+	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_YES, LinkVal);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
 void dyna4300i_regimm_bltzall(OP_PARAMS)
 {
-	_u32 aValue;
-    _s64 LinkVal = (_s64)(_s32)reg->pc+8;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	uint32	aValue;
+	int		tempPC = reg->pc + 4;
+	_int32	LinkVal = reg->pc + 8;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-    CHECK_OPCODE_PASS    
-    
-    SetRdRsRt64bit(PASS_PARAMS);
+	CHECK_OPCODE_PASS;
+	compilerstatus.cp0Counter += 1;
+	SetRdRsRt64bit(PASS_PARAMS);
 	_OPCODE_DEBUG_BRANCH_(r4300i_bltzall);
 
-#ifdef SAFE_BRANCHES
-    HELP_Call((unsigned long)HELP_bltzall); KEEP_RECOMPILING = FALSE; return;
-#endif
+	aValue = (reg->pc + 4 + (__I << 2));
 
-    FlushAllRegisters();
-    MOV_ImmToMemory(1, (unsigned long)&reg->GPR[31],   (_s32)LinkVal);
-    MOV_ImmToMemory(1, (unsigned long)&reg->GPR[31]+4, (_s32)(LinkVal>>31));
-//    FlushedRegistersMap[31].Is32bit = 1;
-
-    aValue = (reg->pc + 4 + (__I << 2));
-
-    MapRS;
+	MapRS;
 	CMP_RegWithShort(1, xRS->HiWordLoc, 0);
-	Jcc_Near_auto(CC_GE, 91); /* jmp false */
+	Jcc_Near_auto(CC_GE, 91);	/* jmp false */
 
-// delay Slot
-		SPEED_HACK
-		reg->pc += 4;
-		Compile_Slot(reg->pc);
-		MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-        TLB_TRANSLATE_PC(aValue)
-        Interrupts(JUMP_TYPE_DIRECT);
+	/* delay Slot */
+	SPEED_HACK reg->pc += 4;
+	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_YES, LinkVal);
 
 	SetNearTarget(91);
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, reg->pc+4);
-		TLB_TRANSLATE_PC(reg->pc+4)
-
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_BREAKOUT);
+	compilerstatus.cp0Counter -= 1;
+	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_YES, LinkVal);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
+/* For JAL finder */
+extern void LogSomething(void);
 
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void tempyness(void)
+{
+	__asm
+	{
+		pushad
+	}
+
+	LogSomething();
+	__asm
+	{
+		popad
+	}
+}
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
 void dyna4300i_jal(OP_PARAMS)
 {
-	_u32 aValue;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	uint32	aValue;
+	_int32	LinkVal = reg->pc + 8;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-    CHECK_OPCODE_PASS    
-    
-	_OPCODE_DEBUG_BRANCH_(r4300i_jal)
-
-#ifdef SAFE_BRANCHES
-    HELP_Call((unsigned long)HELP_jal); KEEP_RECOMPILING = FALSE; return;
-#endif
-
-	
-    aValue = ( (reg->pc & 0xf0000000) | (____T << 2) );
-
-	FlushAllRegisters();
-    MOV_ImmToMemory(1, (unsigned long)&reg->GPR[31], (reg->pc + 8));
-    MOV_ImmToMemory(1, (unsigned long)&reg->GPR[31]+4, ((_int32)(reg->pc + 8))>>31);
-//    FlushedRegistersMap[31].Is32bit = 1;
+	CHECK_OPCODE_PASS;
+	compilerstatus.cp0Counter += 1;
+	_OPCODE_DEBUG_BRANCH_(r4300i_jal) aValue = ((reg->pc & 0xf0000000) | (____T << 2));
 
 	reg->pc += 4;
-	Compile_Slot_Jump(reg->pc);
-	MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-    TLB_TRANSLATE_PC(aValue)
+	compilerstatus.FlagJAL = TRUE;
 
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_DIRECT);
+	/*
+	 * Jal finder £
+	 * MOV_ImmToMemory(1, ModRM_disp32, (uint32)&reg->pc, reg->pc); £
+	 * X86_CALL((uint32)&tempyness);
+	 */
+	Compile_Slot_Jump(reg->pc);
+	MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &reg->pc, aValue);
+
+	/* end of compiled block */
+	compilerstatus.KEEP_RECOMPILING = FALSE;
+
+	Interrupts(JUMP_TYPE_DIRECT, aValue, LINK_YES, LinkVal);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
 void dyna4300i_j(OP_PARAMS)
 {
-	_u32 aValue;
+	/*~~~~~~~~~~~*/
+	_u32	aValue;
+	/*~~~~~~~~~~~*/
 
-    CHECK_OPCODE_PASS    
-    
+	CHECK_OPCODE_PASS;
+	compilerstatus.cp0Counter += 1;
 	_OPCODE_DEBUG_BRANCH_(r4300i_j);
 
-#ifdef SAFE_BRANCHES
-    HELP_Call((unsigned long)HELP_j); KEEP_RECOMPILING = FALSE; return; 
-#endif
+	aValue = ((reg->pc & 0xf0000000) | (____T << 2));
 
-	
-    aValue = ( (reg->pc & 0xf0000000) | (____T << 2) );
+	J_SPEED_HACK reg->pc += 4;
+	Compile_Slot_Jump(reg->pc);
+	MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &reg->pc, aValue);
 
-	J_SPEED_HACK
-    reg->pc += 4;
-    Compile_Slot_Jump(reg->pc);
-	MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-    TLB_TRANSLATE_PC(aValue)
-
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_DIRECT);
+	/* end of compiled block */
+	compilerstatus.KEEP_RECOMPILING = FALSE;
+	FlushAllRegisters();
+	Interrupts(JUMP_TYPE_DIRECT, aValue, LINK_NO, 0);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
 void dyna4300i_special_jr(OP_PARAMS)
 {
-    CHECK_OPCODE_PASS    
-    
-	_OPCODE_DEBUG_BRANCH_(r4300i_jr)
-
-#ifdef SAFE_BRANCHES
-    HELP_Call((unsigned long)HELP_jr); KEEP_RECOMPILING = FALSE; return;
-#endif
-	
-    FlushAllRegisters();
-    LoadLowMipsCpuRegister(__RS,Reg_EAX);
-	MOV_EAXToMemory(1, (unsigned long)&reg->pc);
-	TLB_TRANSLATE_PC_INDIRECT
+	CHECK_OPCODE_PASS;
+	compilerstatus.cp0Counter += 1;
+	_OPCODE_DEBUG_BRANCH_(r4300i_jr) FlushAllRegisters();
+	LoadLowMipsCpuRegister(__RS, Reg_EAX);
+	MOV_EAXToMemory(1, (unsigned long) &reg->pc);
 
 	reg->pc += 4;
 	Compile_Slot_Jump(reg->pc);
 
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_INDIRECT);
+	/* end of compiled block */
+	compilerstatus.KEEP_RECOMPILING = FALSE;
+	FlushAllRegisters();
+	Interrupts(JUMP_TYPE_INDIRECT, 0, LINK_NO, 0);
 }
 
-
-//////////////////////////////////////////////////////////////////////////////
-// void (*dyna4300i_cop1_BC_instruction[])(OP_PARAMS)=                      //
-//////////////////////////////////////////////////////////////////////////////
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
 void dyna4300i_cop1_bc1f(OP_PARAMS)
 {
-	_u32 aValue;
-    int tempPC = reg->pc;
+	/*~~~~~~~~~~~~~~~~~~~~~*/
+	_u32	aValue;
+	int		tempPC = reg->pc;
+	/*~~~~~~~~~~~~~~~~~~~~~*/
 
-    CHECK_OPCODE_PASS    
-
-#ifdef ENABLE_OPCODE_DEBUGGER
-	MOV_ImmToMemory(1, (uint32)&gHardwareState_Interpreter_Compare.pc, reg->pc);
+	CHECK_OPCODE_PASS;
+	compilerstatus.cp0Counter += 1;
 	_OPCODE_DEBUG_BRANCH_(r4300i_COP1_bc1f);
-#endif
+	aValue = (reg->pc + 4 + (__I << 2));
 
-#ifdef SAFE_BRANCHES
-    HELP_Call((unsigned long)HELP_bc1f); KEEP_RECOMPILING = FALSE; return;
-#endif
+	PUSH_RegIfMapped(Reg_EAX);
+	MOV_MemoryToReg(1, Reg_EAX, ModRM_disp32, (_u32) & reg->COP1Con[31]);
+	AND_ImmToReg(1, Reg_EAX, COP1_CONDITION_BIT);
+	TEST_Reg2WithReg1(1, Reg_EAX, Reg_EAX);
+	POP_RegIfMapped(Reg_EAX);
 
-    aValue = (reg->pc + 4 + (__I << 2));
+	Jcc_Near_auto(CC_NZ, 91);	/* jmp false */
 
-    PUSH_RegIfMapped(Reg_EDI);
-    MOV_MemoryToReg(1, Reg_EDI, ModRM_disp32, (_u32)&reg->COP1Con[31]);
-    AND_ImmToReg(1, Reg_EDI, COP1_CONDITION_BIT);
-    TEST_Reg2WithReg1(1, Reg_EDI, Reg_EDI);
-    POP_RegIfMapped(Reg_EDI);
-    
-    Jcc_Near_auto(CC_NZ, 91); /* jmp false */
+	/* delay Slot */
+	SPEED_HACK reg->pc += 4;
+	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
 
-// delay Slot
-		SPEED_HACK
-		reg->pc += 4;
-
-        Compile_Slot(reg->pc);
-
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-        TLB_TRANSLATE_PC(aValue)
-        Interrupts(JUMP_TYPE_DIRECT);
-
-    SetNearTarget(91);
-#ifdef DANGEROUS_BRANCHES
-    reg->pc = tempPC;
-#else
-    MOV_ImmToMemory(1, (unsigned long)&reg->pc, reg->pc);
-	TLB_TRANSLATE_PC(reg->pc)
-
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_BREAKOUT);
-#endif
+	SetNearTarget(91);
+	Interrupts(JUMP_TYPE_BREAKOUT, reg->pc, LINK_NO, 0);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
 void dyna4300i_cop1_bc1fl(OP_PARAMS)
 {
-	_u32 aValue;
-    int tempPC = reg->pc+4;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	_u32	aValue;
+	int		tempPC = reg->pc + 4;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-    CHECK_OPCODE_PASS    
-
-#ifdef ENABLE_OPCODE_DEBUGGER
-	MOV_ImmToMemory(1, (uint32)&gHardwareState_Interpreter_Compare.pc, reg->pc);
+	CHECK_OPCODE_PASS;
+	compilerstatus.cp0Counter += 1;
 	_OPCODE_DEBUG_BRANCH_(r4300i_COP1_bc1fl);
-#endif
+	aValue = (reg->pc + 4 + (__I << 2));
 
-#ifdef SAFE_BRANCHES
-    HELP_Call((unsigned long)HELP_bc1fl); KEEP_RECOMPILING = FALSE; return;
-#endif
+	PUSH_RegIfMapped(Reg_EAX);
+	MOV_MemoryToReg(1, Reg_EAX, ModRM_disp32, (unsigned long) (&reg->COP1Con[31]));
+	AND_ImmToReg(1, Reg_EAX, COP1_CONDITION_BIT);
+	TEST_Reg2WithReg1(1, Reg_EAX, Reg_EAX);
+	POP_RegIfMapped(Reg_EAX);
 
-    aValue = (reg->pc + 4 + (__I << 2));
+	Jcc_Near_auto(CC_NZ, 91);	/* jmp false */
 
-    PUSH_RegIfMapped(Reg_EDI);
-    MOV_MemoryToReg(1, Reg_EDI, ModRM_disp32, (unsigned long)(&reg->COP1Con[31]));
-    AND_ImmToReg(1, Reg_EDI, COP1_CONDITION_BIT);
-    TEST_Reg2WithReg1(1, Reg_EDI, Reg_EDI);
-    POP_RegIfMapped(Reg_EDI);
+	/* delay Slot */
+	SPEED_HACK reg->pc += 4;
+	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
 
-	Jcc_Near_auto(CC_NZ, 91); /* jmp false */
-
-// delay Slot
-		SPEED_HACK
-		reg->pc += 4;
-
-        Compile_Slot(reg->pc);
-
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-        TLB_TRANSLATE_PC(aValue)
-        Interrupts(JUMP_TYPE_DIRECT);
-
-    SetNearTarget(91);
-#ifdef DANGEROUS_BRANCHES
-    reg->pc = tempPC;
-    *pcptr++;
-#else
-    MOV_ImmToMemory(1, (unsigned long)&reg->pc, reg->pc+4);
-	TLB_TRANSLATE_PC(reg->pc+4)
-
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_BREAKOUT);
-#endif
+	SetNearTarget(91);
+	compilerstatus.cp0Counter -= 1;
+	Interrupts(JUMP_TYPE_BREAKOUT, reg->pc + 4, LINK_NO, 0);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
 void dyna4300i_cop1_bc1t(OP_PARAMS)
 {
-	_u32 aValue;
-    int tempPC = reg->pc;
+	/*~~~~~~~~~~~~~~~~~~~~~*/
+	_u32	aValue;
+	int		tempPC = reg->pc;
+	/*~~~~~~~~~~~~~~~~~~~~~*/
 
-    CHECK_OPCODE_PASS    
-
-#ifdef ENABLE_OPCODE_DEBUGGER
-	MOV_ImmToMemory(1, (uint32)&gHardwareState_Interpreter_Compare.pc, reg->pc);
+	CHECK_OPCODE_PASS;
+	compilerstatus.cp0Counter += 1;
 	_OPCODE_DEBUG_BRANCH_(r4300i_COP1_bc1t);
-#endif
+	aValue = (reg->pc + 4 + (__I << 2));
 
-#ifdef SAFE_BRANCHES
-    HELP_Call((unsigned long)HELP_bc1t); KEEP_RECOMPILING = FALSE; return;
-#endif
+	PUSH_RegIfMapped(Reg_EAX);
+	MOV_MemoryToReg(1, Reg_EAX, ModRM_disp32, (_u32) & reg->COP1Con[31]);
+	AND_ImmToReg(1, Reg_EAX, COP1_CONDITION_BIT);
+	TEST_Reg2WithReg1(1, Reg_EAX, Reg_EAX);
+	POP_RegIfMapped(Reg_EAX);
 
-    aValue = (reg->pc + 4 + (__I << 2));
+	Jcc_Near_auto(CC_Z, 91);	/* jmp false */
 
-    PUSH_RegIfMapped(Reg_EDI);
-    MOV_MemoryToReg(1, Reg_EDI, ModRM_disp32, (_u32)&reg->COP1Con[31]);
-    AND_ImmToReg(1, Reg_EDI, COP1_CONDITION_BIT);
-    TEST_Reg2WithReg1(1, Reg_EDI, Reg_EDI);
-    POP_RegIfMapped(Reg_EDI);
+	/* delay Slot */
+	SPEED_HACK reg->pc += 4;
+	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
 
-	Jcc_Near_auto(CC_Z, 91); /* jmp false */
-
-// delay Slot
-		SPEED_HACK
-		reg->pc += 4;
-
-        Compile_Slot(reg->pc);
-
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-        TLB_TRANSLATE_PC(aValue)
-        Interrupts(JUMP_TYPE_DIRECT);
-
-    SetNearTarget(91);
-#ifdef DANGEROUS_BRANCHES
-    reg->pc = tempPC;
-#else
-    MOV_ImmToMemory(1, (unsigned long)&reg->pc, reg->pc);
-	TLB_TRANSLATE_PC(reg->pc)
-
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_BREAKOUT);
-#endif
+	SetNearTarget(91);
+	compilerstatus.cp0Counter -= 1;
+	Interrupts(JUMP_TYPE_BREAKOUT, reg->pc, LINK_NO, 0);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
 void dyna4300i_cop1_bc1tl(OP_PARAMS)
 {
-	_u32 aValue;
-    int tempPC = reg->pc+4;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	_u32	aValue;
+	int		tempPC = reg->pc + 4;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-    CHECK_OPCODE_PASS    
-
-#ifdef ENABLE_OPCODE_DEBUGGER
-	MOV_ImmToMemory(1, (uint32)&gHardwareState_Interpreter_Compare.pc, reg->pc);
+	CHECK_OPCODE_PASS;
+	compilerstatus.cp0Counter += 1;
 	_OPCODE_DEBUG_BRANCH_(r4300i_COP1_bc1tl);
-#endif
+	aValue = (reg->pc + 4 + (__I << 2));
 
-#ifdef SAFE_BRANCHES
-    HELP_Call((unsigned long)HELP_bc1tl); KEEP_RECOMPILING = FALSE; return;
-#endif
+	PUSH_RegIfMapped(Reg_EAX);
+	MOV_MemoryToReg(1, Reg_EAX, ModRM_disp32, (unsigned long) (&reg->COP1Con[31]));
+	AND_ImmToReg(1, Reg_EAX, COP1_CONDITION_BIT);
+	TEST_Reg2WithReg1(1, Reg_EAX, Reg_EAX);
+	POP_RegIfMapped(Reg_EAX);
 
-    aValue = (reg->pc + 4 + (__I << 2));
+	Jcc_Near_auto(CC_Z, 91);	/* jmp false */
 
-    PUSH_RegIfMapped(Reg_EDI);
-    MOV_MemoryToReg(1, Reg_EDI, ModRM_disp32, (unsigned long)(&reg->COP1Con[31]));
-    AND_ImmToReg(1, Reg_EDI, COP1_CONDITION_BIT);
-    TEST_Reg2WithReg1(1, Reg_EDI, Reg_EDI);
-    POP_RegIfMapped(Reg_EDI);
+	/* delay Slot */
+	SPEED_HACK reg->pc += 4;
+	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
 
-    Jcc_Near_auto(CC_Z, 91); /* jmp false */
-
-// delay Slot
-		SPEED_HACK
-		reg->pc += 4;
-
-        Compile_Slot(reg->pc);
-
-        MOV_ImmToMemory(1, (unsigned long)&reg->pc, aValue);
-        TLB_TRANSLATE_PC(aValue)
-        Interrupts(JUMP_TYPE_DIRECT);
-
-    SetNearTarget(91);
-#ifdef DANGEROUS_BRANCHES
-    reg->pc = tempPC;
-    *pcptr++;
-#else
-    MOV_ImmToMemory(1, (unsigned long)&reg->pc, reg->pc+4);
-	TLB_TRANSLATE_PC(reg->pc+4)
-
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_BREAKOUT);
-#endif
+	SetNearTarget(91);
+	compilerstatus.cp0Counter -= 1;
+	Interrupts(JUMP_TYPE_BREAKOUT, reg->pc + 4, LINK_NO, 0);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
 void dyna4300i_special_jalr(OP_PARAMS)
 {
-	_u32 aValue;
-    
-    CHECK_OPCODE_PASS    
-    
+	/*~~~~~~~~~~~*/
+	_u32	aValue;
+	/*~~~~~~~~~~~*/
+
+	CHECK_OPCODE_PASS;
+	compilerstatus.cp0Counter += 1;
 	_OPCODE_DEBUG_BRANCH_(r4300i_jalr)
-
-#ifdef SAFE_BRANCHES
-    HELP_Call((unsigned long)HELP_jalr); KEEP_RECOMPILING = FALSE; return;
+#ifdef DEBUG_COMMON
+	if(__RD == __RS)
+	{
+		DisplayError("In JALR, __RD == __RS");
+	}
 #endif
-
-	
-    aValue = ( (reg->pc & 0xf0000000) | (____T << 2) );
+	aValue = ((reg->pc & 0xf0000000) | (____T << 2));
 
 	FlushAllRegisters();
-    MOV_ImmToMemory(1, (unsigned long)&reg->GPR[__RD], (reg->pc + 8));
-    MOV_ImmToMemory(1, (unsigned long)&reg->GPR[__RD]+4, ((_int32)(reg->pc + 8))>>31);
-//	FlushedRegistersMap[__RD].Is32bit = 1;
+	if(__RD < 16)
+	{
+		MOV_ImmToMemory(1, ModRM_disp8_EBP, (-128 + ((__RD) << 3)), (reg->pc + 8));
+		MOV_ImmToMemory(1, ModRM_disp8_EBP, (-124 + ((__RD) << 3)), ((_int32) (reg->pc + 8)) >> 31);
+	}
+	else
+	{
+		MOV_ImmToMemory(1, ModRM_disp8_EBP, ((__RD) - 16) << 3, (reg->pc + 8));
+		MOV_ImmToMemory(1, ModRM_disp8_EBP, 4 + (((__RD) - 16) << 3), ((_int32) (reg->pc + 8)) >> 31);
+	}
 
-    LoadLowMipsCpuRegister(__RS,Reg_EAX);
-	MOV_EAXToMemory(1, (unsigned long)&reg->pc);
-	TLB_TRANSLATE_PC_INDIRECT
+	/* FlushedRegistersMap[__RD].Is32bit = 1; */
+	LoadLowMipsCpuRegister(__RS, Reg_EAX);
+	MOV_EAXToMemory(1, (unsigned long) &reg->pc);
 
 	reg->pc += 4;
 	Compile_Slot_Jump(reg->pc);
 
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
-    Interrupts(JUMP_TYPE_INDIRECT);
+	/* end of compiled block */
+	compilerstatus.KEEP_RECOMPILING = FALSE;
+	FlushAllRegisters();
+
+	/* Already calculated the link above, so LINK_NO. */
+	Interrupts(JUMP_TYPE_INDIRECT, 0, LINK_NO, 0);
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
 void dyna4300i_cop0_eret(OP_PARAMS)
 {
-    CHECK_OPCODE_PASS    
-    
-    _SAFTY_CPU_(r4300i_COP0_eret) //questionable.
+	CHECK_OPCODE_PASS;
+	compilerstatus.cp0Counter += 1;
+	_OPCODE_DEBUG_BRANCH_(r4300i_COP0_eret) /* questionable. */
 
-#ifdef SAFE_BRANCHES
-    HELP_Call((unsigned long)HELP_eret); 
-	KEEP_RECOMPILING = FALSE; 
-	return;
-#endif
-
-    PUSH_RegIfMapped(Reg_EDI);
-    MOV_MemoryToReg(1,Reg_EDI,ModRM_disp32,(_u32)&reg->COP0Reg[STATUS]);
-	AND_ImmToReg(1, Reg_EDI, 0x0004);
-	CMP_RegWithShort(1, Reg_EDI, 0);
-	Jcc_auto(CC_E,0);
-		MOV_MemoryToReg(1,Reg_EDI,ModRM_disp32,(_u32)&reg->COP0Reg[ERROREPC]);
-		AND_ImmToMemory((unsigned long)&reg->COP0Reg[STATUS], 0xFFFFFFFB);
-		JMP_Short_auto(1);
+	PUSH_RegIfMapped(Reg_EAX);
+	MOV_MemoryToReg(1, Reg_EAX, ModRM_disp32, (_u32) & reg->COP0Reg[STATUS]);
+	AND_ImmToReg(1, Reg_EAX, 0x0004);
+	CMP_RegWithShort(1, Reg_EAX, 0);
+	Jcc_auto(CC_E, 0);
+	MOV_MemoryToReg(1, Reg_EAX, ModRM_disp32, (_u32) & reg->COP0Reg[ERROREPC]);
+	AND_ImmToMemory((unsigned long) &reg->COP0Reg[STATUS], 0xFFFFFFFB);
+	JMP_Short_auto(1);
 	SetTarget(0);
-    	MOV_MemoryToReg(1,Reg_EDI,ModRM_disp32,(_u32)&reg->COP0Reg[EPC]);
-		AND_ImmToMemory((unsigned long)&reg->COP0Reg[STATUS], 0xFFFFFFFD);
-	SetTarget(1);	
+	MOV_MemoryToReg(1, Reg_EAX, ModRM_disp32, (_u32) & reg->COP0Reg[EPC]);
+	AND_ImmToMemory((unsigned long) &reg->COP0Reg[STATUS], 0xFFFFFFFD);
+	SetTarget(1);
 
-	MOV_ImmToMemory(1, (unsigned long)&reg->LLbit, 0);
-	MOV_RegToMemory(1, Reg_EDI, ModRM_disp32, (unsigned long)&reg->pc);
-    POP_RegIfMapped(Reg_EDI);
-	TLB_TRANSLATE_PC_INDIRECT
+	MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &reg->LLbit, 0);
+	MOV_RegToMemory(1, Reg_EAX, ModRM_disp32, (unsigned long) &reg->pc);
+	POP_RegIfMapped(Reg_EAX);
 
-// end of compiled block
-	KEEP_RECOMPILING = FALSE;
-    FlushAllRegisters();
+	/* end of compiled block */
+	compilerstatus.KEEP_RECOMPILING = FALSE;
+	FlushAllRegisters();
 
-    Interrupts(JUMP_TYPE_INDIRECT);
+	Interrupts(JUMP_TYPE_INDIRECT, 0, LINK_NO, 0);
 }
+#endif

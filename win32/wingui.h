@@ -1,115 +1,174 @@
-/*______________________________________________________________________________
- |                                                                              |
- |  1964 - Emulator for Nintendo 64 console system                              |
- |  Copyright (C) 2001  Joel Middendorf  schibo@emulation64.com                 |
- |                                                                              |
- |  This program is free software; you can redistribute it and/or               |
- |  modify it under the terms of the GNU General Public License                 |
- |  as published by the Free Software Foundation; either version 2              |
- |  of the License, or (at your option) any later version.                      |
- |                                                                              |
- |  This program is distributed in the hope that it will be useful,             |
- |  but WITHOUT ANY WARRANTY; without even the implied warranty of              |
- |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               |
- |  GNU General Public License for more details.                                |
- |                                                                              |
- |  You should have received a copy of the GNU General Public License           |
- |  along with this program; if not, write to the Free Software                 |
- |  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
- |                                                                              |
- |  To contact the author:                                                      |
- |  email      : schibo@emulation64.com                                         |
- |  paper mail :                                                                |
- |______________________________________________________________________________|
-*/
+/*$T wingui.h GC 1.136 02/28/02 07:53:40 */
+
+
+/*$6
+ +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ */
+
 
 /*
-The project is a direct documentation-to-code translation of the n64toolkit 
-by my friend anarko and RSP info has been provided by zilmar. Most source
-code comments are taken directly from anarko's n64toolkit with consent and are 
-the property of anarko.
-*/
-
+ * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * program is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version. This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details. You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
+ * authors: email: schibo@emulation64.com, rice1964@yahoo.com
+ */
+#ifndef _WINGUI_H__1964_
+#define _WINGUI_H__1964_
 #include "resource.h"
 
 /* Functions in the wingui.c */
-int APIENTRY WinMain( HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lpszCmdLine, int nCmdShow);
-HWND InitWin98UI(HANDLE hInstance, int nCmdShow);
-LRESULT APIENTRY MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-LRESULT APIENTRY About(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
-void __cdecl DisplayError (char * Message, ...);
-BOOL WinLoadRom();
-BOOL WinLoadRomStep2(char * szFileName);
-void Pause();
-void Resume();
-void Kill();
-void Play();
-void Stop();
-void KailleraPlay();
-void OpenROM();
-void CloseROM();
-void ChangeDirectory();
-void SaveState();
-void LoadState();
-void SaveStateByNumber(WPARAM wparam);
-void LoadStateByNumber(WPARAM wparam);
-void SaveStateByDialog(void);
-void LoadStateByDialog(void);
-void EnableStateMenu(void);
-void DisableStateMenu(void);
-void PrepareBeforePlay(void);
-void KillCPUThread();
-void SetCounterFactor(int);
-void SetCodeCheckMethod(int);
-void InitPluginData(void);
-void Set_1964_Directory(void);
-void ResizeVideoWindow(void);
-void CountryCodeToCountryName_and_TVSystem(int countrycode, char *countryname, int * tvsystem);
-void CaptureScreenToFile(void);
+int APIENTRY		WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lpszCmdLine, int nCmdShow);
+HWND				InitWin98UI(HANDLE hInstance, int nCmdShow);
+LRESULT APIENTRY	MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+LRESULT APIENTRY	About(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
+void __cdecl		DisplayError(char *Message, ...);
+void __cdecl		DisplayCriticalMessage(char *Message, ...);
 
-void StateSetNumber(int number);
-void Exit1964();
-void GetPluginDir(char* Directory);
-extern int LoadGNUDistConditions(char* ConditionsBuf);
-LRESULT APIENTRY ConditionsDialog(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
-LRESULT APIENTRY DefaultOptionsDialog(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
-LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
-LRESULT APIENTRY CriticalMessageDialog(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
+BOOL				WinLoadRom(void);
+BOOL				WinLoadRomStep2(char *szFileName);
+void				Pause(void);
+void				Resume(void);
+void				Kill(void);
+void				Play(void);
+void				Stop(void);
+void				KailleraPlay(void);
+void				OpenROM(void);
+void				CloseROM(void);
+void				ChangeDirectory(void);
+void				SaveState(void);
+void				LoadState(void);
+void				SaveStateByNumber(WPARAM wparam);
+void				LoadStateByNumber(WPARAM wparam);
+void				SaveStateByDialog(int format);
+void				LoadStateByDialog(int format);
+void				EnableStateMenu(void);
+void				DisableStateMenu(void);
+void				PrepareBeforePlay(void);
+void				KillCPUThread(void);
+void				SetCounterFactor(int);
+void				SetCodeCheckMethod(int);
+void				InitPluginData(void);
+void				Set_1964_Directory(void);
+void				CountryCodeToCountryName_and_TVSystem(int countrycode, char *countryname, int *tvsystem);
+void				CaptureScreenToFile(void);
+void				Set_Ready_Message(void);
+void				DisableDebugMenu(void);
+void				SetupDebuger(void);
 
-#define MAXFILENAME 256          /* maximum length of file pathname      */
+void				StateSetNumber(int number);
+void				Exit1964(void);
+void				GetPluginDir(char *Directory);
+extern int			LoadGNUDistConditions(char *ConditionsBuf);
+LRESULT APIENTRY	ConditionsDialog(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
+LRESULT APIENTRY	DefaultOptionsDialog(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
+LRESULT APIENTRY	CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
+LRESULT APIENTRY	CriticalMessageDialog(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
 
-char szWindowTitle[80];
+#define MAXFILENAME 256					/* maximum length of file pathname */
 
 /* the legal stuff */
-unsigned char MainDisclaimer[320];
-unsigned char WarrantyPart1[700];
-unsigned char WarrantyPart2[700];
-unsigned char DistConditions[800]; /* GNU Redistribution Conditions */
+unsigned char	MainDisclaimer[320];
+unsigned char	WarrantyPart1[700];
+unsigned char	WarrantyPart2[700];
+unsigned char	DistConditions[800];	/* GNU Redistribution Conditions */
 
+struct EMU1964GUI
+{
+	char		*szBaseWindowTitle;
+	HINSTANCE	hInst;
+	HANDLE		hAccTable;				/* handle to accelerator table */
+	HWND		hwnd1964main;			/* handle to main window */
+	HWND		hwndRomList;			/* Handle to the rom list child window */
+	HWND		hStatusBar;				/* Window Handle of the status bar */
+	HWND		hToolBar;				/* Window Handle of the toolbar */
+	HWND		hClientWindow;			/* Window handle of the client child window */
+	HWND		hCriticalMsgWnd;		/* handle to critical message window */
+	HMENU		hMenu1964main;
 
-HINSTANCE hInst;
-HANDLE hAccTable;                               /* handle to accelerator table				*/
-extern HWND hwnd;								/* handle to main window					*/
-extern HWND hwndRomList;						/* Handle to the rom list child window		*/
-extern HWND hStatusBar;							/* Window Handle of the status bar			*/
-extern HWND hToolBar;							/* Window Handle of the toolbar				*/
-extern HWND hClientWindow;						/* Window handle of the client child window */
-extern HWND hCriticalMsgWnd;					/* handle to critical message window		*/
-extern HMENU hMenu;
+	struct
+	{
+		/* Status Bar text fields */
+		char	field_1[256];
+		char	field_2[80];
+		char	field_3[80];
+		char	field_4[80];
+		char	field_5[80];
+	} staturbar_field;
+	char	szWindowTitle[80];
+};
 
-extern void DockStatusBar(void);
-extern void InitStatusBarParts(void);
-extern void SetStatusBarText(int, char *);
+extern struct EMU1964GUI	gui;
 
-/* Status Bar fields */
-char staturbar_field_1[];
-char staturbar_field_2[];
-char staturbar_field_3[];
-char staturbar_field_4[];
-char staturbar_field_5[];
+struct GUIOPTIONS
+{
+	BOOL	pause_at_inactive;
+	BOOL	pause_at_menu;
+	BOOL	ok_to_pause_at_menu;
+	BOOL	use_default_save_directory;
+	BOOL	use_default_state_save_directory;
+	BOOL	use_default_plugin_directory;
+	BOOL	use_last_rom_directory;
+	BOOL	show_expert_user_menu;
+	BOOL	show_recent_rom_directory_list;
+	BOOL	show_recent_game_list;
+	BOOL	display_detail_status;
+	BOOL	display_profiler_status;
+	BOOL	show_state_selector_menu;
+	BOOL	show_critical_msg_window;
+	BOOL	display_romlist;
+};
 
-extern int clientwidth;							/* Client window width				*/
-extern RECT window_position;					/* 1964 main window location		*/
+extern struct GUIOPTIONS	guioptions;
 
-char recent_rom_directory_lists[4][260];
-char recent_game_lists[8][260];
+struct GUISTATUS
+{
+	int		clientwidth;				/* Client window width */
+	int		clientheight;				/* Client window height */
+	RECT	window_position;			/* 1964 main window location */
+	BOOL	WindowIsMaximized;
+	BOOL	window_is_moving;
+	BOOL	window_is_maximized;
+	BOOL	window_is_minimized;
+	BOOL	block_menu;					/* Block all menu command while 1964 is busy */
+	int		IsFullScreen;
+};
+extern struct GUISTATUS guistatus;
+
+extern void				DockStatusBar(void);
+extern void				InitStatusBarParts(void);
+extern void				SetStatusBarText(int, char *);
+
+#define MAX_RECENT_ROM_DIR		8
+#define MAX_RECENT_GAME_LIST	8
+char					recent_rom_directory_lists[MAX_RECENT_ROM_DIR][260];
+char					recent_game_lists[MAX_RECENT_GAME_LIST][260];
+
+struct DIRECTORIES
+{
+	char	main_directory[256];
+	char	plugin_directory_to_use[256];
+	char	save_directory_to_use[256];
+	char	rom_directory_to_use[256];
+	char	last_rom_directory[256];
+};
+
+extern struct DIRECTORIES	directories;
+
+extern char					game_country_name[10];
+extern int					game_country_tvsystem;
+
+enum { LOAD_ALL_PLUGIN, LOAD_VIDEO_PLUGIN, LOAD_AUDIO_PLUGIN, LOAD_INPUT_PLUGIN };
+
+void FreePlugins(void);
+void LoadPlugins(int type);
+
+enum { SAVE_STATE_1964_FORMAT, SAVE_STATE_PJ64_FORMAT };
+#endif
