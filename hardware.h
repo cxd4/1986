@@ -6,6 +6,7 @@
 #include "dllsrc/controller.h"
 
 #include "globals.h"		// loads the rom and handle endian stuff
+#include "options.h"
 
 //////////////////////////////////////////////////////////////////////
 // Data Types
@@ -82,15 +83,80 @@ extern t_rominfo		rominfo;
 typedef struct sHardwareState {
     _int64 GPR[34];         /* General Purpose Registers    GPR[32] = lo, GPR[33] = hi */
     uint32 COP0Reg[32];     /* Coprocessor0 Registers       */
-    uint32 COP1Reg[64];     /* FPU Registers                */
-    uint32 COP1Con[64];     /* FPControl Registers          */
-    uint32 COP0Con[64];     /* FPControl Registers          */
+    uint32 fpr32[64];       /* 32bit 64 items needed!		*/
     uint32 LLbit;           /* LoadLinked Bit               */
     uint32 pc;              /* program counter              */
+    uint32 COP1Con[32];     /* FPControl Registers, only 0 and 31 is used   */
+    uint32 COP0Con[64];     /* FPControl Registers          */
+    uint32 RememberFprHi[32];
     uint32 code;            /* The instruction              */
 } HardwareState;
+
 extern HardwareState gHardwareState;
-extern HardwareState gHardwareState2;
+extern HardwareState* p_gHardwareState;
+
+#define HARDWARESTATE_SIZE			(sizeof(HardwareState))
+
+
+#define MAXTLB    32
+
+typedef struct
+{
+    uint32  valid;
+    uint32  EntryHi;
+    uint32  EntryLo1;
+    uint32  EntryLo0;
+    uint64  PageMask;
+    uint32  LoCompare;
+    uint32  MyHiMask;
+} tlb_struct;
+
+typedef struct sMemorySTATE
+{
+    //memory
+//    uint32* RDREG;
+    uint32*	ramRegs0;
+    uint32*	ramRegs4;
+    uint32*	ramRegs8;
+    uint32* SP_MEM;
+    uint32* SP_REG_1;
+    uint32* SP_REG_2;
+    uint32* DPC;
+    uint32* DPS;
+    uint32* MI;
+    uint32* VI;
+    uint32* AI;
+    uint32* PI;
+    uint32* RI;
+    uint32* SI;
+    uint8* RDRAM;		// Size = 4MB
+    uint32* C2A1;
+    uint32* C1A1;
+    uint32* C1A3;
+    uint32* C2A2;
+    uint8* ROM_Image;
+    uint32* GIO_REG;
+    uint8*  PIF;
+    uint8* ExRDRAM;		// Size = 4MB
+    uint8* dummySegment; //handles crap pointers for now..band-aid'ish
+
+    tlb_struct      TLB[MAXTLB];
+
+} MemoryState;
+
+uint8* RDRAM_Copy;
+
+extern MemoryState gMemoryState;
+extern MemoryState * p_gMemoryState;
+extern MemoryState gVirtMemory;
+
+#ifdef ENABLE_OPCODE_DEBUGGER
+extern HardwareState gHardwareState_Interpreter_Compare;
+extern HardwareState gHardwareState_Flushed_Dynarec_Compare;
+extern MemoryState   gMemoryState_Interpreter_Compare;
+#endif
+
+
 
 #define gLO 32
 #define gHI 33
@@ -111,23 +177,6 @@ _u32 debugger_pc;
 #else
 extern _u32 debugger_pc;
 #endif
-
-#define LOADIMM32(x)                \
-{                                   \
-  /* mov eax, 32bit value */        \
-    WC8(0xB8);                      \
-    WC32((_u32)x);                  \
-}
-
-
-#define INTERPRET_LOADSTORE(OPCODE)             \
-    FlushAllRegisters();                        \
-    MOV_ImmToReg(1, Reg_ECX, reg->code);        \
-    LOADIMM32(&OPCODE);                         \
-    WC16(0xd0ff); 
-
-#define INTERPRET(OPCODE) INTERPRET_LOADSTORE(OPCODE)
-
 
 _s32 exception_slot;
 _u32 next_interrupt_count;

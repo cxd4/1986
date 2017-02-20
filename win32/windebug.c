@@ -1,7 +1,7 @@
 /*______________________________________________________________________________
  |                                                                              |
  |  1964 - Emulator for Nintendo 64 console system                              |
- |  Copyright (C) 2001  Joel Middendorf  schibo@emuhq.com                       |
+ |  Copyright (C) 2001  Joel Middendorf  schibo@emulation64.com                 |
  |                                                                              |
  |  This program is free software; you can redistribute it and/or               |
  |  modify it under the terms of the GNU General Public License                 |
@@ -18,7 +18,7 @@
  |  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
  |                                                                              |
  |  To contact the author:                                                      |
- |  email      : schibo@emuhq.com                                               |
+ |  email      : schibo@emulation64.com                                         |
  |  paper mail :                                                                |
  |______________________________________________________________________________|
 
@@ -44,8 +44,7 @@ the property of anarko.
 #include "..\interrupt.h"
 #include "..\DbgPrint.h"
 #include "..\emulator.h"
-
-uint32 CalculateAddress(uint32 Addr);
+#include "..\memory.h"
 
 #define  MIPS_VIEW 0
 #define INTEL_VIEW 1
@@ -55,6 +54,9 @@ extern HANDLE CPUThreadHandle;
 #define LOGGING
 static FILE* fp=NULL;
 static BOOL LoggingEnabled;
+
+static BOOL DisplayCompareReg=0;		// Use by opcode debugger
+static BOOL DisplayDynaCompareReg = 0;
 
 //---------------------------------------------------------------------------------------
 
@@ -92,7 +94,6 @@ LRESULT CALLBACK VIREGS(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 //---------------------------------------------------------------------------------------
-
 LRESULT CALLBACK DEBUGGER(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static int i;
@@ -121,6 +122,10 @@ LRESULT CALLBACK DEBUGGER(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         UpdateCOP0();
         UpdateFPR();
         UpdateMisc();
+#ifdef ENABLE_OPCODE_DEBUGGER
+		DisplayCompareReg = 0;
+		DisplayDynaCompareReg = 0;
+#endif
         return(TRUE);
         break;
     case WM_COMMAND:
@@ -130,7 +135,7 @@ LRESULT CALLBACK DEBUGGER(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
                 CloseDebugger();
                 break;
             case IDC_STEPCPU: //..TODO
-				StepCPU();
+				InterpreterStepCPU();
 		        UpdateGPR();
 				UpdateCOP0();
 				UpdateFPR();
@@ -138,14 +143,35 @@ LRESULT CALLBACK DEBUGGER(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				UpdateVIReg();
                 break;
             case ID_RUNTO:
-                Get_HexInput();
+                Set_Breakpoint();
                 break;
-            
+#ifdef ENABLE_OPCODE_DEBUGGER
+			case IDC_OPCODE_COMPARE:
+				DisplayCompareReg = 1 - DisplayCompareReg;
+				break;
+			case IDC_OPCODE_DYNA_COMPARE:
+				DisplayDynaCompareReg = 1 - DisplayDynaCompareReg;
+				break;
+#endif
             case IDC_CHECK1:
                 if (DebuggerEnabled == 0)
+				{
                     DebuggerEnabled = 1;
+					if( Emu_Is_Running )
+					{
+						PauseEmulator();
+						ResumeEmulator(TRUE);	// Need to init emu
+					}
+				}
                 else
+				{
                     DebuggerEnabled = 0;
+					if( Emu_Is_Running )
+					{
+						PauseEmulator();
+						ResumeEmulator(TRUE);	// Need to init emu
+					}
+				}
                 break;
 
 #ifdef LOGGING
@@ -167,15 +193,7 @@ LRESULT CALLBACK DEBUGGER(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 #endif
 
             case IDC_TRIGGER_SP_INTERRUPT:
-                MI_INTR_REG_R |= MI_INTR_SP;
-				if ((MI_INTR_MASK_REG_R) & MI_INTR_SP)
-				{
-					gHardwareState.COP0Reg[CAUSE] |= 0x00000400;
-#ifdef CPUCHECKINTR
-					CPUNeedToCheckInterrupt = TRUE;
-					CPUNeedToDoOtherTask = TRUE;
-#endif
-				}
+				Trigger_SPInterrupt();
                 break;
 			case IDC_REGS_FLUSH:
 		        UpdateGPR();
@@ -193,10 +211,15 @@ LRESULT CALLBACK DEBUGGER(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 //---------------------------------------------------------------------------------------
 
 extern char op_str[0xff];
+extern BOOL pausegame;
+extern void AUDIO_AiUpdate(BOOL update);
+enum GAME_STOP_REASON { EMURUNNING=1, EMUSTOP=2, EMUPAUSE=3, EMUSWITCHCORE=4, EMURESUME };
+extern enum GAME_STOP_REASON reason_to_stop;
+
 void HandleBreakpoint(uint32 Instruction) {
     if (RUN_TO_ADDRESS_ACTIVE)
     {
-        if (gHardwareState.pc == BreakAddress)
+        if (gHWS_pc == BreakAddress)
         {
             //RUN_TO_ADDRESS_ACTIVE = FALSE;
             //BreakAddress = 0;
@@ -204,29 +227,33 @@ void HandleBreakpoint(uint32 Instruction) {
             
             //DebuggerEnabled = 1;
             WinDynDebugPrintInstruction(Instruction);
+			RefreshDebugger();
+			TRACE1("breakpoint %08X is hit", BreakAddress);
             DisplayError("%s\nBreakpoint Encountered.", op_str);
-            SuspendThread(CPUThreadHandle);
+            //SuspendThread(CPUThreadHandle);
+			reason_to_stop = EMUPAUSE;
+			Emu_Keep_Running = FALSE;
+			AUDIO_AiUpdate(TRUE);
         }
     }
 }
 
-void PrintTLB(void)
+void PrintTLB(BOOL all)
 {
 	int i;
 	uint32 g;
 
 	for(i=0; i<=NTLBENTRIES; i++ )
 	{
-		g = (TLB[i].EntryLo0 & TLB[i].EntryLo1 & 0x01);
+		if( gMS_TLB[i].valid || all == TRUE )
+		{
+			g = (gMS_TLB[i].EntryLo0 & gMS_TLB[i].EntryLo1 & 0x01);
 
-	    sprintf(generalmessage, "TLB [%d], G=%d, V=%d", i,g, TLB[i].valid);
-		RefreshOpList(generalmessage);
-	    sprintf(generalmessage, "PAGEMASK = 0x%08X, ENTRYHI = 0x%08X", (uint32)TLB[i].PageMask, TLB[i].EntryHi);
-		RefreshOpList(generalmessage);
-		sprintf(generalmessage, "ENTRYLO1 = 0x%08X, ENTRYLO0 = 0x%08X", TLB[i].EntryLo1, TLB[i].EntryLo0);
-		RefreshOpList(generalmessage);
-		sprintf(generalmessage, "LoCompare = 0x%08X, MyHiMask = 0x%08X", TLB[i].LoCompare, TLB[i].MyHiMask);
-		RefreshOpList(generalmessage);
+			TRACE3( "TLB [%d], G=%d, V=%d", i,g, gMS_TLB[i].valid);
+			TRACE2( "PAGEMASK = 0x%08X, ENTRYHI = 0x%08X", (uint32)gMS_TLB[i].PageMask, gMS_TLB[i].EntryHi);
+			TRACE2( "ENTRYLO1 = 0x%08X, ENTRYLO0 = 0x%08X", gMS_TLB[i].EntryLo1, gMS_TLB[i].EntryLo0);
+			TRACE2( "LoCompare = 0x%08X, MyHiMask = 0x%08X", gMS_TLB[i].LoCompare, gMS_TLB[i].MyHiMask);
+		}
     }
 }
 
@@ -262,7 +289,7 @@ void UpdateMemList()
         }
         else
         {
-            realmemloc = (uint8*)sDWORD_R[((uint16)((memloc) >> 16))];
+            realmemloc = pLOAD_UBYTE_PARAM(memloc);
             if (realmemloc == NULL) 
             {
                 sprintf(final, "--- Invalid Segment ---");
@@ -352,17 +379,16 @@ void MemoryDeAssemble(void)
         {
 			uint32 translatepc;
 
-			if ((memloc ^ 0x80000000) & 0xC0000000 ) //(gHardwareState.pc & 0xC0000000) != 0x80000000) 
+			if ((memloc ^ 0x80000000) & 0xC0000000 ) //(gHWS_pc & 0xC0000000) != 0x80000000) 
 			{                                                   
 				translatepc = TranslateITLBAddress(memloc);
-				realmemloc = (uint32*)sDWORD_R[((uint16)((translatepc) >> 16))];
+				realmemloc = pLOAD_UWORD_PARAM(translatepc);	//TODO: valloc2
 			}
 			else
 			{
-	            realmemloc = (uint32*)sDWORD_R[((uint16)((memloc) >> 16))];
+	            realmemloc = pLOAD_UWORD_PARAM(memloc);
 			}
 
-			//*(uint32*)((uint8*)sDWORD_R[((uint16)((param) >> 16))] + ((uint16)param    ))
             if (realmemloc == NULL) 
             {
                 sprintf(final, "--- Invalid Segment ---");
@@ -378,33 +404,34 @@ void MemoryDeAssemble(void)
                 }
                 else
 				{
-					uint32 temppc = gHardwareState.pc;
+					uint32 temppc = gHWS_pc;
 					uint32 Instruction;
+					uint32 Addr = StrToHex((char*)mem);
 
 
-					gHardwareState.pc = memloc;
+					gHWS_pc = memloc;
 
 					for (i=0;i<LINETODASM;i++)
 					{
-						if ((gHardwareState.pc ^ 0x80000000) & 0xC0000000 ) //(gHardwareState.pc & 0xC0000000) != 0x80000000) 
+						if ((gHWS_pc ^ 0x80000000) & 0xC0000000 ) //(gHWS_pc & 0xC0000000) != 0x80000000) 
 						{                                                   
-							translatepc = TranslateITLBAddress(gHardwareState.pc);
+							translatepc = TranslateITLBAddress(gHWS_pc);
 							Instruction = LOAD_UWORD_PARAM(translatepc);
 						}
 						else
 						{
-							Instruction = LOAD_UWORD_PARAM(gHardwareState.pc);
+							Instruction = LOAD_UWORD_PARAM(gHWS_pc);
 						}
 						
 						DebugPrintInstructionWithOutRefresh(Instruction); 
-						SendMessage(MEMLISTBOX,LB_INSERTSTRING,(WPARAM)-1,(LPARAM)op_str);
+						SendMessage(MEMLISTBOX,LB_INSERTSTRING,(WPARAM)i,(LPARAM)op_str);
 
-						gHardwareState.pc += 4;
+						gHWS_pc += 4;
 						realmemloc++;
 						memloc++;
 					}
 
-					gHardwareState.pc = temppc;
+					gHWS_pc = temppc;
 					
                 }   /* end for */
             }   /* end if (realmemloc == NULL)...else */
@@ -525,8 +552,35 @@ LRESULT APIENTRY CODELISTPROC(HWND hDlg, unsigned message, WORD wParam, LONG lPa
 				Play();
 				break;
 			case IDC_PRINT_TLB:
-				PrintTLB();
+				PrintTLB(FALSE);
 				break;
+			case IDC_PRINT_TLBALL:
+				PrintTLB(TRUE);
+				break;
+			case IDC_STEPCPU_CODELIST:
+				InterpreterStepCPU();
+		        UpdateGPR();
+				UpdateCOP0();
+				UpdateFPR();
+				UpdateMisc();
+				UpdateVIReg();
+				break;
+			case IDC_MANUAL_SI:
+				Trigger_Interrupt_Without_Mask(MI_INTR_SI);
+				break;
+			case IDC_MANUAL_AI:
+				Trigger_Interrupt_Without_Mask(MI_INTR_AI);
+				break;
+			case IDC_MANUAL_VI:
+				Trigger_Interrupt_Without_Mask(MI_INTR_VI);
+				break;
+			case IDC_MANUAL_SP:
+				Trigger_Interrupt_Without_Mask(MI_INTR_SP);
+				break;
+			case IDC_MANUAL_DP:
+				Trigger_Interrupt_Without_Mask(MI_INTR_DP);
+				break;
+
             }
         break;
     }
@@ -743,6 +797,8 @@ LRESULT APIENTRY GETHEX(HWND hDlg, unsigned message, WORD wParam, LONG lParam)
     switch (message) 
     {
         case WM_INITDIALOG:
+			sprintf(generalmessage, "%08X", BreakAddress);
+			SetDlgItemText(hDlg, IDC_VALUE, generalmessage);
             return (TRUE);
             break;
 
@@ -817,12 +873,16 @@ void UpdateVIReg()
 
 //---------------------------------------------------------------------------------------
 
-void Get_HexInput()
+void Set_Breakpoint()
 {
     if (!hEnterHexwnd)
         hEnterHexwnd = CreateDialog(hInst, "ENTERHEX", hwnd, (DLGPROC)GETHEX);
 }
 
+void Clear_Breakpoint()
+{
+	RUN_TO_ADDRESS_ACTIVE = FALSE;
+}
 //---------------------------------------------------------------------------------------
 
 void RefreshOpList(char *opcode)
@@ -846,7 +906,7 @@ void RefreshOpList(char *opcode)
 		OpCount++;
 		SendMessage(CODEEDIT[0],LB_SETCURSEL,(WPARAM)OpCount-1,(LPARAM)0);
 
-		if (gHardwareState.COP0Reg[COUNT] == NextClearCode)
+		if (gHWS_COP0Reg[COUNT] == NextClearCode)
 		{
 			SendMessage(CODEEDIT[0],LB_RESETCONTENT ,0,0);
 	        NextClearCode += 250;
@@ -862,20 +922,34 @@ void UpdateMisc()
 {
     char String[17];
 
+	HardwareState * pstate;
+	pstate = &gHardwareState;
+
+#ifdef ENABLE_OPCODE_DEBUGGER
+	if( DisplayCompareReg )
+	{
+		pstate = &gHardwareState_Interpreter_Compare;
+	}
+	else if ( DisplayDynaCompareReg )
+	{
+		pstate = &gHardwareState_Flushed_Dynarec_Compare;
+	}
+#endif
+
     /* PC */
-    sprintf(String, "%08X", (uint32)gHardwareState.pc);
+    sprintf(String, "%08X", (uint32)pstate->pc);
     SendMessage(MISCEDIT[0],WM_SETTEXT,0,(LPARAM)(LPCTSTR)String);
 
     /* LLBit */
-    sprintf(String, "%08X", (uint32)gHardwareState.LLbit);
+    sprintf(String, "%08X", (uint32)pstate->LLbit);
     SendMessage(MISCEDIT[1],WM_SETTEXT,0,(LPARAM)(LPCTSTR)String);
 
     /* MultHI */
-    sprintf(String, "%016I64X", gHardwareState.GPR[gHI]);
+    sprintf(String, "%016I64X", pstate->GPR[gHI]);
     SendMessage(MISCEDIT[2],WM_SETTEXT,0,(LPARAM)(LPCTSTR)String);
     
     /* MultLO */
-    sprintf(String, "%016I64X", gHardwareState.GPR[gLO]);
+    sprintf(String, "%016I64X", pstate->GPR[gLO]);
     SendMessage(MISCEDIT[3],WM_SETTEXT,0,(LPARAM)(LPCTSTR)String);
 }
 
@@ -886,12 +960,26 @@ void UpdateGPR()
     int i;
     char String[17];
 
+	HardwareState * pstate;
+	pstate = &gHardwareState;
+
+#ifdef ENABLE_OPCODE_DEBUGGER
+	if( DisplayCompareReg )
+	{
+		pstate = &gHardwareState_Interpreter_Compare;
+	}
+	else if ( DisplayDynaCompareReg )
+	{
+		pstate = &gHardwareState_Flushed_Dynarec_Compare;
+	}
+#endif
+
     for (i=0;i<64;i++)
     {
-//        if (gHardwareState.GPR[i] == 0)
+//        if (gHWS_GPR[i] == 0)
 //            sprintf(String, "........");
 //        else
-            sprintf(String, "%016I64X", gHardwareState.GPR[i]);
+            sprintf(String, "%016I64X", pstate->GPR[i]);
 
         SendMessage(GPREDIT[i],WM_SETTEXT,0,(LPARAM)(LPCTSTR)String);
     }
@@ -904,12 +992,26 @@ void UpdateCOP0()
     char String[10];
     int i;
 
+	HardwareState * pstate;
+	pstate = &gHardwareState;
+
+#ifdef ENABLE_OPCODE_DEBUGGER
+	if( DisplayCompareReg )
+	{
+		pstate = &gHardwareState_Interpreter_Compare;
+	}
+	else if ( DisplayDynaCompareReg )
+	{
+		pstate = &gHardwareState_Flushed_Dynarec_Compare;
+	}
+#endif
+
     for (i=0;i<32;i++)
     {
-//        if (gHardwareState.COP0Reg[i] == 0)
+//        if (gHWS_COP0Reg[i] == 0)
 //            sprintf(String, "........");
 //        else
-            sprintf(String, "%08X", (uint32)gHardwareState.COP0Reg[i]);
+            sprintf(String, "%08X", (uint32)pstate->COP0Reg[i]);
 
         SendMessage(COP0EDIT[i],WM_SETTEXT,0,(LPARAM)(LPCTSTR)String);
     }
@@ -922,12 +1024,26 @@ void UpdateFPR()
     char String[17];
     int i;
 
+	HardwareState * pstate;
+	pstate = &gHardwareState;
+
+#ifdef ENABLE_OPCODE_DEBUGGER
+	if( DisplayCompareReg )
+	{
+		pstate = &gHardwareState_Interpreter_Compare;
+	}
+	else if ( DisplayDynaCompareReg )
+	{
+		pstate = &gHardwareState_Flushed_Dynarec_Compare;
+	}
+#endif
+
     for (i=0;i<32;i++)
     {
-//        if (gHardwareState.COP1Reg[i] == 0)
+//        if (gHWS_COP1Reg[i] == 0)
 //            sprintf(String, "........");
 //        else
-        sprintf(String, "%016I64X", (_int64)gHardwareState.COP1Reg[i]);
+        sprintf(String, "%016I64X", (_int64)pstate->fpr32[i]);
         SendMessage(COP1EDIT[i],WM_SETTEXT,0,(LPARAM)(LPCTSTR)String);
     }
 }   
@@ -1064,5 +1180,19 @@ void CloseDebugger()
     }
 }
 
+
+void SetDebugMenu(void)
+{
+	CheckMenuItem(hMenu, ID_DEBUG_CONTROLLER,	debug_si_controller?MF_CHECKED:MF_UNCHECKED);
+	CheckMenuItem(hMenu, ID_DEBUGSPTASK,		debug_sp_task?MF_CHECKED:MF_UNCHECKED);
+	CheckMenuItem(hMenu, ID_DEBUGSITASK,		debug_si_task?MF_CHECKED:MF_UNCHECKED);
+	CheckMenuItem(hMenu, ID_DEBUGSPDMA,			debug_sp_dma?MF_CHECKED:MF_UNCHECKED);
+	CheckMenuItem(hMenu, ID_DEBUGSIDMA,			debug_si_dma?MF_CHECKED:MF_UNCHECKED);
+	CheckMenuItem(hMenu, ID_DEBUGPIDMA,			debug_pi_dma?MF_CHECKED:MF_UNCHECKED);
+	CheckMenuItem(hMenu, ID_DEBUGMEMPAK,		debug_si_mempak?MF_CHECKED:MF_UNCHECKED);
+	CheckMenuItem(hMenu, ID_DEBUGTLB,			debug_tlb?MF_CHECKED:MF_UNCHECKED);
+	CheckMenuItem(hMenu, ID_DEBUGEEPROM,		debug_si_eeprom?MF_CHECKED:MF_UNCHECKED);
+	CheckMenuItem(hMenu, ID_DEBUG_SRAM,			debug_sram?MF_CHECKED:MF_UNCHECKED);
+}
 
 #endif //#ifdef WINDEBUG_1964

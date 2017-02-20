@@ -1,7 +1,7 @@
 /*______________________________________________________________________________
  |                                                                              |
  |  1964 - Globals                                                              |
- |  Copyright (C) 2001 Joel Middendorf, <schibo@emuhq.com>                      |
+ |  Copyright (C) 2001 Joel Middendorf, <schibo@emulation64.com>                |
  |                                                                              |
  |  This program is free software; you can redistribute it and/or               |
  |  modify it under the terms of the GNU General Public License                 |
@@ -18,7 +18,7 @@
  |  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
  |                                                                              |
  |  To contact the author:                                                      |
- |  email      : schibo@emuhq.com                                               |
+ |  email      : schibo@emulation64.com                                         |
  |  paper mail :                                                                |
  |______________________________________________________________________________|
 */
@@ -86,12 +86,32 @@ typedef struct
 } t_rominfo;
 
 extern int DebuggerEnabled; /* Flag to toggle debug printing on/off */
-extern uint8* ROM_Image;
 extern uint32 gAllocationLength;
 extern int eepromsize;
 
 extern t_rominfo rominfo;
-extern BOOL Rom_Loaded;
+extern volatile BOOL Rom_Loaded;
+extern volatile BOOL Emu_Keep_Running;
+extern volatile BOOL Emu_Is_Running;
+extern DWORD OSversion;
+
+extern uint8* sDWord[0x10000];
+extern uint8* sDWord2[0x10000];
+#ifdef DIRECT_TLB_LOOKUP
+extern uint8* TLB_sDWord[0x100000];
+#endif
+
+#ifdef ENABLE_OPCODE_DEBUGGER
+extern uint8* sDWORD_R__Debug[0x10000];
+extern uint8* sDWORD_R_2__Debug[0x10000];
+extern uint8** sDWord_ptr;
+extern uint8** sDWord2_ptr;
+#ifdef DIRECT_TLB_LOOKUP
+extern uint8** TLB_sDWord_ptr;
+//extern uint8* TLB_sDWord__Debug[0x100000];
+#endif
+#endif
+
 
 #include "plugins.h"
 extern GFX_INFO Gfx_Info;
@@ -100,5 +120,42 @@ extern AUDIO_INFO Audio_Info;
 
 extern char* CURRENT1964VERSION;
 extern char  generalmessage[256];
+extern char  main_directory[256];
+extern char  plugin_directory_to_use[256];
+extern char  save_directory_to_use[256];
+extern char  rom_directory_to_use[256];
+extern char  last_rom_directory[256];
+
+extern char  tracemessage[256];
+extern char  errormessage[256];
+
+// TRACE macros
+#ifdef DEBUG_COMMON
+#define TRACE0(str)			{RefreshOpList(str);}
+#define TRACE1(str, arg1)	{sprintf(tracemessage, str, arg1);RefreshOpList(tracemessage);}
+#define TRACE2(str, arg1, arg2)		{sprintf(tracemessage, str, arg1, arg2);RefreshOpList(tracemessage);}
+#define TRACE3(str, arg1, arg2, arg3)	{sprintf(tracemessage, str, arg1, arg2, arg3);RefreshOpList(tracemessage);}
+#define TRACE4(str, arg1, arg2, arg3, arg4)		{sprintf(tracemessage, str, arg1, arg2, arg3, arg4);RefreshOpList(tracemessage);}
+#else
+#define TRACE0(str)
+#define TRACE1(str, arg1)
+#define TRACE2(str, arg1, arg2)
+#define TRACE3(str, arg1, arg2, arg3)
+#define TRACE4(str, arg1, arg2, arg3, arg4)
+#endif
+
+extern int CounterFactor;
+extern int CodeCheckMethod;
+extern int VICounterFactors[9];
+extern int CounterFactors[9];
+
+extern int DListCount;
+extern int AListCount;
+extern int PIDMACount;
+extern int  ControllerReadCount;
+extern unsigned long TLBCount;
+
+extern char game_country_name[10];
+extern int  game_country_tvsystem;
 
 #endif /* _GLOBALS_H__1964_ */

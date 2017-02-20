@@ -2,7 +2,7 @@
   ______________________________________________________________________________
  |                                                                              |
  |  1964 - Emulator for Nintendo 64 console system                              |
- |  Copyright (C) 2001  Joel Middendorf  schibo@emuhq.com                       |
+ |  Copyright (C) 2001  Joel Middendorf  schibo@emulation64.com                 |
  |                                                                              |
  |  This program is free software; you can redistribute it and/or               |
  |  modify it under the terms of the GNU General Public License                 |
@@ -19,7 +19,7 @@
  |  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
  |                                                                              |
  |  To contact the author:                                                      |
- |  email      : schibo@emuhq.com                                               |
+ |  email      : schibo@emulation64.com                                         |
  |  paper mail :                                                                |
  |______________________________________________________________________________|
 
@@ -29,6 +29,9 @@
 #define _R4300I_H__1964_
 
 #include "globals.h"
+#include "options.h"
+#include "debug_option.h"
+#include "hardware.h"
 
 /*
  * TLB size constants
@@ -104,7 +107,7 @@
 #define	SR_CH		0x00040000	/* Cache hit for last 'cache' op */
 #define	SR_CE		0x00020000	/* Create ECC */
 #define	SR_DE		0x00010000	/* ECC of parity does not cause error */
-
+#define STATUS_CU1  SR_CU1
 
 /*
  * Interrupt enable bits
@@ -146,11 +149,9 @@
 #define	CAUSE_IP5	0x00001000	/* External level 5 pending - INT2 */
 #define	CAUSE_IP4	0x00000800	/* External level 4 pending - INT1 */
 #define	CAUSE_IP3	0x00000400	/* External level 3 pending - INT0 */
+#define NOT_CAUSE_IP3		0xFFFFFBFF
 #define	CAUSE_SW2	0x00000200	/* Software level 2 pending */
 #define	CAUSE_SW1	0x00000100	/* Software level 1 pending */
-#define CAUSE_IP0			0x00000100
-#define CAUSE_IP1			0x00000200
-#define CAUSE_IP2			0x00000400
 
 #define CAUSE_BD			0x80000000
 
@@ -159,8 +160,6 @@
 #define CAUSE_CE1			0x10000000
 #define CAUSE_CE2			0x20000000
 #define CAUSE_CE3			0x30000000
-
-#define NOT_CAUSE_IP2		0xFFFFFBFF
 
 
 #define	CAUSE_IPMASK	0x0000FF00	/* Pending interrupt mask */
@@ -194,26 +193,63 @@
 #define	EXC_WATCH	EXC_CODE(23)	/* Watchpoint reference */
 #define	EXC_VCED	EXC_CODE(31)	/* Virt. Coherency on data read */
 
+#define COP1_CONDITION_BIT 0x00800000
+#define NOT_COP1_CONDITION_BIT  0xFF7FFFFF
 
 // little-endian memory operations
 #define QUER_ADDR QuerAddr = (uint32)((_int32)gBASE + (_int32)OFFSET_IMMEDIATE)
 
-//#define LOAD_SBYTE_PARAM(param)     *(_int8 *)(uint8*)(valloc+((param^3)&0x1fffffff))
-//#define LOAD_UBYTE_PARAM(param)     *(uint8 *)(uint8*)(valloc+((param^3)&0x1fffffff))
-//#define LOAD_SHALF_PARAM(param)     *(_int16*)(uint8*)(valloc+((param^2)&0x1fffffff))
-//#define LOAD_UHALF_PARAM(param)     *(uint16*)(uint8*)(valloc+((param^2)&0x1fffffff))
-//#define LOAD_SWORD_PARAM(param)     *(_int32*)(uint8*)(valloc+(param&0x1fffffff))
-//#define LOAD_UWORD_PARAM(param)     *(uint32*)(uint8*)(valloc+(param&0x1fffffff))
-//#define pLOAD_UWORD_PARAM(param)     (uint32*)(uint8*)(valloc+(param&0x1fffffff))
+#ifdef DIRECT_TLB_LOOKUP
+#define LOAD_SBYTE_PARAM(param)     *         ((_int8*)TLB_sDWORD_R[(((param) >> 12))] + ((param&0x00000FFF) ^ 3))
+#define LOAD_UBYTE_PARAM(param)     *         ((uint8*)TLB_sDWORD_R[(((param) >> 12))] + ((param&0x00000FFF) ^ 3))
+#define LOAD_SHALF_PARAM(param)     *(_int16*)((uint8*)TLB_sDWORD_R[(((param) >> 12))] + ((param&0x00000FFF) ^ 2))
+#define LOAD_UHALF_PARAM(param)     *(uint16*)((uint8*)TLB_sDWORD_R[(((param) >> 12))] + ((param&0x00000FFF) ^ 2))
+#define LOAD_SWORD_PARAM(param)     *(_int32*)((uint8*)TLB_sDWORD_R[(((param) >> 12))] + ((param&0x00000FFF)    ))
+#define LOAD_UWORD_PARAM(param)     *(uint32*)((uint8*)TLB_sDWORD_R[(((param) >> 12))] + ((param&0x00000FFF)    ))
+#define LOAD_DOUBLE_PARAM(param)    *(uint64*)((uint8*)TLB_sDWORD_R[(((param) >> 12))] + ((param&0x00000FFF)    ))
 
-
+#define pLOAD_SBYTE_PARAM(param)              ((_int8*)TLB_sDWORD_R[(((param) >> 12))] + ((param&0x00000FFF) ^ 3))
+#define pLOAD_UBYTE_PARAM(param)              ((uint8*)TLB_sDWORD_R[(((param) >> 12))] + ((param&0x00000FFF) ^ 3))
+#define pLOAD_SHALF_PARAM(param)     (_int16*)((uint8*)TLB_sDWORD_R[(((param) >> 12))] + ((param&0x00000FFF) ^ 2))
+#define pLOAD_UHALF_PARAM(param)     (uint16*)((uint8*)TLB_sDWORD_R[(((param) >> 12))] + ((param&0x00000FFF) ^ 2))
+#define pLOAD_SWORD_PARAM(param)     (_int32*)((uint8*)TLB_sDWORD_R[(((param) >> 12))] + ((param&0x00000FFF)    ))
+#define pLOAD_UWORD_PARAM(param)     (uint32*)((uint8*)TLB_sDWORD_R[(((param) >> 12))] + ((param&0x00000FFF)    ))
+#define pLOAD_DOUBLE_PARAM(param)    (uint64*)((uint8*)TLB_sDWORD_R[(((param) >> 12))] + ((param&0x00000FFF)    ))
+#else
 #define LOAD_SBYTE_PARAM(param)     *         ((_int8*)sDWORD_R[((uint16)((param) >> 16))] + ((uint16)param ^ 3))
 #define LOAD_UBYTE_PARAM(param)     *         ((uint8*)sDWORD_R[((uint16)((param) >> 16))] + ((uint16)param ^ 3))
 #define LOAD_SHALF_PARAM(param)     *(_int16*)((uint8*)sDWORD_R[((uint16)((param) >> 16))] + ((uint16)param ^ 2))
 #define LOAD_UHALF_PARAM(param)     *(uint16*)((uint8*)sDWORD_R[((uint16)((param) >> 16))] + ((uint16)param ^ 2))
 #define LOAD_SWORD_PARAM(param)     *(_int32*)((uint8*)sDWORD_R[((uint16)((param) >> 16))] + ((uint16)param    ))
 #define LOAD_UWORD_PARAM(param)     *(uint32*)((uint8*)sDWORD_R[((uint16)((param) >> 16))] + ((uint16)param    ))
+#define LOAD_DOUBLE_PARAM(param)    *(uint64*)((uint8*)sDWORD_R[((uint16)((param) >> 16))] + ((uint16)param    ))
+
+#define pLOAD_SBYTE_PARAM(param)              ((_int8*)sDWORD_R[((uint16)((param) >> 16))] + ((uint16)param ^ 3))
+#define pLOAD_UBYTE_PARAM(param)              ((uint8*)sDWORD_R[((uint16)((param) >> 16))] + ((uint16)param ^ 3))
+#define pLOAD_SHALF_PARAM(param)     (_int16*)((uint8*)sDWORD_R[((uint16)((param) >> 16))] + ((uint16)param ^ 2))
+#define pLOAD_UHALF_PARAM(param)     (uint16*)((uint8*)sDWORD_R[((uint16)((param) >> 16))] + ((uint16)param ^ 2))
+#define pLOAD_SWORD_PARAM(param)     (_int32*)((uint8*)sDWORD_R[((uint16)((param) >> 16))] + ((uint16)param    ))
 #define pLOAD_UWORD_PARAM(param)     (uint32*)((uint8*)sDWORD_R[((uint16)((param) >> 16))] + ((uint16)param    ))
+#define pLOAD_DOUBLE_PARAM(param)    (uint64*)((uint8*)sDWORD_R[((uint16)((param) >> 16))] + ((uint16)param    ))
+#endif
+
+#define LOAD_SBYTE_PARAM_2(param)   *         ((_int8*)sDWORD_R_2[((uint16)((param) >> 16))] + ((uint16)param ^ 3))
+#define LOAD_UBYTE_PARAM_2(param)   *         ((uint8*)sDWORD_R_2[((uint16)((param) >> 16))] + ((uint16)param ^ 3))
+#define LOAD_SHALF_PARAM_2(param)   *(_int16*)((uint8*)sDWORD_R_2[((uint16)((param) >> 16))] + ((uint16)param ^ 2))
+#define LOAD_UHALF_PARAM_2(param)   *(uint16*)((uint8*)sDWORD_R_2[((uint16)((param) >> 16))] + ((uint16)param ^ 2))
+#define LOAD_SWORD_PARAM_2(param)   *(_int32*)((uint8*)sDWORD_R_2[((uint16)((param) >> 16))] + ((uint16)param    ))
+#define LOAD_UWORD_PARAM_2(param)   *(uint32*)((uint8*)sDWORD_R_2[((uint16)((param) >> 16))] + ((uint16)param    ))
+#define LOAD_DOUBLE_PARAM_2(param)  *(uint64*)((uint8*)sDWORD_R_2[((uint16)((param) >> 16))] + ((uint16)param    ))
+
+#define pLOAD_SBYTE_PARAM_2(param)            ((_int8*)sDWORD_R_2[((uint16)((param) >> 16))] + ((uint16)param ^ 3))
+#define pLOAD_UBYTE_PARAM_2(param)            ((uint8*)sDWORD_R_2[((uint16)((param) >> 16))] + ((uint16)param ^ 3))
+#define pLOAD_SHALF_PARAM_2(param)   (_int16*)((uint8*)sDWORD_R_2[((uint16)((param) >> 16))] + ((uint16)param ^ 2))
+#define pLOAD_UHALF_PARAM_2(param)   (uint16*)((uint8*)sDWORD_R_2[((uint16)((param) >> 16))] + ((uint16)param ^ 2))
+#define pLOAD_SWORD_PARAM_2(param)   (_int32*)((uint8*)sDWORD_R_2[((uint16)((param) >> 16))] + ((uint16)param    ))
+#define pLOAD_UWORD_PARAM_2(param)   (uint32*)((uint8*)sDWORD_R_2[((uint16)((param) >> 16))] + ((uint16)param    ))
+#define pLOAD_UWORD_PARAM_2(param)   (uint32*)((uint8*)sDWORD_R_2[((uint16)((param) >> 16))] + ((uint16)param    ))
+#define pLOAD_DOUBLE_PARAM_2(param)  (uint64*)((uint8*)sDWORD_R_2[((uint16)((param) >> 16))] + ((uint16)param    ))
+
 
 
 #define BAD_TASK    0
@@ -238,15 +274,9 @@
    The last  2 bits of instr_index = 00
    instr_index is a misnomer (should be called target, but easier to understand this way)
 */
-#define INSTR_INDEX         ( (gHardwareState.pc & 0xF0000000) | ((Instruction & 0x03FFFFFF) << 2) )
+#define INSTR_INDEX         ( (gHWS_pc & 0xF0000000) | ((Instruction & 0x03FFFFFF) << 2) )
 
-
-
-#define MAGICNUMBER (625000)
-#define MAGICNUMBERFORCOUNTREG (312500)
-
-extern uint8* sDWORD_R[0xFFFF];
-extern uint8* sDYN_PC_LOOKUP[0xFFFF];
+extern uint8* sDYN_PC_LOOKUP[0x10000];
 
 
 extern uint8 *dyna_CodeTable;
@@ -254,42 +284,38 @@ extern uint8 *dyna_CodeTable;
 extern uint32    CPUdelayPC;
 extern uint32    CPUdelay;
 extern int		 whichcore;		// Which compiler to use
+extern uint32	 FR_reg_offset;
 
 //dynarec globals
-extern uint32* LocationJumpedFrom;
 extern uint32* pcptr;
 extern uint32 KEEP_RECOMPILING;
 extern uint8* Block;
 
 extern uint8 HeaderDllPass[0x40];
 
-#define C_CALL(address) \
-  LOADIMM32(address);   \
-    WC16(0xd0ff);
+#define C_CALL(/*address*/OPCODE)                         \
+  MOV_ImmToReg(1, Reg_EAX, (uint32)/*&*/OPCODE);    \
+  CALL_Reg(Reg_EAX);
 
 
 
 #ifdef WINDEBUG_1964
-
 #define DYNDEBUG_UPDATE                                                 \
-    MOV_ImmToMemory(1, (_u32)&gHardwareState.pc, gHardwareState.pc);    \
-    WC8(0xB9);                                                          \
-    WC32(Instruction);                                                  \
+    MOV_ImmToMemory(1, (_u32)&gHWS_pc, gHWS_pc);                        \
+	MOV_ImmToReg(1, Reg_ECX, Instruction);								\
     C_CALL((uint32)&WinDynDebugPrintInstruction)
 
 #define rc_DYNDEBUG_UPDATE                                              \
     FlushAllRegisters();                                                \
-    MOV_ImmToMemory(1, (_u32)&gHardwareState.pc, gHardwareState.pc);    \
-    WC8(0xB9);                                                          \
-    WC32(Instruction);                                                  \
+    MOV_ImmToMemory(1, (_u32)&gHWS_pc, gHWS_pc);    \
+	MOV_ImmToReg(1, Reg_ECX, Instruction);								\
     C_CALL((uint32)&WinDynDebugPrintInstruction)
 
 
 
 
 #define DEBUG_BPT                       \
-    WC8(0xB9);                          \
-    WC32(Instruction);                  \
+	MOV_ImmToReg(1, Reg_ECX, Instruction);								\
     C_CALL((uint32)&HandleBreakpoint);
 
 #else
@@ -303,47 +329,31 @@ extern uint8 HeaderDllPass[0x40];
 
 
 
-#define RegFetchOpcode                      \
-    Instruction = *pcptr;  \
-    rc_DYNDEBUG_UPDATE                     \
-    DEBUG_BPT                           \
-    gHardwareState.code = Instruction;  \
+#define RegFetchOpcode                              \
+    Instruction = *pcptr;                           \
+    rc_DYNDEBUG_UPDATE                              \
+    DEBUG_BPT                                       \
+    gHWS_code = Instruction;                        \
+    DYNA_LOG_INSTRUCTION;                           \
     dyna_instruction[_OPCODE_](&gHardwareState);
 
+//#define cFD     CheckMode((_u8)SA_FD)
+//#define cFS     CheckMode((_u8)RD_FS)
+//#define cFT     CheckMode((_u8)RT_FT)
+#define cFD     gHWS_fpr32[SA_FD]
+#define cFS     gHWS_fpr32[RD_FS]
+#define cFT     gHWS_fpr32[RT_FT]
+#define FPU_Reg(reg)     gHWS_fpr32[reg]
 
-#define cFD     gHardwareState.COP1Reg[SA_FD]
-#define cFS     gHardwareState.COP1Reg[RD_FS]
-#define cFT     gHardwareState.COP1Reg[RT_FT]
-#define cCON31  gHardwareState.COP1Con[31]
-#define cCONFS  gHardwareState.COP1Con[RD_FS]
-#define gRS     gHardwareState.GPR[RS_BASE_FMT]
-#define gBASE   gHardwareState.GPR[RS_BASE_FMT]
-#define gRD     gHardwareState.GPR[RD_FS]
-#define gRT     gHardwareState.GPR[RT_FT]
-#define c0FD    gHardwareState.COP0Reg[SA_FD]
-#define c0FS    gHardwareState.COP0Reg[RD_FS]
-#define c0FT    gHardwareState.COP0Reg[RT_FT]
-
-#define MAXTLB    32
-#define MAXITLB	2
-#define MAXDTLB   2		// Try to use a small TLB table with two TLB entry only to speed up TLB lookup
-
-typedef struct
-{
-    uint32  valid;
-    uint32  EntryHi;
-    uint32  EntryLo1;
-    uint32  EntryLo0;
-    uint64  PageMask;
-    uint32  LoCompare;
-    uint32  MyHiMask;
-} tlb_struct;
-
-extern tlb_struct       TLB[MAXTLB];
-extern tlb_struct		ITLB[MAXITLB];
-extern tlb_struct		DTLB[MAXDTLB];
-
-
+#define cCON31  gHWS_COP1Con[31]
+#define cCONFS  gHWS_COP1Con[RD_FS]
+#define gRS     gHWS_GPR[RS_BASE_FMT]
+#define gBASE   gHWS_GPR[RS_BASE_FMT]
+#define gRD     gHWS_GPR[RD_FS]
+#define gRT     gHWS_GPR[RT_FT]
+#define c0FD    gHWS_COP0Reg[SA_FD]
+#define c0FS    gHWS_COP0Reg[RD_FS]
+#define c0FT    gHWS_COP0Reg[RT_FT]
 
 /*
 ****************************************************************************
@@ -439,23 +449,20 @@ extern tlb_struct		DTLB[MAXDTLB];
 #define ERROREPC  0x1E
 #define RESERVED6 0x1F
 
-#define DELAY_SET               {   CPUdelayPC = gHardwareState.pc + 4 + (OFFSET_IMMEDIATE << 2); CPUdelay = 1;     }
-#define DELAY_SKIP              {   __asm { add gHardwareState.pc, 4 }                                              }
-#define INTERPRETIVE_LINK(X)    {   gHardwareState.GPR[X] = (_int32)(gHardwareState.pc + 8);                        }
+#define DELAY_SET               {  CPUdelayPC = gHWS_pc + 4 + (OFFSET_IMMEDIATE << 2); CPUdelay = 1; }
+#define DELAY_SKIP              {  gHWS_pc += 4;                                                     }
+#define INTERPRETIVE_LINK(X)    {  gHWS_GPR[X] = (_int32)(gHWS_pc + 8);                              }
 
 #define   sLOGIC(Sum, Operand1, OPERATOR, Operand2) Sum =         (_int64)((_int32)Operand1 OPERATOR (_int32)Operand2)
 #define   uLOGIC(Sum, Operand1, OPERATOR, Operand2) Sum = (_int64)(_int32)((uint32)Operand1 OPERATOR (uint32)Operand2)
 #define  sDLOGIC(Sum, Operand1, OPERATOR, Operand2) Sum =                  (_int64)Operand1 OPERATOR (_int64)Operand2
 #define  uDLOGIC(Sum, Operand1, OPERATOR, Operand2) Sum =                  (uint64)Operand1 OPERATOR (uint64)Operand2
 
-#define sLOCICIMM(Sum, Operand1, OPERATOR, Operand2) Sum = (_int64)((_int32)Operand1 OPERATOR Operand2)
-
 #define  sLOGICAL(OPERATOR)              sLOGIC(gRD, gRS, OPERATOR, gRT)
 #define  uLOGICAL(OPERATOR)              uLOGIC(gRD, gRS, OPERATOR, gRT)
 #define sDLOGICAL(OPERATOR)             sDLOGIC(gRD, gRS, OPERATOR, gRT)
 #define uDLOGICAL(OPERATOR)             uDLOGIC(gRD, gRS, OPERATOR, gRT)
 #define  sLOGICAL_WITH_IMM(OPERATOR)     sLOGIC(gRT, gRS, OPERATOR, (_int16)OFFSET_IMMEDIATE)
-//#define  sLOGICAL_WITH_IMM(OPERATOR)     sLOCICIMM(gRT, gRS, OPERATOR, ((_int16)OFFSET_IMMEDIATE))
 #define  uLOGICAL_WITH_IMM(OPERATOR)     uLOGIC(gRT, gRS, OPERATOR, (_int16)OFFSET_IMMEDIATE)
 #define sDLOGICAL_WITH_IMM(OPERATOR)    sDLOGIC(gRT, gRS, OPERATOR, (_int16)OFFSET_IMMEDIATE)
 #define uDLOGICAL_WITH_IMM(OPERATOR)    uDLOGIC(gRT, gRS, OPERATOR, (uint16)OFFSET_IMMEDIATE)
@@ -470,7 +477,7 @@ extern tlb_struct		DTLB[MAXDTLB];
                                                                     \
     QUER_ADDR;                                                      \
                                                                     \
-    if( (QuerAddr & 0xC0000000) != 0x80000000 )                      \
+    if( NOT_IN_KO_K1_SEG(QuerAddr) )		                        \
     {                                                               \
         QuerAddr = TranslateTLBAddressForLoad(QuerAddr);  \
     }
@@ -480,7 +487,7 @@ extern tlb_struct		DTLB[MAXDTLB];
                                                                     \
     QUER_ADDR;                                                      \
                                                                     \
-    if ((QuerAddr & 0xC0000000) != 0x80000000)                      \
+    if (NOT_IN_KO_K1_SEG(QuerAddr))				                    \
     {                                                               \
         QuerAddr = TranslateTLBAddressForStore(QuerAddr);                   \
     }
@@ -489,7 +496,7 @@ extern tlb_struct		DTLB[MAXDTLB];
 extern void r4300i_Init(void);
 extern void r4300i_Reset(void);
 
-extern void Check_LW(unsigned __int32, unsigned __int32);
+extern _int32 Check_LW(unsigned __int32);
 extern void Check_SW(unsigned __int32, unsigned __int32);
 extern void UNUSED(                 unsigned __int32);
 extern void r4300i_cache(           unsigned __int32);
@@ -705,9 +712,8 @@ extern void r4300i_sync(            unsigned __int32);
 extern void r4300i_syscall(         unsigned __int32);
 
 extern void InitTLB(void);
+extern void Build_Whole_Direct_TLB_Lookup_Table(void);
 uint32 TranslateITLBAddress(uint32 address);
-uint32 TranslateDTLBAddress(uint32 address);
-//uint32 TranslateTLBAddress(uint32 address);
 uint32 TranslateTLBAddress(uint32 address, int operation);
 uint32 TranslateTLBAddressForLoad(uint32 address);
 uint32 TranslateTLBAddressForStore(uint32 address);
@@ -720,6 +726,98 @@ uint32 TranslateTLBAddressForStore(uint32 address);
 #define	PCLOCKDMULTU	1
 #define	PCLOCKDDIV		70
 #define	PCLOCKDDIVU		70
+
+
+#define R4300I_SPEEDHACK	\
+        if ((uint16)OFFSET_IMMEDIATE == (uint16)0xFFFF )	\
+		{		\
+			if( NOT_IN_KO_K1_SEG(gHWS_pc) )  \
+			{	\
+				uint32 temppc = TranslateITLBAddress(gHWS_pc);	\
+				if( LOAD_UWORD_PARAM(temppc+4)==0 )	\
+				{	\
+					CPUdelayPC = gHWS_pc;	\
+					CPUdelay = 1;	\
+					r4300i_speedhack();	\
+				}	\
+			}	\
+			else if( LOAD_UWORD_PARAM(gHWS_pc+4)==0) \
+			{	\
+				CPUdelayPC = gHWS_pc;	\
+				CPUdelay = 1;	\
+				r4300i_speedhack();	\
+			}	\
+		}	\
+        else 
+
+#define R4300I_J_SPEEDHACK	\
+        if (gHWS_pc == CPUdelayPC )	\
+		{		\
+			if( NOT_IN_KO_K1_SEG(gHWS_pc) )  \
+			{	\
+				uint32 temppc = TranslateITLBAddress(gHWS_pc);	\
+				if( LOAD_UWORD_PARAM(temppc+4)==0 )	\
+				{	\
+					r4300i_speedhack();	\
+				}	\
+			}	\
+			else if( LOAD_UWORD_PARAM(gHWS_pc+4)==0) \
+			{	\
+				r4300i_speedhack();	\
+			}	\
+		}	
+
+#define	K0_TO_K1(Addr)		((uint32)(Addr)|0xA0000000)	// K0_SEG to K1_SEG 
+#define	K1_TO_K0(Addr)		((uint32)(Addr)&0x9FFFFFFF)	// K1_SEG to K0_SEG 
+#define	K0_TO_PHYS(Addr)	((uint32)(Addr)&0x1FFFFFFF)	// K0_SEG to Physical 
+#define	K1_TO_PHYS(Addr)	((uint32)(Addr)&0x1FFFFFFF)	// K1_SEG to Physical 
+#define	ADDR_TO_PHYS(Addr)	((uint32)(Addr)&0x1FFFFFFF)	// direct mapped to Physical 
+#define	PHYS_TO_K0(Addr)	((uint32)(Addr)|0x80000000)	// Physical to K0_SEG 
+#define	PHYS_TO_K1(Addr)	((uint32)(Addr)|0xA0000000)	// Physical to K1_SEG
+#define IN_K0_SEG(Addr)		((Addr&0xE0000000)==0x80000000)
+#define IN_K1_SEG(Addr)		((Addr&0xE0000000)==0xA0000000)
+#define IN_KO_K1_SEG(Addr)	(!((Addr^0x80000000)&0xC0000000))
+#define NOT_IN_KO_K1_SEG(Addr)	((Addr^0x80000000)&0xC0000000)
+
+#ifdef ADDRESS_ERROR_EXCEPTION
+#define TRIGGER_ADDR_ERROR_EXCEPTION(exception,address)	\
+	gHWS_COP0Reg[CAUSE] |= exception;			\
+	gHWS_COP0Reg[BADVADDR] = address;			\
+	HandleExceptions(0x80000180);	
+#else
+#define TRIGGER_ADDR_ERROR_EXCEPTION(exception,address)
+#endif
+
+
+#ifdef CPU_CORE_CHECK_R0
+#ifdef DEBUG_COMMON
+#define CHECK_R0_EQUAL_0(reg, op)	{if(reg==0) {DisplayError("%08X: %s Load reg R0", gHardwareState.pc, op); return;} }
+#else
+#define CHECK_R0_EQUAL_0(reg, op)	{if(reg==0) return;}
+#endif
+#else
+#define CHECK_R0_EQUAL_0(reg, op)
+#endif
+
+#ifdef ADDR_ALIGN_CHECKING
+#define ADDR_WORD_ALIGN_CHECKING(addr)		if( addr & 0x3 ) {DisplayError("WORD memory access not aligned, PC=%08X", gHWS_pc);Trigger_Address_Error_Exception(addr);return;}
+#define ADDR_DWORD_ALIGN_CHECKING(addr)		if( addr & 0x7 ) {DisplayError("DWORD memory access not aligned, PC=%08X", gHWS_pc);Trigger_Address_Error_Exception(addr);return;}
+#define ADDR_HALFWORD_ALIGN_CHECKING(addr)	if( addr & 0x1 ) {DisplayError("HALF_WORD memory access not aligned, PC=%08X", gHWS_pc);Trigger_Address_Error_Exception(addr);return;}
+#else
+#define ADDR_WORD_ALIGN_CHECKING(addr)
+#define ADDR_DWORD_ALIGN_CHECKING(addr)
+#define ADDR_HALFWORD_ALIGN_CHECKING(addr)
+#endif
+
+extern BOOL FPU_Is_Enabled;
+void Dyna_Set_FPU_Usability(BOOL usable);
+extern dyn_cpu_instr dyna_instruction[64];
+extern void dyna4300i_cop1(OP_PARAMS);
+extern void dyna4300i_cop1_with_exception(OP_PARAMS);
+extern void (*CPU_instruction[64])(uint32 Instruction);
+extern void COP1_instr(uint32 Instruction);
+void COP1_NotAvailable_instr(uint32 Instruction);
+
 
 #endif // _R4300I_H__1964_
 

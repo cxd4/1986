@@ -1,7 +1,7 @@
 /*______________________________________________________________________________
  |                                                                              |
  |  1964 - Emulator for Nintendo 64 console system                              |
- |  Copyright (C) 2001  Joel Middendorf  schibo@emuhq.com                       |
+ |  Copyright (C) 2001  Joel Middendorf  schibo@emulation64.com                 |
  |                                                                              |
  |  This program is free software; you can redistribute it and/or               |
  |  modify it under the terms of the GNU General Public License                 |
@@ -18,7 +18,7 @@
  |  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
  |                                                                              |
  |  To contact the author:                                                      |
- |  email      : schibo@emuhq.com                                               |
+ |  email      : schibo@emulation64.com                                         |
  |  paper mail :                                                                |
  |______________________________________________________________________________|
 */
@@ -30,19 +30,32 @@
 
 // 9/15/1999 - GERRIT - rewrote opcode debug printing so that it's no longer
 // dependant on opcode execution. Makes things easier for dynarec, etc...
+#include "options.h"
+
+#ifndef _DEBUG
+#define RefreshOpList(lala)
+//#define DEBUG_COMMON 1
+#endif
+
+#ifdef ENABLE_OPCODE_DEBUGGER
+#ifndef DEBUG_COMMON
+#define DEBUG_COMMON
+#endif
+#endif
 
 #ifdef DEBUG_COMMON
 
 #include <windows.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include "options.h"
 #include "debug_option.h"
 #include "r4300i.h"
 #include "globals.h"
 #include "hardware.h"
 #include "interrupt.h"
 #include "DbgPrint.h"
+#include "win32/windebug.h"
+
 #include "controller.h"
 #include "n64rcp.h"
 
@@ -235,23 +248,23 @@ void debug_r4300i_dsrl32(uint32 Instruction)        {         DBGPRINT_RT_RD_SA(
 void debug_r4300i_dsrlv(uint32 Instruction)         {         DBGPRINT_RT_RD_RS("DSRLV   ") };
 void debug_r4300i_dsub(uint32 Instruction)          {         DBGPRINT_RS_RT_RD("DSUB    ") };
 void debug_r4300i_dsubu(uint32 Instruction)         {         DBGPRINT_RS_RT_RD("DSUBU   ") };
-void debug_r4300i_j(uint32 Instruction)             {                   sprintf(op_str,"%X: J       %08X", gHardwareState.pc, INSTR_INDEX); };
-void debug_r4300i_jal(uint32 Instruction)           {                   sprintf(op_str,"%08X: JAL     %08X", gHardwareState.pc, INSTR_INDEX); };
+void debug_r4300i_j(uint32 Instruction)             {                   sprintf(op_str,"%X: J       %08X", gHWS_pc, INSTR_INDEX); };
+void debug_r4300i_jal(uint32 Instruction)           {                   sprintf(op_str,"%08X: JAL     %08X", gHWS_pc, INSTR_INDEX); };
 void debug_r4300i_jalr(uint32 Instruction)          {            DBGPRINT_RS_RD("JALR    ") };
 void debug_r4300i_jr(uint32 Instruction)            {               DBGPRINT_RS("JR      ") };
 void debug_r4300i_lb(uint32 Instruction)            {   DBGPRINT_BASE_RT_OFFSET("LB      ") };
 void debug_r4300i_lbu(uint32 Instruction)           {   DBGPRINT_BASE_RT_OFFSET("LBU     ") };
-void debug_r4300i_ld(uint32 Instruction)            {   DBGPRINT_BASE_RT_OFFSET("LD      ") };
-void debug_r4300i_ldc1(uint32 Instruction)          {           DBGPRINT_OPCODE("LDC1 [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_ldl(uint32 Instruction)           {   DBGPRINT_BASE_RT_OFFSET("LDL     ") };
-void debug_r4300i_ldr(uint32 Instruction)           {   DBGPRINT_OPCODE("LDR [UNIMPLEMENTED DBGPRINT]") };
+void debug_r4300i_ld(uint32 Instruction)            {   DBGPRINT_BASE_RT64BIT_OFFSET("LD      ") };
+void debug_r4300i_ldc1(uint32 Instruction)          {	DBGPRINT_BASE_FPR64BIT_OFFSET("LDC1		") };
+void debug_r4300i_ldl(uint32 Instruction)           {   DBGPRINT_BASE_RT64BIT_OFFSET("LDL     ") };
+void debug_r4300i_ldr(uint32 Instruction)           {   DBGPRINT_BASE_RT64BIT_OFFSET("LDR     ") };
 void debug_r4300i_lh(uint32 Instruction)            {   DBGPRINT_BASE_RT_OFFSET("LH      ") };
 void debug_r4300i_lhu(uint32 Instruction)           {   DBGPRINT_BASE_RT_OFFSET("LHU     ") };
 void debug_r4300i_ll(uint32 Instruction)            {   DBGPRINT_BASE_RT_OFFSET("LL      ") };
 void debug_r4300i_lld(uint32 Instruction)           {   DBGPRINT_BASE_RT_OFFSET("LLD     ") };
 void debug_r4300i_lui(uint32 Instruction)           {           DBGPRINT_RT_IMM("LUI     ") };
 void debug_r4300i_lw(uint32 Instruction)            {   DBGPRINT_BASE_RT_OFFSET("LW      ") };
-void debug_r4300i_lwc1(uint32 Instruction)          {           DBGPRINT_OPCODE("LWC1 [UNIMPLEMENTED DBGPRINT]") };
+void debug_r4300i_lwc1(uint32 Instruction)          {  DBGPRINT_BASE_FPR_OFFSET("LWC1    ") };
 void debug_r4300i_lwl(uint32 Instruction)           {   DBGPRINT_BASE_RT_OFFSET("LWL     ") };
 void debug_r4300i_lwr(uint32 Instruction)           {   DBGPRINT_BASE_RT_OFFSET("LWR     ") };
 void debug_r4300i_lwu(uint32 Instruction)           {   DBGPRINT_BASE_RT_OFFSET("LWU     ") };
@@ -267,10 +280,10 @@ void debug_r4300i_ori(uint32 Instruction)           {       DBGPRINT_RS_RT_IMMH(
 void debug_r4300i_sb(uint32 Instruction)            {   DBGPRINT_BASE_RT_OFFSET("SB      ") };
 void debug_r4300i_sc(uint32 Instruction)            {   DBGPRINT_BASE_RT_OFFSET("SC      ") };
 void debug_r4300i_scd(uint32 Instruction)           {   DBGPRINT_BASE_RT_OFFSET("SCD     ") };
-void debug_r4300i_sd(uint32 Instruction)            {   DBGPRINT_BASE_RT_OFFSET("SD      ") };
-void debug_r4300i_sdc1(uint32 Instruction)          {           DBGPRINT_OPCODE("SDC1 [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_sdl(uint32 Instruction)           {           DBGPRINT_OPCODE("SDL [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_sdr(uint32 Instruction)           {           DBGPRINT_OPCODE("SDR [UNIMPLEMENTED DBGPRINT]") };
+void debug_r4300i_sd(uint32 Instruction)            {   DBGPRINT_BASE_RT64BIT_OFFSET("SD      ") };
+void debug_r4300i_sdc1(uint32 Instruction)          {  DBGPRINT_BASE_FPR64BIT_OFFSET("LDC1    ") };
+void debug_r4300i_sdl(uint32 Instruction)           {	DBGPRINT_BASE_RT64BIT_OFFSET("SDL     ") };
+void debug_r4300i_sdr(uint32 Instruction)           {	DBGPRINT_BASE_RT64BIT_OFFSET("SDR     ") };
 void debug_r4300i_sh(uint32 Instruction)            {   DBGPRINT_BASE_RT_OFFSET("SH      ") };
 void debug_r4300i_sll(uint32 Instruction)           {         DBGPRINT_RT_RD_SA("SLL     ") };
 void debug_r4300i_sllv(uint32 Instruction)          {         DBGPRINT_RS_RT_RD("SLLV    ") };
@@ -285,7 +298,7 @@ void debug_r4300i_srlv(uint32 Instruction)          {         DBGPRINT_RS_RT_RD(
 void debug_r4300i_sub(uint32 Instruction)           {         DBGPRINT_RS_RT_RD("SUB     ") };
 void debug_r4300i_subu(uint32 Instruction)          {         DBGPRINT_RS_RT_RD("SUBU    ") };
 void debug_r4300i_sw(uint32 Instruction)            {   DBGPRINT_BASE_RT_OFFSET("SW      ") };
-void debug_r4300i_swc1(uint32 Instruction)          {           DBGPRINT_OPCODE("SWC1 [UNIMPLEMENTED DBGPRINT]") };
+void debug_r4300i_swc1(uint32 Instruction)          {  DBGPRINT_BASE_FPR_OFFSET("SWC1    ") };
 void debug_r4300i_swl(uint32 Instruction)           {   DBGPRINT_BASE_RT_OFFSET("SWL     ") };
 void debug_r4300i_swr(uint32 Instruction)           {   DBGPRINT_BASE_RT_OFFSET("SWR     ") };
 void debug_r4300i_sync(uint32 Instruction)          {           DBGPRINT_OPCODE("SYNC    ") };
@@ -298,14 +311,14 @@ void debug_r4300i_tltu(uint32 Instruction)          {            DBGPRINT_RS_RT(
 void debug_r4300i_tne(uint32 Instruction)           {            DBGPRINT_RS_RT("TNE     ") };
 void debug_r4300i_xor(uint32 Instruction)           {         DBGPRINT_RS_RT_RD("XOR     ") };
 void debug_r4300i_xori(uint32 Instruction)          {       DBGPRINT_RS_RT_IMMH("XORI    ") };
-void debug_r4300i_REGIMM_bgez(uint32 Instruction)   {           DBGPRINT_RS_OFF("BGEZ    ") };
-void debug_r4300i_REGIMM_bgezall(uint32 Instruction){           DBGPRINT_RS_OFF("BGEZALL ") };
-void debug_r4300i_REGIMM_bgezl(uint32 Instruction)  {           DBGPRINT_RS_OFF("BGEZL   ") };
-void debug_r4300i_REGIMM_bltz(uint32 Instruction)   {           DBGPRINT_RS_OFF("BLTZ    ") };
-void debug_r4300i_REGIMM_bltzal(uint32 Instruction) {           DBGPRINT_RS_OFF("BLTZAL  ") };
-void debug_r4300i_REGIMM_bltzall(uint32 Instruction){           DBGPRINT_RS_OFF("BLTZALL ") };
-void debug_r4300i_REGIMM_bltzl(uint32 Instruction)  {           DBGPRINT_RS_OFF("BLTZL   ") };
-void debug_r4300i_REGIMM_bgezal(uint32 Instruction) {           DBGPRINT_RS_OFF("BGEZAL  ") };
+void debug_r4300i_REGIMM_bgez(uint32 Instruction)   {    DBGPRINT_RS_OFF_BRANCH("BGEZ    ") };
+void debug_r4300i_REGIMM_bgezall(uint32 Instruction){    DBGPRINT_RS_OFF_BRANCH("BGEZALL ") };
+void debug_r4300i_REGIMM_bgezl(uint32 Instruction)  {    DBGPRINT_RS_OFF_BRANCH("BGEZL   ") };
+void debug_r4300i_REGIMM_bltz(uint32 Instruction)   {    DBGPRINT_RS_OFF_BRANCH("BLTZ    ") };
+void debug_r4300i_REGIMM_bltzal(uint32 Instruction) {    DBGPRINT_RS_OFF_BRANCH("BLTZAL  ") };
+void debug_r4300i_REGIMM_bltzall(uint32 Instruction){    DBGPRINT_RS_OFF_BRANCH("BLTZALL ") };
+void debug_r4300i_REGIMM_bltzl(uint32 Instruction)  {    DBGPRINT_RS_OFF_BRANCH("BLTZL   ") };
+void debug_r4300i_REGIMM_bgezal(uint32 Instruction) {    DBGPRINT_RS_OFF_BRANCH("BGEZAL  ") };
 void debug_r4300i_REGIMM_teqi(uint32 Instruction)   {           DBGPRINT_RS_IMM("TEQI    ") };
 void debug_r4300i_REGIMM_tgei(uint32 Instruction)   {           DBGPRINT_RS_IMM("TGEI    ") };
 void debug_r4300i_REGIMM_tgeiu(uint32 Instruction)  {           DBGPRINT_RS_IMM("TGEIU   ") };
@@ -316,84 +329,84 @@ void debug_r4300i_COP0_eret(uint32 Instruction)     {           DBGPRINT_OPCODE(
 void debug_r4300i_COP0_mfc0(uint32 Instruction)     {       DBGPRINT_RT_FS_COP0("MFC0    ") };
 void debug_r4300i_COP0_mtc0(uint32 Instruction)     {       DBGPRINT_RT_FS_COP0("MTC0    ") };
 void debug_r4300i_COP0_tlbp(uint32 Instruction)     {           DBGPRINT_OPCODE("TLBP    ") };
-void debug_r4300i_COP0_tlbr(uint32 Instruction)     {                   sprintf(op_str, "%08X: TLBR   (TLB[%d])", gHardwareState.pc, 89); };
-void debug_r4300i_COP0_tlbwi(uint32 Instruction)    {                   sprintf(op_str, "%08X: TLBWI   (TLB[%d])", gHardwareState.pc, (gHardwareState.COP0Reg[INDEX] & 0x1F)); };
-void debug_r4300i_COP0_tlbwr(uint32 Instruction)    {                   sprintf(op_str, "%08X: TLBWR   (TLB[%d])", gHardwareState.pc, (gHardwareState.COP0Reg[INDEX] & 0x1F)); };
+void debug_r4300i_COP0_tlbr(uint32 Instruction)     {                   sprintf(op_str, "%08X: TLBR   (TLB[%d])", gHWS_pc, 89); };
+void debug_r4300i_COP0_tlbwi(uint32 Instruction)    {                   sprintf(op_str, "%08X: TLBWI   (TLB[%d])", gHWS_pc, (gHWS_COP0Reg[INDEX] & 0x1F)); };
+void debug_r4300i_COP0_tlbwr(uint32 Instruction)    {                   sprintf(op_str, "%08X: TLBWR   (TLB[%d])", gHWS_pc, (gHWS_COP0Reg[INDEX] & 0x1F)); };
 void debug_r4300i_COP1_abs_s(uint32 Instruction)    {            DBGPRINT_FD_FS("ABS.S   ") };
 void debug_r4300i_COP1_abs_d(uint32 Instruction)    {            DBGPRINT_FD_FS("ABS.D   ") };
 void debug_r4300i_COP1_add_s(uint32 Instruction)    {         DBGPRINT_FD_FS_FT("ADD.S   ") };
 void debug_r4300i_COP1_add_d(uint32 Instruction)    {         DBGPRINT_FD_FS_FT("ADD.D   ") };
-void debug_r4300i_COP1_bc1f(uint32 Instruction)     {           DBGPRINT_OPCODE("BC1F [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_COP1_bc1fl(uint32 Instruction)    {           DBGPRINT_OPCODE("BC1FL [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_COP1_bc1t(uint32 Instruction)     {           DBGPRINT_OPCODE("BC1T [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_COP1_bc1tl(uint32 Instruction)    {           DBGPRINT_OPCODE("BC1TL [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_F_S(uint32 Instruction)         {           DBGPRINT_OPCODE("C.F.S [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_F_D(uint32 Instruction)         {           DBGPRINT_OPCODE("C.F.D [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_UN_S(uint32 Instruction)        {           DBGPRINT_OPCODE("C.UN.S [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_UN_D(uint32 Instruction)        {           DBGPRINT_OPCODE("C.UN.D [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_EQ_S(uint32 Instruction)        {           DBGPRINT_OPCODE("C.EQ.S [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_EQ_D(uint32 Instruction)        {           DBGPRINT_OPCODE("C.EQ.D [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_UEQ_S(uint32 Instruction)       {           DBGPRINT_OPCODE("C.UEQ.S [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_UEQ_D(uint32 Instruction)       {           DBGPRINT_OPCODE("C.UEQ.D [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_OLT_S(uint32 Instruction)       {           DBGPRINT_OPCODE("C.OLT.S [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_OLT_D(uint32 Instruction)       {           DBGPRINT_OPCODE("C.OLT.D [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_ULT_S(uint32 Instruction)       {           DBGPRINT_OPCODE("C.ULT.S [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_ULT_D(uint32 Instruction)       {           DBGPRINT_OPCODE("C.ULT.D [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_OLE_S(uint32 Instruction)       {           DBGPRINT_OPCODE("C.OLE.S [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_OLE_D(uint32 Instruction)       {           DBGPRINT_OPCODE("C.OLE.D [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_ULE_S(uint32 Instruction)       {           DBGPRINT_OPCODE("C.ULE.S [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_ULE_D(uint32 Instruction)       {           DBGPRINT_OPCODE("C.ULE.D [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_SF_S(uint32 Instruction)        {           DBGPRINT_OPCODE("C.SF.S [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_SF_D(uint32 Instruction)        {           DBGPRINT_OPCODE("C.SF.D [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_NGLE_S(uint32 Instruction)      {           DBGPRINT_OPCODE("C.NGLE.S [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_NGLE_D(uint32 Instruction)      {           DBGPRINT_OPCODE("C.NGLE.D [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_SEQ_S(uint32 Instruction)       {           DBGPRINT_OPCODE("C.SEQ.S [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_SEQ_D(uint32 Instruction)       {           DBGPRINT_OPCODE("C.SEQ.D [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_NGL_S(uint32 Instruction)       {           DBGPRINT_OPCODE("C.NGL.S [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_NGL_D(uint32 Instruction)       {           DBGPRINT_OPCODE("C.NGL.D [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_LT_S(uint32 Instruction)        {           DBGPRINT_OPCODE("C.LT.S [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_LT_D(uint32 Instruction)        {           DBGPRINT_OPCODE("C.LT.D [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_NGE_S(uint32 Instruction)       {           DBGPRINT_OPCODE("C.NGE.S [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_NGE_D(uint32 Instruction)       {           DBGPRINT_OPCODE("C.NGE.D [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_LE_S(uint32 Instruction)        {           DBGPRINT_OPCODE("C.LE.S [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_LE_D(uint32 Instruction)        {           DBGPRINT_OPCODE("C.LE.D [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_NGT_S(uint32 Instruction)       {           DBGPRINT_OPCODE("C.NGT.S [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_C_NGT_D(uint32 Instruction)       {           DBGPRINT_OPCODE("C.NGT.D [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_COP1_ceilw(uint32 Instruction)    {           DBGPRINT_OPCODE("CEIL.W.fmt [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_COP1_ceill(uint32 Instruction)    {           DBGPRINT_OPCODE("CEIL.L.fmt [UNIMPLEMENTED DBGPRINT]") };
+void debug_r4300i_COP1_bc1f(uint32 Instruction)     {   DBGPRINT_FPR_OFF_BRANCH("BC1F    ") };
+void debug_r4300i_COP1_bc1fl(uint32 Instruction)    {   DBGPRINT_FPR_OFF_BRANCH("BC1FL   ") };
+void debug_r4300i_COP1_bc1t(uint32 Instruction)     {   DBGPRINT_FPR_OFF_BRANCH("BC1T    ") };
+void debug_r4300i_COP1_bc1tl(uint32 Instruction)    {   DBGPRINT_FPR_OFF_BRANCH("BC1TL   ") };
+void debug_r4300i_C_F_S(uint32 Instruction)         {        DBGPRINT_FPR_FT_FS("C.F.S   ") };
+void debug_r4300i_C_F_D(uint32 Instruction)         {   DBGPRINT_FPR64BIT_FT_FS("C.F.D   ") };
+void debug_r4300i_C_UN_S(uint32 Instruction)        {        DBGPRINT_FPR_FT_FS("C.UN.S  ") };
+void debug_r4300i_C_UN_D(uint32 Instruction)        {   DBGPRINT_FPR64BIT_FT_FS("C.UN.D  ") };
+void debug_r4300i_C_EQ_S(uint32 Instruction)        {        DBGPRINT_FPR_FT_FS("C.EQ.S  ") };
+void debug_r4300i_C_EQ_D(uint32 Instruction)        {   DBGPRINT_FPR64BIT_FT_FS("C.EQ.D  ") };
+void debug_r4300i_C_UEQ_S(uint32 Instruction)       {        DBGPRINT_FPR_FT_FS("C.UEQ.S ") };
+void debug_r4300i_C_UEQ_D(uint32 Instruction)       {   DBGPRINT_FPR64BIT_FT_FS("C.UEQ.D ") };
+void debug_r4300i_C_OLT_S(uint32 Instruction)       {        DBGPRINT_FPR_FT_FS("C.OLT.S ") };
+void debug_r4300i_C_OLT_D(uint32 Instruction)       {   DBGPRINT_FPR64BIT_FT_FS("C.OLT.D ") };
+void debug_r4300i_C_ULT_S(uint32 Instruction)       {        DBGPRINT_FPR_FT_FS("C.ULT.S ") };
+void debug_r4300i_C_ULT_D(uint32 Instruction)       {   DBGPRINT_FPR64BIT_FT_FS("C.ULT.D ") };
+void debug_r4300i_C_OLE_S(uint32 Instruction)       {        DBGPRINT_FPR_FT_FS("C.OLE.S ") };
+void debug_r4300i_C_OLE_D(uint32 Instruction)       {   DBGPRINT_FPR64BIT_FT_FS("C.OLE.D ") };
+void debug_r4300i_C_ULE_S(uint32 Instruction)       {        DBGPRINT_FPR_FT_FS("C.ULE.S ") };
+void debug_r4300i_C_ULE_D(uint32 Instruction)       {   DBGPRINT_FPR64BIT_FT_FS("C.ULE.D ") };
+void debug_r4300i_C_SF_S(uint32 Instruction)        {        DBGPRINT_FPR_FT_FS("C.SF.S  ") };
+void debug_r4300i_C_SF_D(uint32 Instruction)        {   DBGPRINT_FPR64BIT_FT_FS("C.SF.D  ") };
+void debug_r4300i_C_NGLE_S(uint32 Instruction)      {        DBGPRINT_FPR_FT_FS("C.NGLE.S") };
+void debug_r4300i_C_NGLE_D(uint32 Instruction)      {   DBGPRINT_FPR64BIT_FT_FS("C.NGLE.D") };
+void debug_r4300i_C_SEQ_S(uint32 Instruction)       {        DBGPRINT_FPR_FT_FS("C.SEQ.S ") };
+void debug_r4300i_C_SEQ_D(uint32 Instruction)       {   DBGPRINT_FPR64BIT_FT_FS("C.SEQ.D ") };
+void debug_r4300i_C_NGL_S(uint32 Instruction)       {        DBGPRINT_FPR_FT_FS("C.NGL.S ") };
+void debug_r4300i_C_NGL_D(uint32 Instruction)       {   DBGPRINT_FPR64BIT_FT_FS("C.NGL.D ") };
+void debug_r4300i_C_LT_S(uint32 Instruction)        {        DBGPRINT_FPR_FT_FS("C.LT.S  ") };
+void debug_r4300i_C_LT_D(uint32 Instruction)        {   DBGPRINT_FPR64BIT_FT_FS("C.LT.D  ") };
+void debug_r4300i_C_NGE_S(uint32 Instruction)       {        DBGPRINT_FPR_FT_FS("C.NGE.S ") };
+void debug_r4300i_C_NGE_D(uint32 Instruction)       {   DBGPRINT_FPR64BIT_FT_FS("C.NGE.D ") };
+void debug_r4300i_C_LE_S(uint32 Instruction)        {        DBGPRINT_FPR_FT_FS("C.LE.S  ") };
+void debug_r4300i_C_LE_D(uint32 Instruction)        {   DBGPRINT_FPR64BIT_FT_FS("C.LE.D  ") };
+void debug_r4300i_C_NGT_S(uint32 Instruction)       {        DBGPRINT_FPR_FT_FS("C.NGT.S ") };
+void debug_r4300i_C_NGT_D(uint32 Instruction)       {   DBGPRINT_FPR64BIT_FT_FS("C.NGT.D ") };
+void debug_r4300i_COP1_ceilw(uint32 Instruction)    {   DBGPRINT_FPR64BIT_FS_FD("CEIL.W.fmt ") };
+void debug_r4300i_COP1_ceill(uint32 Instruction)    {   DBGPRINT_FPR64BIT_FS_FD("CEIL.L.fmt ") };
 void debug_r4300i_COP1_cfc1(uint32 Instruction)     {       DBGPRINT_RT_FS_COP1("CFC1    ") };
 void debug_r4300i_COP1_ctc1(uint32 Instruction)     {       DBGPRINT_RT_FS_COP1("CTC1    ") };
-void debug_r4300i_COP1_cvtd_s(uint32 Instruction)   {           DBGPRINT_OPCODE("CVT.D.S [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_COP1_cvtd_w(uint32 Instruction)   {           DBGPRINT_OPCODE("CVT.D.W [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_COP1_cvtd_l(uint32 Instruction)   {           DBGPRINT_OPCODE("CVT.D.L [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_COP1_cvtl_s(uint32 Instruction)   {           DBGPRINT_OPCODE("CVT.L.S [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_COP1_cvtl_d(uint32 Instruction)   {           DBGPRINT_OPCODE("CVT.L.D [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_COP1_cvts_d(uint32 Instruction)   {           DBGPRINT_OPCODE("CVT.S.D [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_COP1_cvts_w(uint32 Instruction)   {           DBGPRINT_OPCODE("CVT.S.W [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_COP1_cvts_l(uint32 Instruction)   {           DBGPRINT_OPCODE("CVT.S.L [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_COP1_cvtw_s(uint32 Instruction)   {           DBGPRINT_OPCODE("CVT.W.S [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_COP1_cvtw_d(uint32 Instruction)   {           DBGPRINT_OPCODE("CVT.W.D [UNIMPLEMENTED DBGPRINT]") };
+void debug_r4300i_COP1_cvtd_s(uint32 Instruction)   {   DBGPRINT_FPR64BIT_FS_FD("CVT.D.S ") };
+void debug_r4300i_COP1_cvtd_w(uint32 Instruction)   {   DBGPRINT_FPR64BIT_FS_FD("CVT.D.W ") };
+void debug_r4300i_COP1_cvtd_l(uint32 Instruction)   {   DBGPRINT_FPR64BIT_FS_FD("CVT.D.L ") };
+void debug_r4300i_COP1_cvtl_s(uint32 Instruction)   {   DBGPRINT_FPR64BIT_FS_FD("CVT.L.S ") };
+void debug_r4300i_COP1_cvtl_d(uint32 Instruction)   {   DBGPRINT_FPR64BIT_FS_FD("CVT.L.D ") };
+void debug_r4300i_COP1_cvts_d(uint32 Instruction)   {   DBGPRINT_FPR64BIT_FS_FD("CVT.S.D ") };
+void debug_r4300i_COP1_cvts_w(uint32 Instruction)   {   DBGPRINT_FPR64BIT_FS_FD("CVT.S.W ") };
+void debug_r4300i_COP1_cvts_l(uint32 Instruction)   {   DBGPRINT_FPR64BIT_FS_FD("CVT.S.L ") };
+void debug_r4300i_COP1_cvtw_s(uint32 Instruction)   {   DBGPRINT_FPR64BIT_FS_FD("CVT.W.S ") };
+void debug_r4300i_COP1_cvtw_d(uint32 Instruction)   {   DBGPRINT_FPR64BIT_FS_FD("CVT.W.D ") };
 void debug_r4300i_COP1_div_s(uint32 Instruction)    {         DBGPRINT_FD_FS_FT("DIV.S   ") };
 void debug_r4300i_COP1_div_d(uint32 Instruction)    {         DBGPRINT_FD_FS_FT("DIV.D   ") };
-void debug_r4300i_COP1_dmfc1(uint32 Instruction)    {           DBGPRINT_OPCODE("DMFC1 [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_COP1_dmtc1(uint32 Instruction)    {           DBGPRINT_OPCODE("DMTC1 [UNIMPLEMENTED DBGPRINT]") };
+void debug_r4300i_COP1_dmfc1(uint32 Instruction)    {   DBGPRINT_FPR64BIT_FT_FS("DMFC1   ") };
+void debug_r4300i_COP1_dmtc1(uint32 Instruction)    {   DBGPRINT_FPR64BIT_FT_FS("DMTC1   ") };
 void debug_r4300i_COP1_floorl(uint32 Instruction)   {            DBGPRINT_FD_FS("FLOOR.L ") };
 void debug_r4300i_COP1_floorw(uint32 Instruction)   {            DBGPRINT_FD_FS("FLOOR.W ") };
-void debug_r4300i_COP1_mfc1(uint32 Instruction)     {           DBGPRINT_OPCODE("MFC1 [UNIMPLEMENTED DBGPRINT]") };
+void debug_r4300i_COP1_mfc1(uint32 Instruction)     {        DBGPRINT_FPR_FT_FS("MFC1    ") };
 void debug_r4300i_COP1_mov_s(uint32 Instruction)    {            DBGPRINT_FD_FS("MOV.S   ") };
 void debug_r4300i_COP1_mov_d(uint32 Instruction)    {            DBGPRINT_FD_FS("MOV.D   ") };
-void debug_r4300i_COP1_mtc1(uint32 Instruction)     {           DBGPRINT_OPCODE("MTC1 [UNIMPLEMENTED DBGPRINT]") };
+void debug_r4300i_COP1_mtc1(uint32 Instruction)     {        DBGPRINT_FPR_FT_FS("MTC1    ") };
 void debug_r4300i_COP1_mul_s(uint32 Instruction)    {         DBGPRINT_FD_FS_FT("MUL.S   ") };
 void debug_r4300i_COP1_mul_d(uint32 Instruction)    {         DBGPRINT_FD_FS_FT("MUL.D   ") };
 void debug_r4300i_COP1_neg_s(uint32 Instruction)    {            DBGPRINT_FD_FS("NEG.S   ") };
 void debug_r4300i_COP1_neg_d(uint32 Instruction)    {            DBGPRINT_FD_FS("NEG.D   ") };
-void debug_r4300i_COP1_roundl(uint32 Instruction)   {           DBGPRINT_OPCODE("ROUND.L.fmt [UNIMPLEMENTED DBGPRINT]") };
-void debug_r4300i_COP1_roundw(uint32 Instruction)   {           DBGPRINT_OPCODE("ROUND.W.fmt [UNIMPLEMENTED DBGPRINT]") };
+void debug_r4300i_COP1_roundl(uint32 Instruction)   {   DBGPRINT_FPR64BIT_FS_FD("ROUND.L.fmt ") };
+void debug_r4300i_COP1_roundw(uint32 Instruction)   {   DBGPRINT_FPR64BIT_FS_FD("ROUND.W.fmt ") };
 void debug_r4300i_COP1_sqrt_s(uint32 Instruction)   {            DBGPRINT_FD_FS("SQRT.S  ") };
 void debug_r4300i_COP1_sqrt_d(uint32 Instruction)   {            DBGPRINT_FD_FS("SQRT.D  ") };
 void debug_r4300i_COP1_sub_s(uint32 Instruction)    {         DBGPRINT_FD_FS_FT("SUB.S   ") };
 void debug_r4300i_COP1_sub_d(uint32 Instruction)    {         DBGPRINT_FD_FS_FT("SUB.D   ") };
-void debug_r4300i_COP1_truncl(uint32 Instruction)   {           DBGPRINT_OPCODE("TRUNC.L.fmt [UNIMPLEMENTED DBGPRINT]") };
+void debug_r4300i_COP1_truncl(uint32 Instruction)   {   DBGPRINT_FPR64BIT_FS_FD("TRUNC.L.fmt ") };
 void debug_r4300i_COP1_truncw_s(uint32 Instruction) {            DBGPRINT_FD_FS("TRUNC.W.S") };
 void debug_r4300i_COP1_truncw_d(uint32 Instruction) {            DBGPRINT_FD_FS("TRUNC.W.D") };
 
@@ -538,18 +551,29 @@ void debug_COP1_L(uint32 Instruction)   {   DebugCOP1LInstruction[_FUNCTION_](In
 
 
 
-void DebugPrintInstruction(uint32 Instruction)
+char* DebugPrintInstruction(uint32 Instruction)
 {   
     // generate the debug string function
     DebugInstruction[(Instruction >> 26)](Instruction);
     // refresh the opcode list
     RefreshOpList(op_str);
+    return(op_str);
 }
 
-void DebugPrintInstructionWithOutRefresh(uint32 Instruction)
+char* DebugPrintInstr(uint32 Instruction)
 {   
     // generate the debug string function
     DebugInstruction[(Instruction >> 26)](Instruction);
+    // refresh the opcode list
+    return(op_str);
+}
+
+
+char* DebugPrintInstructionWithOutRefresh(uint32 Instruction)
+{   
+    // generate the debug string function
+    DebugInstruction[(Instruction >> 26)](Instruction);
+	return(op_str);
 }
 //---------------------------------------------------------------------------------------
 
@@ -557,7 +581,7 @@ void DebugPrintPC(uint32 thePC)
 {
     uint32      instruction;
     // load the instruction
-    instruction = (*((uint32*)(sDWORD_R[(thePC >> 16)] + (uint16)thePC)));
+    instruction = (LOAD_UWORD_PARAM(thePC));
     // generate the debug string function
     DebugInstruction[(instruction >> 26)](instruction);
     // refresh the opcode list
@@ -709,13 +733,11 @@ void DebugIO(uint32 QuerAddr, char * operation, uint32 value)
 		{
 			if( index < NUMBEROFRDRAMREG )
 			{
-				sprintf(generalmessage,"PC=0x%08X %s [%s] value=0x%08X",gHardwareState.pc, operation, rdram_RegNames[index], value);
-				RefreshOpList(generalmessage);
+				TRACE4("PC=0x%08X %s [%s] value=0x%08X",gHWS_pc, operation, rdram_RegNames[index], value);
 			}
 			else
 			{
-				sprintf(generalmessage,"%s invalid RDRAM registers, Address = 0x%08x", operation, QuerAddr);
-				RefreshOpList(generalmessage);
+				TRACE2("%s invalid RDRAM registers, Address = 0x%08x", operation, QuerAddr);
 			}
 		}
 		break;
@@ -728,28 +750,23 @@ void DebugIO(uint32 QuerAddr, char * operation, uint32 value)
 			/* SP PC (R/W): [11:0] program counter */
 			if( index < NUMBEROFSPREG )
 			{
-				sprintf(generalmessage,"PC=0x%08X %s [%s] value=0x%08X",gHardwareState.pc, operation, sp_RegNames[index], value);
-				RefreshOpList(generalmessage);
+				TRACE4("PC=0x%08X %s [%s] value=0x%08X",gHWS_pc, operation, sp_RegNames[index], value);
 			}
 			else if ( QuerAddr == 0x04080000 )
 			{
-				sprintf(generalmessage,"PC=0x%08X %s SP PC Register");
-				RefreshOpList(generalmessage);
+				TRACE2("PC=0x%08X %s SP PC Register",gHWS_pc, operation);
 			}
 			else if( QuerAddr < 0x04001000 )
 			{
-				sprintf(generalmessage,"PC=0x%08X %s SP DMEM [0x%08X] value=0x%08X",gHardwareState.pc, operation, QuerAddr, value);
-				RefreshOpList(generalmessage);
+				TRACE4("PC=0x%08X %s SP DMEM [0x%08X] value=0x%08X",gHWS_pc, operation, QuerAddr, value);
 			}
 			else if( QuerAddr < 0x04002000 )
 			{
-				sprintf(generalmessage,"PC=0x%08X %s SP IMEM [0x%08X] value=0x%08X",gHardwareState.pc, operation, QuerAddr, value);
-				RefreshOpList(generalmessage);
+				TRACE4("PC=0x%08X %s SP IMEM [0x%08X] value=0x%08X",gHWS_pc, operation, QuerAddr, value);
 			}
 			else
 			{
-				sprintf(generalmessage,"%s invalid SP registers, Address = 0x%08x", operation, QuerAddr);
-				RefreshOpList(generalmessage);
+				TRACE2("%s invalid SP registers, Address = 0x%08x", operation, QuerAddr);
 			}
 		}
 		break;
@@ -760,13 +777,11 @@ void DebugIO(uint32 QuerAddr, char * operation, uint32 value)
 		{
 			if( index < NUMBEROFDPREG )
 			{
-				sprintf(generalmessage,"PC=0x%08X %s [%s] value=0x%08X",gHardwareState.pc, operation, dp_RegNames[index], value);
-				RefreshOpList(generalmessage);
+				TRACE4("PC=0x%08X %s [%s] value=0x%08X",gHWS_pc, operation, dp_RegNames[index], value);
 			}
 			else
 			{
-				sprintf(generalmessage,"%s invalid DP registers, Address = 0x%08x", operation, QuerAddr);
-				RefreshOpList(generalmessage);
+				TRACE2("%s invalid DP registers, Address = 0x%08x", operation, QuerAddr);
 			}
 		}
 		break;
@@ -777,13 +792,11 @@ void DebugIO(uint32 QuerAddr, char * operation, uint32 value)
 		{
 			if( index < NUMBEROFDPSREG )
 			{
-				sprintf(generalmessage,"PC=0x%08X %s [%s] value=0x%08X",gHardwareState.pc, operation, dps_RegNames[index], value);
-				RefreshOpList(generalmessage);
+				TRACE4("PC=0x%08X %s [%s] value=0x%08X",gHWS_pc, operation, dps_RegNames[index], value);
 			}
 			else
 			{
-				sprintf(generalmessage,"%s invalid DP Span registers, Address = 0x%08x", operation, QuerAddr);
-				RefreshOpList(generalmessage);
+				TRACE2("%s invalid DP Span registers, Address = 0x%08x", operation, QuerAddr);
 			}
 		}
 		break;
@@ -794,13 +807,11 @@ void DebugIO(uint32 QuerAddr, char * operation, uint32 value)
 		{
 			if( index < NUMBEROFMIREG )
 			{
-				sprintf(generalmessage,"PC=0x%08X %s [%s] value=0x%08X",gHardwareState.pc, operation, mi_RegNames[index], value);
-				RefreshOpList(generalmessage);
+				TRACE4("PC=0x%08X %s [%s] value=0x%08X",gHWS_pc, operation, mi_RegNames[index], value);
 			}
 			else
 			{
-				sprintf(generalmessage,"%s invalid MI registers, Address = 0x%08x", operation, QuerAddr);
-				RefreshOpList(generalmessage);
+				TRACE2("%s invalid MI registers, Address = 0x%08x", operation, QuerAddr);
 			}
 		}
 		break;
@@ -811,13 +822,11 @@ void DebugIO(uint32 QuerAddr, char * operation, uint32 value)
 		{
 			if( index < NUMBEROFVIREG )
 			{
-				sprintf(generalmessage,"PC=0x%08X %s [%s] value=0x%08X",gHardwareState.pc, operation, vi_RegNames[index], value);
-				RefreshOpList(generalmessage);
+				TRACE4("PC=0x%08X %s [%s] value=0x%08X",gHWS_pc, operation, vi_RegNames[index], value);
 			}
 			else
 			{
-				sprintf(generalmessage,"%s invalid Vi registers, Address = 0x%08x", operation, QuerAddr);
-				RefreshOpList(generalmessage);
+				TRACE2("%s invalid Vi registers, Address = 0x%08x", operation, QuerAddr);
 			}
 		}
 		break;
@@ -828,13 +837,11 @@ void DebugIO(uint32 QuerAddr, char * operation, uint32 value)
 		{
 			if( index < NUMBEROFAIREG )
 			{
-				sprintf(generalmessage,"PC=0x%08X %s [%s] value=0x%08X",gHardwareState.pc, operation, ai_RegNames[index], value);
-				RefreshOpList(generalmessage);
+				TRACE4("PC=0x%08X %s [%s] value=0x%08X",gHWS_pc, operation, ai_RegNames[index], value);
 			}
 			else
 			{
-				sprintf(generalmessage,"%s invalid AI registers, Address = 0x%08x", operation, QuerAddr);
-				RefreshOpList(generalmessage);
+				TRACE2("%s invalid AI registers, Address = 0x%08x", operation, QuerAddr);
 			}
 		}
 		break;
@@ -845,13 +852,11 @@ void DebugIO(uint32 QuerAddr, char * operation, uint32 value)
 		{
 			if( index < NUMBEROFPIREG )
 			{
-				sprintf(generalmessage,"PC=0x%08X %s [%s] value=0x%08X",gHardwareState.pc, operation, pi_RegNames[index], value);
-				RefreshOpList(generalmessage);
+				TRACE4("PC=0x%08X %s [%s] value=0x%08X",gHWS_pc, operation, pi_RegNames[index], value);
 			}
 			else
 			{
-				sprintf(generalmessage,"%s invalid PI registers, Address = 0x%08x", operation, QuerAddr);
-				RefreshOpList(generalmessage);
+				TRACE2("%s invalid PI registers, Address = 0x%08x", operation, QuerAddr);
 			}
 		}
 		break;
@@ -862,13 +867,11 @@ void DebugIO(uint32 QuerAddr, char * operation, uint32 value)
 		{
 			if( index < NUMBEROFRIREG )
 			{
-				sprintf(generalmessage,"PC=0x%08X %s [%s] value=0x%08X",gHardwareState.pc, operation, ri_RegNames[index], value);
-				RefreshOpList(generalmessage);
+				TRACE4("PC=0x%08X %s [%s] value=0x%08X",gHWS_pc, operation, ri_RegNames[index], value);
 			}
 			else
 			{
-				sprintf(generalmessage,"%s invalid RI registers, Address = 0x%08x", operation, QuerAddr);
-				RefreshOpList(generalmessage);
+				TRACE2("%s invalid RI registers, Address = 0x%08x", operation, QuerAddr);
 			}
 		}
 		break;
@@ -879,13 +882,11 @@ void DebugIO(uint32 QuerAddr, char * operation, uint32 value)
 		{
 			if( index < NUMBEROFSIREG )
 			{
-				sprintf(generalmessage,"PC=0x%08X %s [%s] value=0x%08X",gHardwareState.pc, operation, si_RegNames[index], value);
-				RefreshOpList(generalmessage);
+				TRACE4("PC=0x%08X %s [%s] value=0x%08X",gHWS_pc, operation, si_RegNames[index], value);
 			}
 			else
 			{
-				sprintf(generalmessage,"%s invalid SI registers, Address = 0x%08x", operation, QuerAddr);
-				RefreshOpList(generalmessage);
+				TRACE2("%s invalid SI registers, Address = 0x%08x", operation, QuerAddr);
 			}
 		}
 		break;

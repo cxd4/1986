@@ -1,3 +1,28 @@
+/*______________________________________________________________________________
+ |                                                                              |
+ |  1964 - Dll_Audio.c                                                          |
+ |  Copyright (C) 2001 Joel Middendorf, <schibo@emulation64.com>                |
+ |                                                                              |
+ |  This program is free software; you can redistribute it and/or               |
+ |  modify it under the terms of the GNU General Public License                 |
+ |  as published by the Free Software Foundation; either version 2              |
+ |  of the License, or (at your option) any later version.                      |
+ |                                                                              |
+ |  This program is distributed in the hope that it will be useful,             |
+ |  but WITHOUT ANY WARRANTY; without even the implied warranty of              |
+ |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               |
+ |  GNU General Public License for more details.                                |
+ |                                                                              |
+ |  You should have received a copy of the GNU General Public License           |
+ |  along with this program; if not, write to the Free Software                 |
+ |  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
+ |                                                                              |
+ |  To contact the author:  Schibo and Rice                                     |
+ |  email      : schibo@emulation64.com, dyangchicago@yahoo.com                 |
+ |  paper mail :                                                                |
+ |______________________________________________________________________________|
+*/
+
 #include <windows.h>
 #include "..\globals.h"
 #include "..\n64rcp.h"
@@ -6,25 +31,28 @@
 
 HINSTANCE   hinstLibAudio = NULL; 
 
-void   (__cdecl* AUDIO_RomClosed)(void) = NULL;
-void   (__cdecl* AUDIO_DllClose)() = NULL;
+void   (__cdecl* _AUDIO_RomClosed)(void) = NULL;
+void   (__cdecl* _AUDIO_DllClose)() = NULL;
 
 void   (__cdecl* _AUDIO_DllConfig)(HWND) = NULL;
 void   (__cdecl* _AUDIO_About)(HWND) = NULL;
 void   (__cdecl* _AUDIO_Test )(HWND) = NULL;
 
-void   (__cdecl* AUDIO_GetDllInfo)(PLUGIN_INFO *) = NULL;
-BOOL   (__cdecl* AUDIO_Initialize)(AUDIO_INFO) = NULL;
-void   (__cdecl* AUDIO_End)() = NULL;
-void   (__cdecl* AUDIO_PlaySnd)(unsigned __int8*, unsigned __int32*) = NULL;
-_int32 (__cdecl* AUDIO_TimeLeft)(unsigned char*) = NULL;
-void   (__cdecl* AUDIO_ProcessAList)(void) = NULL;
+void   (__cdecl* _AUDIO_GetDllInfo)(PLUGIN_INFO *) = NULL;
+BOOL   (__cdecl* _AUDIO_Initialize)(AUDIO_INFO) = NULL;
+void   (__cdecl* _AUDIO_End)() = NULL;
+void   (__cdecl* _AUDIO_PlaySnd)(unsigned __int8*, unsigned __int32*) = NULL;
+_int32 (__cdecl* _AUDIO_TimeLeft)(unsigned char*) = NULL;
+void   (__cdecl* _AUDIO_ProcessAList)(void) = NULL;
 
 void   (__cdecl* _AUDIO_AiDacrateChanged)(int) = NULL;
 void   (__cdecl* _AUDIO_AiLenChanged)(void) = NULL;
 DWORD  (__cdecl* _AUDIO_AiReadLength)(void) = NULL;
 void   (__cdecl* _AUDIO_AiUpdate)(BOOL) = NULL;
 
+//Used when selecting plugins
+void   (__cdecl* _AUDIO_Under_Selecting_About)(HWND) = NULL;
+void   (__cdecl* _AUDIO_Under_Selecting_Test )(HWND) = NULL;
 
 BOOL LoadAudioPlugin(char *libname)
 {
@@ -39,9 +67,9 @@ BOOL LoadAudioPlugin(char *libname)
     if (hinstLibAudio != NULL)	// Check if load DLL successfully
     {
 		// Get the function address AUDIO_GetDllInfo in the audio DLL file
-        AUDIO_GetDllInfo = (void   (__cdecl*)(PLUGIN_INFO *)) GetProcAddress(hinstLibAudio, "GetDllInfo");
+        _AUDIO_GetDllInfo = (void   (__cdecl*)(PLUGIN_INFO *)) GetProcAddress(hinstLibAudio, "GetDllInfo");
 
-		if(AUDIO_GetDllInfo)
+		if(_AUDIO_GetDllInfo != NULL)
 		{
 			PLUGIN_INFO Plugin_Info;
 			ZeroMemory(&Plugin_Info, sizeof(Plugin_Info));
@@ -51,98 +79,114 @@ BOOL LoadAudioPlugin(char *libname)
 			if(Plugin_Info.Type == PLUGIN_TYPE_AUDIO)
 			{
 				/*if(Plugin_Info.Version == 1)*/
-				if(1)
 				{
+                    _AUDIO_AiDacrateChanged  = (void      (__cdecl*)(   int    ))	GetProcAddress(hinstLibAudio, "AiDacrateChanged"      );
+					_AUDIO_AiLenChanged      = (void      (__cdecl*)(   void   ))	GetProcAddress(hinstLibAudio, "AiLenChanged"      );
+					_AUDIO_AiReadLength      = (DWORD     (__cdecl*)(   void   ))	GetProcAddress(hinstLibAudio, "AiReadLength"      );
+					_AUDIO_AiUpdate          = (void      (__cdecl*)(   BOOL   ))	GetProcAddress(hinstLibAudio, "AiUpdate"      );
+					_AUDIO_DllClose          = (void      (__cdecl*)(   void   ))   GetProcAddress(hinstLibAudio, "CloseDLL"      );
 
-#if 0
-					if(Plugin_Info.NormalMemory == FALSE && Plugin_Info.MemoryBswaped == TRUE)
-					{
-#endif
-
-						_AUDIO_AiDacrateChanged = (void      (__cdecl*)(   int    ))	GetProcAddress(hinstLibAudio, "AiDacrateChanged"      );
-						_AUDIO_AiLenChanged     = (void      (__cdecl*)(   void   ))	GetProcAddress(hinstLibAudio, "AiLenChanged"      );
-						_AUDIO_AiReadLength     = (DWORD     (__cdecl*)(   void   ))	GetProcAddress(hinstLibAudio, "AiReadLength"      );
-						_AUDIO_AiUpdate         = (void      (__cdecl*)(   BOOL   ))	GetProcAddress(hinstLibAudio, "AiUpdate"      );
-						AUDIO_DllClose          = (void      (__cdecl*)(   void   ))     GetProcAddress(hinstLibAudio, "CloseDLL"      );
-
-                        _AUDIO_About            = (void      (__cdecl*)(   HWND   ))     GetProcAddress(hinstLibAudio, "Test"      );
-						_AUDIO_DllConfig         = (void (__cdecl*)(HWND))       GetProcAddress(hinstLibAudio, "DllConfig");
-						_AUDIO_Test             = (void      (__cdecl*)(   HWND   ))     GetProcAddress(hinstLibAudio, "About"      );
-                        AUDIO_Initialize        = (BOOL      (__cdecl*)(AUDIO_INFO))     GetProcAddress(hinstLibAudio, "InitiateAudio" );
-                        AUDIO_ProcessAList      = (void      (__cdecl*)(   void   ))     GetProcAddress(hinstLibAudio, "ProcessAList"  );
-						AUDIO_RomClosed         = (void      (__cdecl*)(   void   ))     GetProcAddress(hinstLibAudio, "RomClosed"     );
-
-#if 0
-					}
-					else
-					{
-						DisplayError("%s has an incompatible memory config (Needs dword swapped).", libname, Plugin_Info.Version);
-						return FALSE;
-					}
-#endif
+                    _AUDIO_About             = (void      (__cdecl*)(   HWND   ))   GetProcAddress(hinstLibAudio, "DllAbout"      );
+					_AUDIO_DllConfig         = (void	  (__cdecl*)(	HWND   ))	GetProcAddress(hinstLibAudio, "DllConfig");
+					_AUDIO_Test              = (void      (__cdecl*)(   HWND   ))   GetProcAddress(hinstLibAudio, "DllTest"      );
+                    _AUDIO_Initialize        = (BOOL      (__cdecl*)(AUDIO_INFO))   GetProcAddress(hinstLibAudio, "InitiateAudio" );
+                    _AUDIO_ProcessAList      = (void      (__cdecl*)(   void   ))   GetProcAddress(hinstLibAudio, "ProcessAList"  );
+					_AUDIO_RomClosed         = (void      (__cdecl*)(   void   ))   GetProcAddress(hinstLibAudio, "RomClosed"     );
+                    return(TRUE);
 				}
-				else
-				{
-					DisplayError("%s dll is a %d version of audio plugin spec. 1964 requires version 1.", libname, Plugin_Info.Version);
-					return FALSE;
-				}
-			}
-			else
-			{
-				DisplayError("%s dll is not an audio plugin.", libname);
-				CloseAudioPlugin();
-				return FALSE;
-			}
-		}
-		else
-		{
-			DisplayError("%s is a bad audio dll.", libname);
-			return FALSE;
-		}
+            }
+        }
     }
-    else
+  return FALSE;
+}
+
+
+void  AUDIO_GetDllInfo(PLUGIN_INFO* Plugin_Info)
+{
+    if (_AUDIO_GetDllInfo != NULL)
+        __try{
+        _AUDIO_GetDllInfo(Plugin_Info);
+        }
+        __except(NULL, EXCEPTION_EXECUTE_HANDLER){
+        }
+}
+
+BOOL AUDIO_Initialize(AUDIO_INFO Audio_Info)
+{
+    if (_AUDIO_Initialize != NULL)
+        __try{
+            _AUDIO_Initialize(Audio_Info);
+        }
+        __except(NULL,EXCEPTION_EXECUTE_HANDLER)
+        {
+//          Some people won't have a soud card. No error.
+        }
+    return(1); // for now..
+}
+
+void AUDIO_ProcessAList(void)
+{
+    // try/except is handled from the call to this function
+    if (_AUDIO_ProcessAList != NULL)
+	{
+        __try{
+            _AUDIO_ProcessAList();
+		}
+        __except(NULL,EXCEPTION_EXECUTE_HANDLER)
+        {
+			//Some people won't have a soud card. No error.
+        }
+	}
+}
+
+
+
+
+void AUDIO_RomClosed(void)
+{
+    if (_AUDIO_RomClosed != NULL)
     {
-        if (strcmp(libname, "steb_aud") != 0)
-		{
-            DisplayError("%s not found. Please check your directory for the existence of this file and use DirectX 8.", libname);
-		}
-        strcpy(gRegSettings.AudioPlugin, "");
-        WriteConfiguration();
-        return FALSE;
+        __try{
+            _AUDIO_RomClosed();
+        }
+        __except(NULL,EXCEPTION_EXECUTE_HANDLER){
+        }
     }
+}
 
-  return TRUE;
+void AUDIO_DllClose()
+{
+    if (_AUDIO_DllClose != NULL)
+    {
+        __try{
+            _AUDIO_DllClose();
+        }
+        __except(NULL,EXCEPTION_EXECUTE_HANDLER){
+        }
+    }
 }
 
 void CloseAudioPlugin()
 {
 	//  AUDIO_End();
-	if(AUDIO_RomClosed)
-	{
-		AUDIO_RomClosed();
-	}
+	AUDIO_RomClosed();
+	AUDIO_DllClose();
 
-	if(AUDIO_DllClose)
-	{
-		AUDIO_DllClose();
-	}
-
-  
 	if(hinstLibAudio)
 	{
 		FreeLibrary(hinstLibAudio);
 		hinstLibAudio = NULL;
 	}
   
-	AUDIO_DllClose = NULL;
+	_AUDIO_DllClose = NULL;
 	_AUDIO_DllConfig = NULL;
 	_AUDIO_About = NULL;
 	_AUDIO_Test = NULL;
-	AUDIO_GetDllInfo = NULL;
-	AUDIO_Initialize = NULL;
-	AUDIO_End  = NULL;
-	AUDIO_PlaySnd = NULL;
-	AUDIO_TimeLeft = NULL;
+	_AUDIO_GetDllInfo = NULL;
+	_AUDIO_Initialize = NULL;
+	_AUDIO_End  = NULL;
+	_AUDIO_PlaySnd = NULL;
+	_AUDIO_TimeLeft = NULL;
 }
 
 void AUDIO_DllConfig(HWND hParent)
@@ -203,7 +247,6 @@ void AUDIO_AiLenChanged(void)
 	{
 //		DisplayError("%s: Test box is not available for this plug-in.", "Audio Plugin");
 	}
-
 }
 
 DWORD AUDIO_AiReadLength(void)
@@ -231,3 +274,29 @@ void AUDIO_AiUpdate(BOOL update)
 //		DisplayError("%s: Test box is not available for this plug-in.", "Audio Plugin");
 	}
 }
+
+//Used when selecting plugins
+void AUDIO_Under_Selecting_About(HWND hParent)
+{
+	if (_AUDIO_Under_Selecting_About != NULL)
+	{
+		_AUDIO_Under_Selecting_About(hParent);
+	}
+	else
+	{
+//		DisplayError("%s: About information is not available for this plug-in.", "Audio Plugin");
+	}
+}
+
+void AUDIO_Under_Selecting_Test(HWND hParent)
+{
+	if (_AUDIO_Under_Selecting_Test != NULL)
+	{
+		_AUDIO_Under_Selecting_Test(hParent);
+	}
+	else
+	{
+//		DisplayError("%s: Test box is not available for this plug-in.", "Audio Plugin");
+	}
+}
+

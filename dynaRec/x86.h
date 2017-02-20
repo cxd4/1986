@@ -97,6 +97,7 @@ extern void			 SetTarget(unsigned char bIndex);
 extern void		WC16(unsigned int wValue);
 extern void		WC32(unsigned long dwValue);
 extern void     WC8(unsigned char bValue);
+extern void     WC8_Signed(signed char bValue);
 
 extern void     Reg2ToReg1(unsigned char OperandSize, unsigned char op, unsigned char Reg1,unsigned char Reg2);
 
@@ -108,12 +109,13 @@ extern void		ADD_Reg1ToReg2(unsigned char OperandSize, unsigned char Reg1,unsign
 extern void		ADD_Reg2ToReg1(unsigned char OperandSize, unsigned char Reg1,unsigned char Reg2);
 extern void		ADD_ImmToReg(unsigned char OperandSize, unsigned char Reg, unsigned long Data);
 extern void		ADD_ImmToMemory(unsigned long Address, unsigned long Data);
-extern void		ADD_ImmToEAX(unsigned char OperandSize, unsigned long Data);
 extern void		AND_ImmToReg(unsigned char OperandSize, unsigned char Reg, unsigned long Data);
 extern void     AND_ImmToEAX(unsigned char OperandSize, unsigned long Data);
 extern void		AND_ImmToMemory(unsigned long Address, unsigned long Data);
 extern void		AND_MemoryToReg(unsigned char OperandSize, unsigned char Reg,unsigned long Address);
 extern void     AND_Reg1ToReg2(unsigned char OperandSize, unsigned char Reg1,unsigned char Reg2);
+extern void     AND_Reg2ToReg1(unsigned char OperandSize, unsigned char Reg1,unsigned char Reg2);
+
 
 extern void		BSWAP(unsigned char Reg);
 extern void		BREAKPOINT(void);
@@ -125,7 +127,7 @@ extern void		CMP_Reg2WithReg1(unsigned char OperandSize, unsigned char Reg1,unsi
 extern void		CMP_EAXWithImm(unsigned char OperandSize, unsigned long Data);
 extern void		CMP_RegWithImm(unsigned char OperandSize, unsigned char Reg, unsigned long Data);
 extern void     CMP_RegWithShort(unsigned char OperandSize, unsigned char Reg, unsigned char Data);
-extern void		CMP_MemoryWithImm(unsigned long dwAddress,unsigned char bValue);
+extern void     CMP_MemoryWithImm(unsigned char OperandSize, unsigned long dwAddress,unsigned long Data);
 extern void		CMP_RegWithMemory(unsigned char Reg,unsigned long dwAddress);
 extern void     DEC_Reg(unsigned char OperandSize, unsigned char Reg);
 extern void		DIV_EAXWithReg(unsigned char OperandSize, unsigned char Reg);
@@ -186,12 +188,15 @@ extern void		OR_Reg1ToReg2(unsigned char OperandSize, unsigned char Reg1,unsigne
 extern void		OR_ImmToMemory(unsigned char OperandSize, unsigned long Immediate,unsigned long Address);
 extern void		OR_RegToMemory(unsigned char OperandSize, unsigned char Reg,unsigned long Address);
 extern void		POP_RegFromStack(unsigned char Reg);
+extern void     PUSH_Imm8ToStack(unsigned char Imm8);
 extern void		PUSH_RegToStack(unsigned char Reg);
 extern void		PUSH_WordToStack(unsigned	__int32 wWord);
 extern void		PUSHA();
 extern void		PUSHAD();
 extern void		POPA();
 extern void		POPAD();
+extern void		PushMap();
+extern void		PopMap();
 extern void		RET();
 extern void		SETcc_Reg(unsigned char ConditionCode, unsigned char Reg);
 extern void		SAHF();
@@ -203,7 +208,7 @@ extern void		SHL_RegByCL(unsigned char OperandSize, unsigned char Reg);
 extern void		SHR_RegByImm(unsigned char OperandSize, unsigned char Reg,unsigned char Data);
 extern void		SHR_RegByCL(unsigned char OperandSize, unsigned char Reg);
 extern void		SUB_Reg1OfReg2(unsigned char OperandSize, unsigned char Reg1,unsigned char Reg2);
-extern void		SUB_ImmToReg(unsigned char Reg,unsigned char data);
+extern void		SUB_ImmToMemory(unsigned long Address, unsigned long Data);
 extern void		TEST_ImmWithMemory(unsigned long dwAddress,unsigned long Value);
 extern void		TEST_EAXWithImm(unsigned char OperandSize,unsigned long dwAddress);
 extern void		TEST_EAXWithEAX();
@@ -215,6 +220,11 @@ extern void		XOR_ImmToReg(unsigned char OperandSize, unsigned char Reg,unsigned 
 extern void     XOR_ShortToReg(unsigned char OperandSize, unsigned char Reg, unsigned char Data);
 extern void		XOR_Reg1ToReg2(unsigned char OperandSize, unsigned char Reg1,unsigned char Reg2);
 extern void     XOR_Reg2ToReg1(unsigned char OperandSize, unsigned char Reg1,unsigned char Reg2);
+
+extern void     SHL_MemoryByCL(unsigned char OperandSize, unsigned char Reg, unsigned long Address);
+extern void     SHR_MemoryByCL(unsigned char OperandSize, unsigned char Reg, unsigned long Address);
+extern void     SAR_MemoryByCL(unsigned char OperandSize, unsigned char Reg, unsigned long Address);
+
 
 extern void SetNearTarget(unsigned char bIndex);
 

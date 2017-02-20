@@ -1,7 +1,7 @@
 /*______________________________________________________________________________
  |                                                                              |
  |  1964 - Emulator for Nintendo 64 console system                              |
- |  Copyright (C) 2001  Joel Middendorf  schibo@emuhq.com                       |
+ |  Copyright (C) 2001  Joel Middendorf  schibo@emulation64.com                 |
  |                                                                              |
  |  This program is free software; you can redistribute it and/or               |
  |  modify it under the terms of the GNU General Public License                 |
@@ -18,7 +18,7 @@
  |  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
  |                                                                              |
  |  To contact the author:                                                      |
- |  email      : schibo@emuhq.com                                               |
+ |  email      : schibo@emulation64.com                                         |
  |  paper mail :                                                                |
  |______________________________________________________________________________|
 
@@ -73,6 +73,7 @@ BOOL    DebuggerActive;                 //is the debugger on?
 unsigned __int32 NextClearCode;
 int OpCount;
 
+extern void SetDebugMenu(void);
 extern void UpdateGPR();
 extern void UpdateCOP0();
 extern void UpdateFPR();
@@ -82,7 +83,8 @@ extern void RefreshDebugger();
 extern void OpenDebugger();
 extern void CloseDebugger();
 
-extern void Get_HexInput();
+extern void Set_Breakpoint();
+extern void Clear_Breakpoint();
 extern unsigned _int32 StrToHex(char* HexStr);
 
 extern void UpdateVIReg();

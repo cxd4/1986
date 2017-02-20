@@ -2,124 +2,148 @@
 #define _REGCACHE_H__1964_
 
 
-
+//#define NO_CONSTS         1
+//#define SAFE_SLT          1
+//#define SAFE_GATES        1
+//#define SAFE_MATH         1
+//#define SAFE_IMM          1
+//#define SAFE_LOADSTORE    1
+//#define SAFE_LOADSTORE_FPU 1
+//#define SAFE_SHIFTS       1
 
 #define _Xor 0x33
+#define NUM_CONSTS 34
 
+extern unsigned long	lCodePosition;
+extern unsigned char	*RecompCode;
 
-
-/* These macros are for mapping and unmapping GPRs. */
-/* Comments indicate examples of recompiled code    */
-#define StoreGPR_LO(k)                                                  \
-{                                                                       \
-    _u32 mod_rm;                                                        \
-    _u32 offset = (_u32)&gHardwareState.GPR[0]+(x86reg[k].mips_reg<<3);             \
-                                                                        \
-  /*00413F0D 89 0D 80 83 49 00    mov         dword ptr [_GPR],ecx*/    \
-    if (k==0)                                                           \
-        WC8(0xA3);                                                      \
-    else                                                                \
-    {                                                                   \
-        mod_rm = 0x5|(k<<3);                                            \
-        WC8(0x89);                                                      \
-        WC8((_u8)mod_rm);                                               \
-    }                                                                   \
-    WC32(offset);                                                       \
+#ifdef USE_STACK
+#define ItIsARegisterNotToUse(k) ((k == Reg_EBP) || (k == Reg_ESP)) //Don't use these registers for mapping
+#define  StoreGPR_LO(k) \
+{                       \
+    if (x86reg[k].mips_reg == 0);    \
+    else if ( x86reg[k].mips_reg < 16) \
+        { /* MOV_RegToRegDisp8()*/WC8(0x89); WC8((_u8)(0x45+(k<<3))); WC8((_u8)(-128+(x86reg[k].mips_reg<<3)));}/*__asm { mov eax, dword ptr [ebp] }*/\
+    else if (x86reg[k].mips_reg < 32)    \
+        { /* MOV_RegToRegDisp8()*/WC8(0x89); WC8((_u8)(0x45+(k<<3))); WC8((_u8)((x86reg[k].mips_reg-16)<<3));}/*__asm { mov eax, dword ptr [ebp] }*/\
+    else    \
+        MOV_RegToMemory(1, (_u8)k, ModRM_disp32, (_u32)&gHWS_GPR[0]+(x86reg[k].mips_reg<<3));  \
 }
 
-#define StoreGPR_HI(k)                                                  \
-{                                                                       \
-    _u32 mod_rm;                                                        \
-    _u32 offset = (_u32)&gHardwareState.GPR[0]+4+(x86reg[k].mips_reg<<3);           \
-                                                                        \
-  /*00413F0D 89 0D 80 83 49 00    mov         dword ptr [_GPR+4],ecx*/  \
-    if (x86reg[k].HiWordLoc==0)                                         \
-        WC8(0xA3);                                                      \
-    else                                                                \
-    {                                                                   \
-        mod_rm = 0x5|(x86reg[k].HiWordLoc<<3);                          \
-        WC8(0x89);                                                      \
-        WC8((_u8)mod_rm);                                               \
-    }                                                                   \
-    WC32(offset);                                                       \
+#define  LoadGPR_LO(k) \
+{                       \
+    if (x86reg[k].mips_reg == 0)    \
+        XOR_Reg2ToReg1(1, (_u8)k, (_u8)k);    \
+    else if ( x86reg[k].mips_reg < 16) \
+        { /* MOV_RegToRegDisp8()*/WC8(0x8b); WC8((_u8)(0x45+(k<<3))); WC8((_u8)(-128+(x86reg[k].mips_reg<<3)));}/*__asm { mov eax, dword ptr [ebp] }*/\
+    else if (x86reg[k].mips_reg < 32) \
+    { \
+        /* MOV_RegDisp8ToReg()*/WC8(0x8b); WC8((_u8)(0x45+(k<<3))); WC8((_u8)((x86reg[k].mips_reg-16)<<3));}/*__asm { mov eax, dword ptr [ebp] }*/\
+    else    \
+        MOV_MemoryToReg(1, (_u8)k, ModRM_disp32, (_u32)&gHWS_GPR[0]+(x86reg[k].mips_reg<<3));  \
 }
 
-
-#define LoadGPR_LO(k)                                                   \
-{                                                                       \
-    _u32 offset = (_u32)&gHardwareState.GPR[0]+(x86reg[k].mips_reg<<3);             \
-                                                                        \
-    /*0041B3E3 8B 0D 84 61 4A 00    mov         ecx,dword ptr [_GPR] */ \
-    if (k==0)                                                           \
-        WC8(0xA1);                                                      \
-    else                                                                \
-    {                                                                   \
-        _u32 mod_rm = 0x5|(k<<3);                                       \
-        WC8(0x8B);                                                      \
-        WC8((_u8)mod_rm);                                               \
-    }                                                                   \
-    WC32(offset);                                                       \
+#define  LoadGPR_HI(k) \
+{                       \
+    if (x86reg[k].mips_reg == 0)    \
+        XOR_Reg2ToReg1(1, (_u8)x86reg[k].HiWordLoc, (_u8)x86reg[k].HiWordLoc);    \
+    else if ( x86reg[k].mips_reg < 16) \
+        { /* MOV_RegToRegDisp8()*/WC8(0x8b); WC8((_u8)(0x45+(x86reg[k].HiWordLoc<<3))); WC8((_u8)(-124+(x86reg[k].mips_reg<<3)));}/*__asm { mov eax, dword ptr [ebp] }*/\
+    else if (x86reg[k].mips_reg < 32) \
+    { \
+        /* MOV_RegDisp8ToReg()*/WC8(0x8b); WC8((_u8)(0x45+(x86reg[k].HiWordLoc<<3))); WC8((_u8)(4+((x86reg[k].mips_reg-16)<<3)));}/*__asm { mov eax, dword ptr [ebp] }*/\
+    else    \
+        MOV_MemoryToReg(1, (_u8)x86reg[k].HiWordLoc, ModRM_disp32, 4+(_u32)&gHWS_GPR[0]+(x86reg[k].mips_reg<<3));\
 }
 
-#define LoadGPR_HI(k)                                                   \
-{                                                                       \
-    _u32 offset = (_u32)&gHardwareState.GPR[0]+4+(x86reg[k].mips_reg<<3);           \
-                                                                        \
-  /*0041B3E3 8B 0D 84 61 4A 00    mov         ecx,dword ptr [_GPR+4] */ \
-    if (x86reg[k].HiWordLoc==0)                                         \
-        WC8(0xA1);                                                      \
-    else                                                                \
-    {                                                                   \
-        _u32 mod_rm = 0x5|(x86reg[k].HiWordLoc<<3);                     \
-        WC8(0x8B);                                                      \
-        WC8((_u8)mod_rm);                                               \
-    }                                                                   \
-    WC32(offset);                                                       \
+#define  StoreGPR_HI(k) \
+{                       \
+    if (x86reg[k].mips_reg == 0);    \
+    else if ( x86reg[k].mips_reg < 16) \
+        { /* MOV_RegToRegDisp8()*/WC8(0x89); WC8((_u8)(0x45+(x86reg[k].HiWordLoc<<3))); WC8((_u8)(-124+(x86reg[k].mips_reg<<3)));}/*__asm { mov eax, dword ptr [ebp] }*/\
+    else if (x86reg[k].mips_reg < 32) \
+    { \
+        /* MOV_RegDisp8ToReg()*/WC8(0x89); WC8((_u8)(0x45+(x86reg[k].HiWordLoc<<3))); WC8((_u8)(4+((x86reg[k].mips_reg-16)<<3)));}/*__asm { mov eax, dword ptr [ebp] }*/\
+    else    \
+        MOV_RegToMemory(1, x86reg[k].HiWordLoc, ModRM_disp32, 4+(_u32)&gHWS_GPR[0]+(x86reg[k].mips_reg<<3));\
 }
+#else
+#define ItIsARegisterNotToUse(k) ((k == Reg_ESP)) //Don't use these registers for mapping
+#define  LoadGPR_LO(k) MOV_MemoryToReg(1, k, ModRM_disp32, (_u32)&gHWS_GPR[0]+(x86reg[k].mips_reg<<3));
+#define  LoadGPR_HI(k) MOV_MemoryToReg(1, x86reg[k].HiWordLoc, ModRM_disp32, 4+(_u32)&gHWS_GPR[0]+(x86reg[k].mips_reg<<3));
+#define StoreGPR_LO(k) MOV_RegToMemory(1, k,                   ModRM_disp32,   (_u32)&gHWS_GPR[0]+(x86reg[k].mips_reg<<3));
+#define StoreGPR_HI(k) MOV_RegToMemory(1, x86reg[k].HiWordLoc, ModRM_disp32, 4+(_u32)&gHWS_GPR[0]+(x86reg[k].mips_reg<<3));
 
+#endif
 
 typedef struct x86regtyp
 {
-    _u32 BirthDate;
-    _s8  HiWordLoc;
-    _s8  Is32bit;
-    _s8  IsDirty;
-    _s8  mips_reg;
-    _s8  NoNeedToLoadTheLo;
-    _s8  NoNeedToLoadTheHi;
-    _s8  x86reg;
+    uint32 BirthDate;
+    _int8  HiWordLoc;
+    _int8  Is32bit;
+    _int8  IsDirty;
+    _int8  mips_reg;
+    _int8  NoNeedToLoadTheLo;
+    _int8  NoNeedToLoadTheHi;
+    _int8  x86reg;
 
 } x86regtyp;
 
 //Keeps status of constants
 typedef struct MapConstant
 {
-    _s32 value;
-    _s32 IsMapped;
+    _int32 value;
+    _int32 IsMapped;
 } MapConstant;
 
 
 //Keeps status of registers stored to memory
 typedef struct FlushedMap
 {
-    _u32 Is32bit;
+    uint32 Is32bit;
 } FlushedMap;
 
-_u32 ThisYear;
-MapConstant ConstMap[32];
+uint32 ThisYear;
+MapConstant ConstMap[NUM_CONSTS];
+
+////////////////////////////////////////////////
+//
+// Multi-Pass definitions
+//
+////////////////////////////////////////////////
+
+#define CHECK_OPCODE_PASS   if (gMultiPass.WhichPass == COMPILE_MAP_ONLY) { SwitchToOpcodePass(); return; }
+
+enum PASSTYPE 
+{
+    COMPILE_MAP_ONLY,
+    COMPILE_OPCODES_ONLY,
+    COMPILE_ALL
+};
+
+typedef struct MultiPass
+{
+    int UseOnePassOnly;   // Make this a rom option. default option will be yes (1).
+    int WhichPass;        // Mapping pass or opcode pass
+    int WriteCode;        // Whether or not we write code on this pass
+    int PhysAddrAfterMap; // Phyical Start address of 1st instruction after the block's first mappings.
+    int VirtAddrAfterMap; // Virtual ""
+    int JumpToPhysAddr;
+    int pc;
+    int MapPass_Count;
+    int OpcodePass_Count;
+
+} MultiPass;
+MultiPass gMultiPass;
 
 
+////////////////////////////////////////////////
+//
+// Mnemonics
+//
+////////////////////////////////////////////////
 
-
-
-#define fpr32 COP1Reg
-#define STATUS_CU1  SR_CU1
-
-#define COP1_CONDITION_BIT 0x00800000
-#define NOT_COP1_CONDITION_BIT  0xFF7FFFFF
-
-
-#define __OPCODE        ((_u8)(__CODE >> 26))
+#define __OPCODE        ((_u8)(reg->code >> 26))
 #define __RS            (((_u8)(reg->code >> 21)) & 0x1f)
 #define __RT            (((_u8)(reg->code >> 16)) & 0x1f)
 #define __RD            (((_u8)(reg->code >> 11)) & 0x1f)
@@ -134,96 +158,62 @@ MapConstant ConstMap[32];
 #define __FT            __RT
 #define __FD            __SA
 
-#define __dotRS         (((_u8)(gHardwareState.code >> 21)) & 0x1f)
-#define __dotRT         (((_u8)(gHardwareState.code >> 16)) & 0x1f)
-#define __dotRD         (((_u8)(gHardwareState.code >> 11)) & 0x1f)
-#define __dotSA         (((_u8)(gHardwareState.code >>  6)) & 0x1f)
+#define __dotRS         (((_u8)(gHWS_code >> 21)) & 0x1f)
+#define __dotRT         (((_u8)(gHWS_code >> 16)) & 0x1f)
+#define __dotRD         (((_u8)(gHWS_code >> 11)) & 0x1f)
+#define __dotSA         (((_u8)(gHWS_code >>  6)) & 0x1f)
 
-#define __dotI         ( (_s32)(_s16)gHardwareState.code )
-#define __dotO             ( gHardwareState.pc + 4 + (__dotI << 2) )
-#define ____dotT        (gHardwareState.code & 0x3ffffff)
-#define __dotT          ( (gHardwareState.pc & 0xf0000000) | (____dotT << 2) )
-#define __dotF          ( (_u8)(gHardwareState.code)       & 0x3f)
+#define __dotI         ( (_s32)(_s16)gHWS_code )
+#define __dotO             ( gHWS_pc + 4 + (__dotI << 2) )
+#define ____dotT        (gHWS_code & 0x3ffffff)
+#define __dotT          ( (gHWS_pc & 0xf0000000) | (____dotT << 2) )
+#define __dotF          ( (_u8)(gHWS_code)       & 0x3f)
+
+#define __ND                ((uint8)((reg->code >> 17) & 0x1))
+#define __TF                ((uint8)((reg->code >> 16) & 0x1))
 
 
-
-
-
-/*****************************************************************
-                   Function Declarations
-/*****************************************************************/
-
+////////////////////////////////////////////////
+//
+// Function Declarations
+//
+////////////////////////////////////////////////
 
 
 extern int CheckIs32Bit(int mips_reg);
 extern void FlushAllRegisters();
-extern void FlushOneButNotThese4(int The1stOneNotToFlush, int The2ndOneNotToFlush, int The3rdOneNotToFlush, int The4thOneNotToFlush);
-extern void MapRegister(x86regtyp* Conditions, int The2ndOneNotToFlush, int The3rdOneNotToFlush, int The4thOneNotToFlush);
+extern void FlushOneButNotThese3(int The1stOneNotToFlush, int The2ndOneNotToFlush, int The3rdOneNotToFlush);
+extern void MapRegister(x86regtyp* Conditions, int The2ndOneNotToFlush, int The3rdOneNotToFlush);
 extern int CheckRegStatus(x86regtyp* Query);
 extern void InitRegisterMap();
-extern _u32 InterruptWasExecuted;
+extern void FlushRegister(int k);
+extern void WriteBackDirty(_int8 k);
+extern void FlushOneConstant(int k);
+extern void MapOneConstantToRegister(x86regtyp* Conditions, int The2ndOneNotToFlush, int The3rdOneNotToFlush);
+extern int CheckWhereIsMipsReg(int mips_reg);
+void PUSH_RegIfMapped(int k);
+void POP_RegIfMapped(int k);
 
-//---------------------------------------------------------------------------------------
-#define recPUSHEAX  WC8(0x50);
-#define recPOPEAX   WC8(0x58);
+#define MapRD MapRegister(xRD, xRS->mips_reg, xRT->mips_reg);
+#define MapRS MapRegister(xRS, xRD->mips_reg, xRT->mips_reg);
+#define MapRT MapRegister(xRT, xRD->mips_reg, xRS->mips_reg);
 
-
-
-#define r32_imm8(opBase, reg, imm)  \
-{                                   \
-    _u8 op = opBase | (_u8)reg;     \
-    WC8(0xC1);                      \
-    WC8(op);                        \
-    WC8(imm);                       \
-}
-
-#define r32_const(op, Const)        \
-{                                   \
-    WC16(op);                       \
-    WC32(Const);                    \
-}
-
-
-#define _jne(Label)     NearJumpConditionLabel8(Label, JNE_NEAR)
-#define _je(Label)      NearJumpConditionLabel8(Label,  JE_NEAR)
-#define _jmp(Label)     JumpLocal8(Label)
-#define _sar(i, Const)  r32_imm8(0xF8, i, Const)
-
-#define _andi(k, Const) r32_const( (0xE081|(k<<8)), Const)
-#define _xori(k, Const) r32_const( (0xF081|(k<<8)), Const)
-#define  _ori(k, Const) r32_const( (0xC881|(k<<8)), Const)
-
-#define MapRD MapRegister(xRD, xRS->mips_reg, xRT->mips_reg, 99);
-#define MapRS MapRegister(xRS, xRD->mips_reg, xRT->mips_reg, 99);
-#define MapRT MapRegister(xRT, xRD->mips_reg, xRS->mips_reg, 99);
-
-#define MapLO MapRegister(xLO, xRS->mips_reg, xRT->mips_reg, __HI);
-#define MapHI MapRegister(xHI, xRS->mips_reg, xRT->mips_reg, __LO);
-
-#define MapRS__ProtectLoHi MapRegister(xRS, __LO, xRT->mips_reg, __HI);
-#define MapRT__ProtectLoHi MapRegister(xRT, __LO, xRS->mips_reg, __HI);
-
-#define r32_const(op, Const)        \
-{                                   \
-    WC16(op);                       \
-    WC32(Const);                    \
-}
-
-#define rcAddConst(rs, rt, Constant, NEG)                                       \
+#define DoConstAdd(Constant)                                                    \
 {                                                                               \
-    if (rs==rt)                                                                 \
+    if (xRS->mips_reg==xRT->mips_reg)                                           \
     {                                                                           \
+        if (ConstMap[xRS->mips_reg].IsMapped == 1)                              \
         {                                                                       \
-            if (ConstMap[xRT->mips_reg].IsMapped == 1)                          \
+            (_s32)ConstMap[xRT->mips_reg].value += (_s32)Constant;              \
+        }                                                                       \
+        else                                                                    \
+        {                                                                       \
+            xRT->IsDirty = 1; /*bugfix: it will convert to 32bit */             \
+            MapRT;                                                              \
+                                                                                \
+            if ((Constant) != 0)                                                \
             {                                                                   \
-                ConstMap[xRT->mips_reg].value += Constant;                      \
-            }                                                                   \
-            else                                                                \
-            {                                                                   \
-                xRT->IsDirty = 1;                                               \
-                MapRT;                                                          \
-                if ((Constant) != 0)                                            \
-                    ADD_ImmToReg(1, xRT->x86reg, Constant);                     \
+                ADD_ImmToReg(1, xRT->x86reg, Constant);                         \
             }                                                                   \
         }                                                                       \
     }                                                                           \
@@ -231,30 +221,38 @@ extern _u32 InterruptWasExecuted;
     {                                                                           \
         if (xRS->mips_reg == 0)                                                 \
         {                                                                       \
-            int tempy = CheckWhereIsMipsReg(xRT->mips_reg);                     \
-            ConstMap[xRT->mips_reg].IsMapped = 1;                               \
-            ConstMap[xRT->mips_reg].value = Constant;                           \
-                                                                                \
-            if (tempy > -1)                                                     \
-            {                                                                   \
-                x86reg[tempy].IsDirty = 0;                                      \
-                FlushRegister(tempy);                                           \
-            }                                                                   \
+/*#ifndef NO_CONSTS                                                          */ \
+/*           int tempy = CheckWhereIsMipsReg(xRT->mips_reg);                 */ \
+/*            ConstMap[xRT->mips_reg].IsMapped = 1;                          */ \
+/*            ConstMap[xRT->mips_reg].value = Constant;                      */ \
+/*                                                                           */ \
+/*            if (tempy > -1)                                                */ \
+/*            {                                                              */ \
+/*                x86reg[tempy].IsDirty = 0;                                 */ \
+/*                FlushRegister(tempy);                                      */ \
+/*            }                                                              */ \
+/*#else                                                                      */ \
+            xRT->IsDirty = 1;                                                   \
+            xRT->Is32bit = 1;                                                   \
+            xRT->NoNeedToLoadTheLo = 1;                                         \
+            MapRT;                                                              \
+            MOV_ImmToReg(1, xRT->x86reg, Constant);                             \
+/*#endif                                                                     */ \
         }                                                                                   \
         else                                                                                \
         {                                                                                   \
             if (ConstMap[xRS->mips_reg].IsMapped && ConstMap[xRT->mips_reg].IsMapped)       \
             {                                                                               \
-                ConstMap[xRT->mips_reg].value = ConstMap[xRS->mips_reg].value + Constant;   \
+                (_s32)ConstMap[xRT->mips_reg].value = (_s32)ConstMap[xRS->mips_reg].value + (_s32)Constant;   \
             }                                                                               \
             else if (ConstMap[xRS->mips_reg].IsMapped)                                      \
             {                                                                               \
                 xRT->IsDirty = 1;                                                           \
                 xRT->NoNeedToLoadTheLo = 1;                                                 \
                 MapRT                                                                       \
-                MOV_ImmToReg(1, (_u8)xRT->x86reg, ConstMap[xRS->mips_reg].value+(Constant));\
+                MOV_ImmToReg(1, (_u8)xRT->x86reg, (_s32)ConstMap[xRS->mips_reg].value+(_s32)(Constant));\
             }                                                                               \
-            else                                                                            \
+            else  /* (rs != rt) && (rs != 0) */                                             \
             {                                                                               \
                 ConstMap[xRT->mips_reg].IsMapped = 0;                                       \
                 xRT->IsDirty = 1;                                                           \
@@ -263,12 +261,11 @@ extern _u32 InterruptWasExecuted;
                 MapRS;                                                                      \
                                                                                             \
                 MOV_Reg2ToReg1(1, (_u8)xRT->x86reg, (_u8)xRS->x86reg); /* mov   rt,rs    */ \
-                ADD_ImmToReg(1, (_u8)xRT->x86reg, Constant);           /* add   rt,Const */ \
+                ADD_ImmToReg(1, (_u8)xRT->x86reg, (_s32)(Constant));   /* add   rt,Const */ \
             }                                                                               \
         }                                                                                   \
     }                                                                                       \
 }
-#define DoConstAdd(theConstant, NEG)   rcAddConst(xRS->mips_reg, xRT->mips_reg, theConstant, NEG)
 
 
 #define NEGATE(REG)   {XOR_ShortToReg(1, (_u8)REG->x86reg,  0xFF); INC_Reg(1, (_u8)REG->x86reg);}
@@ -281,224 +278,109 @@ extern _u32 InterruptWasExecuted;
     rs = (_u8)__RS;                                                                             \
     rt = (_u8)__RT;                                                                             \
                                                                                                 \
-                                                                                                \
-        if (rd==rt)                                                                             \
+    if (rd==rt)                                                                                 \
+    {                                                                                           \
+        if (rs==rt)  /*rd=rs=rt*/                                                               \
         {                                                                                       \
-            if (rs==rt)  /*rd=rs=rt*/                                                           \
+            if (ConstMap[xRT->mips_reg].IsMapped == 1)                                          \
             {                                                                                   \
-                if (ConstMap[xRT->mips_reg].IsMapped == 1)                                      \
-                {                                                                               \
-                    ConstMap[xRT->mips_reg].value += ConstMap[xRD->mips_reg].value;             \
-                }                                                                               \
-                else                                                                                \
-                {                                                                                   \
-                    xRD->IsDirty = 1;                                                               \
-                                                                                                    \
-                    if (subtraction)                                                                \
-                    {                                                                               \
-                        xRD->NoNeedToLoadTheLo = 1;                                                 \
-                        MapRD;                                                                      \
-                        Reg2ToReg1(1, _Xor, (_u8)xRD->x86reg, (_u8)xRD->x86reg);   /* xor    rd,rd*/\
-                    }                                                                               \
-                    else                                                                            \
-                    {                                                                               \
-                        MapRD;                                                                      \
-                        ADD_Reg1ToReg2(1, (_u8)xRD->x86reg, (_u8)xRD->x86reg);   /* shl rd,1 uses 1 cycle also, but only pairing for the u pipe */\
-                    }                                                                           \
-                }                                                                               \
+                if (subtraction)                                                                \
+                    (_s32)ConstMap[xRT->mips_reg].value -= (_s32)ConstMap[xRT->mips_reg].value; \
+                else                                                                            \
+                    (_s32)ConstMap[xRT->mips_reg].value += (_s32)ConstMap[xRT->mips_reg].value; \
             }                                                                                   \
-            else /*rd=rt, rs!=rt*/                                                              \
-            {                                                                                   \
-                if (rs == 0)                                                                    \
-                    if (subtraction)                                                            \
-                    {                                                                           \
-                        xRD->IsDirty = 1;                                                       \
-                        MapRD;                                                                  \
-                        NEG                                                                     \
-                        return;                                                                 \
-                    }                                                                           \
-                    else                                                                        \
-                        return;                                                                 \
-                                                                                                \
-                xRD->IsDirty = 1;                                                               \
-                MapRD;                                                                          \
-                MapRS;                                                                          \
-                NEG                                                                             \
-                Reg2ToReg1(1, 0x02, (_u8)xRD->x86reg, (_u8)xRS->x86reg); /* add    rd,rs*/      \
-            }                                                                                   \
-        }                                                                                       \
-        else /*rd != rt */                                                                      \
-        {                                                                                       \
-            if (rd==rs)                                                                         \
-            {                                                                                   \
-                if (rt == 0) return;                                                            \
-                xRD->IsDirty = 1;                                                               \
-                MapRD;                                                                          \
-                MapRT;                                                                          \
-                Reg2ToReg1(1, op, (_u8)xRD->x86reg, (_u8)xRT->x86reg);    /* add    rd,rt*/     \
-            }                                                                                   \
-            else  /* rd != rs */                                                                \
+            else                                                                                \
             {                                                                                   \
                 xRD->IsDirty = 1;                                                               \
-                xRD->NoNeedToLoadTheLo = 1;                                                     \
-                MapRD;                                                                          \
-                if (rs == rt)                                                                   \
+                                                                                                \
+                if (subtraction)                                                                \
                 {                                                                               \
-                    if (rt == 0) /* rd = 0+0 */                                                 \
-                        Reg2ToReg1(1, _Xor, (_u8)xRD->x86reg, (_u8)xRD->x86reg); /* xor rd, rd */\
-                    else                                                                        \
-                        if (subtraction) /* rd = rs-rs */                                       \
-                            Reg2ToReg1(1, _Xor, (_u8)xRD->x86reg, (_u8)xRD->x86reg);   /* xor    rd,rd*/\
-                        else  /* rd = rs+rs */                                                  \
-                        {                                                                       \
-                            MapRT;                                                              \
-                            MOV_Reg2ToReg1(1, (_u8)xRD->x86reg, (_u8)xRT->x86reg);    /* mov rd, rt */ \
-                            ADD_Reg1ToReg2(1, (_u8)xRD->x86reg, (_u8)xRD->x86reg);   /* shl rd,1 uses 1 cycle also, but only pairing for the u pipe */\
-                        }                                                                       \
+                    xRD->NoNeedToLoadTheLo = 1;                                                 \
+                    MapRD;                                                                      \
+                    Reg2ToReg1(1, _Xor, (_u8)xRD->x86reg, (_u8)xRD->x86reg);   /* xor    rd,rd*/\
                 }                                                                               \
-                else  /* rs != rt */                                                            \
+                else                                                                            \
                 {                                                                               \
-                    if (rs != 0)                                                                \
-                    {                                                                           \
-                        MapRS;                                                                  \
-                        MOV_Reg2ToReg1(1, (_u8)xRD->x86reg, (_u8)xRS->x86reg);/* mov  rd,rs*/   \
-                                                                                                \
-                        if (rt==0) return;                                                      \
-                                                                                                \
-                        /* rs!=0, rt!=0 , rs!=rt */                                             \
-                        MapRT;                                                                  \
-                        Reg2ToReg1(1, op, (_u8)xRD->x86reg, (_u8)xRT->x86reg); /* add rd,rt*/   \
-                                                                                                \
-                    }                                                                           \
-                    else   /*rs=0, rt!=0 */                                                     \
-                    {                                                                           \
-                        MapRT;                                                                  \
-                        MOV_Reg2ToReg1(1, (_u8)xRD->x86reg, (_u8)xRT->x86reg); /* mov  rd,rt*/  \
-                        NEG                                                                     \
-                    }                                                                           \
-                }                                                                               \
-            }                                                                                   \
-        }                                                                                       \
-}
-
-//rd = rt >> rs
-#define rcShift3reg(op, rd, rs, rt)                                                             \
-{                                                                                               \
-        xRD->IsDirty = 1;                                                                       \
-        if (rd==rt)                                                                             \
-        {                                                                                       \
-            MapRD;                                                                              \
-                                                                                                \
-            if (rs==rt)  /*rd=rs=rt*/                                                           \
-            {                                                                                   \
-                MOV_Reg2ToReg1(1, Reg_ECX, (_u8)xRD->x86reg);                                   \
-                op(1, (_u8)xRD->x86reg);                                                        \
-            }                                                                                   \
-            else /*rd=rt, rs!=rt*/                                                              \
-            {                                                                                   \
-                MapRS;                                                                          \
-                MOV_Reg2ToReg1(1, Reg_ECX, (_u8)xRS->x86reg);                                   \
-                op(1, (_u8)xRD->x86reg);                                                        \
-            }                                                                                   \
-        }                                                                                       \
-        else /*rd != rt */                                                                      \
-        {                                                                                       \
-            if (rd==rs)                                                                         \
-            {                                                                                   \
-                MapRD;                                                                          \
-                MapRT;                                                                          \
-                MOV_Reg2ToReg1(1, Reg_ECX,          (_u8)xRD->x86reg);                          \
-                MOV_Reg2ToReg1(1, (_u8)xRD->x86reg, (_u8)xRT->x86reg);                          \
-                op(1, (_u8)xRD->x86reg);                                                        \
-            }                                                                                   \
-            else  /* rd != rs */                                                                \
-            {                                                                                   \
-                xRD->NoNeedToLoadTheLo = 1;                                                     \
-                MapRD;                                                                          \
-                if (rs == rt)                                                                   \
-                {                                                                               \
-                    if (rt == 0) /* rd = (rt=0) >> whatever */                                  \
-                        Reg2ToReg1(1, _Xor, (_u8)xRD->x86reg, (_u8)xRD->x86reg); /* xor rd, rd */\
-                    else                                                                        \
+                    MapRD;                                                                      \
+                    ADD_Reg1ToReg2(1, (_u8)xRD->x86reg, (_u8)xRD->x86reg);   /* shl rd,1 uses 1 cycle also, but only pairing for the u pipe */\
+                }                                                                           \
+            }                                                                               \
+        }                                                                                   \
+        else /*rd=rt, rs!=rt*/                                                              \
+        {                                                                                   \
+            if (rs == 0)                                                                    \
+                if (subtraction)                                                            \
+                {                                                                           \
+                    xRD->IsDirty = 1;                                                       \
+                    MapRD;                                                                  \
+                    NEG                                                                     \
+                    return;                                                                 \
+                }                                                                           \
+                else                                                                        \
+                    return;                                                                 \
+                                                                                            \
+            xRD->IsDirty = 1;                                                               \
+            MapRD;                                                                          \
+            MapRS;                                                                          \
+            NEG                                                                             \
+            ADD_Reg2ToReg1(1, xRD->x86reg, xRS->x86reg);                                    \
+        }                                                                                   \
+    }                                                                                       \
+    else /*rd != rt */                                                                      \
+    {                                                                                       \
+        if (rd==rs)                                                                         \
+        {                                                                                   \
+            if (rt == 0) return;                                                            \
+            xRD->IsDirty = 1;                                                               \
+            MapRD;                                                                          \
+            MapRT;                                                                          \
+            Reg2ToReg1(1, op, (_u8)xRD->x86reg, (_u8)xRT->x86reg);    /* add    rd,rt*/     \
+        }                                                                                   \
+        else  /* rd != rs */                                                                \
+        {                                                                                   \
+            xRD->IsDirty = 1;                                                               \
+            xRD->NoNeedToLoadTheLo = 1;                                                     \
+            MapRD;                                                                          \
+            if (rs == rt)                                                                   \
+            {                                                                               \
+                if (rt == 0) /* rd = 0+0 */                                                 \
+                    XOR_Reg2ToReg1(1, xRD->x86reg, xRD->x86reg); /* xor rd, rd */           \
+                else                                                                        \
+                    if (subtraction) /* rd = rs-rs */                                       \
+                        XOR_Reg2ToReg1(1, xRD->x86reg, xRD->x86reg);                        \
+                    else  /* rd = rs+rs */                                                  \
                     {                                                                       \
                         MapRT;                                                              \
-                        MOV_Reg2ToReg1(1, Reg_ECX,          (_u8)xRT->x86reg);    /* mov cx, rt */ \
-                        MOV_Reg2ToReg1(1, (_u8)xRD->x86reg, (_u8)xRT->x86reg);    /* mov rd, rt */ \
-                        op(1, (_u8)xRD->x86reg);                         /* sar rd, cl */ \
+                        MOV_Reg2ToReg1(1, xRD->x86reg, xRT->x86reg);                        \
+                        ADD_Reg2ToReg1(1, xRD->x86reg, xRD->x86reg);   /* shl rd,1 uses 1 cycle also, but only pairing for the u pipe */\
                     }                                                                       \
-                }                                                                               \
-                else  /* rs != rt */                                                            \
-                {                                                                               \
-                    if (rs != 0)                                                                \
-                    {                                                                           \
-                        MapRS;                                                                  \
-                        /* schibo:- if rt == 0..what here ? */                                  \
-                        /* rs!=0, rt!=0 , rs!=rt */                                             \
-                        MapRT;                                                                  \
-                        MOV_Reg2ToReg1(1, Reg_ECX,          (_u8)xRS->x86reg); /* mov cx, rs */ \
-                        MOV_Reg2ToReg1(1, (_u8)xRD->x86reg, (_u8)xRT->x86reg); /* mov rd, rt */ \
-                        op(1,    (_u8)xRD->x86reg);                   /* sar rd, cl */ \
-                    }                                                                           \
-                    else   /*rs=0, rt!=0 */                                                     \
-                    {                                                                           \
-                        MapRT;                                                                  \
-                        MOV_Reg2ToReg1(1, (_u8)xRD->x86reg, (_u8)xRT->x86reg); /* mov  rd,rt*/  \
-                    }                                                                           \
-                }                                                                               \
-            }                                                                                   \
-        }                                                                                       \
+            }                                                                               \
+            else  /* rs != rt */                                                            \
+            {                                                                               \
+                if (rs != 0)                                                                \
+                {                                                                           \
+                    MapRS;                                                                  \
+                    MOV_Reg2ToReg1(1, (_u8)xRD->x86reg, (_u8)xRS->x86reg);/* mov  rd,rs*/   \
+                                                                                            \
+                    if (rt==0) return;                                                      \
+                                                                                            \
+                    /* rs!=0, rt!=0 , rs!=rt */                                             \
+                    MapRT;                                                                  \
+                    Reg2ToReg1(1, op, (_u8)xRD->x86reg, (_u8)xRT->x86reg); /* add rd,rt*/   \
+                                                                                            \
+                }                                                                           \
+                else   /*rs=0, rt!=0 */                                                     \
+                {                                                                           \
+                    MapRT;                                                                  \
+                    MOV_Reg2ToReg1(1, (_u8)xRD->x86reg, (_u8)xRT->x86reg); /* mov  rd,rt*/  \
+                    NEG                                                                     \
+                }                                                                           \
+            }                                                                               \
+        }                                                                                   \
+    }                                                                                       \
 }
 
 #define Do3Add(op, NEG, subtraction)    rcAdd3reg(op, xRD->mips_reg, xRS->mips_reg, xRT->mips_reg, NEG, subtraction)
-
-#define rcShift(modbase, rd, rt)                                   \
-{                                                                  \
-    _u8 mod_rm;                                                    \
-    rd = (_u8)__RD;                                                \
-    rt = (_u8)__RT;                                                \
-                                                                   \
-    xRD->mips_reg = (_u8)__RD;                                     \
-                                                                   \
-    if (rd==rt)                                                    \
-    {                                                              \
-        xRD->IsDirty = 1;                                          \
-        MapRD;                                                     \
-        mod_rm = modbase|((_u8)xRD->x86reg);                       \
-                                                                   \
-        WC8(0xC1);                                                 \
-        WC8((_u8)mod_rm);                                          \
-        WC8((_u8)__SA);                                            \
-    }                                                              \
-    else                                                           \
-    {                                                              \
-        xRD->IsDirty = 1;                                          \
-        xRD->NoNeedToLoadTheLo = 1;                                \
-        MapRD;                                                     \
-        mod_rm = modbase|((_u8)xRD->x86reg);                       \
-        if (rt == 0)                                                \
-        {                                                           \
-            XOR_Reg1ToReg2(1, (_u8)xRD[0].x86reg, (_u8)xRD[0].x86reg); \
-        }                                                              \
-        else                                                           \
-        {                                                              \
-            MapRT;                                                     \
-                                                                       \
-            /* mov      rd,rt*/                                        \
-            MOV_Reg2ToReg1(1, (_u8)xRD[0].x86reg, (_u8)xRT[0].x86reg); \
-            WC8(0xC1);                                                 \
-            WC8((_u8)mod_rm);                                          \
-            WC8((_u8)__SA);                                            \
-        }                                                              \
-    }                                                                  \
-}
-
-
-
-
-
-    
-
-
 
 #define SetLoHiRsRt32bit                                            \
     memset(xLO, 0, sizeof(xLO));                                    \

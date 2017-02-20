@@ -19,6 +19,8 @@ CFG=1964 - Win32 Debug
 !MESSAGE 
 !MESSAGE "1964 - Win32 Debug" (based on "Win32 (x86) Application")
 !MESSAGE "1964 - Win32 Release" (based on "Win32 (x86) Application")
+!MESSAGE "1964 - Win32 Release Opcode Debugger" (based on "Win32 (x86) Application")
+!MESSAGE "1964 - Win32 Debug Opcode Debugger" (based on "Win32 (x86) Application")
 !MESSAGE 
 
 # Begin Project
@@ -44,7 +46,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /GX /ZI /I ".." /D "WIN32" /D "WINDEBUG_1964" /D "_WINDOWS" /D "_MBCS" /D "DEBUG_COMMON" /D "_DEBUG" /D "VIDEO" /Fr /YX /FD /c
-# ADD CPP /nologo /Gr /MTd /W3 /ZI /I ".." /D "DYNAREC" /D "DYN_DEBUG" /D "DEBUG_COMMON" /D "WIN32" /D "WINDEBUG_1964" /D "_WINDOWS" /D "_MBCS" /D "_DEBUG" /D "VIDEO" /D "ZIP_SUPPORT" /D "HLE" /D "GRAPHICS_TRACER" /D "ZLIB_DLL" /Fr /YX /FD /c
+# ADD CPP /nologo /Gr /Zp16 /MTd /W3 /Gm /Gi /ZI /Od /I ".." /D "DYNAREC" /D "DYN_DEBUG" /D "DEBUG_COMMON" /D "WIN32" /D "WINDEBUG_1964" /D "_WINDOWS" /D "_MBCS" /D "_DEBUG" /D "VIDEO" /D "ZIP_SUPPORT" /D "HLE" /D "GRAPHICS_TRACER" /D "ZLIB_DLL" /D "ENABLE_64BIT_FPU" /FAcs /Fr /YX /FD /c
 # SUBTRACT CPP /WX
 # ADD BASE MTL /nologo /D "NDEBUG" /win32
 # SUBTRACT BASE MTL /mktyplib203
@@ -58,7 +60,7 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 dxguid.lib dinput.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib /nologo /subsystem:windows /incremental:yes /debug /machine:I386 /out:"../Debug/dbg_1964.exe"
 # SUBTRACT BASE LINK32 /pdb:none
-# ADD LINK32 dxguid.lib dinput.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib opengl32.lib zlib/zlib.lib /nologo /subsystem:windows /incremental:yes /debug /machine:I386 /out:"../Release/1964dbug.exe"
+# ADD LINK32 dxguid.lib dinput.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib opengl32.lib zlib/zlib.lib comctl32.lib /nologo /subsystem:windows /incremental:yes /debug /machine:I386 /out:"../Release/1964dbug.exe"
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "1964 - Win32 Release"
@@ -77,7 +79,7 @@ LINK32=link.exe
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /G6 /Gr /W3 /Zi /O2 /Ob2 /I ".." /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /FAs /Fr /FD /c
 # SUBTRACT BASE CPP /YX
-# ADD CPP /nologo /G6 /Gr /MT /W3 /Zi /O2 /Ob0 /I ".." /D "DYNAREC" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "ZLIB_DLL" /D "WIN32_LEAN_AND_MEAN" /FAs /Fr /FD /c
+# ADD CPP /nologo /G6 /Gr /MT /W3 /Gi /O2 /I ".." /D "DYNAREC" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "ZLIB_DLL" /D "WIN32_LEAN_AND_MEAN" /D "ENABLE_64BIT_FPU" /FAcs /FR /FD /c
 # SUBTRACT CPP /YX
 # ADD BASE MTL /nologo /D "NDEBUG" /win32
 # SUBTRACT BASE MTL /mktyplib203
@@ -91,8 +93,74 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 dxguid.lib dinput.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib oleaut32.lib ole32.lib uuid.lib /nologo /subsystem:windows /pdb:none /machine:I386 /out:"../Release/1964.exe"
 # SUBTRACT BASE LINK32 /profile /debug /nodefaultlib
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib comdlg32.lib shell32.lib advapi32.lib zlib\zlib.lib /nologo /subsystem:windows /debug /machine:I386 /out:"../Release/1964.exe"
-# SUBTRACT LINK32 /profile /map /nodefaultlib
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib comdlg32.lib shell32.lib advapi32.lib zlib\zlib.lib comctl32.lib /nologo /subsystem:windows /machine:I386 /out:"../Release/1964.exe"
+# SUBTRACT LINK32 /profile /pdb:none /incremental:yes /map /debug /nodefaultlib
+
+!ELSEIF  "$(CFG)" == "1964 - Win32 Release Opcode Debugger"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "1964___Win32_Release_Opcode_Debugger"
+# PROP BASE Intermediate_Dir "1964___Win32_Release_Opcode_Debugger"
+# PROP BASE Ignore_Export_Lib 0
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "obj/Release_OpDbg"
+# PROP Intermediate_Dir "obj/Release_OpDbg"
+# PROP Ignore_Export_Lib 0
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /G6 /Gr /MT /W3 /Gi /O2 /I ".." /D "DYNAREC" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "ZLIB_DLL" /D "WIN32_LEAN_AND_MEAN" /FAcs /FR /FD /c
+# SUBTRACT BASE CPP /YX
+# ADD CPP /nologo /G6 /Gr /MT /W3 /Gi /O2 /I ".." /D "ENABLE_OPCODE_DEBUGGER" /D "DYNAREC" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "ZLIB_DLL" /D "WIN32_LEAN_AND_MEAN" /FAcs /FR /FD /c
+# SUBTRACT CPP /YX
+# ADD BASE MTL /nologo /D "NDEBUG" /win32
+# SUBTRACT BASE MTL /mktyplib203
+# ADD MTL /nologo /D "NDEBUG" /win32
+# SUBTRACT MTL /mktyplib203
+# ADD BASE RSC /l 0x409 /d "NDEBUG"
+# ADD RSC /l 0x409 /d "NDEBUG"
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LINK32=link.exe
+# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib comdlg32.lib shell32.lib advapi32.lib zlib\zlib.lib comctl32.lib /nologo /subsystem:windows /map /machine:I386 /out:"../Release/1964.exe"
+# SUBTRACT BASE LINK32 /profile /pdb:none /incremental:yes /debug /nodefaultlib
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib comdlg32.lib shell32.lib advapi32.lib zlib\zlib.lib comctl32.lib /nologo /subsystem:windows /map /machine:I386 /out:"../Release/Release_Opcode_Debugger.exe"
+# SUBTRACT LINK32 /profile /pdb:none /incremental:yes /debug /nodefaultlib
+
+!ELSEIF  "$(CFG)" == "1964 - Win32 Debug Opcode Debugger"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "1964___Win32_Debug_Opcode_Debugger"
+# PROP BASE Intermediate_Dir "1964___Win32_Debug_Opcode_Debugger"
+# PROP BASE Ignore_Export_Lib 0
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "obj/Debug_OpcodeDebugger"
+# PROP Intermediate_Dir "obj/Debug_OpcodeDebugger"
+# PROP Ignore_Export_Lib 0
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /Gr /Zp16 /MTd /W3 /Gm /Gi /ZI /Od /I ".." /D "DYNAREC" /D "DYN_DEBUG" /D "DEBUG_COMMON" /D "WIN32" /D "WINDEBUG_1964" /D "_WINDOWS" /D "_MBCS" /D "_DEBUG" /D "VIDEO" /D "ZIP_SUPPORT" /D "HLE" /D "GRAPHICS_TRACER" /D "ZLIB_DLL" /FAcs /Fr /YX /FD /c
+# SUBTRACT BASE CPP /WX
+# ADD CPP /nologo /Gr /Zp16 /MTd /W3 /Gm /Gi /ZI /Od /I ".." /D "ENABLE_OPCODE_DEBUGGER" /D "DYNAREC" /D "DYN_DEBUG" /D "DEBUG_COMMON" /D "WIN32" /D "WINDEBUG_1964" /D "_WINDOWS" /D "_MBCS" /D "_DEBUG" /D "VIDEO" /D "ZIP_SUPPORT" /D "HLE" /D "GRAPHICS_TRACER" /D "ZLIB_DLL" /FAcs /Fr /YX /FD /c
+# SUBTRACT CPP /WX
+# ADD BASE MTL /nologo /D "NDEBUG" /win32
+# SUBTRACT BASE MTL /mktyplib203
+# ADD MTL /nologo /D "NDEBUG" /win32
+# SUBTRACT MTL /mktyplib203
+# ADD BASE RSC /l 0x409 /d "_DEBUG" /d "WINDEBUG_1964"
+# ADD RSC /l 0x409 /d "_DEBUG" /d "WINDEBUG_1964"
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LINK32=link.exe
+# ADD BASE LINK32 dxguid.lib dinput.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib opengl32.lib zlib/zlib.lib comctl32.lib /nologo /subsystem:windows /incremental:yes /debug /machine:I386 /out:"../Release/1964dbug.exe"
+# SUBTRACT BASE LINK32 /pdb:none
+# ADD LINK32 dxguid.lib dinput.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib opengl32.lib zlib/zlib.lib comctl32.lib /nologo /subsystem:windows /incremental:yes /debug /machine:I386 /out:"../Release/dbgOpcodeDebugger.exe"
+# SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
 
@@ -100,12 +168,18 @@ LINK32=link.exe
 
 # Name "1964 - Win32 Debug"
 # Name "1964 - Win32 Release"
+# Name "1964 - Win32 Release Opcode Debugger"
+# Name "1964 - Win32 Debug Opcode Debugger"
 # Begin Group "1964"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Group "r4300i"
 
 # PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\DbgPrint.h
+# End Source File
 # Begin Source File
 
 SOURCE=.\DebugR4300i.c
@@ -160,7 +234,11 @@ SOURCE=.\win32\registry.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\win32\resource.h
+SOURCE=.\romlist.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\romlist.h
 # End Source File
 # Begin Source File
 
@@ -197,6 +275,14 @@ SOURCE=.\emulator.h
 # Begin Source File
 
 SOURCE=.\emulators.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\flashram.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\flashram.h
 # End Source File
 # Begin Source File
 
@@ -242,6 +328,10 @@ SOURCE=.\n64rcp.h
 # Begin Group "Plugins"
 
 # PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\dllsrc\controller.h
+# End Source File
 # Begin Source File
 
 SOURCE=.\win32\Dll_Audio.c
@@ -300,7 +390,19 @@ SOURCE=.\iPIF.h
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\DbgPrint.h
+SOURCE=.\1964ini.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\1964ini.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\cheatcode.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\cheatcode.h
 # End Source File
 # Begin Source File
 
@@ -383,6 +485,18 @@ SOURCE=.\dynaRec\x86.c
 SOURCE=.\dynaRec\x86.h
 # End Source File
 # End Group
+# Begin Group "Kaillera"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\Kaillera\Kaillera.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\Kaillera\Kaillera.h
+# End Source File
+# End Group
 # End Group
 # Begin Group "Resource Files"
 
@@ -397,9 +511,17 @@ SOURCE=.\win32\logo.bmp
 # End Source File
 # Begin Source File
 
+SOURCE=.\win32\resource.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\win32\wingui.rc
 # End Source File
 # End Group
+# Begin Source File
+
+SOURCE=.\changes.txt
+# End Source File
 # Begin Source File
 
 SOURCE=.\COPYRIGHT.txt
@@ -407,6 +529,10 @@ SOURCE=.\COPYRIGHT.txt
 # Begin Source File
 
 SOURCE=.\todo.txt
+# End Source File
+# Begin Source File
+
+SOURCE=.\zlib\zlib.lib
 # End Source File
 # End Target
 # End Project

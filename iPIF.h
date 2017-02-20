@@ -1,3 +1,29 @@
+/*______________________________________________________________________________
+ |                                                                              |
+ |  1964 - pif.c                                                                |
+ |  Copyright (C) 2001 Joel Middendorf, <schibo@emulation64.com>                |
+ |                                                                              |
+ |  This program is free software; you can redistribute it and/or               |
+ |  modify it under the terms of the GNU General Public License                 |
+ |  as published by the Free Software Foundation; either version 2              |
+ |  of the License, or (at your option) any later version.                      |
+ |                                                                              |
+ |  This program is distributed in the hope that it will be useful,             |
+ |  but WITHOUT ANY WARRANTY; without even the implied warranty of              |
+ |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               |
+ |  GNU General Public License for more details.                                |
+ |                                                                              |
+ |  You should have received a copy of the GNU General Public License           |
+ |  along with this program; if not, write to the Free Software                 |
+ |  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
+ |                                                                              |
+ |  To contact the author:  Schibo and Rice                                     |
+ |  email      : schibo@emulation64.com, dyangchicago@yahoo.com                 |
+ |  paper mail :                                                                |
+ |______________________________________________________________________________|
+*/
+
+
 #ifndef __PIF_H
 #define __PIF_H
 
@@ -5,8 +31,6 @@
 
 #define PIF_RAM_PHYS		0x7C0
 #define IPIF_EXIT			6
-
-extern uint8 * PIF;
 
 typedef struct
 {
@@ -29,5 +53,6 @@ void WriteEEprom(char *src, long offset);
 int EEpromCommand(unsigned __int8 *cmd, int device);
 
 void LogPIFData(char *data, int input);
+extern int  firstusedsavemedia;
 
 #endif

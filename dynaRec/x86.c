@@ -1,7 +1,9 @@
-//Thanks to Lionel for these awesome functions.
-
+#include    "../options.h"
+#include    "../globals.h"
+#include    "../debug_option.h"
 #include	"x86.h"
 #include	"dynaLog.h"
+#include    "regcache.h"
 
 extern void __cdecl MBox(char *debug, ...);
 extern void __cdecl DisplayError (char * Message, ...);
@@ -9,7 +11,6 @@ extern void __cdecl DisplayError (char * Message, ...);
 unsigned long	JumpTargets[100];
 unsigned char	*RecompCode;
 unsigned long	lCodePosition, lCodeSize;
-
 
 char *RegNames[] =
 {
@@ -22,7 +23,6 @@ char *RegNames[] =
 	"ESI",
 	"EDI"
 };
-
 
 void SetTranslator(unsigned char *Code, unsigned long Pos, unsigned long Size)	
 {
@@ -68,38 +68,45 @@ void DynaBufferOverrun()
 	SetTranslator(dyna_RecompCode, 0, RECOMPCODE_SIZE);
 	DynaBufferOverError = TRUE;
 
-//	MBox("Dynabuffer overrun");
+	//DisplayError("Dynabuffer overrun");
 }
 
 
 void WC8(unsigned char bValue)	
 {
 	if (DynaBufferOverError) return;
-	if ((lCodePosition + 10) > lCodeSize) DynaBufferOverrun();
 
+    if (gMultiPass.WriteCode)
+    {
+        if ((lCodePosition + 10) > lCodeSize) DynaBufferOverrun();
 	RecompCode[lCodePosition] = bValue;
 	lCodePosition++;
+    }
 }
 
 void WC16(unsigned int wValue)
 {
 	if (DynaBufferOverError) return;
-	if ((lCodePosition + 10) > lCodeSize) DynaBufferOverrun();
 
+    if (gMultiPass.WriteCode)
+    {
+        if ((lCodePosition + 10) > lCodeSize) DynaBufferOverrun();
     (*((unsigned _int16*)(&RecompCode[lCodePosition]))=(unsigned _int16)(wValue));
     lCodePosition+=2;
+    }
 }
 
 void WC32(unsigned long dwValue)
 {
 	if (DynaBufferOverError) return;
-	if ((lCodePosition + 10) > lCodeSize) DynaBufferOverrun();
 
+    if (gMultiPass.WriteCode)
+    {
+        if ((lCodePosition + 10) > lCodeSize) DynaBufferOverrun();
     (*((unsigned _int32*)(&RecompCode[lCodePosition]))=(unsigned _int32)(dwValue));
     lCodePosition+=4;
 }
-
-
+}
 
 
 // Now some X86 Opcodes ...
@@ -157,36 +164,34 @@ void ADD_Reg2ToReg1(unsigned char OperandSize, unsigned char Reg1,unsigned char 
 
 void ADD_ImmToReg(unsigned char OperandSize, unsigned char Reg, unsigned long Data)
 {
+    if (Reg == Reg_EAX)
+    {
+        WC8((unsigned char)(0x04 | OperandSize));
+    }
+    else
+    {
 	WC8((unsigned char)(0x80 | OperandSize));
 	WC8((unsigned char)(0xC0 | Reg));
-	WC32(Data); 
+    }
+	WC32(Data);  
 
 #ifdef LOG_DYNA
 	LogDyna("	ADD %s, 0x%08X\n", RegNames[Reg], Data);
 #endif LOG_DYNA
 }
 
-void ADD_ImmToEAX(unsigned char OperandSize, unsigned long Data)
-{
-	WC8((unsigned char)(0x04 | OperandSize));
-	WC32(Data);  
-
-#ifdef LOG_DYNA
-	LogDyna("	ADD EAX, 0x%08X\n", Data);
-#endif LOG_DYNA
-}
-
 void ADD_ImmToMemory(unsigned long Address, unsigned long Data)
 {
-	WC8((unsigned char)0x83);
+	WC8((unsigned char)0x81);
 	WC8((unsigned char)0x05);
 	WC32(Address);
-	WC8((unsigned char)(Data & 0xFF));
+	WC32((unsigned long)(Data));
 
 #ifdef LOG_DYNA
-	LogDyna("	ADD [0x%08X], 0x%08x\n", Address, Data);
+	LogDyna(" ADD [0x%08X], 0x%08x\n", Address, Data);
 #endif LOG_DYNA
 }
+
 
 void AND_ImmToEAX(unsigned char OperandSize, unsigned long Data)
 {
@@ -273,7 +278,7 @@ void CALL_Reg(unsigned char Reg)
 	WC8((unsigned char)(0xD0 | Reg));
 
 #ifdef LOG_DYNA
-	LogDyna("	CALL 0x%08X\n", dwAddress);
+	LogDyna("	CALL %s\n", RegNames[Reg]);
 #endif LOG_DYNA
 }
 
@@ -328,12 +333,12 @@ void CMP_RegWithShort(unsigned char OperandSize, unsigned char Reg, unsigned cha
 }
 
 
-void CMP_MemoryWithImm(unsigned long dwAddress,unsigned char bValue)
+void CMP_MemoryWithImm(unsigned char OperandSize, unsigned long dwAddress,unsigned long Data)
 {
-	WC8((unsigned char)0x80);
-	WC8((unsigned char)0x3d);
+	WC8((unsigned char)(0x80 | OperandSize));
+	WC8((unsigned char)0x3D);
 	WC32(dwAddress);
-	WC8(bValue);
+	WC32(Data);
 }
 
 void CMP_RegWithMemory(unsigned char Reg,unsigned long dwAddress)
@@ -497,7 +502,6 @@ void INC_Memory(unsigned long Address)
 	WC32(Address);
 }
 
-
 //Incomplete..assumed: operandsize = 1
 void DEC_Reg(unsigned char OperandSize, unsigned char Reg)
 {
@@ -510,8 +514,6 @@ void DEC_Reg(unsigned char OperandSize, unsigned char Reg)
         DisplayError("DEC: Incomplete");
     }  
 }
-
-
 
 void INC_Reg(unsigned char OperandSize, unsigned char Reg)
 {
@@ -566,7 +568,6 @@ __inline void Jcc_Near_auto(unsigned char ConditionCode, unsigned long Index)
   WC32(0x00000000);
   JumpTargets[Index] = lCodePosition;
 }
-
 
 void JMP_Short(unsigned char Offset)
 {
@@ -906,6 +907,19 @@ void POPAD()
 #endif LOG_DYNA
 }
 
+
+void PUSH_Imm8ToStack(unsigned char Imm8) 
+{
+	WC8(0x6A);
+	WC8(Imm8);
+
+#ifdef LOG_DYNA
+	LogDyna("	PUSH 0x%02X\n", Imm8);
+#endif LOG_DYNA
+}
+
+
+
 void PUSH_RegToStack(unsigned char Reg)
 {
 	WC8((unsigned char)(0x50 | Reg));
@@ -969,14 +983,6 @@ void SETcc_Reg(unsigned char ConditionCode, unsigned char Reg)
 	WC8((unsigned char)(0xC0 | Reg));
 }
 
-
-void SAR_RegByImm(unsigned char OperandSize, unsigned char Reg,unsigned char Data)
-{
-	WC8((unsigned char)(0xC0 | OperandSize));
-	WC8((unsigned char)(0xF8 | Reg));
-	WC8((unsigned char)Data);
-}
-
 void SAR_RegByCL(unsigned char OperandSize, unsigned char Reg)
 {
 	WC8((unsigned char)(0xD2 | OperandSize));
@@ -985,10 +991,61 @@ void SAR_RegByCL(unsigned char OperandSize, unsigned char Reg)
 
 void SHL_RegByImm(unsigned char OperandSize, unsigned char Reg,unsigned char Data)
 {
-	WC8((unsigned char)(0xC0 | OperandSize));
+    WC8((unsigned char)(0xC0 | OperandSize));
 	WC8((unsigned char)(0xE0 | Reg));
 	WC8((unsigned char)Data);
 }
+
+void SHR_RegByImm(unsigned char OperandSize, unsigned char Reg,unsigned char Data)
+{
+	WC8((unsigned char)(0xC0 | OperandSize));
+	WC8((unsigned char)(0xE8 | Reg));
+	WC8((unsigned char)Data);
+}
+
+void SAR_RegByImm(unsigned char OperandSize, unsigned char Reg,unsigned char Data)
+{
+    WC8((unsigned char)(0xC0 | OperandSize));
+	WC8((unsigned char)(0xF8 | Reg));
+	WC8((unsigned char)Data);
+}
+
+void SHL_MemoryByCL(unsigned char OperandSize, unsigned char Reg, unsigned long Address)
+{
+	WC8((unsigned char)(0xD2 | OperandSize));
+	WC8((unsigned char)(0xA4));
+	if(Address!=0)
+		WC32(Address);
+
+#ifdef LOG_DYNA
+	LogDyna("	SHL %s, [0x%08X]\n", RegNames[Reg], Address);
+#endif LOG_DYNA
+}
+
+void SHR_MemoryByCL(unsigned char OperandSize, unsigned char Reg, unsigned long Address)
+{
+	WC8((unsigned char)(0xD2 | OperandSize));
+	WC8((unsigned char)(0xAC));
+	if(Address!=0)
+		WC32(Address);
+
+#ifdef LOG_DYNA
+	LogDyna("	SHR %s, [0x%08X]\n", RegNames[Reg], Address);
+#endif LOG_DYNA
+}
+
+void SAR_MemoryByCL(unsigned char OperandSize, unsigned char Reg, unsigned long Address)
+{
+	WC8((unsigned char)(0xD2 | OperandSize));
+	WC8((unsigned char)(0xBC));
+	if(Address!=0)
+		WC32(Address);
+
+#ifdef LOG_DYNA
+	LogDyna("	SAR %s, [0x%08X]\n", RegNames[Reg], Address);
+#endif LOG_DYNA
+}
+
 
 void SHL_RegBy1(unsigned char OperandSize, unsigned char Reg)
 {
@@ -1001,13 +1058,6 @@ void SHL_RegByCL(unsigned char OperandSize, unsigned char Reg)
 {
 	WC8((unsigned char)(0xD2 | OperandSize));
 	WC8((unsigned char)(0xE0 | Reg));
-}
-
-void SHR_RegByImm(unsigned char OperandSize, unsigned char Reg,unsigned char Data)
-{
-	WC8((unsigned char)(0xC0 | OperandSize));
-	WC8((unsigned char)(0xE8 | Reg));
-	WC8((unsigned char)Data);
 }
 
 void SHR_RegByCL(unsigned char OperandSize, unsigned char Reg)
@@ -1026,14 +1076,15 @@ void SUB_Reg1OfReg2(unsigned char OperandSize, unsigned char Reg1,unsigned char 
 #endif LOG_DYNA
 }
 
-void SUB_ImmToReg(unsigned char Reg,unsigned char data)
+void SUB_ImmToMemory(unsigned long Address, unsigned long Data)
 {
-	WC8((unsigned char)0x83);
-	WC8((unsigned char)(0xe8 | Reg));
-	WC8((unsigned char)data);
+	WC8((unsigned char)0x81);
+	WC8((unsigned char)0x2D);
+	WC32(Address);
+	WC32((unsigned long)(Data));
 
 #ifdef LOG_DYNA
-	LogDyna("	SUB %s, 0x%08X\n", RegNames[Reg], data);
+	LogDyna(" SUB [0x%08X], 0x%08x\n", Address, Data);
 #endif LOG_DYNA
 }
 
@@ -1157,6 +1208,16 @@ void XOR_ShortToReg(unsigned char OperandSize, unsigned char Reg, unsigned char 
 #endif LOG_DYNA
 }
 
+
+void AND_Reg2ToReg1(unsigned char OperandSize, unsigned char Reg1,unsigned char Reg2)
+{
+ WC8((unsigned char)(0x22 | OperandSize));
+ WC8((unsigned char)(0xC0 | (Reg1 << 3) | Reg2));
+
+#ifdef LOG_DYNA
+ LogDyna(" AND %s, %s\n", RegNames[Reg1], RegNames[Reg2]);
+#endif LOG_DYNA
+}
 
 
 

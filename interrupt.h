@@ -1,7 +1,7 @@
 /*______________________________________________________________________________
  |                                                                              |
  |  1964 - Emulator for Nintendo 64 console system                              |
- |  Copyright (C) 2001  Joel Middendorf  schibo@emuhq.com                       |
+ |  Copyright (C) 2001  Joel Middendorf  schibo@emulation64.com                 |
  |                                                                              |
  |  This program is free software; you can redistribute it and/or               |
  |  modify it under the terms of the GNU General Public License                 |
@@ -18,7 +18,7 @@
  |  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
  |                                                                              |
  |  To contact the author:                                                      |
- |  email      : schibo@emuhq.com                                               |
+ |  email      : schibo@emulation64.com                                         |
  |  paper mail :                                                                |
  |______________________________________________________________________________|
 
@@ -46,7 +46,12 @@ the property of anarko.
 #define NOT_MI_INTR_PI      0xFFFFFFEF
 #define NOT_MI_INTR_DP      0xFFFFFFDF  
 
-
+#define MI_INTR_MASK_SP		0x01		/* Bit 0: SP intr mask */
+#define MI_INTR_MASK_SI		0x02		/* Bit 1: SI intr mask */
+#define MI_INTR_MASK_AI		0x04		/* Bit 2: AI intr mask */
+#define MI_INTR_MASK_VI		0x08		/* Bit 3: VI intr mask */
+#define MI_INTR_MASK_PI		0x10		/* Bit 4: PI intr mask */
+#define MI_INTR_MASK_DP		0x20		/* Bit 5: DP intr mask */
 
 #define MI_INTR_MASK_SP_CLR     0x01    
 #define MI_INTR_MASK_SI_CLR     0x04        
@@ -187,6 +192,8 @@ extern unsigned _int32 iCurrentInterruptMask;
 #define EXCCODE     0x7C
 #define NOT_EXCCODE 0xFFFFFF83
 
+#define SET_EXCEPTION(exception)	{gHWS_COP0Reg[CAUSE] &= NOT_EXCCODE; gHWS_COP0Reg[CAUSE] |= exception;}
+
 void Intr_Common();
 void  CheckInterrupts(void);
 void __cdecl printlist (char * Message, ...);
@@ -204,10 +211,20 @@ void Handle_PI(void);
 void Init_Bootstrap_Pointers(void);
 
 void Trigger_RSPBreak(void);
+void Trigger_SPInterrupt(void);
 void Trigger_VIInterrupt(void);
+void Trigger_AIInterrupt(void);
 void Trigger_DPInterrupt(void);
+void Trigger_PIInterrupt(void);
+void Trigger_SIInterrupt(void);
 void Trigger_CompareInterrupt(void);
+void Trigger_Address_Error_Exception(unsigned __int32 addr);
+void Trigger_Interrupt_Without_Mask(unsigned __int32 interrupt);
 
+void HandleInterrupts(unsigned __int32 vt);
+void HandleExceptions(unsigned __int32 evt);
+
+char * Get_Interrupt_Name();
 
 #endif //_INTERRUPT_H__1964_
 

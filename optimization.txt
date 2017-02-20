@@ -1,0 +1,289 @@
+In the dyan emu main loop
+
+Address	Line	Clockticks	   Source
+	 524		   void RunTheRegCache(void)
+ 01:10690	 525		   {
+	 526		       //uint32 savedpc=0;
+ 01:10693	 527	0.73%	       while( Emu_Keep_Running || CPUNeedToDoOtherTask )
+	 528		       {
+	 529		           //if( savedpc != gHardwareState.pc )
+	 530		           //{
+ 01:106AD	 531	3.34%	               Dyna_Get_Block();
+	 532		   
+	 533		               // Check if this block of N64 code has been compiled before
+ 01:106C6	 534	2.10%	               if (Block == NULL)  Dyna_Compile_Block();
+	 535		           //}
+	 536		   
+	 537		           //savedpc = gHardwareState.pc;
+ 01:107E5	 538	0.76%	           SavedCOUNT2 = gHardwareState.COP0Reg[COUNT];
+	 539		   
+	 540		           DEBUG_PRINT_DYNA_EXECUTION_INFO
+	 541		           // Run the compiled code in the Block
+ 01:107EF	 542	1.02%	           __asm pushad
+	 543		   #ifdef USE_STACK
+ 01:107F0	 544	5.51%	"           __asm mov ebp, offset [gHardwareState]"
+ 01:107F5	 545	0.14%	"           __asm add ebp, 128"
+	 546		   #endif
+ 01:107FB	 547	0.21%	           __asm call Block
+ 01:10801	 548	1.81%	           __asm popad
+	 549		           
+ 01:10802	 550	7.84%	           DYNA_CHECK_COMPARE  // Check COMPARE interrupts
+ 01:1082E	 551	1.52%	           DYNA_CHECK_VI   // Check VI counter / generate VI interrupts
+ 01:10850	 552	0.77%	           Dyna_CPU_Check_Other_Tasks();
+ 01:10887	 553		       }
+ 01:1088C	 554		   }
+
+
+
+This dyna emu main uses 26% precent of CPU time.
+
+1. To put get block inline, not as a routine.
+2. This line can be optimized 
+	__asm mov ebp, offset [gHardwareState]
+   Define an const value and put the const value into one register, load ebp from the const register.
+3. DYNA_CHECK_COMPARE
+#define DYNA_CHECK_COMPARE		                                            \
+	if (gHardwareState.COP0Reg[COUNT] > gHardwareState.COP0Reg[COMPARE])    \
+        if ( (SavedCOUNT < gHardwareState.COP0Reg[COMPARE]) ||	            \
+		 (gHardwareState.COP0Reg[COUNT] < SavedCOUNT) )		                \
+	{																		\
+		SavedCOUNT = gHardwareState.COP0Reg[COUNT];						    \
+		Trigger_CompareInterrupt();											\
+	}
+
+This is too complicate, use a count down counter to replace this line, like
+	if( countdown < 0)
+		Trigger_CompareIterrupt();
+
+The new countdown counter will be set when a COMPARE register is set. And after the compare interupt is triggered, set the countdown counter to big value, so compare interrupt will not be triggered again.
+
+4. Use a global parameter COUNT to replace gHardwareState.COP0Reg[COUNT], use another global parameter COMPARE to replace gHardwareState.COP0Reg[COMPARE], only set the global parameter when these GPR is read.
+
+5. not to use SAVECOUNT2 global variable
+
+
+
+
+
+
+The r4300i_lw and r4300i_sw function.
+Address	Line	Clockticks	   Source
+	 1650		   void r4300i_lw(uint32 Instruction)
+ 01:6140	 1651	5.87%	   {
+ 01:6166	 1652	0.79%	       uint32 rt_ft = RT_FT;
+	 1653		       uint32 QuerAddr;
+	 1654		   
+ 01:6171	 1655	1.49%	       QUER_ADDR;
+	 1656		   
+	 1657		   //  CHECK_R0_EQUAL_0(rt_ft)
+	 1658		   
+	 1659		       ADDR_WORD_ALIGN_CHECKING(QuerAddr)
+	 1660		   
+ 01:6188	 1661	0.40%	      __try{
+	 1662		           //gHardwareState.GPR[rt_ft] = LOAD_SWORD_PARAM(QuerAddr);
+ 01:618D	 1663	4.70%	           gHardwareState.GPR[rt_ft] = *(_int32*)((uint8*)TLB_sDWord[(QuerAddr) >> 12] + (QuerAddr&0x00000FFF));
+ 01:61BC	 1664	0.02%	"      }__except(NULL,EXCEPTION_EXECUTE_HANDLER){"
+ 01:61C5	 1665	0.01%	           if( (QuerAddr ^ 0x80000000) & 0xC0000000 )
+	 1666		           {
+ 01:61D8	 1667		               QuerAddr = TranslateTLBAddressForLoad(QuerAddr);
+ 01:61E0	 1668		               __try{
+ 01:61E7	 1669		                   gHardwareState.GPR[rt_ft] = LOAD_SWORD_PARAM(QuerAddr);
+ 01:6216	 1670		"               }__except(NULL,EXCEPTION_EXECUTE_HANDLER){"
+ 01:621F	 1671		"                   Check_LW(QuerAddr, rt_ft);"
+	 1672		               }
+	 1673		           }
+ 01:6233	 1674		           else
+	 1675		           {
+ 01:6235	 1676	0.01%	"               Check_LW(QuerAddr, rt_ft);"
+	 1677		           }
+	 1678		   //      DisplayError("Interpretive Exception");
+	 1679		      }
+	 1680		   
+	 1681		   #ifdef CPU_CORE_CHECK_R0
+ 01:6248	 1682	0.40%	      if (rt_ft == 0) 
+	 1683		      {
+ 01:624C	 1684		"          DisplayError("Warning, using R0 to do LW opcode");"
+ 01:6259	 1685		"          gHardwareState.GPR[0] = 0; //needed only in lw, sw"
+	 1686		      }
+	 1687		   #endif
+ 01:6265	 1688	2.10%	   }
+	 1689		   
+	 1690		   //---------------------------------------------------------------------------------------
+	 1691		"   extern void Faster_Check_SW(uint32 QuerAddr, uint32 rt_ft);"
+	 1692		   void r4300i_sw(uint32 Instruction) 
+ 01:6280	 1693	4.06%	   {   
+ 01:62A6	 1694	0.52%	       uint32 rt_ft = RT_FT;
+	 1695		       uint32 QuerAddr;
+	 1696		   
+ 01:62B1	 1697	1.10%	       QUER_ADDR;
+	 1698		   
+	 1699		   
+	 1700		       ADDR_WORD_ALIGN_CHECKING(QuerAddr)
+ 01:62C8	 1701	0.32%	      __try{
+	 1702		           //LOAD_UWORD_PARAM(QuerAddr) = (uint32)gHardwareState.GPR[rt_ft];
+ 01:62CD	 1703	1.73%	           *(_int32*)((uint8*)TLB_sDWord[(QuerAddr) >> 12] + (QuerAddr&0x00000FFF)) = (uint32)gHardwareState.GPR[rt_ft];
+ 01:62F4	 1704	0.01%	"      }__except(NULL,EXCEPTION_EXECUTE_HANDLER){"
+ 01:62FD	 1705	0.02%	           if ((QuerAddr ^ 0x80000000) & 0xC0000000)
+	 1706		           {
+ 01:630E	 1707		               QuerAddr = TranslateTLBAddressForStore(QuerAddr);
+ 01:6316	 1708		              __try{
+ 01:631D	 1709		                 LOAD_UWORD_PARAM(QuerAddr) = (uint32)gHardwareState.GPR[rt_ft];
+ 01:6344	 1710		"              }__except(NULL,EXCEPTION_EXECUTE_HANDLER){"
+ 01:634D	 1711		"                   Check_SW(QuerAddr, rt_ft);"
+	 1712		"                   //Faster_Check_SW(QuerAddr, rt_ft);"
+	 1713		              }
+	 1714		           }
+ 01:6361	 1715		           else
+	 1716		           {
+ 01:6363	 1717	0.01%	"               Check_SW(QuerAddr, rt_ft);"
+	 1718		"               //Faster_Check_SW(QuerAddr, rt_ft);"
+	 1719		           }
+	 1720		      }
+	 1721		   
+	 1722		   #ifdef CPU_CORE_CHECK_R0
+ 01:6376	 1723	0.32%	"       if (rt_ft == 0) gHardwareState.GPR[0] = 0; //needed only in lw, sw"
+	 1724		   #endif
+	 1725		   
+ 01:6386	 1726	2.17%	   }
+
+
+
+Function call over head is too much, cost about 4.06%+2.17% = 6.23% of total CPU time.
+if these two function can be dyna, will increase CPU speed by 6.23% for SW only, and save 8% for LW only.
+
+
+
+The CheckMode function is overhead, no need for 32bit FPU games. Need better way to do it
+		
+Address	Line	Clockticks	   Source
+	 66		   uint32* CheckMode(uint8 reg)
+ 01:0A20	 67	1.20%	   {
+	 68		       if (gHardwareState.COP0Reg[STATUS] & 0x04000000)
+ 01:0A2C	 69		           return(&gHardwareState.COP1Reg[reg][0]);
+	 70		       else
+ 01:0A3A	 71	1.19%	           return(&gHardwareState.fpr32[reg]);
+ 01:0A39	 72	0.33%	   }
+
+
+
+The Dyna_Code_Check is needed, but function call overhead is avoidable.
+1) Inline the functions
+2) 
+
+
+Address	Line	Clockticks	   Source
+	 940		   void Dyna_Code_Check_QWORD(uint32 pc)
+ 01:10E40	 941	4.84%	   {
+	 942		       if( Block != NULL && (pc &0x1FFFFFFF) < current_rdram_size )
+	 943		       {
+	 944		           pc &= 0x7FFFFF;
+ 01:10E5B	 945	5.83%	           if( *(uint64*)(gMemoryState.RDRAM_Copy+pc) != *(uint64*)(gMemoryState.RDRAM+pc) )
+	 946		           {
+ 01:10E82	 947		               Block = NULL;
+ 01:10E8C	 948	0.67%	               *(uint64*)(gMemoryState.RDRAM_Copy+pc) = *(uint64*)(gMemoryState.RDRAM+pc);
+	 949		           }
+	 950		       }
+ 01:10E9E	 951	0.02%	   }
+
+
+This Try_Lookup_Ptr function need to be inline. Increase speed by 2.5%
+
+Address	Line	Clockticks	   Source
+	 148		   void Try_Lookup_Ptr(void)
+ 01:19F80	 149	1.96%	   {
+	 150		       uint8* tempblock;
+ 01:19FA6	 151	0.13%	       __try{
+ 01:19FAD	 152	0.95%	           tempblock = (uint8*)*g_LookupPtr;
+ 01:19FB9	 153		"       }__except(NULL,EXCEPTION_EXECUTE_HANDLER)"
+	 154		       {
+	 155		   #ifdef DYNAEXECUTIONMAPMEMORY
+ 01:19FC2	 156		           if( UnmappedMemoryExceptionHelper(g_translatepc) )
+	 157		           {
+ 01:19FD1	 158		               g_LookupPtr = (uint32*)((uint8*)sDYN_PC_LOOKUP[g_translatepc>>16] + (uint16)g_translatepc);
+	 159		           }
+ 01:19FEF	 160		           else
+	 161		   #endif
+ 01:19FF1	 162	0.16%	"               DisplayError("Execution from unmapped address, PC=%08X", gHardwareState.pc);"
+	 163		       }
+ 01:1A00C	 164	0.76%	   }
+
+
+
+
+
+This LWC1 opcode need to be optimize
+1) Apply the new TLB code in
+2) no need to check LOAD_UWORD_PARAM_2, of course, it is much save to have it.
+3) no need to use try_exception block on this one.
+
+
+
+
+Address	Line	Clockticks	   Source
+	 435		   void r4300i_lwc1(uint32 Instruction)        
+ 01:1AA0	 436	2.55%	   {   
+ 01:1ACB	 437	1.76%	       LOAD_TLB_FUN
+	 438		       ADDR_WORD_ALIGN_CHECKING(QuerAddr)
+ 01:1AFE	 439	0.19%	       __try{
+ 01:1B05	 440	2.58%	           *((uint32 *)cFT) = LOAD_UWORD_PARAM(QuerAddr);
+ 01:1B41	 441		"       }__except(NULL,EXCEPTION_EXECUTE_HANDLER){"
+ 01:1B4A	 442		           __try{
+ 01:1B51	 443		               *((uint32 *)cFT) = LOAD_UWORD_PARAM_2(QuerAddr);
+ 01:1B7B	 444		"           }__except(NULL,EXCEPTION_EXECUTE_HANDLER){"
+	 445		"               TRACE2("%08X: LWC1 to access VA=%08X, Out of range. ", gHardwareState.pc, QuerAddr);"
+	 446		   #ifdef DEBUG_RANGE_ERROR
+	 447		"               TRACE1("%08X: LWC1 out of range", gHardwareState.pc);"
+	 448		   #endif
+	 449		           }
+	 450		      }
+	 451		       CHK_64BITMODE("lwc1")
+	 452		       SAVE_OP_COUNTER_INCREASE_INTERPRETER(2);
+ 01:1B30	 453	1.49%	   }
+
+
+The LH opcode need to be optimized, and the 
+1) try_exception blocks are not needed
+2) Apply the new TLB
+
+Address	Line	Clockticks	   Source
+	 413		   void r4300i_lh(uint32 Instruction)
+ 01:3700	 414	2.66%	   {   
+ 01:372B	 415	1.10%	       LOAD_TLB_FUN
+	 416		       ADDR_HALFWORD_ALIGN_CHECKING(QuerAddr)
+	 417		       
+ 01:375C	 418	0.22%	       CHECK_R0_EQUAL_0(RT_FT);
+	 419		   
+ 01:3768	 420	0.02%	       __try{
+ 01:376F	 421	2.04%	           gRT = LOAD_SHALF_PARAM(QuerAddr);
+ 01:37B4	 422		"       }__except(NULL,EXCEPTION_EXECUTE_HANDLER){"
+ 01:37BD	 423		           __try{
+ 01:37C4	 424		               gRT = LOAD_SHALF_PARAM_2(QuerAddr);
+	 425		   #ifdef DEBUG_IO_READ
+	 426		               if( (QuerAddr & 0x1FFFF000) != 0x04001000 )
+	 427		               {
+	 428		"                   TRACE2( "%08X: Use LH to read registers at 0x%08x", gHardwareState.pc, QuerAddr);"
+	 429		               }
+	 430		   #endif
+	 431		           }
+ 01:37F9	 432		"           __except(NULL,EXCEPTION_EXECUTE_HANDLER)"
+	 433		           {
+	 434		"               //TRIGGER_ADDR_ERROR_EXCEPTION(EXC_RADE,QuerAddr);"
+	 435		"               DISPLAY_ADDRESS_ERROR( QuerAddr, "LH" );"
+	 436		               // Use dummy segment
+	 437		   //          gRT = *(_int16*)(valloc+((QuerAddr^2)&0x0000ffff)+0x1FFF0000);
+	 438		               //gRT = 0xFFFF;
+	 439		           }
+	 440		      }
+ 01:37A3	 441	0.89%	   }
+
+
+
+
+---- LBU opcode need do the same thing -------------
+
+1) new TLB
+2) remove try_exception
+
+
+----- LUI opcode need to be dyna -----
+

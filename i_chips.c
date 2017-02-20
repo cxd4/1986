@@ -1,7 +1,7 @@
 /*______________________________________________________________________________
  |                                                                              |
  |  1964 - Emulator for Nintendo 64 console system                              |
- |  Copyright (C) 2001  Joel Middendorf  schibo@emuhq.com                       |
+ |  Copyright (C) 2001  Joel Middendorf  schibo@emulation64.com                 |
  |                                                                              |
  |  This program is free software; you can redistribute it and/or               |
  |  modify it under the terms of the GNU General Public License                 |
@@ -18,7 +18,7 @@
  |  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
  |                                                                              |
  |  To contact the author:                                                      |
- |  email      : schibo@emuhq.com                                               |
+ |  email      : schibo@emulation64.com                                         |
  |  paper mail :                                                                |
  |______________________________________________________________________________|
 
@@ -212,10 +212,14 @@ void (*TLB_Instruction[64])(uint32 Instruction)=
 */
 void (*COP1_Instruction[32])(uint32 Instruction)=
 {
-    r4300i_COP1_mfc1,   r4300i_COP1_dmfc1,  r4300i_COP1_cfc1,   UNUSED, r4300i_COP1_mtc1,   r4300i_COP1_dmtc1,  r4300i_COP1_ctc1,   UNUSED,
-    COP1_BC_instr,      UNUSED,             UNUSED,             UNUSED, UNUSED,             UNUSED,             UNUSED,             UNUSED,
-    COP1_S_instr,       COP1_D_instr,       UNUSED,             UNUSED, COP1_W_instr,       COP1_L_instr,       UNUSED,             UNUSED,
-    UNUSED,             UNUSED,             UNUSED,             UNUSED, UNUSED,             UNUSED,             UNUSED,             UNUSED
+    r4300i_COP1_mfc1,   r4300i_COP1_dmfc1,  r4300i_COP1_cfc1,   UNUSED, 
+    r4300i_COP1_mtc1,   r4300i_COP1_dmtc1,  r4300i_COP1_ctc1,   UNUSED,
+    COP1_BC_instr,      UNUSED,             UNUSED,             UNUSED, 
+    UNUSED,             UNUSED,             UNUSED,             UNUSED,
+    COP1_S_instr,       COP1_D_instr,       UNUSED,             UNUSED,
+    COP1_W_instr,       COP1_L_instr,       UNUSED,             UNUSED,
+    UNUSED,             UNUSED,             UNUSED,             UNUSED,
+    UNUSED,             UNUSED,             UNUSED,             UNUSED
 };
 
 
@@ -259,14 +263,23 @@ void (*COP1_BC_Instruction[4])(uint32 Instruction)=
 */
 void (*COP1_S_Instruction[64])(uint32 Instruction)=
 {
-    r4300i_COP1_add_s,    r4300i_COP1_sub_s,    r4300i_COP1_mul_s,    r4300i_COP1_div_s,    r4300i_COP1_sqrt_s,   r4300i_COP1_abs_s,      r4300i_COP1_mov_s,  r4300i_COP1_neg_s,
-    r4300i_COP1_roundl_s, r4300i_COP1_truncl_s, r4300i_COP1_ceill_s,  r4300i_COP1_floorl_s, r4300i_COP1_roundw_s, r4300i_COP1_truncw_s,   r4300i_COP1_ceilw_s,  r4300i_COP1_floorw_s,
-    UNUSED,               UNUSED,               UNUSED,               UNUSED,               UNUSED,               UNUSED,                 UNUSED,             UNUSED,
-    UNUSED,               UNUSED,               UNUSED,               UNUSED,               UNUSED,               UNUSED,                 UNUSED,             UNUSED,
-    UNUSED,               r4300i_COP1_cvtd_s,   UNUSED,               UNUSED,               r4300i_COP1_cvtw_s,   r4300i_COP1_cvtl_s,     UNUSED,             UNUSED,
-    UNUSED,               UNUSED,               UNUSED,               UNUSED,               UNUSED,               UNUSED,                 UNUSED,             UNUSED,
-    r4300i_C_F_S,         r4300i_C_UN_S,        r4300i_C_EQ_S,        r4300i_C_UEQ_S,       r4300i_C_OLT_S,       r4300i_C_ULT_S,         r4300i_C_OLE_S,     r4300i_C_ULE_S,
-    r4300i_C_SF_S,        r4300i_C_NGLE_S,      r4300i_C_SEQ_S,       r4300i_C_NGL_S,       r4300i_C_LT_S,        r4300i_C_NGE_S,         r4300i_C_LE_S,      r4300i_C_NGT_S
+    r4300i_COP1_add_s,    r4300i_COP1_sub_s,    r4300i_COP1_mul_s,    r4300i_COP1_div_s,    
+    r4300i_COP1_sqrt_s,   r4300i_COP1_abs_s,    r4300i_COP1_mov_s,    r4300i_COP1_neg_s,
+    r4300i_COP1_roundl_s, r4300i_COP1_truncl_s, r4300i_COP1_ceill_s,  r4300i_COP1_floorl_s,
+    r4300i_COP1_roundw_s, r4300i_COP1_truncw_s, r4300i_COP1_ceilw_s,  r4300i_COP1_floorw_s,
+    UNUSED,               UNUSED,               UNUSED,               UNUSED,
+    UNUSED,               UNUSED,               UNUSED,               UNUSED,
+    UNUSED,               UNUSED,               UNUSED,               UNUSED,
+    UNUSED,               UNUSED,               UNUSED,               UNUSED,
+    UNUSED,               r4300i_COP1_cvtd_s,   UNUSED,               UNUSED,
+    r4300i_COP1_cvtw_s,   r4300i_COP1_cvtl_s,   UNUSED,               UNUSED,
+    UNUSED,               UNUSED,               UNUSED,               UNUSED,
+    UNUSED,               UNUSED,               UNUSED,               UNUSED,
+    
+    r4300i_C_F_S,         r4300i_C_UN_S,        r4300i_C_EQ_S,        r4300i_C_UEQ_S,
+    r4300i_C_OLT_S,       r4300i_C_ULT_S,       r4300i_C_OLE_S,       r4300i_C_ULE_S,
+    r4300i_C_SF_S,        r4300i_C_NGLE_S,      r4300i_C_SEQ_S,       r4300i_C_NGL_S,
+    r4300i_C_LT_S,        r4300i_C_NGE_S,       r4300i_C_LE_S,        r4300i_C_NGT_S
 };
 
 //---------------------------------------------------------------------------------------
@@ -290,14 +303,23 @@ void (*COP1_S_Instruction[64])(uint32 Instruction)=
 */
 void (*COP1_D_Instruction[64])(uint32 Instruction)=
 {
-    r4300i_COP1_add_d,    r4300i_COP1_sub_d,    r4300i_COP1_mul_d,    r4300i_COP1_div_d,    r4300i_COP1_sqrt_d,   r4300i_COP1_abs_d,      r4300i_COP1_mov_d,  r4300i_COP1_neg_d,
-    r4300i_COP1_roundl_d, r4300i_COP1_truncl_d, r4300i_COP1_ceill_d,  r4300i_COP1_floorl_d, r4300i_COP1_roundw_d, r4300i_COP1_truncw_d,   r4300i_COP1_ceilw_d,  r4300i_COP1_floorw_d,
-    UNUSED,               UNUSED,               UNUSED,               UNUSED,               UNUSED,               UNUSED,                 UNUSED,             UNUSED,
-    UNUSED,               UNUSED,               UNUSED,               UNUSED,               UNUSED,               UNUSED,                 UNUSED,             UNUSED,
-    r4300i_COP1_cvts_d,   UNUSED,               UNUSED,               UNUSED,               r4300i_COP1_cvtw_d,   r4300i_COP1_cvtl_d,     UNUSED,             UNUSED,
-    UNUSED,               UNUSED,               UNUSED,               UNUSED,               UNUSED,               UNUSED,                 UNUSED,             UNUSED,
-    r4300i_C_F_D,         r4300i_C_UN_D,        r4300i_C_EQ_D,        r4300i_C_UEQ_D,       r4300i_C_OLT_D,       r4300i_C_ULT_D,         r4300i_C_OLE_D,     r4300i_C_ULE_D,
-    r4300i_C_SF_D,        r4300i_C_NGLE_D,      r4300i_C_SEQ_D,       r4300i_C_NGL_D,       r4300i_C_LT_D,        r4300i_C_NGE_D,         r4300i_C_LE_D,      r4300i_C_NGT_D
+    r4300i_COP1_add_d,    r4300i_COP1_sub_d,    r4300i_COP1_mul_d,    r4300i_COP1_div_d,
+    r4300i_COP1_sqrt_d,   r4300i_COP1_abs_d,    r4300i_COP1_mov_d,    r4300i_COP1_neg_d,
+    r4300i_COP1_roundl_d, r4300i_COP1_truncl_d, r4300i_COP1_ceill_d,  r4300i_COP1_floorl_d, 
+    r4300i_COP1_roundw_d, r4300i_COP1_truncw_d, r4300i_COP1_ceilw_d,  r4300i_COP1_floorw_d,
+    UNUSED,               UNUSED,               UNUSED,               UNUSED,
+    UNUSED,               UNUSED,               UNUSED,               UNUSED,
+    UNUSED,               UNUSED,               UNUSED,               UNUSED,
+    UNUSED,               UNUSED,               UNUSED,               UNUSED,
+    r4300i_COP1_cvts_d,   UNUSED,               UNUSED,               UNUSED,
+    r4300i_COP1_cvtw_d,   r4300i_COP1_cvtl_d,   UNUSED,               UNUSED,
+    UNUSED,               UNUSED,               UNUSED,               UNUSED,
+    UNUSED,               UNUSED,               UNUSED,               UNUSED,
+    
+    r4300i_C_F_D,         r4300i_C_UN_D,        r4300i_C_EQ_D,        r4300i_C_UEQ_D,
+    r4300i_C_OLT_D,       r4300i_C_ULT_D,       r4300i_C_OLE_D,       r4300i_C_ULE_D,
+    r4300i_C_SF_D,        r4300i_C_NGLE_D,      r4300i_C_SEQ_D,       r4300i_C_NGL_D,
+    r4300i_C_LT_D,        r4300i_C_NGE_D,       r4300i_C_LE_D,        r4300i_C_NGT_D
 };
 
 //---------------------------------------------------------------------------------------
@@ -321,14 +343,22 @@ void (*COP1_D_Instruction[64])(uint32 Instruction)=
 */
 void (*COP1_W_Instruction[64])(uint32 Instruction)=
 {
-    UNUSED,             UNUSED,             UNUSED, UNUSED, UNUSED, UNUSED, UNUSED, UNUSED,
-    UNUSED,             UNUSED,             UNUSED, UNUSED, UNUSED, UNUSED, UNUSED, UNUSED,
-    UNUSED,             UNUSED,             UNUSED, UNUSED, UNUSED, UNUSED, UNUSED, UNUSED,
-    UNUSED,             UNUSED,             UNUSED, UNUSED, UNUSED, UNUSED, UNUSED, UNUSED,
-    r4300i_COP1_cvts_w, r4300i_COP1_cvtd_w, UNUSED, UNUSED, UNUSED, UNUSED, UNUSED, UNUSED,
-    UNUSED,             UNUSED,             UNUSED, UNUSED, UNUSED, UNUSED, UNUSED, UNUSED,
-    UNUSED,             UNUSED,             UNUSED, UNUSED, UNUSED, UNUSED, UNUSED, UNUSED,
-    UNUSED,             UNUSED,             UNUSED, UNUSED, UNUSED, UNUSED, UNUSED, UNUSED
+    UNUSED,             UNUSED,             UNUSED, UNUSED,
+    UNUSED,             UNUSED,             UNUSED, UNUSED,
+    UNUSED,             UNUSED,             UNUSED, UNUSED, 
+    UNUSED,             UNUSED,             UNUSED, UNUSED,
+    UNUSED,             UNUSED,             UNUSED, UNUSED, 
+    UNUSED,             UNUSED,             UNUSED, UNUSED,
+    UNUSED,             UNUSED,             UNUSED, UNUSED, 
+    UNUSED,             UNUSED,             UNUSED, UNUSED,
+    r4300i_COP1_cvts_w, r4300i_COP1_cvtd_w, UNUSED, UNUSED, 
+    UNUSED,             UNUSED,             UNUSED, UNUSED,
+    UNUSED,             UNUSED,             UNUSED, UNUSED, 
+    UNUSED,             UNUSED,             UNUSED, UNUSED,
+    UNUSED,             UNUSED,             UNUSED, UNUSED, 
+    UNUSED,             UNUSED,             UNUSED, UNUSED,
+    UNUSED,             UNUSED,             UNUSED, UNUSED, 
+    UNUSED,             UNUSED,             UNUSED, UNUSED
 };
 
 //---------------------------------------------------------------------------------------
@@ -352,14 +382,22 @@ void (*COP1_W_Instruction[64])(uint32 Instruction)=
 */
 void (*COP1_L_Instruction[64])(uint32 Instruction)=
 {
-    UNUSED,             UNUSED,             UNUSED, UNUSED, UNUSED, UNUSED, UNUSED, UNUSED,
-    UNUSED,             UNUSED,             UNUSED, UNUSED, UNUSED, UNUSED, UNUSED, UNUSED,
-    UNUSED,             UNUSED,             UNUSED, UNUSED, UNUSED, UNUSED, UNUSED, UNUSED,
-    UNUSED,             UNUSED,             UNUSED, UNUSED, UNUSED, UNUSED, UNUSED, UNUSED,
-    r4300i_COP1_cvts_l, r4300i_COP1_cvtd_l, UNUSED, UNUSED, UNUSED, UNUSED, UNUSED, UNUSED,
-    UNUSED,             UNUSED,             UNUSED, UNUSED, UNUSED, UNUSED, UNUSED, UNUSED,
-    UNUSED,             UNUSED,             UNUSED, UNUSED, UNUSED, UNUSED, UNUSED, UNUSED,
-    UNUSED,             UNUSED,             UNUSED, UNUSED, UNUSED, UNUSED, UNUSED, UNUSED
+    UNUSED,             UNUSED,             UNUSED, UNUSED,
+    UNUSED,             UNUSED,             UNUSED, UNUSED,
+    UNUSED,             UNUSED,             UNUSED, UNUSED, 
+    UNUSED,             UNUSED,             UNUSED, UNUSED,
+    UNUSED,             UNUSED,             UNUSED, UNUSED, 
+    UNUSED,             UNUSED,             UNUSED, UNUSED,
+    UNUSED,             UNUSED,             UNUSED, UNUSED, 
+    UNUSED,             UNUSED,             UNUSED, UNUSED,
+    r4300i_COP1_cvts_l, r4300i_COP1_cvtd_l, UNUSED, UNUSED, 
+    UNUSED,             UNUSED,             UNUSED, UNUSED,
+    UNUSED,             UNUSED,             UNUSED, UNUSED, 
+    UNUSED,             UNUSED,             UNUSED, UNUSED,
+    UNUSED,             UNUSED,             UNUSED, UNUSED, 
+    UNUSED,             UNUSED,             UNUSED, UNUSED,
+    UNUSED,             UNUSED,             UNUSED, UNUSED, 
+    UNUSED,             UNUSED,             UNUSED, UNUSED
 };
 
 //---------------------------------------------------------------------------------------

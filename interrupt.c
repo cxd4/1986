@@ -1,7 +1,7 @@
 /*______________________________________________________________________________
  |                                                                              |
  |  1964 - Emulator for Nintendo 64 console system                              |
- |  Copyright (C) 2001  Joel Middendorf  schibo@emuhq.com                       |
+ |  Copyright (C) 2001  Joel Middendorf  schibo@emulation64.com                 |
  |                                                                              |
  |  This program is free software; you can redistribute it and/or               |
  |  modify it under the terms of the GNU General Public License                 |
@@ -18,7 +18,7 @@
  |  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
  |                                                                              |
  |  To contact the author:                                                      |
- |  email      : schibo@emuhq.com                                               |
+ |  email      : schibo@emulation64.com                                         |
  |  paper mail :                                                                |
  |______________________________________________________________________________|
 
@@ -36,39 +36,94 @@ the property of anarko.
 #include "options.h"
 #include "r4300i.h"
 #include "n64rcp.h"
+#include "memory.h"
 #include "timer.h"
 #include "hardware.h"
 #include "dma.h"
 #include "debug_option.h"
+#include "emulator.h"
+#include "1964ini.h"
 #include "dynarec/dynarec.h"
 #include "win32/DLL_Video.h"
 #include "win32/DLL_Audio.h"
 #include "win32/registry.h"
+#include "win32/wingui.h"
+#include "win32/resource.h"
+#include "win32/windebug.h"
 #include <stdio.h>  
 #include <stdlib.h>
 
 #ifdef DEBUG_COMMON
-char dbgString[80];
+char * Get_Interrupt_Name()
+{
+	uint32 cause;
+	
+	if( gHWS_COP0Reg[CAUSE] & 0x00007B00 )
+	{
+		DisplayError("Invalid interrupt bits set, CAUSE reg = %08X", gHWS_COP0Reg[CAUSE]);
+		return "Invalid";
+	}
+
+	cause = (gHWS_COP0Reg[CAUSE] & 0x00008400);
+	switch( cause )
+	{
+	case 0x00008000:
+		return "Compare";
+		break;
+	case 0x00000400:
+		switch ( MI_INTR_REG_R & 0x0000003F )
+		{
+		case MI_INTR_SP:
+			return "SP";
+			break;
+		case MI_INTR_SI:
+			return "SI";
+			break;
+		case MI_INTR_AI:
+			return "AI";
+			break;
+		case MI_INTR_VI:
+			return "VI";
+			break;
+		case MI_INTR_PI:
+			return "PI";
+			break;
+		case MI_INTR_DP:
+			return "DP";
+			break;
+		case MI_INTR_DP|MI_INTR_SP:
+			return "DP&SP";
+			break;
+		default:
+			if( (MI_INTR_REG_R & 0x0000003F) == 0 )
+			{
+				DisplayError("No MI interrupt as interrupt is triggered, MI_INTR_REG = %08X", MI_INTR_REG_R);
+				return "No MI";
+			}
+			else
+			{
+				DisplayError("Warning: Multiple MI interrupt is triggered at the same time, MI_INTR_REG = %08X", MI_INTR_REG_R);
+				return "Invalid MI";
+			}
+			break;
+		}
+		break;
+	default:
+		if( cause == 0x00008400 )
+		{
+			//DisplayError("Warning, both COMPARE and MI interrupt happens together, could lose one");
+			return "COMPARE&MI";
+			break;
+		}
+		else
+		{
+			DisplayError("Warning, invalid interrupts, CAUSE=%08X", gHWS_COP0Reg[CAUSE]);
+			return "Invalid";
+		}
+		break;
+	}
+}
 #endif
-
-
-extern void RefreshOpList(char *opcode);
-extern uint32 sp_hle_task;
-extern int    sp_task_counter;
-extern uint32 VIcounter;
-int		viframeskip=0;				// This global parameter determines to skip a VI frame
-									// after every few frames
-int		viframeskipcount=0;
-int		framecounter=0;				// To count how many frames are displayed per second
-
-
-//extern uint32* InstructionPointer;
-
-uint8* InterruptVector;
-uint8* IVTStart;
-uint8* TLBMissStart;
-BOOL VIupdated=FALSE;
-
 //---------------------------------------------------------------------------------------
 // This function is called when a Exception Interrupt happens, will set COP0 registers
 // EPC and CAUSE, then return a correct interrupt vector address
@@ -77,34 +132,38 @@ uint32 SetException_Interrupt(uint32 pc)
 {
 	uint32 newpc = 0x180;
 
+#ifdef FAST_COUNTER
+	Count_Down(4*VICounterFactors[CounterFactor]);
+#else
 	// Any Interrupt and Exceptions will result delay 4 PCLOCKs
-	VIcounter+=4;
-	gHardwareState.COP0Reg[COUNT] +=2;
+	VIcounter+= 4*VICounterFactors[CounterFactor];
+	gHWS_COP0Reg[COUNT] += 2*CounterFactors[CounterFactor];
+#endif
 
 
     if (CPUdelay != 0)                  /* are we in branch delay slot? */
     {                                       /* yes */
-        gHardwareState.COP0Reg[CAUSE] |= BD;
-        gHardwareState.COP0Reg[EPC] = pc - 4;
+        gHWS_COP0Reg[CAUSE] |= BD;
+        gHWS_COP0Reg[EPC] = pc - 4;
         CPUdelay = 0;
     }
     else
     {                                       /* no */            
-        gHardwareState.COP0Reg[CAUSE] &= NOT_BD;
-        gHardwareState.COP0Reg[EPC] = pc;
+        gHWS_COP0Reg[CAUSE] &= NOT_BD;
+        gHWS_COP0Reg[EPC] = pc;
     }
 
-    gHardwareState.COP0Reg[STATUS] |= EXL;              // set EXL = 1
+    gHWS_COP0Reg[STATUS] |= EXL;              // set EXL = 1
 														// to disable further interrupts
 
-    if ( (gHardwareState.COP0Reg[CAUSE] & TLBL_Miss) || (gHardwareState.COP0Reg[CAUSE] & TLBS_Miss))
+    if ( (gHWS_COP0Reg[CAUSE] & TLBL_Miss) || (gHWS_COP0Reg[CAUSE] & TLBS_Miss))
 	{
 		newpc = 0x80;
     }
 
-    gHardwareState.COP0Reg[CAUSE] &= NOT_EXCCODE;   /* clear EXCCode  */
+    //gHWS_COP0Reg[CAUSE] &= NOT_EXCCODE;   /* clear EXCCode  */
 
-	if( gHardwareState.COP0Reg[STATUS] & (1 << 22) )
+	if( gHWS_COP0Reg[STATUS] & (1 << 22) )
 	{
 		//newpc += 0xbfc00200;
 		newpc += 0x80000000;
@@ -120,12 +179,37 @@ uint32 SetException_Interrupt(uint32 pc)
 
 //---------------------------------------------------------------------------------------
 
-//extern void Trigger_RSPBreak();
-//extern void Trigger_DPInterrupt();
 void CheckInterrupts()
 {
-    if ((MI_INTR_REG_R & MI_INTR_SP) != 0) Trigger_RSPBreak();
-    if ((MI_INTR_REG_R & MI_INTR_DP) != 0) Trigger_DPInterrupt();
+	if ((MI_INTR_REG_R & MI_INTR_SP) != 0) 
+	{
+		OPCODE_DEBUGGER_BEGIN_EPILOGUE
+		Trigger_RSPBreak();
+		OPCODE_DEBUGGER_END_EPILOGUE
+	}
+
+    if ((MI_INTR_REG_R & MI_INTR_DP) != 0)
+	{
+		OPCODE_DEBUGGER_BEGIN_EPILOGUE
+		Trigger_DPInterrupt();
+		OPCODE_DEBUGGER_END_EPILOGUE
+	}
+
+	/*
+    if ((MI_INTR_REG_R & MI_INTR_VI) != 0) 
+	{
+		OPCODE_DEBUGGER_BEGIN_EPILOGUE
+		Trigger_VIInterrupt();
+		OPCODE_DEBUGGER_END_EPILOGUE
+	}
+	*/
+
+    if ((MI_INTR_REG_R & MI_INTR_AI) != 0) 
+	{
+		OPCODE_DEBUGGER_BEGIN_EPILOGUE
+		Trigger_AIInterrupt();
+		OPCODE_DEBUGGER_END_EPILOGUE
+	}
 }
 
 //---------------------------------------------------------------------------------------
@@ -145,111 +229,80 @@ void Handle_MI(uint32 value)
     if ((value & MI_INTR_MASK_PI_SET))  MI_INTR_MASK_REG_R |=  MI_INTR_PI;
     if ((value & MI_INTR_MASK_DP_SET))  MI_INTR_MASK_REG_R |=  MI_INTR_DP;
     if ((value & MI_INTR_MASK_SP_SET))  MI_INTR_MASK_REG_R |=  MI_INTR_SP;
+
+	// Check MI interrupt again, this is important, otherwise we will lost interrupts
+	if( MI_INTR_MASK_REG_R & 0x0000003F & MI_INTR_REG_R ) 
+	{
+		// Trigger an MI interrupt, don't know what it is
+		SET_EXCEPTION(EXC_INT)
+        gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
+		HandleInterrupts(0x80000180);
+	}
 }
 
 //---------------------------------------------------------------------------------------
 
-void Trigger_AIInterrupt(void)
-{
-#ifdef DEBUG_COMMON
-	if( debug_interrupt && debug_ai_interrupt )
-	{
-		sprintf(generalmessage,"AI Interrupt is triggered");
-		RefreshOpList(generalmessage);
-	}
-#endif
-    // set the interrupt to fire
-    (MI_INTR_REG_R) |= MI_INTR_AI;
-    if ((MI_INTR_MASK_REG_R) & MI_INTR_AI)
-	{
-		gHardwareState.COP0Reg[CAUSE] |= 0x00000400;
-#ifdef CPUCHECKINTR
-		CPUNeedToCheckInterrupt = TRUE;
-		CPUNeedToDoOtherTask = TRUE;
-#endif
-	}
-
-}
-
-extern void GetPluginDir(char* Directory);
 void RunSPTask(void)
 {
 	sp_task_counter = 0;
+
 	switch( sp_hle_task )
 	{
 	case GFX_TASK:
 		__try{
-            VIDEO_ProcessDList();
+			VIDEO_ProcessDList();
+			DListCount++;
+			DPC_STATUS_REG = 0x801;		// Makes Banjo Kazooie work - Azimer
         }
 		__except(NULL,EXCEPTION_EXECUTE_HANDLER)
 		{
-			char VideoPath[_MAX_PATH];
-			char StartPath[_MAX_PATH];
-
-			DisplayError("Memory exception fires to process VIDEO DList");
-			
-			CloseVideoPlugin();
-
-			// Need to reload the VIDEO plugin
-
-			GetPluginDir(StartPath);
-			strcpy(VideoPath, StartPath);
-			strcat(VideoPath, gRegSettings.VideoPlugin);
-
-			LoadVideoPlugin(VideoPath);
-			VIDEO_RomOpen();
-
 		}
-		VIupdated = TRUE;
 
-			if ((MI_INTR_REG_R & MI_INTR_DP) != 0) Trigger_DPInterrupt();
+		if ((MI_INTR_REG_R & MI_INTR_DP) != 0) Trigger_DPInterrupt();
 #ifdef DEBUG_SP_TASK
-			if( debug_sp_task )
-			{
-				sprintf(generalmessage, "SP GRX Task finished");
-				RefreshOpList(generalmessage);
-			}
+		if( debug_sp_task )
+		{
+			TRACE0( "SP GRX Task finished")
+		}
 #endif
 		break;
 	case SND_TASK:
 		__try{
             AUDIO_ProcessAList();
+			AListCount++;
         }
 		__except(NULL,EXCEPTION_EXECUTE_HANDLER)
 		{
-			DisplayError("Memory exception fires to process AUDIO DList");
+			//DisplayError("Memory exception fires to process AUDIO DList");
 		}
 			if ((MI_INTR_REG_R & MI_INTR_DP) != 0) Trigger_DPInterrupt();
 #ifdef DEBUG_SP_TASK 
 			if( debug_sp_task )
 			{
-				sprintf(generalmessage, "SP SND Task finished");
-				RefreshOpList(generalmessage);
+				TRACE0( "SP SND Task finished");
 			}
 #endif
 			break;
 	default:
-#ifdef DEBUG_SP_TASK 
-		if( debug_sp_task )
-		{
-			//sprintf(TempStr, "SP BAD Task finished");
-			sprintf(generalmessage, "SP BAD Task skipped");
-			RefreshOpList(generalmessage);
-		}
-#endif
-		/*
 		__try{
-            VIDEO_ProcessDList();
+			VIDEO_ProcessRDPList();
+			//VIDEO_ProcessDList();
+
         }
 		__except(NULL,EXCEPTION_EXECUTE_HANDLER)
 		{
-			DisplayError("Memory exception fires to process Unknown DList");
+			//DisplayError("Memory exception fires to process RDP List");
 		}
-		
 
-        CheckInterrupts();
 		if ((MI_INTR_REG_R & MI_INTR_DP) != 0) Trigger_DPInterrupt();
-		*/
+
+#ifdef DEBUG_SP_TASK 
+		if( debug_sp_task )
+		{
+			//TRACE0( "SP BAD Task skipped");
+			TRACE0( "Unknown SP Taks");
+		}
+#endif
 		break;
 	}
 
@@ -263,29 +316,6 @@ void RunSPTask(void)
 
 void Handle_SP(uint32 value) 
 {
-    if (value & SP_CLR_HALT)
-    {   
-        (SP_STATUS_REG) &= ~SP_STATUS_HALT; 
-
-#ifdef DEBUG_SP_TASK 
-		if( debug_sp_task )
-		{
-			sprintf(generalmessage, "SP Task is triggered");
-			RefreshOpList(generalmessage);
-		}
-#endif
-
-		sp_hle_task = HLE_DMEM_TASK;
-
-#ifdef DOSPTASKCOUNTER		
-		sp_task_counter = SPTASKPCLOCKS;
-		CPUNeedToDoOtherTask = TRUE;	// Set CPU to do other tasks
-										// it should be OK if CPU is already doing some other tasks
-#else
-		RunSPTask();
-#endif
-
-    }
     if (value & SP_SET_HALT)        (SP_STATUS_REG) |=  SP_STATUS_HALT; 
     if (value & SP_CLR_BROKE)       (SP_STATUS_REG) &= ~SP_STATUS_BROKE;
 
@@ -294,10 +324,9 @@ void Handle_SP(uint32 value)
 		(MI_INTR_REG_R) &= ~MI_INTR_SP;
 		if( (MI_INTR_REG_R & MI_INTR_MASK_REG_R) == 0)   
 		{
-			gHardwareState.COP0Reg[CAUSE] &=  0xFFFFFBFF;
-#ifdef CPUCHECKINTR
-			CPUNeedToCheckInterrupt = FALSE;
-#endif
+			gHWS_COP0Reg[CAUSE] &=  0xFFFFFBFF;
+			//CPUNeedToCheckInterrupt = FALSE;
+			//CPUNeedToDoOtherTask = TRUE;	// Set CPU to do other tasks
 		}
 	}
 
@@ -306,10 +335,9 @@ void Handle_SP(uint32 value)
 		(MI_INTR_REG_R) |= MI_INTR_SP;
 		if( (MI_INTR_REG_R & MI_INTR_MASK_REG_R) != 0)   
 		{
-			gHardwareState.COP0Reg[CAUSE] |=  0x0400;
-#ifdef CPUCHECKINTR
-			CPUNeedToCheckInterrupt = TRUE;
-#endif
+			SET_EXCEPTION(EXC_INT)
+			gHWS_COP0Reg[CAUSE] |=  CAUSE_IP3;
+			HandleInterrupts(0x80000180);
 		}
 	}
 
@@ -342,6 +370,31 @@ void Handle_SP(uint32 value)
     
     if (value & SP_CLR_SIG7)        (SP_STATUS_REG) &= ~SP_STATUS_SIG7;
     if (value & SP_SET_SIG7)        (SP_STATUS_REG) |= SP_STATUS_SIG7;
+
+    if (value & SP_CLR_HALT)		
+	{
+		(SP_STATUS_REG) &= ~SP_STATUS_HALT;
+
+#ifdef DEBUG_SP_TASK 
+		if( debug_sp_task )
+		{
+			TRACE0( "SP Task is triggered");
+		}
+#endif
+
+		sp_hle_task = HLE_DMEM_TASK;
+
+#ifdef DOSPTASKCOUNTER		
+		sp_task_counter = SPTASKPCLOCKS;
+		CPUNeedToDoOtherTask = TRUE;	// Set CPU to do other tasks
+										// it should be OK if CPU is already doing some other tasks
+#else
+		RunSPTask();
+#endif
+    }
+
+	// Add by Rice, 2001.08.10
+	SP_STATUS_REG |= SP_STATUS_HALT;
 }
 
 //---------------------------------------------------------------------------------------
@@ -352,7 +405,9 @@ void Handle_DPC(uint32 value)
     if (value & DPC_SET_XBUS_DMEM_DMA) (DPC_STATUS_REG) |= DPC_STATUS_XBUS_DMEM_DMA;
 
     if (value & DPC_CLR_FREEZE) (DPC_STATUS_REG) &= ~DPC_STATUS_FREEZE;
-    if (value & DPC_SET_FREEZE) (DPC_STATUS_REG) |= DPC_STATUS_FREEZE;
+
+	// Modified by Rice. 2001.08.10
+    //if (value & DPC_SET_FREEZE) (DPC_STATUS_REG) |= DPC_STATUS_FREEZE;
 
     if (value & DPC_CLR_FLUSH) (DPC_STATUS_REG) &= ~DPC_STATUS_FLUSH;
     if (value & DPC_SET_FLUSH) (DPC_STATUS_REG) |= DPC_STATUS_FLUSH;
@@ -365,28 +420,23 @@ void Handle_DPC(uint32 value)
 
 //---------------------------------------------------------------------------------------
 
-void Handle_PI() {
-#ifdef DEBUG_COMMON
-    sprintf(dbgString, "%08X: Clearing PI Interrupt", gHardwareState.pc);
-    RefreshOpList(dbgString);
-#endif
+void Handle_PI() 
+{
+    TRACE1("%08X: Clearing PI Interrupt", gHWS_pc);
 
     if ((PI_STATUS_REG & 0x2))  MI_INTR_REG_R &= ~MI_INTR_PI;
     
     if (MI_INTR_REG_R != 0)   
 	{
-		gHardwareState.COP0Reg[CAUSE] |=  0x0400;
-#ifdef CPUCHECKINTR
+		SET_EXCEPTION(EXC_INT)
+		gHWS_COP0Reg[CAUSE] |=  CAUSE_IP3;
 		CPUNeedToCheckInterrupt = TRUE;
 		CPUNeedToDoOtherTask = TRUE;
-#endif
 	}
     else                        
 	{
-		gHardwareState.COP0Reg[CAUSE] &=  0xFFFFFBFF;
-#ifdef CPUCHECKINTR
-		CPUNeedToCheckInterrupt = FALSE;
-#endif
+		gHWS_COP0Reg[CAUSE] &=  0xFFFFFBFF;
+		//CPUNeedToCheckInterrupt = FALSE;
 	}
 }
 
@@ -405,33 +455,40 @@ void WriteMI_ModeReg(uint32 value)
 
     if ( (MI_INTR_REG_R & MI_INTR_MASK_REG_R) == 0) 
 	{
-		gHardwareState.COP0Reg[CAUSE] &=  0xFFFFFBFF;
-#ifdef CPUCHECKINTR
-		CPUNeedToCheckInterrupt = FALSE;
-#endif
+		gHWS_COP0Reg[CAUSE] &=  0xFFFFFBFF;
+		//CPUNeedToCheckInterrupt = FALSE;
 	}
 }
 
 
 //---------------------------------------------------------------------------------------
 
+void Trigger_AIInterrupt(void)
+{
+	DEBUG_AI_INTERRUPT_TRACE(TRACE0("AI Interrupt is triggered"););
+
+    // set the interrupt to fire
+    (MI_INTR_REG_R) |= MI_INTR_AI;
+    if ((MI_INTR_MASK_REG_R) & MI_INTR_AI)
+	{
+		SET_EXCEPTION(EXC_INT)
+		gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
+		HandleInterrupts(0x80000180);
+	}
+
+}
+
 void Trigger_CompareInterrupt(void)
 {
-#ifdef DEBUG_COMPARE_INTERRUPT
-	if( debug_interrupt && debug_compare_interrupt )
-	{
-		sprintf(generalmessage, "COUNT Interrupt is triggered");
-		RefreshOpList(generalmessage);
-		sprintf(generalmessage, "COUNT = %08X, COMPARE= %08X, PC = %08X", gHardwareState.COP0Reg[COUNT], gHardwareState.COP0Reg[COMPARE], gHardwareState.pc);
-		RefreshOpList(generalmessage);
-	}
-#endif
+	DEBUG_COMPARE_INTERRUPT_TRACE(
+		TRACE0("COUNT Interrupt is triggered");
+		TRACE3("COUNT = %08X, COMPARE= %08X, PC = %08X", gHWS_COP0Reg[COUNT], gHWS_COP0Reg[COMPARE], gHWS_pc);
+	);
     // set the compare interrupt flag (ip7)
-    gHardwareState.COP0Reg[CAUSE] |= 0x00008000;
-#ifdef CPUCHECKINTR
-	CPUNeedToCheckInterrupt = TRUE;
-	CPUNeedToDoOtherTask = TRUE;
-#endif
+	SET_EXCEPTION(EXC_INT)
+    gHWS_COP0Reg[CAUSE] |= CAUSE_IP8;
+
+	HandleInterrupts(0x80000180);
 }
 
 //---------------------------------------------------------------------------------------
@@ -442,79 +499,115 @@ void Trigger_DPInterrupt(void)
     (MI_INTR_REG_R) |= MI_INTR_DP;
     if ((MI_INTR_MASK_REG_R) & MI_INTR_DP)
 	{
-            gHardwareState.COP0Reg[CAUSE] |= 0x00000400;
-#ifdef CPUCHECKINTR
-			CPUNeedToCheckInterrupt = TRUE;
-			CPUNeedToDoOtherTask = TRUE;
-#endif
+		SET_EXCEPTION(EXC_INT)
+        gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
+		HandleInterrupts(0x80000180);
 	}
-
 }
 
 //---------------------------------------------------------------------------------------
-extern int AiUpdating;
+
+LARGE_INTEGER LastVITime = { 0,0 };
+LARGE_INTEGER LastSecondTime = { 0,0 };
+LARGE_INTEGER Freq;
+LARGE_INTEGER CurrentTime;
+LARGE_INTEGER Elapsed;
+double sleeptime;
+double tempvips;
+
 void Trigger_VIInterrupt(void)
 {
-	// Speed Sync
-	// If enabled, will slow down too much
-	/*
-	unsigned long currenttime;
-	static unsigned long time_of_last_vi=0;
-
-	currenttime = GetTickCount();
-	if( currenttime - time_of_last_vi < 12 )
-	{
-		Sleep(12+time_of_last_vi-currenttime);
-	}
-	time_of_last_vi = currenttime;
-	*/
-	
-#ifdef DEBUG_COMMON
-	if( debug_interrupt && debug_vi_interrupt )
-	{
-		sprintf(generalmessage, "VI Interrupt is triggered");
-		RefreshOpList(generalmessage);
-	}
+#ifdef ENABLE_OPCODE_DEBUGGER
+	if( p_gHardwareState == &gHardwareState )	
+		//only do the VI updatescreen for dyna, not for interpreter compare
 #endif
+	{
+		DEBUG_VI_INTERRUPT_TRACE(TRACE0( "VI Interrupt is triggered"););
+		//DEBUG_VI_INTERRUPT_TRACE(TRACE1("VI counter = %08X", Get_VIcounter());
+		VIDEO_UpdateScreen();
+		framecounter++;
+		if (AiUpdating==1)
+			AUDIO_AiUpdate(FALSE);
+	}
+
+	// Speed Sync
+	if( currentromoptions.Max_FPS != MAXFPS_NONE )
+	{
+		QueryPerformanceCounter(&CurrentTime);
+		Elapsed.QuadPart = CurrentTime.QuadPart - LastSecondTime.QuadPart;
+		tempvips = framecounter / ((double)Elapsed.QuadPart / (double)Freq.QuadPart);
+
+		if( tempvips > vips_speed_limits[currentromoptions.Max_FPS]+1.0)
+		{
+			//TRACE1("tempvips = %f", (float)tempvips);
+			Elapsed.QuadPart = CurrentTime.QuadPart - LastVITime.QuadPart;
+
+			sleeptime = 1000.00f/(vips_speed_limits[currentromoptions.Max_FPS]) - (double)Elapsed.QuadPart / (double)Freq.QuadPart * 1000.00;
+			do{
+				if( sleeptime > 0 )
+				{
+					if( sleeptime > 1.5 )
+						Sleep(1);
+					else
+					{
+						uint32 i;
+						for( i= 0; i< 1000*sleeptime; i++ )	{ ; }	//busy wait
+					}
+				}
+
+				QueryPerformanceCounter(&CurrentTime);
+				Elapsed.QuadPart = CurrentTime.QuadPart - LastVITime.QuadPart;
+				sleeptime = 1000.00f/(vips_speed_limits[currentromoptions.Max_FPS]) - (float)Elapsed.QuadPart / (float)Freq.QuadPart * 1000.00;
+			}while(sleeptime>0.1);
+		}
+		LastVITime = CurrentTime;
+	}
 
     // set the interrupt to fire
     (MI_INTR_REG_R) |= MI_INTR_VI;
-    if ((MI_INTR_MASK_REG_R) & MI_INTR_VI)
+    if ((MI_INTR_MASK_REG_R) & MI_INTR_MASK_VI)
 	{
-        gHardwareState.COP0Reg[CAUSE] |= 0x00000400;
-#ifdef CPUCHECKINTR
-		CPUNeedToCheckInterrupt = TRUE;
-		CPUNeedToDoOtherTask = TRUE;
-#endif
+		SET_EXCEPTION(EXC_INT)
+        gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
+		HandleInterrupts(0x80000180);
 	}
-
-	
-	
-	if( VIupdated )
-	{
-		VIDEO_UpdateScreen();
-		VIupdated = FALSE;
-	}
-	else
-	{
-#ifdef DEBUG_COMMON
-		if( debug_interrupt && debug_vi_interrupt )
-		{
-			sprintf(generalmessage, "No VI Update, Screen Update is skipped");
-			RefreshOpList(generalmessage);
-		}
-#endif
-	}
-
-	framecounter++;
-
-	if (AiUpdating)
-		AUDIO_AiUpdate(FALSE);
-
 }
 
-//---------------------------------------------------------------------------------------
+void Trigger_SIInterrupt(void)
+{
+	MI_INTR_REG_R  |= MI_INTR_SI;
 
+	if ((MI_INTR_MASK_REG_R) & MI_INTR_MASK_SI)
+	{
+		SET_EXCEPTION(EXC_INT)
+		gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
+		HandleInterrupts(0x80000180);
+	}
+}
+
+void Trigger_PIInterrupt(void)
+{
+	MI_INTR_REG_R |= MI_INTR_PI;	// Set PI Interrupt
+
+    if ((MI_INTR_MASK_REG_R) & MI_INTR_MASK_PI)
+	{
+		SET_EXCEPTION(EXC_INT)
+		gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
+		HandleInterrupts(0x80000180);
+	}
+}
+//---------------------------------------------------------------------------------------
+void Trigger_SPInterrupt(void)
+{
+	MI_INTR_REG_R  |= MI_INTR_SP;
+
+	if ((MI_INTR_MASK_REG_R) & MI_INTR_MASK_SP)
+	{
+		SET_EXCEPTION(EXC_INT)
+		gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
+		HandleInterrupts(0x80000180);
+	}
+}
 
 void Trigger_RSPBreak(void)
 {
@@ -523,15 +616,83 @@ void Trigger_RSPBreak(void)
     // set the sp interrupt when wanted
     if ((SP_STATUS_REG) & 0x0040) 
 	{
-        (MI_INTR_REG_R) |= MI_INTR_SP;
-        if ((MI_INTR_MASK_REG_R) & MI_INTR_SP)
-		{
-            gHardwareState.COP0Reg[CAUSE] |= 0x00000400;
-#ifdef CPUCHECKINTR
-			CPUNeedToCheckInterrupt = TRUE;
-			CPUNeedToDoOtherTask = TRUE;
-#endif
-		}
+		Trigger_SPInterrupt();
     }
+
+
+	// Add by Rice 2001.08.10
+	SP_STATUS_REG |= SP_STATUS_HALT;
 }
+
+void Trigger_Address_Error_Exception(uint32 addr)
+{
+	SET_EXCEPTION(EXC_RADE)
+	gHWS_COP0Reg[BADVADDR] = addr;
+
+	//TRACE0("Should fire Address Error Exception, but we skipped here");
+	TRACE0("Fires Address Error Exception");
+
+	//HandleExceptions(0x80000180);
+}
+
+void TriggerFPUUnusableException()
+{
+	if( (gHWS_COP0Reg[STATUS] & SR_CU1) )
+		return;
+
+	SET_EXCEPTION(EXC_CPU)
+	gHWS_COP0Reg[CAUSE] &= 0xCFFFFFFF;
+	gHWS_COP0Reg[CAUSE] |= CAUSE_CE1;
+
+	// Should test the CPU Delay slot bit
+	//gHWS_COP0Reg[EPC] = gHWS_pc;
+
+	TRACE0("FPU Unusable Exception");
+	HandleExceptions(0x80000180);
+}
+
+// This exception is triggered when integer overflow or divided by zero condition happens
+void TriggerIntegerOverflowException()
+{
+	SET_EXCEPTION(EXC_OV)
+	TRACE0("Integer Overflow Exception is triggered");
+	HandleExceptions(0x80000180);
+}
+
+void TriggerGeneralFPUException()
+{
+	SET_EXCEPTION(EXC_FPE)
+	TRACE0("FPU Exception is triggered");
+	HandleExceptions(0x80000180);
+}
+
+void HandleInterrupts(uint32 vt)
+{
+	// Set flag for interrupt service
+	CPUNeedToCheckInterrupt = TRUE;
+	CPUNeedToDoOtherTask = TRUE;
+}
+
+void HandleExceptions(uint32 evt)
+{
+	if( gHWS_COP0Reg[STATUS] & EXL_OR_ERL )	// Exception in exception
+	{
+		TRACE1("Warning, Exception happens in exception, the new exception is %d", (0x7C&gHWS_COP0Reg[CAUSE])>>2);
+	}
+
+	Dyna_Exception_Service_Routine(evt);
+}
+
+// This function is for debug purpose
+void Trigger_Interrupt_Without_Mask(uint32 interrupt)
+{
+    // set the interrupt to fire
+    (MI_INTR_REG_R) |= interrupt;
+	SET_EXCEPTION(EXC_INT)
+    gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
+	HandleInterrupts(0x80000180);
+}
+
+
+
 

@@ -22,6 +22,7 @@ void dyna4300i_xori(OP_PARAMS);			// lionel
 void dyna4300i_lui(OP_PARAMS);			// lionel
 void dyna4300i_cop0(OP_PARAMS);			// Table
 void dyna4300i_cop1(OP_PARAMS);			// Table
+void dyna4300i_cop1_with_exception(OP_PARAMS);
 void dyna4300i_cop2(OP_PARAMS);			// Table
 void dyna4300i_beql(OP_PARAMS);
 void dyna4300i_bnel(OP_PARAMS);
@@ -61,28 +62,20 @@ void dyna4300i_scd(OP_PARAMS);
 void dyna4300i_sdc1(OP_PARAMS);
 void dyna4300i_sdc2(OP_PARAMS);
 void dyna4300i_sd(OP_PARAMS);
-void dyna4300i_special_sll(OP_PARAMS);
-void dyna4300i_special_srl(OP_PARAMS);
-void dyna4300i_special_sra(OP_PARAMS);
-void dyna4300i_special_sllv(OP_PARAMS);
-void dyna4300i_special_srlv(OP_PARAMS);
-void dyna4300i_special_srav(OP_PARAMS);
+void dyna4300i_special_shift(OP_PARAMS); // sll, srl, sra
+void dyna4300i_shift_var(OP_PARAMS);	 // sllv, srlv, srav
 void dyna4300i_special_jr(OP_PARAMS);
 void dyna4300i_special_jalr(OP_PARAMS);
 void dyna4300i_special_syscall(OP_PARAMS);
 void dyna4300i_special_break(OP_PARAMS);
 void dyna4300i_special_sync(OP_PARAMS);
-void dyna4300i_special_mfhi(OP_PARAMS);		// lionel
-void dyna4300i_special_mthi(OP_PARAMS);		// lionel
-void dyna4300i_special_mflo(OP_PARAMS);		// lionel
-void dyna4300i_special_mtlo(OP_PARAMS);		// lionel
+void dyna4300i_mf_mt(OP_PARAMS);
 void dyna4300i_special_dsllv(OP_PARAMS);
 void dyna4300i_special_dsrlv(OP_PARAMS);
 void dyna4300i_special_dsrav(OP_PARAMS);
-void dyna4300i_special_mult(OP_PARAMS);
-void dyna4300i_special_multu(OP_PARAMS);		// lionel
-void dyna4300i_special_div(OP_PARAMS);		// lionel
-void dyna4300i_special_divu(OP_PARAMS);		// lionel
+void dyna4300i_special_mul(OP_PARAMS);
+void dyna4300i_special_div(OP_PARAMS);
+void dyna4300i_special_divu(OP_PARAMS);
 void dyna4300i_special_dmult(OP_PARAMS);
 void dyna4300i_special_dmultu(OP_PARAMS);
 void dyna4300i_special_ddiv(OP_PARAMS);
@@ -134,7 +127,7 @@ void dyna4300i_cop0_rs_mt(OP_PARAMS);
 void dyna4300i_cop0_rs_dmt(OP_PARAMS);
 void dyna4300i_cop0_rs_ct(OP_PARAMS);
 void dyna4300i_cop0_rs_bc(OP_PARAMS);
-void dyna4300i_cop0_rs_co(OP_PARAMS);
+void dyna4300i_cop0_tlb(OP_PARAMS);
 void dyna4300i_cop0_rt_bcf(OP_PARAMS);
 void dyna4300i_cop0_rt_bct(OP_PARAMS);
 void dyna4300i_cop0_rt_bcfl(OP_PARAMS);
@@ -145,7 +138,6 @@ void dyna4300i_cop0_tlbwr(OP_PARAMS);
 void dyna4300i_cop0_tlbp(OP_PARAMS);
 void dyna4300i_cop0_eret(OP_PARAMS);
 void dyna4300i_cop2_rs_not_implemented(OP_PARAMS);
-
 
 
 extern void rs4300i_reserved(_u32 Instruction);
@@ -293,13 +285,22 @@ extern void rs4300i_cop0_tlbp(_u32 Instruction);
 extern void rs4300i_cop0_eret(_u32 Instruction);
 extern void rs4300i_cop2_rs_not_implemented(_u32 Instruction);
 
+
+extern dyn_cpu_instr asm_instruction[64];
+extern dyn_cpu_instr asm_special_instruction[64];
+extern dyn_cpu_instr asm_regimm_instruction[32];
+extern dyn_cpu_instr asm_cop0_rs_instruction[32];
+extern dyn_cpu_instr asm_cop0_rt_instruction[32];
+extern dyn_cpu_instr asm_cop0_instruction[64];
+extern dyn_cpu_instr asm_cop2_rs_instruction[32];
+
        
 extern dyn_cpu_instr dyna_instruction[64];
 extern dyn_cpu_instr dyna_special_instruction[64];
 extern dyn_cpu_instr dyna_regimm_instruction[32];
 extern dyn_cpu_instr dyna_cop0_rs_instruction[32];
 extern dyn_cpu_instr dyna_cop0_rt_instruction[32];
-extern dyn_cpu_instr dyna_cop0_instruction[64];
+extern dyn_cpu_instr dyna_tlb_instruction[64];
 extern dyn_cpu_instr dyna_cop2_rs_instruction[32];
 
 extern void SetRdRsRt32bit(HardwareState* reg);

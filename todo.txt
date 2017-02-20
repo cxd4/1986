@@ -1,0 +1,430 @@
+2001-06-11
+
+1) Rom Info display, goes together to the rom options dialog box
+2) Rom List, multi-column
+3) When open-rom from File menu, will check and update the current working directory
+   and refresh the romlist
+4) When open-rom from File menu, will check / create a romlist entry for the
+   opened rom, in order to set options for it.
+5) Option rom option from menu, so be able to set options for the current rom
+6) Use full path in romlist entry, so to cover roms in different directories
+7) Search the romlist entry
+8) Change directory dialog and menu, refresh rom list
+9) Integrate options to Emu core
+   - Game save type
+   - RDRAM size
+   - Emulator type
+   - Use TLB
+   - Check memory
+   - Max VI
+10)Create a DLL to do rom list view, using C++
+11)State save/load, continue debug
+12)Rom List for zipped roms
+13)Debug the problem to open large zipped roms
+14)Merge new changes from Schibo
+
+
+2001-06-20
+
+Improve memory maps
+
+ 0x0000 0000 to 0x03EF FFFF RDRAM Memory
+ 0x03F0 0000 to 0x03FF FFFF RDRAM Registers
+ 0x0400 0000 to 0x040F FFFF SP Registers
+ 0x0410 0000 to 0x041F FFFF DP Command Registers
+ 0x0420 0000 to 0x042F FFFF DP Span Registers
+ 0x0430 0000 to 0x043F FFFF MIPS Interface (MI) Registers
+ 0x0440 0000 to 0x044F FFFF Video Interface (VI) Registers
+ 0x0450 0000 to 0x045F FFFF Audio Interface (AI) Registers
+ 0x0460 0000 to 0x046F FFFF Peripheral Interface (PI) Registers
+ 0x0470 0000 to 0x047F FFFF RDRAM Interface (RI) Registers
+ 0x0480 0000 to 0x048F FFFF Serial Interface (SI) Registers
+ 0x0490 0000 to 0x04FF FFFF Unused
+ 0x0500 0000 to 0x05FF FFFF Cartridge Domain 2 Address 1
+ 0x0600 0000 to 0x07FF FFFF Cartridge Domain 1 Address 1
+ 0x0800 0000 to 0x0FFF FFFF Cartridge Domain 2 Address 2
+ 0x1000 0000 to 0x1FBF FFFF Cartridge Domain 1 Address 2
+ 0x1FC0 0000 to 0x1FC0 07BF PIF Boot ROM
+ 0x1FC0 07C0 to 0x1FC0 07FF PIF RAM
+ 0x1FC0 0800 to 0x1FCF FFFF Reserved
+ 0x1FD0 0000 to 0x7FFF FFFF Cartridge Domain 1 Address 3
+
+/* Address translation routines and macros */
+
+extern u32		 osVirtualToPhysical(void *);
+extern void *		 osPhysicalToVirtual(u32);
+
+#define	OS_K0_TO_PHYSICAL(x)	(u32)(((char *)(x)-0x80000000))
+#define	OS_K1_TO_PHYSICAL(x)	(u32)(((char *)(x)-0xa0000000))
+
+#define	OS_PHYSICAL_TO_K0(x)	(void *)(((u32)(x)+0x80000000))
+#define	OS_PHYSICAL_TO_K1(x)	(void *)(((u32)(x)+0xa0000000))
+
+
+A) Address calculation
+
+- For KSEG0 Address range 0x80000000 - 0x9FFFFFFF
+	Physical Address = Addr & 0x1FFFFFFF
+
+- For KSEG1 Address range 0xA0000000 - 0xBFFFFFFF
+	Physical Address = Addr & 0x1FFFFFFF
+
+- All for other address range, address is virtual address
+	Physical Address = TLB(addr)
+	
+c) Addresss Access
+- 
+	
+B) Address Mask
+- use mask to map the out-of-range address to its range.
+  1) Range 0x0500 0000 to 0x05FF FFFF Cartridge Domain 2 Address 1
+     Addr = Addr & 0x05007FFF + 0x05000000	// 32KB SRAM
+
+  2) Range 0x0600 0000 to 0x07FF FFFF Cartridge Domain 1 Address 1
+  	 Addr = Addr & 0x06007FFF	// 32KB SRAM
+  	 
+  3) Range 0x0800 0000 to 0x0FFF FFFF Cartridge Domain 2 Address 2
+  	 Addr = Addr & 0x0801FFFF	// 128KB FLASHRAM
+  	 
+  4) Range 0x1FD0 0000 to 0x7FFF FFFF Cartridge Domain 1 Address 3
+     Addr = Addr & 0x1FD07FFF	// 32KB SRAM
+
+D) SRAM support
+  0) Allocate SRAM memory
+  1) Detect SRAM access in DMA memory transfer
+  2) Detect SRAM acesss in r4300i SW/LW opcode
+  3) Load SRAM at first access
+  4) Save SRAM at iPIF.close
+  
+E) FLASHRAM support
+  0) Allocate FLASHRAM memory
+  1) Detect FLASHRAM access in r4300i SW/LW opcode
+  2) Load FLASHRAM at first access
+  3) Save FLASHRAM at 1964 exit
+
+F) Out of range memory access
+- Record the out of range memory access in error log
+- Should the out of range memory be mapped to a dummy memory segment
+- Generate address error exception
+- Stop emulation at instruction load exception
+
+G) Error log of 1964
+- Open error log at first use
+- Max count for error log
+- Close error log at ROM close
+- Name the error log file as ROM name
+- Prompt user when create error log
+- Enable/Disable error in 1964 option dialog windows
+
+H) Read only memory protection
+- Protect ROM memory from being overwriten
+
+I) Cache support
+- Instruction Cache
+  Implement Instruction cache
+- Data Cache
+
+
+J) Self-modify code detection
+- How to detect which part of memory is code, and which part is data
+- Elimiate DynaInterrupt segment
+- Detect interrupt vector to be modified
+- Detect interrupt service routine to be modified
+
+M) 
+
+
+2001-06-30
+1) To elimiate checking interrupts in the main interpreter/dynareg emulation loop
+   * Set interrupt vector only at the point when interrupt is triggers.
+   * Check interrupt mask, if interrupt is disabled or the interrupt is masked, not to
+     set interrupt vector
+   * Works different in Dynrec and Interpreter
+   * When enable the interrupt in MI, or change interpreter mask, rescan the interrupt
+     condition and set interrupt vector if needed.
+   * How to inplement interrupt vector ?
+2) Elimate all CPU tasks
+   * not to use PI DMA delay
+   * Not to use SI DMA delay
+   * Not to use SP Task delay
+   * Not to use SP DMA delay
+3) TLB in Dynarec
+
+2001-07-02
+
+1) If write to PIF RAM/ROM
+
+ 
+   if ((dwAddress&0x1FFFFFFF) <= PIF_RAM_END)
+	{
+		DBGConsole_Msg(0, "[WWriting directly to PI ram]: 0x%08x:0x%08x!", dwAddress, dwValue);
+		DPF(DEBUG_MEMORY_PIF, "Writing to MEM_PI_RAM: 0x%08x", dwAddress);
+
+		dwOffset = (dwAddress&0x1FFFFFFF) - PIF_RAM_START;
+
+		switch (dwOffset)
+		{
+		case 0x3c:
+			DBGConsole_Msg(0, "[YWriting to Control Byte]");
+			// Seems to want high bt set after 0x20 is written
+			if (dwValue & 0x20)
+				dwValue |= 0x80; break;
+			
+			dwValue = 0; break;
+		}
+
+		*(DWORD *)((BYTE *)g_pMemoryBuffers[MEM_PI_RAM] + dwOffset) = dwValue;
+		
+2) Do not generate a exception for invalid address access
+  
+3) Read/write noise for the following memory range
+	{ 0x8080, 0x83EF, Read_Noise,		Write_Noise,	WriteValueNoise },			// Unused - electrical noise
+	{ 0xA080, 0xA3EF, Read_Noise,		Write_Noise,	WriteValueNoise },			// Unused
+
+4) Map all address read/write to dummy segment,
+   not to generate TLB exception
+   An option to enable/disable TLB exception / Memory exception
+   
+5) These two SP registers are read only, ignore all writes
+		case SP_DMA_FULL_REG:
+		case SP_DMA_BUSY_REG:
+
+		case DPC_CURRENT_REG:// - Read Only
+		case DPC_CLOCK_REG: //- Read Only
+		case DPC_BUFBUSY_REG: //- Read Only
+		case DPC_PIPEBUSY_REG: //- Read Only
+		case DPC_TMEM_REG: //- Read Only
+
+		case MI_VERSION_REG:
+		case MI_INTR_REG:
+
+6) Ignore R0, R0 can not be modified by
+   Load/Store, Math instructions
+   
+7) Ignore the brance instruction in brance delay slot
+
+8) Faster boot, from sixtyforce
+	// HACK TEST - boots zelda
+	if (gBootHelper == true) {
+		uint32	bootAddress, bootOffset;
+		// copy boot code to sp data mem
+		if (gROMFileMapped == false) {
+			FastDMA((state->cartMemory + 8), &bootAddress, 4);
+			bootOffset = (bootAddress & 0x00FFFFFF);
+			FastDMA((state->cartMemory + 0x1000), (state->rdram + bootOffset), (0x400000 - bootOffset));
+		} else {
+			FileDMA(8, &bootAddress, 4);
+			bootOffset = (bootAddress & 0x00FFFFFF);
+			FileDMA(0x1000, (state->rdram + bootOffset), (0x400000 - bootOffset));
+		}
+		state->haltAddress = (0x80000000 + bootOffset);
+	} else {
+		// copy boot code to sp data mem
+		if (gROMFileMapped == false) {
+			FastDMA(state->cartMemory, state->spMemory, 0x1000);
+		} else {
+			FileDMA(0, state->spMemory, 0x1000);
+		}
+		// setup initial pc
+		state->haltAddress = 0xA4000040;
+	}
+
+9) ROM file memory mapping
+   Map memory directory to file, without load the ROM into memory
+   
+10) DynaROM, dynamatic allocate it, allocate it only when needed.
+   Only a very few ROM need it for Dynareg compiler
+   
+   This will reduce memory requirement for ROM by half
+   
+   - Detect DynaROM memory access in Dynareg emu main loop
+   - Use link list to manager the blocks
+   - Allocate the block, create a link node
+   - 4KB block size
+   - Deallocate the blocks in the link list
+   
+11) Take a look of sixty-force code to dynacomp block compiling and checking
+
+12) For non-mapped memory range,
+   - Write to nothing
+   - Read to get 0xFF, all high bits
+
+
+   
+2001-07-20
+
+1) More speed hacks
+Like:
+	80004c00	50 40 FF FF		BNEL v0, r0, 80004c00
+	80004c04	8E 42 7! E8		LW   v0, 71E8(s2)
+
+If the branch slot instruction is a LOAD instruction and the target register of the load instruction
+is one of the two comparing registers in the BNE instruction
+
+
+2)	800001c8		BGEZAL	R0, FFFFFFFF
+	800001ca		NOP
+
+Loop because no interrupts. This instruction is waiting for interrupts but in the boot strap
+
+
+
+2001-07-23
+
+1) Add the CHECK_R0 Macro to DynaCPU
+   This options works for some games
+
+2) Debug the issue that game works only at DEBUG mode, but not in RELEASE mode
+
+3) Check the SHIFT instructions
+
+
+2001-07-31
+1) Debug the FPU bug in interpreter
+2) Optimize the emu main loop for intrepreter
+3) Checking the flash register routing, to debug this problem
+4) A faster intrepreter, to make a new CPU core
+5) CF, to be put into ROM option and saved into INI file
+6) Setting the CF and CPU core menu correctly when 1964 starting
+7) A new register caching option to ROM options
+8) File directory setting logic
+9) CF, fix CF for interpreter
+10) Check the interrupt service routing for Dynarec, remove it
+11) Flashram support
+
+
+2001-08-07
+1) Do asm code for opcode LW, SW, LH
+2) Use MMX register to optimize 64bit Load/Store opcode for intrepreter mode
+3) Do asm code for optimized 64bit Load/Sotre opcode
+4) How to use two passes to optimize Load/Store instructions. In the first pass, to know
+   the memory range, in the second pass, modify the code itself to do Load/Store without
+   testing valloc/valloc2/CheckSW/CheckLW
+
+2001-08-08
+To implement FPU usage exception
+<zilmar> yer it is a uery important exception
+<zilmar> uoid _fastcall DoCopUnusableException ( BOOL DelaySlot, int
+
+Coprocessor ) (
+<Rice> Should this exception aluays fires acceding to STATUS reg. May not
+
+it is not a good question to you, you don't haue to ansuer
+<zilmar> iif (( STATUS_REGISTER Q, STATUS_EXL  ) != 0 ) (
+<zilmar> ••DisplayError("EXL set in Break Exception");
+
+<zilmar> 1}
+
+<zilmar> iif (( STATUS_REGISTER Q, STATUS_ERL  ) != 0 ) (
+
+<zilmar> iiDisplayError("ERL set in Break Exception");
+
+<zilmar> 1}
+
+<zilmar> BCAUSE_REGISTER = EXC_CPU;
+
+<zilmar> •if (Coprocessor == 1) ( CAUSE_REGISTER l= 0x10000000; }
+
+<zilmar> •if (DelaySlot) (
+
+<zilmar> iiCAUSE_REGISTER l= CAUSE_BD;
+
+<zilmar> iiEPC_REGISTER = PROGRAM_COUNTER - 4;
+
+<zilmar> 1} else (
+
+<zilmar> iiEPC_REGISTER = PROGRAM_COUNTER;
+
+<zilmar> 1}
+
+<zilmar> BSTATUS_REGISTER 1= STATUS_EXL;
+
+<zilmar> BPROGRAM_COUNTER = 0x80000180;
+
+<zilmar> }
+
+<zilmar> ttdefine TEST_COP1_USABLE_EXCEPTION \
+
+<zilmar> •if ((STATUS_REGISTER Q, STATUS_CU1) == 0) (\
+
+<zilmar> IIDoCopUnusableException(Next Instruct ion == JUMP,1);\
+
+<zilmar> BiNextInstruction = JUMP;\
+
+<zilmar> BiJumpToLocation = PROGRAM_COUNTER;\
+
+<zilmar> iireturn;\
+
+<zilmar> 1}
+
+<zilmar> I do that for euery fpu op
+
+
+
+
+
+2001-0817
+
+1. To optimize TLB lookup, use two linked list, one for ITLB, one for DTLB
+	* Always move the last accessed TLB entry to the top of the list.
+	* When an new TLB entry is written, test if this is a valid entry or invalid entry. If is a valid entry, put this new entry to the last of the valid entry list
+	* Count the number of valid entries
+	* remove ITLB, use the new ITLB entry linked list
+
+
+
+2001-0926
+1) Pause audio at pausing game
+2) Fix the problem Jabo 1.3 video dll does not display graphics
+D-3) fix the bug from interpreter to dyna switch
+X-4) faster check block method, by checking 1st, last, middle WORD first, then check other WORDs
+5) better check_Dword method
+6) debug flashram DMA error report on Paper Mario
+7) debug SRAM problem in F-Zero
+8) save/store flashram file
+D-9) revise the state save format
+D-10) version information in state save file
+X-11) pj64 compatibile state save format
+   will do an exteral tool to do convert
+X-12) or support pj64 state save file
+X-13) user to select zip/unzip state save file
+14) state save directory
+15) automatic state save at game pause
+16) dyna some of the 64bit FPU opcode
+17) better utilize the idle sleep CPU time in vi speed sync
+D-18) use a big try_except block to catch any other exception from emu main loop
+D-19) elegant quit from error condition 
+20) count error messages.
+D- 21) an optional message box to display all critical error messages
+22) a graphical indicator (green/red color circle) to show normal/in_exception
+
+
+GUI
+D-1) Add a option to enable/disable rom list display
+2) Able to sort rom list by name/country/comments/size
+3) able to modify rom comments directly in the rom list
+D-4) load hack code on demand, not until the rom is loaded
+5) disable/enable necessary menus before/after game play
+6) hide rom option and default option menu during game play
+7) Block some key/mouse input during game play
+D-8) Display country code and country name in rom option dialog
+D-9) New functions to do
+  country code -> tv-system
+  country code -> country name
+10) toolbar
+11) fix the problem that rcp.dll covers status bar
+D-12) user option to use automatic speed sync
+13) hide mouse pointer during game play
+D-14) pause emu at menu action, use suspend/resume thread
+15) saft guard video plugin from hangs
+D-16) screenshot supporting
+D-17) When emu is running, user can change option for the current playing rom
+
+
+Plugin
+D-1) Don't initialize plugin if it is not changed when click OK after plugin selection dialog
+
+
+Others
+1) combine DEBUG and RELEASE build into one build
+2) debugger to support 64bit FPU
