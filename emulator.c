@@ -1,7 +1,4 @@
-/*$T emulator.c GC 1.136 03/09/02 16:59:16 */
-
-
-/*$6
+/*
  +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     This file boots the n64 and starts the emulation thread.
  +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -39,6 +36,7 @@
 #include "win32/DLL_Video.h"
 #include "win32/DLL_Audio.h"
 #include "win32/DLL_Input.h"
+#include "win32/DLL_Rsp.h"
 #include "win32/windebug.h"
 #include "win32/wingui.h"
 #include "dynarec/regcache.h"
@@ -46,6 +44,7 @@
 #include "dynarec/dynaLog.h"
 #include "dynarec/dynacpu.h"
 #include "dynarec/dynarec.h"
+#include "netplay.h"
 
 #ifdef DEBUG_COMMON
 #include "win32/windebug.h"
@@ -62,7 +61,8 @@ void				RunTheRegCacheWithoutOpcodeDebugger(void);
 void				RunTheRegCacheWithOpcodeDebugger(void);
 void				RunTheRegCacheNoCheck(void);
 HANDLE				CPUThreadHandle = NULL;
-int					Audio_Thread_Keep_Running = FALSE;
+
+LONG				Audio_Thread_Keep_Running = FALSE;
 HANDLE				AudioThreadHandle = NULL;
 struct EmuStatus	emustatus;
 struct EmuOptions	emuoptions;
@@ -73,36 +73,85 @@ MemoryState			gMemoryState, *p_gMemoryState;
 uint32				*g_LookupPtr;	/* This global will be set at returning from a block */
 uint32				g_pc_is_rdram;	/* This global will be set at returning from a block */
 BOOL				IsBooting = FALSE;
+BOOL				NeedToApplyRomWriteHack = FALSE;
+extern HINSTANCE	AudioThreadSemaphore;
+extern HINSTANCE	AudioThreadDataMutex;
+
+void StopAudio(void);
 
 void (__cdecl StartCPUThread) (void *pVoid);
 void (__cdecl AudioThread) (void *pVoid)
 {
-	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL);
-	while(Audio_Thread_Keep_Running)
+	//SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL);
+	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
+	
+	ReleaseSemaphore(AudioThreadSemaphore, 1, NULL);	//Tell that this thread is running
+
+	while(Audio_Thread_Keep_Running == TRUE)
 	{
-		AUDIO_AiUpdate(FALSE);
+		AUDIO_AiUpdate(TRUE);
+		Sleep(1);
 	}
+	ExitThread(0);
 }
 
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void StartAudio(void)
+{
+	Audio_Thread_Keep_Running = TRUE;
+	AudioThreadHandle = (HANDLE) _beginthread(AudioThread, 0, NULL);
+	WaitForSingleObject(AudioThreadSemaphore, INFINITE);
+}
+
+void PauseAudio(void)
+{
+}
+
+void ResumeAudio(void)
+{
+}
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
 void StopAudio(void)
 {
-	Audio_Thread_Keep_Running = TRUE;
-	AudioThreadHandle = (HANDLE) _beginthread(AudioThread, 0, NULL);
-}
+	if( AudioThreadHandle != NULL )
+	{
+		TerminateThread(AudioThreadHandle,0);
+		AudioThreadHandle = NULL;
+		return;
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void ResumeAudio(void)
-{
-	Audio_Thread_Keep_Running = FALSE;
-	Sleep(50);
-	AudioThreadHandle = NULL;
+		if( emuoptions.UsingRspPlugin )	//We are using Jabo DirectSound Plugin
+		{
+			//For some reason, if using Jabo DirectSound plugin, the audio thread
+			//can not be terminated correctly as other audio plugins
+			//Only way to stop it is to terminate the thread
+			TerminateThread(AudioThreadHandle,0);
+		}
+		else
+		{
+			DWORD retval = WAIT_TIMEOUT;
+			MSG msg;
+
+			do {
+				if(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
+				{
+					if(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
+					{
+						if(GetMessage(&msg, NULL, 0, 0)) DispatchMessage(&msg);
+					}
+				}
+
+				Audio_Thread_Keep_Running = FALSE;
+				GetExitCodeThread(AudioThreadHandle, &retval);
+			} while( retval == STILL_ACTIVE );
+		}
+		AudioThreadHandle = NULL;
+	}
 }
 
 /*
@@ -120,9 +169,19 @@ void RunEmulator(uint32 core)
 	emustatus.Emu_Keep_Running = TRUE;
 	Audio_Thread_Keep_Running = TRUE;
 	AUDIO_Initialize(Audio_Info);
-	AUDIO_AiUpdate(FALSE);
 	emustatus.cpucore = core;
-	CPUThreadHandle = (HANDLE) _beginthread(StartCPUThread, 0, NULL);
+#ifndef CRASHABLE
+    __try {
+#endif
+    CPUThreadHandle = (HANDLE) _beginthread(StartCPUThread, 0, NULL);
+#ifndef CRASHABLE
+    }__except(NULL, EXCEPTION_EXECUTE_HANDLER)
+	{
+		DisplayError("Emulation stopped. Please restart 1964.exe");
+		emustatus.reason_to_stop = CPUCRASH;	/* Quit like VIDEO plugin crash */
+	}
+#endif
+
 }
 
 /*
@@ -176,7 +235,7 @@ step2:
 		Sleep(50);
 	}
 
-	StopAudio();;
+	PauseAudio();;
 	sprintf(generalmessage, "%s - paused", gui.szWindowTitle);
 	SetStatusBarText(0, generalmessage);
 	SetWindowText(gui.hwnd1964main, generalmessage);
@@ -195,14 +254,19 @@ void ResumeEmulator(int action_after_pause)
 {
 	if(!emustatus.Emu_Is_Paused) return;
 
-	AUDIO_AiUpdate(FALSE);
 	emustatus.action_after_resume = action_after_pause;
 
 	ResumeAudio();
 	Sleep(50);
 
 	/* Apply the hack codes */
-	if(emuoptions.auto_apply_cheat_code) CodeList_ApplyAllCode(INGAME);
+	if(emuoptions.auto_apply_cheat_code)
+	{
+		CodeList_ApplyAllCode(INGAME);
+#ifdef CHEATCODE_LOCK_MEMORY
+		InitCheatCodeEngineMemoryLock();
+#endif
+	}
 
 	emustatus.Emu_Keep_Running = TRUE;
 
@@ -242,11 +306,16 @@ void StopEmulator(void)
 		Sleep(50);
 	}
 
-	ResumeAudio();	/* quit the audio thread */
+	StopAudio();
 	Sleep(50);
 
 	AUDIO_RomClosed();
 	CONTROLLER_RomClosed();
+	if( emuoptions.UsingRspPlugin )
+	{
+		RSPRomClosed();
+	}
+	netplay_rom_closed();
 }
 
 /*
@@ -326,8 +395,11 @@ void RefreshDynaDuringGamePlay(void)
  =======================================================================================================================
  =======================================================================================================================
  */
+extern BOOL write_to_rom_flag;
+
 void InitEmu(void)
 {
+	StartAudio();
 	if(GetVersion() < 0x80000000)	/* Windows NT */
 		SetThreadPriority(CPUThreadHandle, THREAD_PRIORITY_NORMAL);
 	else
@@ -340,6 +412,7 @@ void InitEmu(void)
 	CPUNeedToDoOtherTask = FALSE;
 	CPUNeedToCheckInterrupt = FALSE;
 	emustatus.Emu_Is_Paused = FALSE;
+	write_to_rom_flag = FALSE;
 	emustatus.exception_entry_count = 0;
 	emustatus.action_after_resume = DO_NOTHING_AFTER_PAUSE;
 	compilerstatus.lCodePosition = 0;
@@ -348,6 +421,8 @@ void InitEmu(void)
 	compilerstatus.Is_Compiling = 0;
 	vips = vips_speed_limits[currentromoptions.Max_FPS];
 	framecounter = 0;
+	viCountePerSecond = 0;
+	vi_field_number = 0;
 	QueryPerformanceCounter(&LastVITime);
 	QueryPerformanceCounter(&LastSecondTime);
 
@@ -356,6 +431,7 @@ void InitEmu(void)
 	memcpy(&HeaderDllPass[0], &gMS_ROM_Image[0], 0x40);
 	VIDEO_RomOpen();
 	CONTROLLER_RomOpen();
+	netplay_rom_open();
 
 	RefreshDynaDuringGamePlay();
 }
@@ -374,6 +450,14 @@ void N64_Boot(void)
 
 	emustatus.Emu_Is_Running = TRUE;
 	IsBooting = TRUE;
+	
+	NeedToApplyRomWriteHack = FALSE;
+	if( strnicmp(currentromoptions.Game_Name, "A Bug's Life", 12) == 0 ||
+		strnicmp(currentromoptions.Game_Name, "Toy Story 2", 11) == 0 )
+	{
+		NeedToApplyRomWriteHack = TRUE;
+		TRACE0("Using Rom Write Hack");
+	}
 
 	while
 	(
@@ -433,6 +517,9 @@ void N64_Boot(void)
 	{
 		CodeList_ApplyAllCode(BOOTUPONCE);
 		CodeList_ApplyAllCode(INGAME);
+#ifdef CHEATCODE_LOCK_MEMORY
+		InitCheatCodeEngineMemoryLock();
+#endif
 	}
 
 	emustatus.Emu_Is_Running = FALSE;
@@ -455,7 +542,7 @@ void __cdecl	LogDyna(char *debug, ...);
  */
 void (__cdecl StartCPUThread) (void *pVoid)
 {
-	TRACE0("");
+    TRACE0("");
 	TRACE0("");
 	TRACE0("");
 	TRACE1("Starting ROM %s", rominfo.name)
@@ -470,9 +557,6 @@ void (__cdecl StartCPUThread) (void *pVoid)
 
 	emustatus.reason_to_stop = EMURUNNING;
 	DO_PROFILIER_R4300I
-#ifndef CRASHABLE
-	__try
-#endif
 	{
 START_CPU_THREAD:
 		emustatus.Emu_Is_Running = TRUE;
@@ -484,10 +568,10 @@ START_CPU_THREAD:
 			break;
 		case DYNACOMPILER:
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY4
-			if(debug_opcode == 1)
+			if(debug_opcode != 0)
 			{
-				TRACE0("Start RunTheRegCacheWithOpcodeDebugger");
-				RunTheRegCacheWithOpcodeDebugger();
+                TRACE0("Start RunTheRegCacheWithOpcodeDebugger");
+                RunTheRegCacheWithOpcodeDebugger();
 			}
 			else
 #endif
@@ -516,16 +600,10 @@ START_CPU_THREAD:
 			goto START_CPU_THREAD;
 		}
 	}
-#ifndef CRASHABLE
-	__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-	{
-		DisplayError("Emulation stopped. Please restart 1964.exe");
-		emustatus.reason_to_stop = CPUCRASH;	/* Quit like VIDEO plugin crash */
-	}
-#endif
 	stop_profiling();
 	CloseEmulator();
-	_endthreadex(0);
+    _endthreadex(0);
+
 }
 
 /*
@@ -551,7 +629,6 @@ void PauseEmulating(void)
 
 	if(emustatus.Emu_Keep_Running)
 	{
-		AUDIO_AiUpdate(FALSE);
 		Free_Dynarec();
 
 		if(emustatus.action_after_resume == INIT_EMU_AFTER_PAUSE)
@@ -630,39 +707,30 @@ void RunTheRegCacheWithoutOpcodeDebugger(void)
 	{
 _DoOtherTask:
 		Block = (uint8 *) *g_LookupPtr;
-		if(Block != NULL && g_pc_is_rdram) Dyna_Check_Codes();
+		if(Block != NULL && g_pc_is_rdram) 
+			Dyna_Check_Codes();
+
 		if(Block == NULL)
 		{
-			__asm
-			{
-				push ebp
-			}
-
+			__asm push ebp;
 			Dyna_Compile_Block();
-			__asm
-			{
-				pop ebp
-			}
+			__asm push ebp;
 		}
 
 		/* Run the compiled code in the Block */
-		DEBUG_PRINT_DYNA_EXECUTION_INFO __asm call Block
-		if(countdown_counter > 0) goto _DoOtherTask;
-		{
-			__asm
-			{
-				push ebp
-			}
+		DEBUG_PRINT_DYNA_EXECUTION_INFO;
+		__asm call Block;
+		
+		if(countdown_counter > 0)
+			goto _DoOtherTask;
 
-			Trigger_Timer_Event();
-			__asm
-			{
-				pop ebp
-			}
-		}
+		__asm push ebp;
+		Trigger_Timer_Event();
+		__asm push ebp;
 	}
 
-	if(Is_CPU_Doing_Other_Tasks()) goto _DoOtherTask;
+	if( emustatus.reason_to_stop != EMUSTOP && Is_CPU_Doing_Other_Tasks() ) 
+		goto _DoOtherTask;
 
 	__asm pop ebp
 
@@ -683,7 +751,7 @@ void RunTheRegCacheWithOpcodeDebugger(void)
 	__asm mov ebp, HardwareStart
 	while(emustatus.Emu_Keep_Running)
 	{
-_DoOtherTask:
+_NextBlock:
 		__asm
 		{
 			mov eax, g_LookupPtr
@@ -704,18 +772,13 @@ _DoOtherTask:
 			l3 :
 		}
 
-		/*
-		 * Block = (uint8*)*g_LookupPtr; if( Block != NULL && g_pc_is_rdram )
-		 * Dyna_Check_Codes(); if (Block == NULL) { __asm { push ebp }
-		 * Dyna_Compile_Block(); __asm { pop ebp } }
-		 */
 		BlockStartPC = gHardwareState.pc;
 
 		/* Run the compiled code in the Block */
-		DEBUG_PRINT_DYNA_EXECUTION_INFO __asm call Block
+		DEBUG_PRINT_DYNA_EXECUTION_INFO;
+		__asm call Block
 
-		/* ifndef TEST_OPCODE_DEBUGGER_INTEGRITY5 */
-		if(debug_opcode)
+		if(debug_opcode!=0)
 		{
 			if(CPUdelay == 1) gHardwareState_Interpreter_Compare.pc += 4;
 
@@ -751,23 +814,16 @@ _DoOtherTask:
 			gHardwareState_Interpreter_Compare.pc = gHardwareState.pc;
 		}
 
-		/* endif */
-		if(countdown_counter > 0) goto _DoOtherTask;
-		{
-			__asm
-			{
-				push ebp
-			}
+		if(countdown_counter > 0)
+			goto _NextBlock;
 
-			Trigger_Timer_Event();
-			__asm
-			{
-				pop ebp
-			}
-		}
+		__asm push ebp;
+		Trigger_Timer_Event();
+		__asm pop ebp;
 	}
 
-	if(Is_CPU_Doing_Other_Tasks()) goto _DoOtherTask;
+	if( emustatus.reason_to_stop != EMUSTOP && Is_CPU_Doing_Other_Tasks() ) 
+		goto _NextBlock;
 
 	__asm pop ebp
 
@@ -780,12 +836,11 @@ _DoOtherTask:
  */
 void RunTheRegCacheNoCheck(void)
 {
-	/* __asm pushad */
 	__asm push ebp
 	__asm mov ebp, HardwareStart
 	while(emustatus.Emu_Keep_Running)
 	{
-_DoOtherTask:
+_NextBlock:
 		__asm
 		{
 l1:
@@ -798,39 +853,24 @@ l1:
 			test eax, eax
 			jg l1
 			jmp l3
-			l2 : push ebp	/* start e */
-			call Dyna_Compile_Block
-			pop ebp
-			call eax
-			cmp countdown_counter, 0
-			jg l1
-			l3 :
+l2 :		push ebp	/* start e */
+			 call Dyna_Compile_Block
+			 pop ebp
+			 call eax
+			 cmp countdown_counter, 0
+			 jg l1
+l3 :
 		}
 
-		/*
-		 * if( !(Block = (uint8*)*g_LookupPtr) ) { __asm { push ebp }
-		 * Dyna_Compile_Block(); __asm { pop ebp } } __asm call Block if(
-		 * countdown_counter > 0 ) goto _DoOtherTask;
-		 */
-		{
-			__asm
-			{
-				push ebp
-			}
-
-			Trigger_Timer_Event();
-			__asm
-			{
-				pop ebp
-			}
-		}
+		__asm push ebp;
+		Trigger_Timer_Event();
+		__asm pop ebp;
 	}
 
-	if(Is_CPU_Doing_Other_Tasks()) goto _DoOtherTask;
+	if( emustatus.reason_to_stop != EMUSTOP && Is_CPU_Doing_Other_Tasks() ) 
+		goto _NextBlock;
 
 	__asm pop ebp
-
-	/* __asm popad */
 }
 
 /*
@@ -861,7 +901,7 @@ void CPU_Check_Interrupts(void)
 	else	/* Dyna mode */
 	{
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY6
-		if(debug_opcode)
+		if(debug_opcode!=0)
 		{
 			COMPARE_SwitchToInterpretive();
 			if
@@ -1090,7 +1130,7 @@ void RunDynaBlock(void)
 		__asm pop ebp
 		__asm popad
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY7
-		if(debug_opcode)
+		if(debug_opcode!=0)
 		{
 			if(CPUdelay == 1) gHardwareState_Interpreter_Compare.pc += 4;
 
@@ -1205,7 +1245,7 @@ void Dyna_Exception_Service_Routine(uint32 vector)
 		{
 #ifdef ENABLE_OPCODE_DEBUGGER
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY8
-			if(debug_opcode == 1 && emustatus.cpucore == DYNACOMPILER)
+			if(debug_opcode != 0 && emustatus.cpucore == DYNACOMPILER)
 			{
 				if(p_gMemoryState == &gMemoryState)
 					RunDynaBlock();
@@ -1226,6 +1266,8 @@ void Dyna_Exception_Service_Routine(uint32 vector)
 		{
 			AUDIO_RomClosed();
 			CONTROLLER_RomClosed();
+			netplay_rom_closed();
+
 			emustatus.Emu_Is_Running = FALSE;
 			CloseEmulator();
 			_endthreadex(0);
@@ -1250,5 +1292,37 @@ void Dyna_Exception_Service_Routine(uint32 vector)
 	__asm
 	{
 		pop ebp
+	}
+}
+
+void DoOthersBeforeSaveState()
+{
+	AI_LEN_REG = AUDIO_AiReadLength();
+}
+
+void DoOthersAfterLoadState()
+{
+	CPUNeedToCheckInterrupt = TRUE;
+	CPUNeedToDoOtherTask = TRUE;
+	Set_Check_Interrupt_Timer_Event();
+
+	/* Check FPU usage bit */
+	if(currentromoptions.FPU_Hack == USEFPUHACK_YES )
+	{
+		if( gHWS_COP0Reg[STATUS] & SR_CU1)
+		{
+			EnableFPUUnusableException();
+		}
+		else
+		{
+			DisableFPUUnusableException();
+		}
+	}
+
+	AUDIO_AiLenChanged();
+
+	if( CoreDoingAIUpdate )
+	{
+		AUDIO_AiUpdate(FALSE);
 	}
 }

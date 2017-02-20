@@ -2312,82 +2312,6 @@ void dyna4300i_lui(OP_PARAMS)
 	MapConst(xRT, (_s32) ((__I) << 16));
 }
 
-extern void TriggerFPUUnusableException(void);
-void (*Dyna_Code_Check[]) (uint32 pc);
-void (*Dyna_Check_Codes) (uint32 pc);
-void	COMPARE_SwitchToInterpretive(void);
-void	COMPARE_SwitchToDynarec(void);
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void dyna4300i_cop1_with_exception(OP_PARAMS)
-{
-	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	MapConstant LocalTempConstMap[NUM_CONSTS];
-	x86regtyp	LocalTempx86reg[8];
-	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-#ifdef ENABLE_OPCODE_DEBUGGER
-	SetRdRsRt32bit(PASS_PARAMS);
-#ifndef TEST_OPCODE_DEBUGGER_INTEGRITY24
-	if(debug_opcode)
-	{
-		PUSHAD();
-		MOV_ImmToReg(1, Reg_EAX, (_u32) & COMPARE_SwitchToInterpretive);
-		CALL_Reg(Reg_EAX);
-
-		MOV_ImmToReg(1, Reg_ECX, reg->code);
-		if(currentromoptions.FPU_Hack == USEFPUHACK_YES)
-		{
-			MOV_ImmToReg(1, Reg_EAX, (_u32) COP1_NotAvailable_instr);
-		}
-		else
-		{
-			MOV_ImmToReg(1, Reg_EAX, (_u32) COP1_instr);
-		}
-
-		CALL_Reg(Reg_EAX);	/* disable this line to test integrity of dyna portion */
-
-		MOV_ImmToReg(1, Reg_EAX, (_u32) & COMPARE_SwitchToDynarec);
-		CALL_Reg(Reg_EAX);
-		POPAD();
-	}
-#endif
-#endif
-	if(currentromoptions.FPU_Hack == USEFPUHACK_YES)
-	{
-		/*~~~~~~~~~~~~~~~*/
-		int temp = reg->pc;
-		/*~~~~~~~~~~~~~~~*/
-
-		TEST_ImmWithMemory((uint32) & gHWS_COP0Reg[STATUS], SR_CU1);
-		Jcc_Near_auto(CC_NE, 8);
-
-		MOV_ImmToMemory(1, ModRM_disp32, (uint32) & reg->pc, temp);
-		memcpy(LocalTempConstMap, ConstMap, sizeof(ConstMap));
-		memcpy(LocalTempx86reg, x86reg, sizeof(x86reg));
-		FlushAllRegisters();
-		X86_CALL((uint32) TriggerFPUUnusableException);
-		MOV_ImmToMemory(1, ModRM_disp32, (uint32) & reg->pc, temp);
-		RET();
-
-		SetNearTarget(8);
-		memcpy(ConstMap, LocalTempConstMap, sizeof(ConstMap));
-		memcpy(x86reg, LocalTempx86reg, sizeof(x86reg));
-	}
-
-	if(debug_opcode)
-	{
-		debug_opcode = 0;	/* this stops the opcode is interpreted again within dyna4300i_cop1_Instruction */
-		dyna4300i_cop1_Instruction[__RS](PASS_PARAMS);
-		debug_opcode = 1;
-	}
-	else
-		dyna4300i_cop1_Instruction[__RS](PASS_PARAMS);
-}
-
 extern _int32	r4300i_lh_faster(uint32 QuerAddr);
 
 /*
@@ -4201,6 +4125,45 @@ void dyna4300i_shift_var(OP_PARAMS)
 	x86reg[1].mips_reg = -1;
 }
 
+uint32	fpu_exception_count = 0;
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void prepare_run_exception(uint32 exception_code)
+{
+	gHWS_COP0Reg[CAUSE] &= NOT_EXCCODE;
+	gHWS_COP0Reg[CAUSE] |= exception_code;
+	gHWS_COP0Reg[EPC] = gHWS_pc;
+	gHWS_COP0Reg[STATUS] |= EXL;	/* set EXL = 1 */
+	gHWS_COP0Reg[CAUSE] &= NOT_BD;	/* clear BD */
+
+	if(exception_code == EXC_CPU)
+	{
+		gHWS_COP0Reg[CAUSE] &= 0xCFFFFFFF;
+		gHWS_COP0Reg[CAUSE] |= CAUSE_CE1;
+		fpu_exception_count++;
+	}
+
+	TRACE0("Exception in Dyna");
+}
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void dyna_set_exception(OP_PARAMS, uint32 exception_code, uint32 vector)
+{
+	FlushAllRegisters();
+	MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &reg->pc, reg->pc);
+	MOV_ImmToReg(1, Reg_ECX, exception_code);
+	X86_CALL((uint32) prepare_run_exception);
+	MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &reg->pc, vector);
+	X86_CALL((uint32) Set_Translate_PC_No_TLB);
+	RET();
+}
+
 /*
  =======================================================================================================================
  =======================================================================================================================
@@ -4236,11 +4199,97 @@ void dyna4300i_special_break(OP_PARAMS)
 	INTERPRET(r4300i_break);
 
 	/*
-	 * //MOV_ImmToMemory(1, (unsigned long)&reg->pc, reg->pc+4); MOV_ImmToMemory(1,
-	 * (unsigned long)&reg->pc, reg->pc+4); // end of compiled block
-	 * compilerstatus.KEEP_RECOMPILING = FALSE; FlushAllRegisters();
-	 * Interrupts(JUMP_TYPE_INDIRECT, reg->pc);
+	 * dyna_set_exception(reg, EXC_BREAK, 0x80000180); £
+	 * compilerstatus.KEEP_RECOMPILING = FALSE; £
+	 * MOV_ImmToMemory(1, ModRM_disp32, (unsigned long)&reg->pc, reg->pc);
+	 * INTERPRET(r4300i_break); //MOV_ImmToMemory(1, (unsigned long)&reg->pc,
+	 * reg->pc+4); //MOV_ImmToMemory(1, ModRM_disp32, (unsigned long)&reg->pc,
+	 * reg->pc); // end of compiled block compilerstatus.KEEP_RECOMPILING = FALSE;
+	 * FlushAllRegisters(); Interrupts(JUMP_TYPE_INDIRECT, reg->pc, LINK_NO, 0);
 	 */
+}
+
+extern void TriggerFPUUnusableException(void);
+void (*Dyna_Code_Check[]) (uint32 pc);
+void (*Dyna_Check_Codes) (uint32 pc);
+void	COMPARE_SwitchToInterpretive(void);
+void	COMPARE_SwitchToDynarec(void);
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void dyna4300i_cop1_with_exception(OP_PARAMS)
+{
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	MapConstant LocalTempConstMap[NUM_CONSTS];
+	x86regtyp	LocalTempx86reg[8];
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+#ifdef ENABLE_OPCODE_DEBUGGER
+	SetRdRsRt32bit(PASS_PARAMS);
+#ifndef TEST_OPCODE_DEBUGGER_INTEGRITY24
+	if(debug_opcode)
+	{
+		PUSHAD();
+		MOV_ImmToReg(1, Reg_EAX, (_u32) & COMPARE_SwitchToInterpretive);
+		CALL_Reg(Reg_EAX);
+
+		MOV_ImmToReg(1, Reg_ECX, reg->code);
+		if(currentromoptions.FPU_Hack == USEFPUHACK_YES)
+		{
+			MOV_ImmToReg(1, Reg_EAX, (_u32) COP1_NotAvailable_instr);
+		}
+		else
+		{
+			MOV_ImmToReg(1, Reg_EAX, (_u32) COP1_instr);
+		}
+
+		CALL_Reg(Reg_EAX);	/* disable this line to test integrity of dyna portion */
+
+		MOV_ImmToReg(1, Reg_EAX, (_u32) & COMPARE_SwitchToDynarec);
+		CALL_Reg(Reg_EAX);
+		POPAD();
+	}
+#endif
+#endif
+	if( currentromoptions.FPU_Hack == USEFPUHACK_YES)
+	//if( currentromoptions.FPU_Hack == USEFPUHACK_YES && fpu_exception_count == 0)
+	{
+		/*~~~~~~~~~~~~~~~*/
+		int temp = reg->pc;
+		/*~~~~~~~~~~~~~~~*/
+
+		TEST_ImmWithMemory((uint32) & gHWS_COP0Reg[STATUS], SR_CU1);
+		Jcc_Near_auto(CC_NE, 8);
+
+		/*
+		memcpy(LocalTempConstMap, ConstMap, sizeof(ConstMap));
+		memcpy(LocalTempx86reg, x86reg, sizeof(x86reg));
+		dyna_set_exception(reg, EXC_CPU, 0x80000180);
+		*/
+
+		MOV_ImmToMemory(1, ModRM_disp32, (uint32)&reg->pc, temp);
+		memcpy(LocalTempConstMap, ConstMap, sizeof(ConstMap)); 
+		memcpy(LocalTempx86reg,	x86reg, sizeof(x86reg)); 
+		FlushAllRegisters();
+
+		X86_CALL((uint32)TriggerFPUUnusableException); 
+		MOV_ImmToMemory(1, ModRM_disp32, (uint32)&reg->pc, temp); RET();
+
+		SetNearTarget(8);
+		memcpy(ConstMap, LocalTempConstMap, sizeof(ConstMap));
+		memcpy(x86reg, LocalTempx86reg, sizeof(x86reg));
+	}
+
+	if(debug_opcode)
+	{
+		debug_opcode = 0;	/* this stops the opcode is interpreted again within dyna4300i_cop1_Instruction */
+		dyna4300i_cop1_Instruction[__RS](PASS_PARAMS);
+		debug_opcode = 1;
+	}
+	else
+		dyna4300i_cop1_Instruction[__RS](PASS_PARAMS);
 }
 
 /*

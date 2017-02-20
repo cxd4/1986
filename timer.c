@@ -46,7 +46,7 @@ int		CounterFactor = COUTERFACTOR_2;
 uint64	current_counter;
 uint64	next_vi_counter;		/* use 64bit varible, will never overflow */
 uint64	next_count_counter;		/* value in here is in the unit of VIcounter, not in the half rate */
-
+uint32  vi_field_number = 0;;
 /*
  * speed concerning about using 64bit is not a big deal here £
  * because these two variables will not be used in emu main loop £
@@ -702,18 +702,20 @@ void Check_VI_and_COMPARE_Interrupt(void)
 	gHWS_COP0Reg[COUNT] = Get_COUNT_Register();
 	if(next_vi_counter <= current_counter + counter_leap - countdown_counter)
 	{						/* ok, should trigger a VI interrupt */
-		OPCODE_DEBUGGER_EPILOGUE(Trigger_VIInterrupt();) next_vi_counter += max_vi_count;
+		OPCODE_DEBUGGER_EPILOGUE(Trigger_VIInterrupt(););
+		next_vi_counter += max_vi_count;
 	}
 
 	if(next_count_counter <= current_counter + counter_leap - countdown_counter)
 	{						/* ok, should trigger an COMPARE interrupt */
-		OPCODE_DEBUGGER_EPILOGUE(Trigger_CompareInterrupt();) next_count_counter += 0x100000000;
+		OPCODE_DEBUGGER_EPILOGUE(Trigger_CompareInterrupt(););
+		next_count_counter += 0x100000000;
 	}
 
 	Set_Countdown_Counter();
 }
 
-#define DOUBLE_COUNT	2	/* 1 */
+#define DOUBLE_COUNT	1 //2	/* 1 */
 
 /*
  =======================================================================================================================
@@ -735,7 +737,9 @@ uint32 Get_COUNT_Register(void)
 			(current_counter + counter_leap - countdown_counter) *
 			CounterFactors[CounterFactor] /
 			VICounterFactors[CounterFactor] /
-			DOUBLE_COUNT
+			DOUBLE_COUNT +
+			rand() %
+			4
 		);
 #endif
 }
@@ -799,6 +803,7 @@ void Init_Count_Down_Counters(void)
 		DOUBLE_COUNT;
 	counter_leap = 0;
 	countdown_counter = 0;
+	next_vi_counter = current_counter+current_counter%max_vi_count;
 
 	if(gHWS_COP0Reg[COMPARE] != 0)
 	{

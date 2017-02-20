@@ -43,12 +43,33 @@
 ROMLIST_ENTRY	*romlist[MAX_ROMLIST];
 int				romlist_count = 0;
 int				romlist_sort_method = ROMLIST_GAMENAME;
+int				romlistNameToDisplay = ROMLIST_DISPLAY_ALTER_NAME;
 int				selected_rom_index;
 static char		savedrompath[_MAX_PATH];
+
+int				romListHeaderClickedColumn = 0;
+
 void			RomListGetGoodRomNameToDisplay(char *buf, int index);
 
-/* Four column to display */
-int				RomList_Column_Widths[ROMLIST_MAX_COLUMNS] = { 180, 50, 50, 360 };
+ColumnType romListColumns[] =
+{
+	{ROMLIST_COL_GAMENAME,	"Game Name",			0,	TRUE,	180,	0},	//The first column is always the filename, and always enabled
+	{ROMLIST_COL_COUNTRY,	"Country",				1,	TRUE,	50,		0},
+	{ROMLIST_COL_SIZE,		"Size",					2,	TRUE,	50,		0},
+	{ROMLIST_COL_STATUS,	"Compatibility Status",	3,	TRUE,	360,	0},
+	{ROMLIST_COL_GAMESAVE,	"Game Save",			4,	FALSE,	30,		0},
+	{ROMLIST_COL_CICCHIP,	"CIC Chip",				5,	FALSE,	30,		0},
+	{ROMLIST_COL_CRC1,		"CRC1",					6,	FALSE,	30,		0},
+	{ROMLIST_COL_CRC2,		"CRC2",					7,	FALSE,	30,		0},
+};
+
+const int numberOfRomListColumns = sizeof(romListColumns)/sizeof(ColumnType);
+ColumnID GetColumnIDByName(char *name);
+ColumnID GetColumnIDByPos(int pos);
+void InsertColumnsIntoTreeView(HWND hwndTV);
+BOOL ColumnMoveUp(HTREEITEM selected);
+BOOL ColumnMoveDown(HTREEITEM selected);
+
 
 /*
  =======================================================================================================================
@@ -187,7 +208,9 @@ BOOL RomListReadDirectory(const char *spath)
 			}
 		}
 		else
+		{
 			continue;	/* Skip this file */
+		}
 	} while(FindNextFile(findfirst, &libaa));
 	selected_rom_index = 0;
 	NewRomList_Sort();
@@ -307,7 +330,7 @@ extern void RefreshRecentGameMenus(char *filename);
  =======================================================================================================================
  =======================================================================================================================
  */
-void RomListOpenRom(int index)
+void RomListOpenRom(int index, BOOL RunThisRom)
 {
 	/*~~~~~~~~~~~~~~~~~~~~~~~~*/
 	char	filename[_MAX_PATH];
@@ -330,10 +353,10 @@ void RomListOpenRom(int index)
 			EnableMenuItem(gui.hMenu1964main, ID_FILE_ROMINFO, MF_ENABLED);
 			EnableMenuItem(gui.hMenu1964main, ID_FILE_CHEAT, MF_ENABLED);
 
-			if(emuoptions.auto_run_rom || Kaillera_Is_Running == TRUE)
+			if( RunThisRom || Kaillera_Is_Running == TRUE)
 			{
 				Kill();
-				Play(); /* autoplay */
+				Play(emuoptions.auto_full_screen); /* autoplay */
 			}
 		}
 	}
@@ -352,6 +375,10 @@ void RomListSelectRom(int index)
 	}
 }
 
+int  RomListGetSelectedIndex(void)
+{
+	return selected_rom_index;
+}
 /*
  =======================================================================================================================
  =======================================================================================================================
@@ -360,9 +387,22 @@ void RomListRomOptions(int index)
 {
 	if(index >= 0 && index < romlist_count)
 	{
+		int col, i, size;
+
 		RomListSelectRom(index);
 		DialogBox(gui.hInst, "ROM_OPTIONS", gui.hwnd1964main, (DLGPROC) RomListDialog);
-		ListView_SetItemText(gui.hwndRomList, index, 3, romlist[index]->pinientry->Comments);
+
+		//Looking for the column id of the field "Compatibility Status"
+		size = GetColumnIDByName("Compatibility Status");
+		col = 0;
+		for( i=0; i<size; i++)
+		{
+			if( romListColumns[i].enabled )
+			{
+				col++;
+			}
+		}
+		ListView_SetItemText(gui.hwndRomList, index, col, romlist[index]->pinientry->Comments);
 
 		RomListGetGoodRomNameToDisplay(generalmessage, index);
 		ListView_SetItemText(gui.hwndRomList, index, 0, generalmessage);
@@ -744,7 +784,13 @@ void RomListSelectLoadedRomEntry(void)
 
 	for(i = 0; i < romlist_count; i++)
 	{
-		if(stricmp(romlist[i]->pinientry->Game_Name, entry.Game_Name) == 0) break;
+		if( stricmp(romlist[i]->pinientry->Game_Name, entry.Game_Name) == 0 &&
+			romlist[i]->pinientry->crc1 == entry.crc1 &&
+			romlist[i]->pinientry->crc2 == entry.crc2 &&
+			romlist[i]->pinientry->countrycode == entry.countrycode )
+		{
+			break;
+		}
 	}
 
 	selected_rom_index = i;
@@ -795,9 +841,10 @@ typedef struct	myitem_tag
 BOOL WINAPI InitListViewItems(HWND hwndLV)
 {
 	/*~~~~~~~~~~~~~~~~~~~~*/
-	int		index;
+	int		index, i;
 	char	size[20];
 	char	countryname[40];
+	char	textbuf[100];
 	int		tvsystem;
 	LVITEM	lvi;
 	/*~~~~~~~~~~~~~~~~~~~~*/
@@ -812,6 +859,7 @@ BOOL WINAPI InitListViewItems(HWND hwndLV)
 	/* Read each line in the specified file. */
 	for(index = 0; index < romlist_count; index++)
 	{
+		LVCOLUMN colinfo;
 		/* Initialize item-specific LVITEM members. */
 		lvi.iItem = index;
 		lvi.iSubItem = 0;
@@ -822,10 +870,46 @@ BOOL WINAPI InitListViewItems(HWND hwndLV)
 
 		CountryCodeToCountryName_and_TVSystem(romlist[index]->pinientry->countrycode, countryname, &tvsystem);
 
-		ListView_SetItemText(hwndLV, index, 1, countryname);
-		sprintf(size, "%3dM", romlist[index]->size * 8 / 0x100000);
-		ListView_SetItemText(hwndLV, index, 2, size);
-		ListView_SetItemText(hwndLV, index, 3, romlist[index]->pinientry->Comments);
+		colinfo.mask = LVCF_TEXT;
+		colinfo.pszText = textbuf;
+		colinfo.cchTextMax = 99;
+		
+		for( i=1; i< numberOfRomListColumns; i++)
+		{
+			if( ListView_GetColumn(hwndLV, i, &colinfo) )
+			{
+				if( stricmp(colinfo.pszText, romListColumns[1].text) == 0 )	//Country name
+				{
+					ListView_SetItemText(hwndLV, index, i, countryname);
+				}
+				else if( stricmp(colinfo.pszText, romListColumns[2].text) == 0 ) //Rom Size
+				{
+					sprintf(size, "%3dM", romlist[index]->size * 8 / 0x100000);
+					ListView_SetItemText(hwndLV, index, i, size);
+				}
+				else if( stricmp(colinfo.pszText, romListColumns[3].text) == 0 ) //Comments
+				{
+					ListView_SetItemText(hwndLV, index, i, romlist[index]->pinientry->Comments);
+				}
+				else if( stricmp(colinfo.pszText, romListColumns[4].text) == 0 ) //Game Save Type
+				{
+					ListView_SetItemText(hwndLV, index, i, save_type_names[romlist[index]->pinientry->Save_Type]);
+				}
+				else if( stricmp(colinfo.pszText, romListColumns[5].text) == 0 ) //CIC_Chip
+				{
+				}
+				else if( stricmp(colinfo.pszText, romListColumns[6].text) == 0 ) //CRC1
+				{
+					sprintf(size, "%08X", romlist[index]->pinientry->crc1);
+					ListView_SetItemText(hwndLV, index, i, size);
+				}
+				else if( stricmp(colinfo.pszText, romListColumns[7].text) == 0 ) //CRC2
+				{
+					sprintf(size, "%08X", romlist[index]->pinientry->crc2);
+					ListView_SetItemText(hwndLV, index, i, size);
+				}
+			}
+		}
 	}
 
 	if(romlist_count > 0) ListView_SetSelectionMark(hwndLV, 0);
@@ -842,40 +926,28 @@ BOOL WINAPI InitListViewItems(HWND hwndLV)
 BOOL WINAPI InitListViewColumns(HWND hwndLV, int windowwidth)
 {
 	/*~~~~~~~~~~~~*/
+	int i;
 	LVCOLUMNA	lvc;
 	/*~~~~~~~~~~~~*/
 
 	/* Initialize the LVCOLUMN structure. */
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;
-	lvc.cx = RomList_Column_Widths[0];
 
-	/* lvc.cx = 180; */
-	lvc.pszText = "ROM Name";
-	lvc.iSubItem = 0;
-	ListView_InsertColumn(hwndLV, 0, &lvc);
-
-	lvc.pszText = "Country";
-
-	/* lvc.cx = 50; */
-	lvc.cx = RomList_Column_Widths[1];
-	lvc.iSubItem = 1;
-	ListView_InsertColumn(hwndLV, 1, &lvc);
-
-	lvc.pszText = "Size";
-
-	/* lvc.cx = 50; */
-	lvc.cx = RomList_Column_Widths[2];
-	lvc.iSubItem = 2;
-	ListView_InsertColumn(hwndLV, 2, &lvc);
-
-	lvc.pszText = "Comments";
-
-	/* lvc.cx = windowwidth-305; */
-	lvc.cx = RomList_Column_Widths[3];
-	lvc.iSubItem = 3;
-	ListView_InsertColumn(hwndLV, 3, &lvc);
-
+	for( i=0; i<numberOfRomListColumns; i++ )
+	{
+		if( romListColumns[i].enabled )
+		{
+			if( romListColumns[i].colWidth > 500 || romListColumns[i].colWidth < 0 )
+			{
+				romListColumns[i].colWidth = 50;
+			}
+			lvc.cx = romListColumns[i].colWidth;
+			lvc.pszText = romListColumns[i].text;
+			lvc.iSubItem = i;
+			ListView_InsertColumn(hwndLV, i, &lvc);
+		}
+	}
 	return TRUE;
 }
 
@@ -1032,37 +1104,69 @@ void NewRomList_Sort(void)
 	char						cname1[10], cname2[10];
 	char						gamename1[200], gamename2[200];
 	int							tv1, tv2;
+	int							retval;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	TRACE1("Sort rom list: %d", romlist_count);
 	for(i = 0; i < romlist_count - 1; i++)
 	{
 		RomListGetGoodRomNameToDisplay(gamename1, i);
+		CountryCodeToCountryName_and_TVSystem(romlist[i]->pinientry->countrycode, cname1, &tv1);
 		for(j = i + 1; j < romlist_count; j++)
 		{
+			RomListGetGoodRomNameToDisplay(gamename2, j);
 			needswap = FALSE;
 			switch(romlist_sort_method % 4)
 			{
 			case ROMLIST_GAMENAME:
-				RomListGetGoodRomNameToDisplay(gamename2, j);
 				if(stricmp(gamename1, gamename2) >= 0) needswap = TRUE;
 				break;
 			case ROMLIST_COUNTRY:
-				CountryCodeToCountryName_and_TVSystem(romlist[i]->pinientry->countrycode, cname1, &tv1);
 				CountryCodeToCountryName_and_TVSystem(romlist[j]->pinientry->countrycode, cname2, &tv2);
-
-				/* if( romlist[i]->pinientry->countrycode > romlist[j]->pinientry->countrycode ) */
-				if(stricmp(cname1, cname2) > 0) needswap = TRUE;
+				retval = stricmp(cname1, cname2);
+				if( retval > 0)
+				{
+					needswap = TRUE;
+				}
+				else if( retval == 0 )
+				{
+					if(stricmp(gamename1, gamename2) >= 0)
+					{
+						needswap = TRUE;
+					}
+				}
 				break;
 			case ROMLIST_SIZE:
-				if(romlist[i]->size > romlist[j]->size) needswap = TRUE;
+				if(romlist[i]->size > romlist[j]->size)
+				{
+					needswap = TRUE;
+				}
+				else if( romlist[i]->size == romlist[j]->size )
+				{
+					if(stricmp(gamename1, gamename2) >= 0)
+					{
+						needswap = TRUE;
+					}
+				}
 				break;
 			case ROMLIST_COMMENT:
-				if(stricmp(romlist[i]->pinientry->Comments, romlist[j]->pinientry->Comments) >= 0) needswap = TRUE;
+				retval = stricmp(romlist[i]->pinientry->Comments, romlist[j]->pinientry->Comments);
+
+				if( (retval > 0 && romlist_sort_method < 4 ) || (retval < 0 && romlist_sort_method > 4) )
+				{
+					needswap = TRUE;
+				}
+				else
+				{
+					if(stricmp(gamename1, gamename2) >= 0)
+					{
+						;//needswap = TRUE;
+					}
+				}
 				break;
 			}
 
-			if(romlist_sort_method >= 4)
+			if(romlist_sort_method >= 4 && romlist_sort_method%4 != 3 )
 			{
 				needswap = 1 - needswap;
 			}
@@ -1072,6 +1176,8 @@ void NewRomList_Sort(void)
 				temp = romlist[i];
 				romlist[i] = romlist[j];
 				romlist[j] = temp;
+				RomListGetGoodRomNameToDisplay(gamename1, i);
+				CountryCodeToCountryName_and_TVSystem(romlist[i]->pinientry->countrycode, cname1, &tv1);
 			}
 		}
 	}
@@ -1114,11 +1220,24 @@ void RomListRememberColumnWidth(void)
 {
 	/*~~*/
 	int i;
+	char	textbuf[100];
+	LVCOLUMN colinfo;
 	/*~~*/
-
-	for(i = 0; i < ROMLIST_MAX_COLUMNS; i++)
+	colinfo.mask = LVCF_TEXT;
+	colinfo.pszText = textbuf;
+	colinfo.cchTextMax = 99;
+	
+	for( i=1; i< numberOfRomListColumns; i++)
 	{
-		RomList_Column_Widths[i] = ListView_GetColumnWidth(gui.hwndRomList, i);
+		if( ListView_GetColumn(gui.hwndRomList, i, &colinfo) )
+		{
+			int col=GetColumnIDByName(colinfo.pszText);
+			romListColumns[col].colWidth = ListView_GetColumnWidth(gui.hwndRomList, i);
+			if( romListColumns[col].colWidth <= 0 )
+			{
+				romListColumns[col].colWidth = 50;
+			}
+		}
 	}
 }
 
@@ -1128,20 +1247,32 @@ void RomListRememberColumnWidth(void)
  */
 void RomListGetGoodRomNameToDisplay(char *buf, int index)
 {
-	if(strlen(romlist[index]->pinientry->Alt_Title) > 1)
-		strcpy(buf, romlist[index]->pinientry->Alt_Title);
-	else if(InternalNameIsValid(romlist[index]->pinientry->Game_Name))
-		strcpy(buf, romlist[index]->pinientry->Game_Name);
-	else
+	switch( romlistNameToDisplay )
 	{
-		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-		char	drive[_MAX_DIR], dir[_MAX_DIR];
-		char	fname[_MAX_DIR], ext[_MAX_EXT];
-		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-		_splitpath(romlist[index]->romfilename, drive, dir, fname, ext);
-		strcat(fname, ext);
-		strcpy(buf, fname);
+	case ROMLIST_DISPLAY_ALTER_NAME:
+		if(strlen(romlist[index]->pinientry->Alt_Title) > 1)
+		{
+			strcpy(buf, romlist[index]->pinientry->Alt_Title);
+			break;
+		}
+	case ROMLIST_DISPLAY_INTERNAL_NAME:
+		if(InternalNameIsValid(romlist[index]->pinientry->Game_Name))
+		{
+			strcpy(buf, romlist[index]->pinientry->Game_Name);
+			break;
+		}		
+	case ROMLIST_DISPLAY_FILENAME:
+		{
+			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+			char	drive[_MAX_DIR], dir[_MAX_DIR];
+			char	fname[_MAX_DIR], ext[_MAX_EXT];
+			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+			
+			_splitpath(romlist[index]->romfilename, drive, dir, fname, ext);
+			strcat(fname, ext);
+			strcpy(buf, fname);
+		}
+		break;
 	}
 }
 
@@ -1181,4 +1312,409 @@ void ConvertInvalidInternalName(char *oldname, char *newname)
 	}
 
 	newname[i] = '\0';
+}
+
+long OnNotifyRomList(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	if(!emustatus.Emu_Is_Running)
+	{
+		int itemNo = ((LPNMLISTVIEW) lParam)->iItem;
+		
+		switch(((LPNMHDR) lParam)->code)
+		{
+		case NM_DBLCLK:
+			RomListSelectRom(((LPNMLISTVIEW) lParam)->iItem);
+			RomListOpenRom(((LPNMLISTVIEW) lParam)->iItem, emuoptions.auto_run_rom);
+			break;
+		case NM_RCLICK:
+			if( itemNo >= 0 )
+			{
+				RECT pos;
+				HMENU popupmainmenu, popupmenu;
+				int x = ((LPNMLISTVIEW) lParam)->ptAction.x;
+				int y = ((LPNMLISTVIEW) lParam)->ptAction.y;
+				RomListSelectRom(((LPNMLISTVIEW) lParam)->iItem);
+				EnableMenuItem(gui.hMenu1964main, ID_FILE_ROMINFO, MF_ENABLED);
+				EnableMenuItem(gui.hMenu1964main, ID_FILE_CHEAT, MF_ENABLED);
+				
+				GetWindowRect(gui.hwndRomList, &pos);
+				x+=pos.left;
+				y+=pos.top;
+				
+				//popupmenu = GetSubMenu(gui.hMenu1964main, 2);
+				popupmainmenu = LoadMenu(gui.hInst, "ROM_POPUP_MENU");
+				popupmenu = GetSubMenu(popupmainmenu,0);
+				TrackPopupMenuEx(popupmenu, TPM_VERTICAL, x, y, gui.hwnd1964main, NULL);
+				DestroyMenu(popupmenu);
+			}
+			break;
+		case NM_CLICK:
+			RomListSelectRom(((LPNMLISTVIEW) lParam)->iItem);
+			EnableMenuItem(gui.hMenu1964main, ID_FILE_ROMINFO, MF_ENABLED);
+			EnableMenuItem(gui.hMenu1964main, ID_FILE_CHEAT, MF_ENABLED);
+			break;
+		case LVN_COLUMNCLICK:
+			{
+				/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+				LPNMLISTVIEW	p = (LPNMLISTVIEW) lParam;
+				/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+				
+				if(p->iItem == -1 && p->uOldState == 0)
+				{
+					if(romlist_sort_method != p->iSubItem)
+					{
+						romlist_sort_method = p->iSubItem;
+					}
+					else
+					{
+						romlist_sort_method += 4;
+					}
+					romlist_sort_method %= 8;
+					NewRomList_Sort();
+					NewRomList_ListViewFreshRomList();
+				}
+			}
+			break;
+		default:
+			return(DefWindowProc(hWnd, message, wParam, lParam));
+			break;
+		}
+	}
+	
+	return(0l);
+}
+
+long OnNotifyRomListHeader(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	HWND hWndHeader = ListView_GetHeader(gui.hwndRomList);
+	switch(((LPNMHDR) lParam)->code)
+	{
+	case NM_RCLICK:
+		{
+			HMENU popupmainmenu, popupmenu;
+			POINTS pts;
+			POINT point;
+			RECT rect;
+			DWORD pos = GetMessagePos();
+			pts = MAKEPOINTS(pos);
+			point.x = pts.x;
+			point.y = pts.y;
+			ScreenToClient(hWndHeader, &point);
+			popupmainmenu = LoadMenu(gui.hInst, "ROM_POPUP_MENU");
+			
+			for( romListHeaderClickedColumn=0; romListHeaderClickedColumn<numberOfRomListColumns; romListHeaderClickedColumn++)
+			{
+				Header_GetItemRect(hWndHeader, romListHeaderClickedColumn, &rect);
+				if( PtInRect(&rect, point) )
+				{
+					break;
+				}
+			}
+			
+			if( romListHeaderClickedColumn == 0 )
+			{
+				popupmenu = GetSubMenu(popupmainmenu,1);
+				switch( romlistNameToDisplay )
+				{
+				case ROMLIST_DISPLAY_INTERNAL_NAME:
+					CheckMenuItem(popupmenu, ID_HEADERPOPUP_SHOW_INTERNAL_NAME, MF_CHECKED);
+					break;
+				case ROMLIST_DISPLAY_ALTER_NAME:
+					CheckMenuItem(popupmenu, ID_HEADERPOPUP_SHOWALTERNATEROMNAME, MF_CHECKED);
+					break;
+				case ROMLIST_DISPLAY_FILENAME:
+					CheckMenuItem(popupmenu, ID_HEADERPOPUP_SHOWROMFILENAME, MF_CHECKED);
+					break;
+				}
+				
+				if( romlist_sort_method == 0 )
+				{
+					CheckMenuItem(popupmenu, ID_HEADERPOPUP_1_SORT_ASCENDING, MF_CHECKED);
+				}
+				else if( romlist_sort_method == 4 )
+				{
+					CheckMenuItem(popupmenu, ID_HEADERPOPUP_1_SORT_DESCENDING, MF_CHECKED);
+				}
+				
+			}
+			else if( romListHeaderClickedColumn < numberOfRomListColumns )
+			{
+				char	textbuf[100];
+				LVCOLUMN colinfo;
+				colinfo.mask = LVCF_TEXT;
+				colinfo.pszText = textbuf;
+				colinfo.cchTextMax = 99;
+				
+				if( ListView_GetColumn(gui.hwndRomList, romListHeaderClickedColumn, &colinfo) )
+				{
+					romListHeaderClickedColumn=GetColumnIDByName(colinfo.pszText);
+				}
+
+				popupmenu = GetSubMenu(popupmainmenu,2);
+				if( romListHeaderClickedColumn < 4 )
+				{
+					if( romlist_sort_method == romListHeaderClickedColumn )
+					{
+						CheckMenuItem(popupmenu, ID_HEADERPOPUP_2_SORT_ASCENDING, MF_CHECKED);
+					}
+					else if( romlist_sort_method == romListHeaderClickedColumn+4 )
+					{
+						CheckMenuItem(popupmenu, ID_HEADERPOPUP_2_SORT_DESCENDING, MF_CHECKED);
+					}
+				}
+				else
+				{
+					EnableMenuItem(popupmenu, ID_HEADERPOPUP_2_SORT_ASCENDING, MF_GRAYED);
+					EnableMenuItem(popupmenu, ID_HEADERPOPUP_2_SORT_DESCENDING, MF_GRAYED);
+				}
+			}
+			
+			TrackPopupMenuEx(popupmenu, TPM_VERTICAL, pts.x, pts.y, gui.hwnd1964main, NULL);
+			DestroyMenu(popupmenu);
+		}
+	default:
+		return(DefWindowProc(hWnd, message, wParam, lParam));
+		break;
+	}
+	return(0l);
+}
+
+BOOL ColumnSelect_TreeView_GetCheckState(HWND hwndTreeView, HTREEITEM hItem)
+{
+    TVITEM tvItem;
+
+    // Prepare to receive the desired information.
+    tvItem.mask = TVIF_HANDLE | TVIF_STATE;
+    tvItem.hItem = hItem;
+    tvItem.stateMask = TVIS_STATEIMAGEMASK;
+
+    // Request the information.
+    TreeView_GetItem(hwndTreeView, &tvItem);
+
+    // Return zero if it's not checked, or nonzero otherwise.
+    return ((BOOL)(tvItem.state >> 12) -1);
+}
+
+LRESULT APIENTRY ColumnSelectDialog(HWND hDlg, unsigned message, WORD wParam, LONG lParam)
+{
+	HWND hwndTV;
+	int i;
+	HTREEITEM selected, other;
+	hwndTV = GetDlgItem(hDlg, IDC_COL_SEL_TREE);
+	
+	switch(message)
+	{
+	case WM_INITDIALOG:
+		switch(romlistNameToDisplay)
+		{
+		case ROMLIST_DISPLAY_ALTER_NAME:
+			CheckRadioButton(hDlg, IDC_ALT_NAME, IDC_ROM_FILENAME, IDC_ALT_NAME);
+			break;
+		case ROMLIST_DISPLAY_INTERNAL_NAME:
+			CheckRadioButton(hDlg, IDC_ALT_NAME, IDC_ROM_FILENAME, IDC_INTERNAL_NAME);
+			break;
+		case ROMLIST_DISPLAY_FILENAME:
+			CheckRadioButton(hDlg, IDC_ALT_NAME, IDC_ROM_FILENAME, IDC_ROM_FILENAME);
+			break;
+		}
+
+		{
+			//Make sure the checkboxes can be displayed correctly, TreeView has some timing issue.
+			LONG val = GetWindowLong(hwndTV, GWL_STYLE);
+			val &= ~TVS_CHECKBOXES;
+			SetWindowLong(hwndTV, GWL_STYLE, val);
+			val |= TVS_CHECKBOXES;
+			SetWindowLong(hwndTV, GWL_STYLE, val);
+		}
+
+		InsertColumnsIntoTreeView(hwndTV);
+
+		return(TRUE);
+		break;
+	case WM_COMMAND:
+		switch(wParam)
+		{
+		case IDC_COLSEL_UP:
+			selected = TreeView_GetSelection(hwndTV);
+			if( selected != NULL )
+			{
+				other = TreeView_GetPrevSibling(hwndTV, selected);
+				if( other != NULL )
+				{
+					if( ColumnMoveUp(selected) )
+					{
+						TreeView_DeleteAllItems(hwndTV);
+						InsertColumnsIntoTreeView(hwndTV);
+					}
+				}
+			}
+			break;
+		case IDC_COLSEL_DOWN:
+			selected = TreeView_GetSelection(hwndTV);
+			if( selected != NULL )
+			{
+				other = TreeView_GetNextSibling(hwndTV, selected);
+				if( other != NULL )
+				{
+					if( ColumnMoveDown(selected) )
+					{
+						TreeView_DeleteAllItems(hwndTV);
+						InsertColumnsIntoTreeView(hwndTV);
+					}
+				}
+			}
+			break;
+		case IDOK:
+			//Check the rom filename selecting
+			if( IsDlgButtonChecked(hDlg, IDC_ALT_NAME) == BST_CHECKED )
+			{
+				romlistNameToDisplay = ROMLIST_DISPLAY_ALTER_NAME;
+			}
+			else if( IsDlgButtonChecked(hDlg, IDC_INTERNAL_NAME) == BST_CHECKED )
+			{
+				romlistNameToDisplay = ROMLIST_DISPLAY_INTERNAL_NAME;
+			}
+			else
+			{
+				romlistNameToDisplay = ROMLIST_DISPLAY_FILENAME;
+			}
+			
+			for( i=1; i<numberOfRomListColumns; i++ )
+			{
+				romListColumns[i].enabled = ColumnSelect_TreeView_GetCheckState(hwndTV, romListColumns[i].treeViewID);
+			}
+			EndDialog(hDlg, TRUE);
+			NewRomList_ListViewChangeWindowRect();
+			//SendMessage(gui.hwnd1964main, WM_COMMAND, ID_FILE_FRESHROMLIST, 0);
+			return(TRUE);
+		case IDCANCEL:
+			EndDialog(hDlg, TRUE);
+			return(TRUE);
+		}
+		return(TRUE);
+		break;
+	}
+	return(FALSE);
+}
+
+
+ColumnID GetColumnIDByName(char *name)
+{
+	int i;
+	for( i=0; i<numberOfRomListColumns; i++ )
+	{
+		if( stricmp(name, romListColumns[i].text) == 0 )
+		{
+			return i;
+		}
+	}
+
+	return 0;
+}
+
+ColumnID GetColumnIDByPos(int pos)
+{
+	int i;
+	if( pos >= 0 && pos < numberOfRomListColumns )
+	{
+		for( i=0; i<numberOfRomListColumns; i++ )
+		{
+			if( romListColumns[i].colPos = pos )
+			{
+				return i;
+			}
+		}
+
+		return numberOfRomListColumns-1;
+	}
+	else
+	{
+		return numberOfRomListColumns-1;
+	}
+}
+
+void InsertColumnsIntoTreeView(HWND hwndTV)
+{
+	TVINSERTSTRUCT insItem;
+	int i;
+
+	//Insert all items into the Tree View
+	insItem.hParent = NULL;
+	insItem.hInsertAfter = TVI_LAST;
+	insItem.item.mask = TVIF_TEXT | TVIF_STATE;
+	insItem.item.hItem = 0;
+	insItem.item.cchTextMax = 10;
+	insItem.item.cChildren = 0;
+	insItem.item.iImage = 0;
+	insItem.item.lParam = 0;
+	insItem.item.stateMask = TVIS_STATEIMAGEMASK;
+	
+	for( i=1; i<numberOfRomListColumns; i++ )
+	{
+		insItem.item.state = INDEXTOSTATEIMAGEMASK((romListColumns[i].enabled ? 2 : 1));
+		insItem.item.pszText = romListColumns[i].text;
+		romListColumns[i].treeViewID = TreeView_InsertItem(hwndTV, &insItem);
+	}
+}
+
+BOOL ColumnMoveUp(HTREEITEM selected)
+{
+	int i;
+	int idx = -1;
+	for( i=0; i<numberOfRomListColumns; i++ )
+	{
+		if(romListColumns[i].treeViewID == selected)
+		{
+			idx = i;
+			break;
+		}
+	}
+
+	if( idx == -1 || romListColumns[idx].colPos <= 1 )
+	{
+		return FALSE;
+	}
+
+	for( i=0; i<numberOfRomListColumns; i++ )
+	{
+		if(romListColumns[i].colPos == romListColumns[idx].colPos-1 )
+		{
+			romListColumns[i].colPos++;
+			romListColumns[idx].colPos--;
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+BOOL ColumnMoveDown(HTREEITEM selected)
+{
+	int i;
+	int idx = -1;
+	for( i=0; i<numberOfRomListColumns; i++ )
+	{
+		if(romListColumns[i].treeViewID == selected)
+		{
+			idx = i;
+			break;
+		}
+	}
+
+	if( idx == -1 || romListColumns[idx].colPos == numberOfRomListColumns-1 )
+	{
+		return FALSE;
+	}
+
+	for( i=0; i<numberOfRomListColumns; i++ )
+	{
+		if(romListColumns[i].colPos == romListColumns[idx].colPos+1 )
+		{
+			romListColumns[i].colPos--;
+			romListColumns[idx].colPos++;
+			return TRUE;
+		}
+	}
+
+	return FALSE;
 }

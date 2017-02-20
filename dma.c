@@ -1,7 +1,4 @@
-/*$T dma.c GC 1.136 03/09/02 17:28:51 */
-
-
-/*$6
+/*
  +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     Direct Memory Access service
  +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -52,6 +49,7 @@ uint32			PIDMASourceAddress = 0;
 uint32			PIDMATargetAddress = 0;
 uint32			PIDMACurrentPosition = 0;
 uint32			PIDMALength = 0;
+
 BOOL			DMAInProgress = FALSE;
 uint32			SPDMASourceAddress = 0;
 uint32			SPDMATargetAddress = 0;
@@ -113,33 +111,29 @@ void FastPIMemoryCopy(void)
 	unsigned register __int32	target; /* = PIDMATargetMemory+PIDMATargetAddress; */
 	unsigned register __int32	source; /* = PIDMASourceMemory+PIDMASourceAddress; */
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
+	
 	if(PIDMAInProgress == DMA_PI_WRITE && currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY)
 	{
 		Check_And_Invalidate_Compiled_Blocks_By_DMA(PIDMATargetAddress, PIDMALength, "PIDMA");
 	}
-
+	
 	target = (uint32) PMEM_READ_UWORD(PIDMATargetAddress);
 	source = (uint32) PMEM_READ_UWORD(PIDMASourceAddress);
-
+	
 	if((target & 3) == 0 && (source & 3) == 0 && (PIDMALength & 3) == 0)		/* DWORD align */
 	{
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		int i = -(((__int32) PIDMALength) >> 2);
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
+		
 		__asm
 		{
 			align 16
-		}
-
-		__asm
-		{
 			pushad
 			mov eax, i
 			mov edx, target
 			mov ebx, source
-			_Label :
+_Label :
 			test eax, eax
 			jz _Label2
 			mov ecx, dword ptr[ebx]
@@ -148,7 +142,7 @@ void FastPIMemoryCopy(void)
 			add edx, 4
 			inc eax
 			jmp _Label
-			_Label2 :
+_Label2 :
 			popad
 		}
 	}
@@ -163,7 +157,10 @@ void FastPIMemoryCopy(void)
 	}
 	else	/* not align */
 	{
-		for(i = -(__int32) PIDMALength; i < 0; i++) *(uint8 *) (target++ ^ 0x3) = *(uint8 *) (source++ ^ 0x3);
+		for(i = -(__int32) PIDMALength; i < 0; i++) 
+		{
+			*(uint8 *) (target++ ^ 0x3) = *(uint8 *) (source++ ^ 0x3);
+		}
 	}
 }
 
@@ -175,75 +172,65 @@ void FastPIMemoryCopy(void)
 void DMA_PI_MemCopy_From_DRAM_To_Cart(void)
 {
 	emustatus.PIDMACount++;
+
 	PIDMASourceAddress = (PI_DRAM_ADDR_REG & 0x00FFFFFF) | 0x80000000;
 	PIDMATargetAddress = (PI_CART_ADDR_REG & 0x1FFFFFFF) | 0x80000000;
 	PIDMACurrentPosition = 0;;
 	PIDMALength = (PI_RD_LEN_REG & 0x00FFFFFF) + 1;
 
-	DEBUG_PI_DMA_MACRO
-	(
-	TRACE4
-		(
-			"%08X: PI Copy RDRAM to CART  %d bytes %08X to %08X",
-			gHWS_pc,
-			PIDMALength,
-			PIDMASourceAddress,
-			PIDMATargetAddress
-		); if(PI_DRAM_ADDR_REG & 0x7)
-{
-DisplayError("Warning, PI DMA, address does not align as requirement. RDRAM ADDR = %08X", PI_DRAM_ADDR_REG);
-}
-if((PIDMALength & 0x1) || (PI_CART_ADDR_REG & 0x1))
-{
-DisplayError
-	(
-		"Warning, PI DMA, need half word swap. RDRAM ADDR = %08X, CART ADDR=%08X, Len=%X",
-		PI_DRAM_ADDR_REG,
-		PI_CART_ADDR_REG,
-		PIDMALength
-	);
-}
+	DEBUG_PI_DMA_MACRO(
+		TRACE4( "%08X: PI Copy RDRAM to CART  %d bytes %08X to %08X", gHWS_pc, PIDMALength, PIDMASourceAddress, PIDMATargetAddress);
+
+		if(PI_DRAM_ADDR_REG & 0x7)
+		{
+			DisplayError("Warning, PI DMA, address does not align as requirement. RDRAM ADDR = %08X", PI_DRAM_ADDR_REG);
+		}
+
+		if((PIDMALength & 0x1) || (PI_CART_ADDR_REG & 0x1))
+		{
+			DisplayError
+				(
+					"Warning, PI DMA, need half word swap. RDRAM ADDR = %08X, CART ADDR=%08X, Len=%X",
+					PI_DRAM_ADDR_REG,
+					PI_CART_ADDR_REG,
+					PIDMALength
+				);
+		}
 	);
 
-	DEBUG_SRAM_TRACE
-	(
-		TRACE3
-			(
-				"SRAM/FLASHRAM or CART Write, %08X bytes %08X to %08X",
-				PIDMALength,
-				PIDMASourceAddress,
-				PIDMATargetAddress
-			)
-	);
+	DEBUG_SRAM_TRACE(TRACE3( "SRAM/FLASHRAM or CART Write, %08X bytes %08X to %08X", PIDMALength, PIDMASourceAddress, PIDMATargetAddress));
 
 	if((PI_CART_ADDR_REG & 0x1F000000) == MEMORY_START_C2A2)	/* Flashram PI DMA read */
 	{
 		/* Tell flashram about this DMA event */
-		if(currentromoptions.Save_Type != SRAM_SAVETYPE && gamesave.firstusedsavemedia != SRAM_SAVETYPE)
+		if(currentromoptions.Save_Type == FLASHRAM_SAVETYPE || gamesave.firstusedsavemedia == FLASHRAM_SAVETYPE)
 		{
 			/* No delay for Flashram DMA read */
 			DMA_RDRAM_To_Flashram(PIDMASourceAddress, PIDMATargetAddress, PIDMALength);
-			PIDMAInProgress = NO_DMA_IN_PROGRESS;
-			EXTRA_DMA_TIMING(PIDMALength);
-			Trigger_PIInterrupt();
-			return;
 		}
 		else
 		{
-			if(gamesave.firstusedsavemedia == 0) gamesave.firstusedsavemedia = SRAM_SAVETYPE;
+			if(gamesave.firstusedsavemedia == 0)
+			{
+				gamesave.firstusedsavemedia = SRAM_SAVETYPE;
+			}
+
 			if(gamesave.FlashRamUsed == FALSE)
 			{
 				gamesave.FlashRamUsed = TRUE;
 				FileIO_ReadFLASHRAM();
 			}
+			PIDMAInProgress = DMA_PI_READ;
+			FastPIMemoryCopy();
+			FileIO_WriteFLASHRAM();	//Write SRAM data to disk
 		}
+		PIDMAInProgress = NO_DMA_IN_PROGRESS;
+		EXTRA_DMA_TIMING(PIDMALength);
+		Trigger_PIInterrupt();
+		return;
 	}
 
-	if(currentromoptions.DMA_Segmentation == USEDMASEG_YES
-#ifndef TEST_OPCODE_DEBUGGER_INTEGRITY1
-	&& debug_opcode == 0
-#endif
-	)
+	if(currentromoptions.DMA_Segmentation == USEDMASEG_YES && debug_opcode == 0	)
 	{
 		/* Setup DMA transfer in segments */
 		PIDMAInProgress = DMA_PI_READ;
@@ -287,12 +274,9 @@ DisplayError
 void DMA_PI_MemCopy_From_Cart_To_DRAM(void)
 {
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	uint32	len = (PI_WR_LEN_REG & 0x00FFFFFF) +
-	1;
-	uint32	pi_dram_addr_reg = (PI_DRAM_ADDR_REG & 0x00FFFFFF) |
-	0x80000000;
-	uint32	pi_cart_addr_reg = (PI_CART_ADDR_REG & 0x1FFFFFFF) |
-	0x80000000;
+	uint32	len = (PI_WR_LEN_REG & 0x00FFFFFF) + 1;
+	uint32	pi_dram_addr_reg = (PI_DRAM_ADDR_REG & 0x00FFFFFF) | 0x80000000;
+	uint32	pi_cart_addr_reg = (PI_CART_ADDR_REG & 0x1FFFFFFF) | 0x80000000;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	emustatus.PIDMACount++;
@@ -311,21 +295,11 @@ void DMA_PI_MemCopy_From_Cart_To_DRAM(void)
 
 	if(len & 0x1)
 	{
-		TRACE4
-		(
-			"%08X: PI Copy CART to RDRAM %db from %08X to %08X",
-			gHWS_pc,
-			len,
-			pi_cart_addr_reg | 0xA0000000,
-			pi_dram_addr_reg
-		);
+		TRACE4( "%08X: PI Copy CART to RDRAM %db from %08X to %08X", gHWS_pc, len, pi_cart_addr_reg|0xA0000000, pi_dram_addr_reg);
 		TRACE0("Warning, PI DMA, odd length");
 
 		len++;	/* This makes Doraemon3 (J) works, I hope this will not affect other game */
-		/*
-		 * because this should not happen in regular games £
-		 * len--;
-		 */
+				/* because this should not happen in regular games */
 	}
 
 #ifdef DEBUG_COMMON
@@ -359,10 +333,9 @@ void DMA_PI_MemCopy_From_Cart_To_DRAM(void)
 		}
 	}
 #endif
-	PIDMASourceAddress = (PI_CART_ADDR_REG & 0x1FFFFFFF) |
-	0x80000000;
-	PIDMATargetAddress = (PI_DRAM_ADDR_REG & 0x00FFFFFF) |
-	0x80000000;
+
+	PIDMASourceAddress = pi_cart_addr_reg;
+	PIDMATargetAddress = pi_dram_addr_reg;
 
 	if(((PIDMATargetAddress & 0x1FFFFFFF) + len) > current_rdram_size)
 	{
@@ -374,6 +347,9 @@ void DMA_PI_MemCopy_From_Cart_To_DRAM(void)
 	PIDMACurrentPosition = 0;;
 	PIDMALength = len;
 
+	/*
+	** Self-Modify code detection
+	*/
 	if
 	(
 		emustatus.cpucore == DYNACOMPILER
@@ -402,7 +378,9 @@ L1:
 				{
 					/* Need to clear the Dyna marks in dynarommap, how to do it? */
 					if(*(uint32 *) (RDRAM_Copy + (addr & 0x007FFFFF)) != DUMMYOPCODE)
+					{
 						*(uint32 *) ((uint8 *) sDYN_PC_LOOKUP[((uint16) (addr >> 16))] + (uint16) addr) = 0;
+					}
 				}
 				else
 				{
@@ -433,19 +411,24 @@ L1:
 		}
 	}
 
+	/* Check SRAM and/or FLASHRAM DMA Operation */
 	if((pi_cart_addr_reg & 0x1F000000) == MEMORY_START_C2A2)	/* Flashram PI DMA read */
 	{
-		if(currentromoptions.Save_Type != SRAM_SAVETYPE && gamesave.firstusedsavemedia != SRAM_SAVETYPE)
+		if(currentromoptions.Save_Type == FLASHRAM_SAVETYPE || gamesave.firstusedsavemedia == FLASHRAM_SAVETYPE)
 		{
 			/*
-			 * No timing delay for flashram DMA write £
+			 * No timing delay for flashram DMA write
 			 * Tell flashram about this DMA event
 			 */
 			DMA_Flashram_To_RDRAM(PIDMATargetAddress, PIDMASourceAddress, PIDMALength);
 		}
 		else
 		{
-			if(gamesave.firstusedsavemedia == 0) gamesave.firstusedsavemedia = SRAM_SAVETYPE;
+			if(gamesave.firstusedsavemedia == 0)
+			{
+				gamesave.firstusedsavemedia = SRAM_SAVETYPE;
+			}
+
 			if(gamesave.FlashRamUsed == FALSE)
 			{
 				gamesave.FlashRamUsed = TRUE;
@@ -453,6 +436,7 @@ L1:
 			}
 
 			PIDMAInProgress = DMA_PI_WRITE;
+			
 			__try
 			{
 				FastPIMemoryCopy();
@@ -667,8 +651,7 @@ void DMA_MemCopy_SP_to_DRAM(void)
 		);
 	}
 #endif
-	SPDMALength = (SP_WR_LEN_REG & 0x00000FFF) +
-	1;	/* SP_RD_LEN_REG bit [0-11] is length to transfer */
+	SPDMALength = (SP_WR_LEN_REG & 0x00000FFF) + 1;	/* SP_RD_LEN_REG bit [0-11] is length to transfer */
 
 	if(currentromoptions.DMA_Segmentation == USEDMASEG_YES)
 	{
@@ -747,7 +730,9 @@ void Do_DMA_MemCopy_SI_To_DRAM(void)
 	DEBUG_SI_DMA_TRACE0("Doing actual SI DMA Read");
 
 	if(currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY)
+	{
 		Check_And_Invalidate_Compiled_Blocks_By_DMA(si_dram_addr_reg | 0x80000000, 64, "SIDMA");
+	}
 
 	iPifCheck();
 

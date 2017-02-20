@@ -32,6 +32,7 @@ enum { INIT_EMU_AFTER_PAUSE, REFRESH_DYNA_AFTER_PAUSE, DO_NOTHING_AFTER_PAUSE };
 enum GAME_STOP_REASON { EMURUNNING, EMUSTOP, EMUPAUSE, EMUSWITCHCORE, EMURESUME, VIDEOCRASH, CPUCRASH };
 
 extern HANDLE CPUThreadHandle;
+extern HANDLE AudioThreadHandle;
 extern int Audio_Is_Initialized;
 
 struct EmuStatus
@@ -58,6 +59,7 @@ struct EmuOptions
 	BOOL	auto_full_screen;
 	BOOL	dma_in_segments;
 	BOOL	SyncVI;
+	BOOL	UsingRspPlugin;
 };
 extern struct EmuOptions	emuoptions;
 

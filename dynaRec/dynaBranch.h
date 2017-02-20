@@ -49,7 +49,7 @@ static uint8	*tempblock;
 enum { JUMP_TYPE_INDIRECT, JUMP_TYPE_DIRECT, JUMP_TYPE_BREAKOUT };
 
 #define _OPCODE_DEBUG_BRANCH_(x) \
-	if(debug_opcode) \
+	if(debug_opcode!=0) \
 	{ \
 		MOV_ImmToMemory(1, ModRM_disp32, (uint32) & gHardwareState_Interpreter_Compare.pc, reg->pc); \
 		_SAFTY_CPU_(x) \
@@ -243,7 +243,7 @@ void Interrupts(uint32 JumpType, uint32 targetpc, uint32 DoLink, uint32 LinkVal)
 	}
 
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY23
-	if(debug_opcode == 1 && debug_opcode_block == 1)
+	if((debug_opcode!=0) && debug_opcode_block == 1)
 	{
 		MOV_ImmToReg(1, Reg_ECX, 0);
 		MOV_ImmToReg(1, Reg_EAX, (uint32) & CompareStates);
@@ -458,6 +458,7 @@ void dyna4300i_beq(OP_PARAMS)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	_OPCODE_DEBUG_BRANCH_(r4300i_beq);
+    compilerstatus.cp0Counter += 1;
 
 	aValue = (reg->pc + 4 + (__I << 2));
 
@@ -556,7 +557,8 @@ void dyna4300i_beql(OP_PARAMS)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	CHECK_OPCODE_PASS;
-	SetRdRsRt64bit(PASS_PARAMS);
+	compilerstatus.cp0Counter += 1;
+    SetRdRsRt64bit(PASS_PARAMS);
 
 	_OPCODE_DEBUG_BRANCH_(r4300i_beql);
 
@@ -647,7 +649,6 @@ void dyna4300i_beql(OP_PARAMS)
 	 */
 	if(!NoTest) SetNearTarget(91);
 	if(!Use32bit) SetNearTarget(93);
-	compilerstatus.cp0Counter -= 1;
 	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 }
 
@@ -754,7 +755,6 @@ _Redo:
 	}
 
 	/* end of compiled block */
-	compilerstatus.cp0Counter -= 1;
 	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 }
 
@@ -926,6 +926,7 @@ void dyna4300i_blezl(OP_PARAMS)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	_OPCODE_DEBUG_BRANCH_(r4300i_blezl);
+    compilerstatus.cp0Counter += 1;
 
 	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
 	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
@@ -1395,7 +1396,6 @@ _Redo:
 	else
 		SetTarget(91);
 
-	compilerstatus.cp0Counter -= 1;
 	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 }
 
@@ -1638,7 +1638,6 @@ _Redo32:
 		if(!Use32bit) SetNearTarget(93);
 	}
 
-	compilerstatus.cp0Counter -= 1;
 	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 }
 
@@ -1715,7 +1714,6 @@ void dyna4300i_regimm_bgezal(OP_PARAMS)
 
 	SetNearTarget(91);
 	if(!Use32bit) SetNearTarget(93);
-	compilerstatus.cp0Counter -= 1;
 	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_YES, LinkVal);
 }
 
@@ -1774,7 +1772,6 @@ void dyna4300i_regimm_bgezall(OP_PARAMS)
 
 	SetNearTarget(91);
 	if(!Use32bit) SetNearTarget(93);
-	compilerstatus.cp0Counter -= 1;
 	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_YES, LinkVal);
 }
 
@@ -1839,7 +1836,6 @@ void dyna4300i_regimm_bltzall(OP_PARAMS)
 	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_YES, LinkVal);
 
 	SetNearTarget(91);
-	compilerstatus.cp0Counter -= 1;
 	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_YES, LinkVal);
 }
 
@@ -2004,7 +2000,6 @@ void dyna4300i_cop1_bc1fl(OP_PARAMS)
 	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
 
 	SetNearTarget(91);
-	compilerstatus.cp0Counter -= 1;
 	Interrupts(JUMP_TYPE_BREAKOUT, reg->pc + 4, LINK_NO, 0);
 }
 
@@ -2037,7 +2032,6 @@ void dyna4300i_cop1_bc1t(OP_PARAMS)
 	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
 
 	SetNearTarget(91);
-	compilerstatus.cp0Counter -= 1;
 	Interrupts(JUMP_TYPE_BREAKOUT, reg->pc, LINK_NO, 0);
 }
 
@@ -2070,7 +2064,6 @@ void dyna4300i_cop1_bc1tl(OP_PARAMS)
 	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
 
 	SetNearTarget(91);
-	compilerstatus.cp0Counter -= 1;
 	Interrupts(JUMP_TYPE_BREAKOUT, reg->pc + 4, LINK_NO, 0);
 }
 

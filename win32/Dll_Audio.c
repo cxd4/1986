@@ -24,12 +24,14 @@
 #include <windows.h>
 #include "../globals.h"
 #include "../n64rcp.h"
+#include "../emulator.h"
 #include "registry.h"
 #include "DLL_Audio.h"
 
 AUDIO_INFO	Audio_Info;
 
 HINSTANCE	hinstLibAudio = NULL;
+BOOL	CoreDoingAIUpdate = TRUE;;
 
 void (__cdecl *_AUDIO_RomClosed) (void) = NULL;
 void (__cdecl *_AUDIO_DllClose) () = NULL;
@@ -96,6 +98,21 @@ BOOL LoadAudioPlugin(char *libname)
 					_AUDIO_Initialize = (BOOL(__cdecl *) (AUDIO_INFO)) GetProcAddress(hinstLibAudio, "InitiateAudio");
 					_AUDIO_ProcessAList = (void(__cdecl *) (void)) GetProcAddress(hinstLibAudio, "ProcessAList");
 					_AUDIO_RomClosed = (void(__cdecl *) (void)) GetProcAddress(hinstLibAudio, "RomClosed");
+
+					if( strstr(Plugin_Info.Name, "Jabo") != NULL || strstr(Plugin_Info.Name, "jabo") != NULL )
+					{
+						CoreDoingAIUpdate = FALSE;
+						if( emuoptions.UsingRspPlugin == FALSE )
+						{
+							DisplayError("Warning, Jabo DirectSound Plugin is selected and loaded, but RSP Plugin is not "\
+										"selected, Jabo DirectSound Plugin does not roduce sound without RSP plugin. You can activate "\
+										"RSP Plugin in plugin setting, or you can change to other audio plugins");
+						}
+					}
+					else
+					{
+						CoreDoingAIUpdate = TRUE;
+					}
 					return(TRUE);
 				}
 			}

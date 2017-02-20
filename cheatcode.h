@@ -28,8 +28,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define MAX_CHEATCODE_PER_GROUP		10
-#define MAX_CHEATCODE_GROUP_PER_ROM 150
+#define MAX_CHEATCODE_PER_GROUP		100
+#define MAX_CHEATCODE_GROUP_PER_ROM 254	//Can not exceed 254 groups, must be represented by using 1 byte
+
+//Option to apply cheat code and lock memory
+//#define CHEATCODE_LOCK_MEMORY
 
 enum APPLYCHEATMODE { INGAME, BOOTUPONCE, GSBUTTON, ONLYIN1964 };
 
@@ -62,4 +65,14 @@ extern void						CodeList_GotoBeginning(void);
 extern BOOL						CodeList_ApplyAllCode(enum APPLYCHEATMODE mode);
 extern BOOL						CodeList_ReadCode(char *intername_rom_name);
 BOOL							IsCodeMatchRomCountryCode(int cheat_country_code, int rom_country_code);
+
+#ifdef CHEATCODE_LOCK_MEMORY
+extern uint16 *cheatCodeBlockMap[0x800];
+void InitCheatCodeEngineMemoryLock(void);
+void CloseCheatCodeEngineMemoryLock(void);
+BOOL CodeList_ApplyCode_At_Address(int index, uint32 addr_to_apply);
+
+#define BYTE_AFFECTED_BY_CHEAT_CODES	0xFF
+#endif
+
 #endif

@@ -121,7 +121,7 @@ void					COMPARE_SwitchToDynarec(void);
 			if(k == 0 && debug_opcode != 0) COMPARE_SwitchToInterpretive(); \
 			if(k == 1) COMPARE_SwitchToDynarec(); \
 			x; \
-			if(debug_opcode == 0) break; \
+			if(debug_opcode != 1) break; \
 		} \
 	}
 

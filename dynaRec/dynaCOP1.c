@@ -41,7 +41,7 @@
 
 extern void COMPARE_Run(uint32 Inter_Opcode_Address, uint32 code);
 #define _SAFTY_COP1_(x) \
-	if(debug_opcode) \
+	if(debug_opcode!=0) \
 	{ \
 		SetRdRsRt64bit(PASS_PARAMS); \
 		COMPARE_Run((uint32) & x, reg->code); \

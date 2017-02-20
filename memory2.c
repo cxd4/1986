@@ -53,6 +53,7 @@
 #include "gamesave.h"
 #include "fileio.h"
 #include "ipif.h"
+#include "cheatcode.h"
 
 /* Definitions */
 uint32 * (*memory_read_functions[0x10000 >> SHIFTER1_READ]) ();
@@ -78,6 +79,12 @@ uint32 * (*memory_write_functions[0x100000 >> SHIFTER1_WRITE]) (uint32 addr);
 #define _SAFETY_READ_MEM_(x)	{ __asm push ecx __asm mov ecx, eax __asm call x __asm pop ecx }
 #endif
 
+
+//Hack for games to write into ROM
+BOOL write_to_rom_flag = FALSE;
+uint32 write_to_rom_value[2] = {0,0};
+uint32* prom_value = &write_to_rom_value[0];
+extern BOOL NeedToApplyRomWriteHack;
 /*
  =======================================================================================================================
  =======================================================================================================================
@@ -92,12 +99,12 @@ uint32 *mem_read_eax_only_helper(uint32 addr)
 	}
 }
 
-__forceinline static __declspec (naked)
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
+__forceinline static __declspec (naked)
 uint32 *read_mem_rdram_k0seg_eax_only(void)
 {
 	__asm
@@ -107,12 +114,12 @@ uint32 *read_mem_rdram_k0seg_eax_only(void)
 	}
 }
 
-__forceinline static __declspec (naked)
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
+__forceinline static __declspec (naked)
 uint32 *read_mem_rdram_k1seg_eax_only(void)
 {
 	__asm
@@ -157,19 +164,36 @@ uint32 *read_mem_rdram_not_at_0x20000000_eax_only__Opcode_Debugger_is_off(void)
 	}
 }
 
-__forceinline __declspec (naked)
+uint32	dummyWord[4];
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
+__forceinline __declspec (naked)
 uint32 *read_mem_cart_eax_only(void)
 {
 	/* Access by pointer */
 	__asm
 	{
+		cmp	write_to_rom_flag, TRUE
+		jne l1
+		mov write_to_rom_flag, FALSE;
+
+#ifdef DEBUG_COMMON
+		mov dummyWord[0], eax
+		pushad
+	}
+	TRACE2("Read from ROM, addr = %08X, PC=%08X", dummyWord[0], gHardwareState.pc);
+
+	__asm{
+		popad
+#endif
+		mov eax, prom_value
+		ret 0
+l1:
 		push ecx
-		and eax, 0x0fffffff /* Rice: please confirm this mask ? */
+		and eax, 0x07ffffff /* Rice: please confirm this mask ? */
 		mov ecx, p_gMemoryState
 		add eax, [ecx + 76] /* ROM_Image */
 		pop ecx
@@ -177,31 +201,44 @@ uint32 *read_mem_cart_eax_only(void)
 	}
 }
 
-__forceinline __declspec (naked)
-
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
+__forceinline __declspec (naked) 
 uint32 *read_mem_cart_eax_only__Opcode_Debugger_is_off(void)
 {
 	/* doesn't access by pointer */
 	__asm
 	{
-		and eax, 0x0fffffff
+		cmp	write_to_rom_flag, TRUE
+		jne l1
+		mov write_to_rom_flag, FALSE;
+
+#ifdef DEBUG_COMMON
+		mov dummyWord[0], eax
+		pushad
+	}
+	TRACE2("Read from ROM, addr = %08X, PC=%08X", dummyWord[0], gHardwareState.pc);
+
+	__asm{
+		popad
+#endif
+		mov eax, prom_value//dword ptr write_to_rom_value
+		ret 0
+l1:
+		and eax, 0x07ffffff
 		add eax, gMemoryState.ROM_Image
 		ret 0
 	}
 }
 
-__int32 lAddr;
-__declspec(naked)
-
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-uint32 *read_mem_io_eax_only(void)
+__int32 lAddr;
+__declspec(naked) uint32 *read_mem_io_eax_only(void)
 {
 	__asm mov lAddr, eax
 	__asm push edx
@@ -214,7 +251,6 @@ uint32 *read_mem_io_eax_only(void)
 	__asm ret 0
 }
 
-uint32	dummyWord[1];
 
 /*
  =======================================================================================================================
@@ -222,21 +258,29 @@ uint32	dummyWord[1];
  */
 uint32 *read_mem_flashram(uint32 addr)
 {
-	__asm push edx
-	dummyWord[0] = Check_LW(addr);
-	__asm pop edx
-	return dummyWord;	/* gMS_C2A2+(addr&0x0001FFFFF); */
+	if(currentromoptions.Save_Type == SRAM_SAVETYPE || gamesave.firstusedsavemedia == SRAM_SAVETYPE)
+	{
+		return gMS_C2A2+(addr&0x0001FFFFF);
+	}
+	else
+	{
+		__asm push edx;
+		dummyWord[0] = Check_LW(addr);
+		__asm pop edx;
+		return dummyWord;
+	}
 }
 
-__declspec(naked)
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
+__declspec(naked) 
 uint32 *read_mem_flashram_eax_only(void)
 {
-	_SAFETY_READ_MEM_(read_mem_flashram) __asm ret 0
+	_SAFETY_READ_MEM_(read_mem_flashram);
+	__asm ret 0
 }
 
 /*
@@ -248,7 +292,11 @@ uint32 *read_mem_sram(uint32 addr)
 	__asm push edx
 	if(!gamesave.Sram_used)
 	{
-		if(gamesave.firstusedsavemedia == 0) gamesave.firstusedsavemedia = SRAM_SAVETYPE;
+		if(gamesave.firstusedsavemedia == 0)
+		{
+			gamesave.firstusedsavemedia = SRAM_SAVETYPE;
+		}
+		
 		gamesave.Sram_used = TRUE;
 		FileIO_ReadSRAM();
 	}
@@ -258,24 +306,24 @@ uint32 *read_mem_sram(uint32 addr)
 	return(uint32 *) (gamesave.SRam + addr);
 }
 
-__declspec(naked)
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
+__declspec(naked)
 uint32 *read_mem_sram_eax_only(void)
 {
 	_SAFETY_READ_MEM_(read_mem_sram) __asm ret 0
 }
 
 /* This function is used when currentromoptions.UseTLB = No */
-__declspec(naked)
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
+__declspec(naked)
 uint32 *read_mem_tlb_eax_only__UseTLB_No(void)
 {
 	__asm
@@ -296,12 +344,12 @@ uint32 *read_mem_tlb_eax_only__UseTLB_No(void)
 }
 
 /* This function is used when currentromoptions.UseTLB = Yes */
-__declspec(naked)
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
+__declspec(naked)
 uint32 *read_mem_tlb_eax_only(void)
 {
 	__asm
@@ -378,12 +426,12 @@ uint32 *read_mem_others(uint32 addr)
 	return (uint32 *) addr;
 }
 
-__declspec(naked)
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
+__declspec(naked)
 uint32 *read_mem_others_eax_only(void)
 {
 	__asm
@@ -474,12 +522,19 @@ __forceinline uint32 *write_mem_cart(uint32 addr)
 {
 #ifdef DEBUG_COMMON
 	__asm push edx
-	tempaddr = (uint32) (gMS_ROM_Image + (addr & 0x0FFFFFFF));
+	TRACE2("Write to ROM, addr = %08X, PC=%08X", addr, gHardwareState.pc);
 	__asm pop edx
-	return (uint32 *) tempaddr;
-#else
-	return(uint32 *) (gMS_ROM_Image + (addr & 0x0FFFFFFF));
 #endif
+
+	if( NeedToApplyRomWriteHack )	//Do we need to apply ?
+	{
+		write_to_rom_flag = TRUE;
+		return  (uint32*)(&write_to_rom_value[0]);
+	}
+	else
+	{
+		return(uint32 *) (gMS_ROM_Image + (addr & 0x0FFFFFFF));
+	}
 }
 
 /*
@@ -602,6 +657,185 @@ uint32 *write_mem_protected(uint32 addr)
 
 /*
  =======================================================================================================================
+ Write 4KB block which has cheat code enabled.
+ - will not write active cheat code bytes
+ - Cheat code memory address must be within RDRAM 4MB/8MB range
+ =======================================================================================================================
+ */
+#ifdef CHEATCODE_LOCK_MEMORY
+
+uint32 *read_mem_cheatcode_block(uint32 addr)
+{
+	uint32 block;
+	uint32* retval;
+	__asm push edx;
+	block = (addr&0x1FFFFFFF)/0x1000;
+	if( block >= current_rdram_size/0x1000 || cheatCodeBlockMap[block] == NULL || (uint8)(cheatCodeBlockMap[block][addr&0xFFF]) == 0 )
+	{
+		//This block or this byte is not locked/protected by cheatcodes
+		__asm pop edx;
+		__asm mov eax, addr;
+		__asm call read_mem_rdram_not_at_0x20000000_eax_only;
+		__asm mov retval, eax;
+	}
+	else
+	{
+#ifdef DEBUG_COMMON
+		__asm pushad;
+		if( cheatCodeBlockMap[block][addr&0xFFF] == BYTE_AFFECTED_BY_CHEAT_CODES )
+		{
+			TRACE1("Byte is affected by Cheat code protect memory write at: %08X", addr);
+		}
+		else
+		{
+			TRACE1("Cheat code protect memory write at: %08X", addr);
+		}
+		__asm popad;
+#endif
+		//Reapply the cheat code
+		//CodeList_ApplyCode_At_Address(cheatCodeBlockMap[block][addr&0xFFF], addr);		
+		__asm mov eax, addr;
+		__asm call read_mem_rdram_not_at_0x20000000_eax_only;
+		__asm mov retval, eax;
+		{
+			int i;
+			uint8 val;
+			for( i=0; i<4; i++)
+			{
+				if( (uint8)(cheatCodeBlockMap[block][(addr&0xFFC)+(i^0x3)]) != BYTE_AFFECTED_BY_CHEAT_CODES )
+				{
+					val = (uint8)(cheatCodeBlockMap[block][(addr&0xFFC)+(i^0x3)]>>8);
+					*(uint8*)(((uint32)retval&0xFFFFFFFC)+(i^0x3)) = val;
+				}
+			}
+		}
+
+		__asm pop edx;
+		//return dummyWord;	//return dummy word, or any write operation will be written into this dummy word
+	}
+	return (uint32*)retval;
+}
+
+uint32 *read_mem_cheatcode_block_eax_only_rdram_not_at_20000000()
+{
+	/*
+	__asm push ecx;
+	__asm mov ecx, eax;
+	__asm call read_mem_cheatcode_block;
+	__asm pop ecx;
+	*/
+	__asm {
+		push	eax;
+		and		eax, 0x1FFFF000;
+		shr		eax, 10;
+		mov		eax, cheatCodeBlockMap[eax];
+		cmp		eax, 0;
+		jnz		l1;
+		pop		eax;
+		call	read_mem_rdram_not_at_0x20000000_eax_only
+		ret		0
+l1:
+		pop		eax;
+		push	ecx;
+		mov		ecx, eax;
+		call	read_mem_cheatcode_block;
+		pop		ecx;
+		ret		0
+	}
+
+}
+
+__forceinline static __declspec (naked)
+uint32 *read_mem_cheatcode_block_k0seg_eax_only_rdram_at_0x20000000()
+{
+	__asm {
+		push	eax;
+		and		eax, 0x1FFFF000;
+		shr		eax, 10;
+		mov		eax, cheatCodeBlockMap[eax];
+		cmp		eax, 0;
+		jnz		l1;
+		pop		eax;
+		add		eax, 0xA0000000 /* rdram is at 0x20000000 */
+		ret		0
+l1:
+		pop		eax;
+		push	ecx;
+		mov		ecx, eax;
+		call	read_mem_cheatcode_block;
+		pop		ecx;
+		ret		0
+	}
+}
+
+__forceinline static __declspec (naked)
+uint32 *read_mem_cheatcode_block_k1seg_eax_only_rdram_at_0x20000000()
+{
+	__asm {
+		push	eax;
+		and		eax, 0x1FFFF000;
+		shr		eax, 10;
+		mov		eax, cheatCodeBlockMap[eax];
+		cmp		eax, 0;
+		jnz		l1;
+		pop		eax;
+		add		eax, 0x80000000 /* rdram is at 0x20000000 */
+		ret		0
+l1:
+		pop		eax;
+		push	ecx;
+		mov		ecx, eax;
+		call	read_mem_cheatcode_block;
+		pop		ecx;
+		ret		0
+	}
+}
+
+
+
+void enable_cheat_code_lock_block(uint32 addr)
+{
+	uint32 block = (addr&0x1FFFFFFF)/0x1000;
+	if( block >= current_rdram_size/0x1000 )
+	{
+		return;
+	}
+	else
+	{
+		TRACE1("Enable cheat code protection at block=%08X", block);
+		if( rdram_is_at_0x20000000 )
+		{
+			(uint32) memory_read_functions[( addr				/ 0x10000) >> SHIFTER1_READ] = (uint32) read_mem_cheatcode_block_k0seg_eax_only_rdram_at_0x20000000;
+			(uint32) memory_read_functions[((addr | 0x20000000) / 0x10000) >> SHIFTER1_READ] = (uint32) read_mem_cheatcode_block_k1seg_eax_only_rdram_at_0x20000000;
+		}
+		else
+		{
+			(uint32) memory_read_functions[( addr				/ 0x10000) >> SHIFTER1_READ] = (uint32) read_mem_cheatcode_block_eax_only_rdram_not_at_20000000;
+			(uint32) memory_read_functions[((addr | 0x20000000) / 0x10000) >> SHIFTER1_READ] = (uint32) read_mem_cheatcode_block_eax_only_rdram_not_at_20000000;
+		}
+	}
+}
+
+void init_rdram_region_func_array(uint32 startAddress, uint32 size);
+
+void disable_cheat_code_lock_block(uint32 addr)
+{
+	uint32 block = (addr&0x1FFFFFFF)/0x1000;
+	if( block >= current_rdram_size/0x1000 )
+	{
+		return;
+	}
+	else
+	{
+		TRACE1("Disable cheat code protection at block=%08X", block);
+		init_rdram_region_func_array(addr&0x007FC0000, 0x40000);
+	}
+}
+
+#endif
+
+/*
+ =======================================================================================================================
     Function array initializations
  =======================================================================================================================
  */
@@ -634,13 +868,13 @@ void init_mem_region_func_array_eax_only(uint32 startAddress, uint32 size, uint3
     Function array initializations
  =======================================================================================================================
  */
-void init_rdram_region_func_array(uint32 startAddress)
+void init_rdram_region_func_array(uint32 startAddress, uint32 size)
 {
 	if(rdram_is_at_0x20000000)
 	{
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		uint32	curSegment = ((startAddress) >> SHIFTER2_READ);
-		uint32	endSegment = ((startAddress + 0x400000 - 1) >> SHIFTER2_READ);
+		uint32	endSegment = ((startAddress + size - 1) >> SHIFTER2_READ);
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 		while(curSegment <= endSegment)
@@ -667,7 +901,7 @@ void init_rdram_region_func_array(uint32 startAddress)
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY19
-		if(debug_opcode)
+		if(debug_opcode!=0)
 		{
 			while(curSegment <= endSegment)
 			{
@@ -740,7 +974,7 @@ void init_spmem_region_func_array(uint32 startAddress)
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY19
-		if(debug_opcode)
+		if(debug_opcode!=0)
 		{
 			while(curSegment <= endSegment)
 			{
@@ -806,7 +1040,7 @@ void init_whole_mem_func_array(void)
 	for(i = (0xC0000 >> SHIFTER1_WRITE); i < (0x100000 >> SHIFTER1_WRITE); i++)
 		(uint32) memory_write_functions[i] = (uint32) write_mem_tlb;
 
-	init_rdram_region_func_array(MEMORY_START_RDRAM);
+	init_rdram_region_func_array(MEMORY_START_RDRAM, 0x400000);
 	init_mem_region_func_array_eax_only
 	(
 		MEMORY_START_RAMREGS0,
@@ -950,7 +1184,7 @@ void init_whole_mem_func_array(void)
 	 * (uint32)read_mem_others, (uint32)write_mem_others );
 	 */
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY20
-	if(debug_opcode)
+	if(debug_opcode!=0)
 	{
 		init_mem_region_func_array_eax_only
 		(
@@ -977,7 +1211,7 @@ void init_whole_mem_func_array(void)
  */
 void enable_exrdram_func_array(void)
 {
-	init_rdram_region_func_array(MEMORY_START_EXRDRAM);
+	init_rdram_region_func_array(MEMORY_START_EXRDRAM, 0x400000);
 }
 
 /*

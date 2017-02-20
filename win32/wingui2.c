@@ -35,6 +35,7 @@
 #include "dll_audio.h"
 #include "dll_video.h"
 #include "dll_input.h"
+#include "dll_rsp.h"
 #include "windebug.h"
 #include "../1964ini.h"
 #include "../timer.h"
@@ -466,6 +467,32 @@ void LoadPlugins(int type)
 	SetDefaultOptions();
 	GetPluginDir(StartPath);
 
+	if( type == LOAD_ALL_PLUGIN || type == LOAD_RSP_PLUGIN )
+	{
+		SetStatusBarText(0, "Loading RSP Plugin ...");
+
+		/* Set RSP plugin path */
+		strcpy(InputPath, StartPath);
+		strcpy(gRegSettings.RSPPlugin, "rsp.dll");
+		strcat(InputPath, gRegSettings.RSPPlugin);
+
+		/* Load RSP plugin DLL */
+		if(LoadRSPPlugin(InputPath) == FALSE)
+		{
+			CloseRSPPlugin();
+			rsp_plugin_is_loaded = FALSE;
+			emuoptions.UsingRspPlugin = FALSE;
+			EnableMenuItem(gui.hMenu1964main, ID_RSP_CONFIG, MF_GRAYED);
+		}
+		else
+		{
+			rsp_plugin_is_loaded = TRUE;
+		}
+
+		SetStatusBarText(0, "Init RSP Plugin ...");
+		InitializeRSP();
+	}
+
 	if(type == LOAD_ALL_PLUGIN || type == LOAD_VIDEO_PLUGIN)
 	{
 		strcpy(VideoPath, StartPath);
@@ -486,6 +513,7 @@ void LoadPlugins(int type)
 		/* Load Video plugin */
 		if(LoadVideoPlugin(VideoPath) == FALSE)
 		{
+			DisplayError("Can not load video plugin, check the file path or the plugin directory setting");
 			strcpy(gRegSettings.VideoPlugin, "");
 			WriteConfiguration();
 			CloseVideoPlugin();
@@ -522,6 +550,7 @@ void LoadPlugins(int type)
 		/* Load Input plugin DLL */
 		if(LoadControllerPlugin(InputPath) == FALSE)
 		{
+			DisplayError("Can not load controller plugin, check the file path or the plugin directory setting");
 			strcpy(gRegSettings.InputPlugin, "");
 			WriteConfiguration();
 			CloseControllerPlugin();
@@ -574,6 +603,7 @@ void LoadPlugins(int type)
 
 		if(Audio == 0)
 		{
+			DisplayError("Can not load audio plugin, check the file path or the plugin directory setting");
 			CloseAudioPlugin();
 			strcpy(gRegSettings.AudioPlugin, "");
 			WriteConfiguration();
@@ -594,7 +624,7 @@ void LoadPlugins(int type)
 		(
 			gui.hwnd1964main,
 			guistatus.window_position.left,
-			guistatus.window_position.top,
+			guistatus.window_position.top+2,
 			guistatus.clientwidth,
 			guistatus.clientheight,
 			TRUE
@@ -619,6 +649,7 @@ void FreePlugins(void)
 	CloseControllerPlugin();
 	CloseAudioPlugin();
 	CloseVideoPlugin();
+	CloseRSPPlugin();
 }
 
 void (__cdecl *GetDllInfo) (PLUGIN_INFO *) = NULL;
@@ -644,6 +675,8 @@ LRESULT APIENTRY PluginsDialog(HWND hDlg, unsigned message, WORD wParam, LONG lP
 	char			StartPath[_MAX_PATH];
 	char			SearchPath[_MAX_PATH];
 	int				index;
+	BOOL			FoundRSPDll = FALSE;
+	HWND			rsp_checkbox;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	GetPluginDir(StartPath);
@@ -713,6 +746,9 @@ LRESULT APIENTRY PluginsDialog(HWND hDlg, unsigned message, WORD wParam, LONG lP
 					if(_stricmp(libaa.cFileName, gRegSettings.AudioPlugin) == 0)
 						SendDlgItemMessage(hDlg, IDC_COMBO_AUDIO, CB_SETCURSEL, (WPARAM) index, (LPARAM) 0);
 					break;
+				case PLUGIN_TYPE_RSP:
+					FoundRSPDll = TRUE;
+					break;
 				}
 
 skipdll:
@@ -731,6 +767,25 @@ skipdll:
 			}
 		}
 
+		rsp_checkbox = GetDlgItem(hDlg, IDC_USE_RSP_PLUGIN);
+		if( FoundRSPDll == TRUE )
+		{
+			EnableWindow(rsp_checkbox, TRUE);
+			if( emuoptions.UsingRspPlugin == TRUE )
+			{
+				SendMessage(rsp_checkbox, BM_SETCHECK, (WPARAM)TRUE, (LPARAM)NULL);
+			}
+			else
+			{
+				SendMessage(rsp_checkbox, BM_SETCHECK, (WPARAM)FALSE, (LPARAM)NULL);
+			}
+		}
+		else
+		{
+			SendMessage(rsp_checkbox, BM_SETCHECK, (WPARAM)FALSE, (LPARAM)NULL);
+			EnableWindow(rsp_checkbox, FALSE);
+		}
+
 		return(TRUE);
 
 	case WM_COMMAND:
@@ -745,6 +800,21 @@ skipdll:
 
 					FreeLibrary(hinstLib);
 					EndDialog(hDlg, TRUE);
+
+					if( emuoptions.UsingRspPlugin != SendDlgItemMessage(hDlg, IDC_USE_RSP_PLUGIN, BM_GETCHECK, (WPARAM)NULL, (LPARAM)NULL) )
+					{
+						if( emuoptions.UsingRspPlugin )
+						{
+							emuoptions.UsingRspPlugin = FALSE;
+							EnableMenuItem(gui.hMenu1964main, ID_RSP_CONFIG, MF_GRAYED);
+						}
+						else
+						{
+							emuoptions.UsingRspPlugin = TRUE;
+							EnableMenuItem(gui.hMenu1964main, ID_RSP_CONFIG, MF_ENABLED);
+						}
+					}
+
 					if(strcmp(gRegSettings.VideoPlugin, temp_video_plugin) != 0)
 					{
 						strcpy(gRegSettings.VideoPlugin, temp_video_plugin);
@@ -1069,4 +1139,73 @@ LRESULT APIENTRY About(HWND hDlg, unsigned message, WORD wParam, LONG lParam)
 	}
 
 	return(FALSE);
+}
+
+
+char cmdLineParameterBuf[250] = {0};
+void SaveCmdLineParameter(char *cmdline)
+{
+	strcpy(cmdLineParameterBuf, cmdline);
+	if( strlen(cmdLineParameterBuf) > 0 )
+	{
+		int i;
+		int len = strlen(cmdLineParameterBuf);
+		for( i=0; i<len; i++ )
+		{
+			if( isupper(cmdLineParameterBuf[i]) )
+			{
+				cmdLineParameterBuf[i] = tolower(cmdLineParameterBuf[i]);
+			}
+		}
+	}
+}
+
+//To get a command line parameter if available, please pass a flag
+// Flags:
+//	"-v"	-> return video plugin name
+//	"-a"	-> return audio plugin name
+//  "-c"	-> return controller plugin name
+//  "-g"	-> return game name to run
+//	"-f"	-> return play-in-full-screen flag
+//	"-r"	-> return rom path
+char *CmdLineArgFlags[] =
+{
+	"-a",
+	"-v",
+	"-c",
+	"-r",
+	"-g",
+	"-f"
+};
+
+void GetCmdLineParameter(CmdLineParameterType arg, char *buf)
+{
+	char *ptr1;
+	char *ptr2 = buf;
+
+	if( arg >= CMDLINE_MAX_NUMBER || strstr(cmdLineParameterBuf,CmdLineArgFlags[arg])==NULL )
+	{
+		buf[0] = 0;
+		return;
+	}
+	
+	if( arg == CMDLINE_FULL_SCREEN_FLAG )
+	{
+		strcpy(buf, "1");
+		return;
+	}
+
+	ptr1 = strstr(cmdLineParameterBuf,CmdLineArgFlags[arg]);
+	
+	ptr1 += 2;	//Skip the flag
+	while( *ptr1 != 0 && isspace(*ptr1) )
+	{
+		ptr1++;	//skip all spaces
+	}
+
+	while( !isspace(*ptr1) && *ptr1 != 0)
+	{
+		*ptr2++ = *ptr1++;
+	};
+	*ptr2 = 0;
 }

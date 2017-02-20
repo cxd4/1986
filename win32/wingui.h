@@ -37,7 +37,7 @@ BOOL				WinLoadRomStep2(char *szFileName);
 void				Pause(void);
 void				Resume(void);
 void				Kill(void);
-void				Play(void);
+void				Play(BOOL WithFullScreen);
 void				Stop(void);
 void				KailleraPlay(void);
 void				OpenROM(void);
@@ -62,6 +62,8 @@ void				CaptureScreenToFile(void);
 void				Set_Ready_Message(void);
 void				DisableDebugMenu(void);
 void				SetupDebuger(void);
+void				SaveCmdLineParameter(char *cmdline);
+BOOL				StartGameByCommandLine();
 
 void				StateSetNumber(int number);
 void				Exit1964(void);
@@ -92,6 +94,7 @@ struct EMU1964GUI
 	HWND		hClientWindow;			/* Window handle of the client child window */
 	HWND		hCriticalMsgWnd;		/* handle to critical message window */
 	HMENU		hMenu1964main;
+	HMENU		hMenuRomListPopup;
 
 	struct
 	{
@@ -165,10 +168,23 @@ extern struct DIRECTORIES	directories;
 extern char					game_country_name[10];
 extern int					game_country_tvsystem;
 
-enum { LOAD_ALL_PLUGIN, LOAD_VIDEO_PLUGIN, LOAD_AUDIO_PLUGIN, LOAD_INPUT_PLUGIN };
+enum { LOAD_ALL_PLUGIN, LOAD_VIDEO_PLUGIN, LOAD_AUDIO_PLUGIN, LOAD_INPUT_PLUGIN, LOAD_RSP_PLUGIN };
 
 void FreePlugins(void);
 void LoadPlugins(int type);
 
 enum { SAVE_STATE_1964_FORMAT, SAVE_STATE_PJ64_FORMAT };
+
+typedef enum {
+	CMDLINE_AUDIO_PLUGIN,
+	CMDLINE_VIDEO_PLUGIN,
+	CMDLINE_CONTROLLER_PLUGIN,
+	CMDLINE_ROM_DIR,
+	CMDLINE_GAME_FILENAME,
+	CMDLINE_FULL_SCREEN_FLAG,
+	CMDLINE_MAX_NUMBER
+}CmdLineParameterType;
+
+void GetCmdLineParameter(CmdLineParameterType arg, char *buf);
+
 #endif

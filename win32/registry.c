@@ -32,7 +32,7 @@
 #include "windebug.h"
 #include "../romlist.h"
 
-#define MAIN_1964_KEY		"Software\\1964emu_072\\GUI"
+#define MAIN_1964_KEY		"Software\\1964emu_080\\GUI"
 #define KEY_WINDOW_X		"WindowXPos"
 #define KEY_WINDOW_Y		"WindowYPos"
 #define KEY_MAXIMIZED		"Maximized"
@@ -57,6 +57,7 @@ void ReadConfiguration(void)
 {
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	char	Directory[_MAX_PATH], str[260];
+	char	tempstr[_MAX_PATH];
 	int		i;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -74,15 +75,46 @@ void ReadConfiguration(void)
 
 	strcpy(default_save_directory, Directory);
 	strcat(default_save_directory, "Save\\");
-
+	
 	strcpy(gRegSettings.ROMPath, ReadRegistryStrVal(MAIN_1964_KEY, "ROMPath"));
-	strcpy(gRegSettings.AudioPlugin, ReadRegistryStrVal(MAIN_1964_KEY, "AudioPlugin"));
-	strcpy(gRegSettings.VideoPlugin, ReadRegistryStrVal(MAIN_1964_KEY, "VideoPlugin"));
-	strcpy(gRegSettings.InputPlugin, ReadRegistryStrVal(MAIN_1964_KEY, "InputPlugin"));
 
+	GetCmdLineParameter(CMDLINE_AUDIO_PLUGIN, tempstr);		//Get command line audio plugin setting
+	if( strlen(tempstr) == 0 )
+	{
+		strcpy(gRegSettings.AudioPlugin, ReadRegistryStrVal(MAIN_1964_KEY, "AudioPlugin"));
+	}
+	else
+	{
+		strcpy(gRegSettings.AudioPlugin, tempstr);
+	}
+
+	GetCmdLineParameter(CMDLINE_VIDEO_PLUGIN, tempstr);		//Get command line video plugin setting
+	if( strlen(tempstr) == 0 )
+	{
+		strcpy(gRegSettings.VideoPlugin, ReadRegistryStrVal(MAIN_1964_KEY, "VideoPlugin"));
+	}
+	else
+	{
+		strcpy(gRegSettings.VideoPlugin, tempstr);
+	}
+	
+	GetCmdLineParameter(CMDLINE_CONTROLLER_PLUGIN, tempstr);		//Get command line controller plugin setting
+	if( strlen(tempstr) == 0 )
+	{
+		strcpy(gRegSettings.InputPlugin, ReadRegistryStrVal(MAIN_1964_KEY, "InputPlugin"));
+	}
+	else
+	{
+		strcpy(gRegSettings.InputPlugin, tempstr);
+	}
+	
+	
 	strcpy(user_set_rom_directory, ReadRegistryStrVal(MAIN_1964_KEY, "ROMDirectory"));
-	if(strlen(user_set_rom_directory) == 0) strcpy(user_set_rom_directory, gRegSettings.ROMPath);
-
+	if(strlen(user_set_rom_directory) == 0) 
+	{
+		strcpy(user_set_rom_directory, gRegSettings.ROMPath);
+	}
+	
 	strcpy(directories.last_rom_directory, ReadRegistryStrVal(MAIN_1964_KEY, "LastROMDirectory"));
 	strcpy(user_set_save_directory, ReadRegistryStrVal(MAIN_1964_KEY, "SaveDirectory"));
 
@@ -95,6 +127,8 @@ void ReadConfiguration(void)
 	emuoptions.auto_run_rom = ReadRegistryDwordVal(MAIN_1964_KEY, "AutoRunRom");
 	emuoptions.auto_full_screen = ReadRegistryDwordVal(MAIN_1964_KEY, "AutoFullScreen");
 	emuoptions.auto_apply_cheat_code = ReadRegistryDwordVal(MAIN_1964_KEY, "AutoApplyCheat");
+	emuoptions.UsingRspPlugin = ReadRegistryDwordVal(MAIN_1964_KEY, "UsingRspPlugin");
+
 	guioptions.pause_at_inactive = ReadRegistryDwordVal(MAIN_1964_KEY, "PauseWhenInactive");
 	guioptions.pause_at_menu = ReadRegistryDwordVal(MAIN_1964_KEY, "PauseAtMenu");
 	guioptions.show_expert_user_menu = ReadRegistryDwordVal(MAIN_1964_KEY, "ExpertUserMode");
@@ -106,6 +140,7 @@ void ReadConfiguration(void)
 	guioptions.show_critical_msg_window = ReadRegistryDwordVal(MAIN_1964_KEY, "DisplayCriticalMessageWindow");
 	guioptions.display_romlist = ReadRegistryDwordVal(MAIN_1964_KEY, "DisplayRomList");
 	romlist_sort_method = ReadRegistryDwordVal(MAIN_1964_KEY, "SortRomList");
+	romlistNameToDisplay = ReadRegistryDwordVal(MAIN_1964_KEY, "RomNameToDisplay");
 
 	emuoptions.dma_in_segments = ReadRegistryDwordVal(MAIN_1964_KEY, "DmaInSegments");
 	emuoptions.SyncVI = ReadRegistryDwordVal(MAIN_1964_KEY, "emuoptions.SyncVI");
@@ -122,15 +157,23 @@ void ReadConfiguration(void)
 		strcpy(directories.save_directory_to_use, user_set_save_directory);
 
 	/* Set the ROM directory to use */
-	if(guioptions.use_last_rom_directory)
+	GetCmdLineParameter(CMDLINE_ROM_DIR, tempstr);		//Get command line rom path setting
+	if( strlen(tempstr) > 0 )
 	{
-		strcpy(directories.rom_directory_to_use, directories.last_rom_directory);
+		strcpy(directories.rom_directory_to_use, tempstr);
 	}
 	else
 	{
-		strcpy(directories.rom_directory_to_use, user_set_rom_directory);
+		if(guioptions.use_last_rom_directory)
+		{
+			strcpy(directories.rom_directory_to_use, directories.last_rom_directory);
+		}
+		else
+		{
+			strcpy(directories.rom_directory_to_use, user_set_rom_directory);
+		}
 	}
-
+	
 	/* Set the plugin directory to use */
 	if(guioptions.use_default_plugin_directory)
 		strcpy(directories.plugin_directory_to_use, default_plugin_directory);
@@ -171,7 +214,7 @@ void ReadConfiguration(void)
 	 * function. £
 	 * I think it is better to call the function if we need this here.
 	 */
-	defaultoptions.Eeprom_size = EEPROMSIZE_2KB;
+	defaultoptions.Eeprom_size = EEPROMSIZE_4KB;
 	defaultoptions.RDRAM_Size = RDRAMSIZE_4MB;
 	defaultoptions.Emulator = DYNACOMPILER;
 	defaultoptions.Save_Type = ANYUSED_SAVETYPE;
@@ -224,15 +267,22 @@ void ReadConfiguration(void)
 		if(strlen(recent_game_lists[i]) == 0) strcpy(recent_game_lists[i], "Empty Game Slot");
 	}
 
-	for(i = 0; i < ROMLIST_MAX_COLUMNS; i++)
+	for(i = 0; i < numberOfRomListColumns; i++)
 	{
-		/*~~~~~~*/
 		int width;
-		/*~~~~~~*/
-
 		sprintf(str, "RomListColumn%dWidth", i);
 		width = ReadRegistryDwordVal(MAIN_1964_KEY, str);
-		if(width != 0) RomList_Column_Widths[i] = width;
+		if(width >= 0 && width <= 500)
+		{
+			romListColumns[i].colWidth = width;
+		}
+
+		sprintf(str, "RomListColumn%dEnabled", i);
+		romListColumns[i].enabled = ReadRegistryDwordVal(MAIN_1964_KEY, str);
+		if( romListColumns[i].enabled != TRUE )
+		{
+			romListColumns[i].enabled = FALSE;
+		}
 	}
 }
 
@@ -440,6 +490,9 @@ void WriteConfiguration(void)
 	DwordData = emuoptions.auto_apply_cheat_code;
 	RegSetValueEx(hKey2, "AutoApplyCheat", 0, REG_DWORD, (LPBYTE) & DwordData, cbData);
 
+	DwordData = emuoptions.UsingRspPlugin;
+	RegSetValueEx(hKey2, "UsingRspPlugin", 0, REG_DWORD, (LPBYTE) & DwordData, cbData);
+
 	DwordData = guioptions.pause_at_inactive;
 	RegSetValueEx(hKey2, "PauseWhenInactive", 0, REG_DWORD, (LPBYTE) & DwordData, cbData);
 
@@ -472,6 +525,9 @@ void WriteConfiguration(void)
 
 	DwordData = romlist_sort_method;
 	RegSetValueEx(hKey2, "SortRomList", 0, REG_DWORD, (LPBYTE) & DwordData, cbData);
+
+	DwordData = romlistNameToDisplay;
+	RegSetValueEx(hKey2, "RomNameToDisplay", 0, REG_DWORD, (LPBYTE) & DwordData, cbData);
 
 	DwordData = guioptions.use_default_save_directory;
 	RegSetValueEx(hKey2, "UseDefaultSaveDiectory", 0, REG_DWORD, (LPBYTE) & DwordData, cbData);
@@ -584,11 +640,16 @@ void WriteConfiguration(void)
 		RegSetValueEx(hKey2, str, 0, REG_SZ, (LPBYTE) szData, cbData);
 	}
 
-	for(i = 0; i < ROMLIST_MAX_COLUMNS; i++)
+	for(i = 0; i < numberOfRomListColumns; i++)
 	{
 		sprintf(str, "RomListColumn%dWidth", i);
 		cbData = sizeof(DwordData);
-		DwordData = RomList_Column_Widths[i];
+		DwordData = romListColumns[i].colWidth;
+		RegSetValueEx(hKey2, str, 0, REG_DWORD, (LPBYTE) & DwordData, cbData);
+
+		sprintf(str, "RomListColumn%dEnabled", i);
+		cbData = sizeof(DwordData);
+		DwordData = romListColumns[i].enabled;
 		RegSetValueEx(hKey2, str, 0, REG_DWORD, (LPBYTE) & DwordData, cbData);
 	}
 
@@ -612,9 +673,9 @@ void InitAll1964Options(void)
 	strcat(default_save_directory, "Save\\");
 
 	strcpy(gRegSettings.ROMPath, "");
-	strcpy(gRegSettings.AudioPlugin, "tr64_audio.dll");
+	strcpy(gRegSettings.AudioPlugin, "AziAudioHLE013b.dll");
 	strcpy(gRegSettings.VideoPlugin, "1964ogl.dll");
-	strcpy(gRegSettings.InputPlugin, "Basic Keyboard Plugin.dll");
+	strcpy(gRegSettings.InputPlugin, "NooTe_DI.dll");
 	strcpy(user_set_rom_directory, "");
 	strcpy(directories.last_rom_directory, "");
 	strcpy(user_set_save_directory, default_save_directory);
@@ -624,35 +685,34 @@ void InitAll1964Options(void)
 	strcpy(directories.rom_directory_to_use, directories.last_rom_directory);
 	strcpy(directories.plugin_directory_to_use, default_plugin_directory);
 
-	emuoptions.auto_run_rom = 1;
-	emuoptions.auto_full_screen = 0;
-	emuoptions.auto_apply_cheat_code = 0;
-	guioptions.pause_at_inactive = 1;
-	guioptions.pause_at_menu = 0;
-	emuoptions.dma_in_segments = 1;
-	emuoptions.SyncVI = 1;
+	emuoptions.auto_run_rom = TRUE;
+	emuoptions.auto_full_screen = FALSE;
+	emuoptions.auto_apply_cheat_code = FALSE;
+	emuoptions.UsingRspPlugin = FALSE;
+	emuoptions.dma_in_segments = TRUE;
+	emuoptions.SyncVI = TRUE;
+	
+	guioptions.pause_at_inactive = TRUE;
+	guioptions.pause_at_menu = FALSE;
 
-	guioptions.show_expert_user_menu = 0;
-	guioptions.show_recent_rom_directory_list = 0;
-	guioptions.show_recent_game_list = 0;
-	guioptions.display_detail_status = 1;
-	guioptions.display_profiler_status = 0;
-	guioptions.show_state_selector_menu = 0;
-	guioptions.show_critical_msg_window = 0;
-	guioptions.display_romlist = 1;
-	romlist_sort_method = 0;
+	guioptions.show_expert_user_menu = FALSE;
+	guioptions.show_recent_rom_directory_list = TRUE;
+	guioptions.show_recent_game_list = TRUE;
+	guioptions.display_detail_status = TRUE;
+	guioptions.display_profiler_status = TRUE;
+	guioptions.show_state_selector_menu = FALSE;
+	guioptions.show_critical_msg_window = FALSE;
+	guioptions.display_romlist = TRUE;
+	romlist_sort_method = ROMLIST_GAMENAME;
 
-	guioptions.use_default_save_directory = 1;
-	guioptions.use_default_state_save_directory = 1;
-	guioptions.use_default_plugin_directory = 1;
-	guioptions.use_last_rom_directory = 1;
+	guioptions.use_default_save_directory = TRUE;
+	guioptions.use_default_state_save_directory = TRUE;
+	guioptions.use_default_plugin_directory = TRUE;
+	guioptions.use_last_rom_directory = TRUE;
 
-	defaultoptions.Eeprom_size = EEPROMSIZE_2KB;
-
+	defaultoptions.Eeprom_size = EEPROMSIZE_4KB;
 	defaultoptions.RDRAM_Size = RDRAMSIZE_4MB;
-
 	defaultoptions.Emulator = DYNACOMPILER;
-
 	defaultoptions.Save_Type = ANYUSED_SAVETYPE;
 
 	defaultoptions.Code_Check = CODE_CHECK_MEMORY_QWORD;
@@ -668,7 +728,7 @@ void InitAll1964Options(void)
 	defaultoptions.Use_Register_Caching = USEREGC_YES;
 
 	guistatus.clientwidth = 640;
-	guistatus.clientheight = 480;
+	guistatus.clientheight = 580;
 	guistatus.window_position.top = 100;
 	guistatus.window_position.left = 100;
 	guistatus.WindowIsMaximized = FALSE;

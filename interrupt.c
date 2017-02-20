@@ -32,8 +32,10 @@
 #include "1964ini.h"
 #include "win32/DLL_Video.h"
 #include "win32/DLL_Audio.h"
+#include "win32/DLL_RSP.h"
 #include "win32/wingui.h"
 #include "win32/windebug.h"
+#include "cheatcode.h"
 #include "dynarec/dynacpu.h"
 
 extern void		Init_Timer_Event_List(void);
@@ -182,8 +184,11 @@ void WriteMI_ModeReg(uint32 value)
  */
 void Handle_SP(uint32 value)
 {
-	if(value & SP_SET_HALT) (SP_STATUS_REG) |= SP_STATUS_HALT;
-	if(value & SP_CLR_BROKE) (SP_STATUS_REG) &= ~SP_STATUS_BROKE;
+	if(value & SP_SET_HALT) 
+		(SP_STATUS_REG) |= SP_STATUS_HALT;
+
+	if(value & SP_CLR_BROKE) 
+		(SP_STATUS_REG) &= ~SP_STATUS_BROKE;
 
 	if(value & SP_CLR_INTR)
 	{
@@ -223,10 +228,13 @@ void Handle_SP(uint32 value)
 
 	if(value & SP_CLR_HALT)
 	{
-		(SP_STATUS_REG) &= ~SP_STATUS_HALT;
-		DEBUG_SP_TASK_MACRO(TRACE0("SP Task is triggered"));
-		sp_hle_task = HLE_DMEM_TASK;
-		RunSPTask();
+		if ( ( value & SP_STATUS_BROKE ) == 0 )
+		{
+			(SP_STATUS_REG) &= ~SP_STATUS_HALT;
+			DEBUG_SP_TASK_MACRO(TRACE0("SP Task is triggered"));
+			sp_hle_task = HLE_DMEM_TASK;
+			RunSPTask();
+		}
 	}
 
 	/* Add by Rice, 2001.08.10 */
@@ -269,7 +277,15 @@ void RunSPTask(void)
 		__try
 		{
 			DO_PROFILIER_VIDEO;
-			VIDEO_ProcessDList();
+			if( rsp_plugin_is_loaded == TRUE && emuoptions.UsingRspPlugin == TRUE )
+			{
+				DoRspCycles(100);
+				//VIDEO_ProcessDList();
+			}
+			else
+			{
+				VIDEO_ProcessDList();
+			}
 
 			emustatus.DListCount++;
 			DPC_STATUS_REG = 0x801; /* Makes Banjo Kazooie work - Azimer */
@@ -297,7 +313,15 @@ void RunSPTask(void)
 		__try
 		{
 			DO_PROFILIER_AUDIO;
-			AUDIO_ProcessAList();
+			if( rsp_plugin_is_loaded == TRUE && emuoptions.UsingRspPlugin == TRUE )
+			{
+				//AUDIO_ProcessAList();
+				DoRspCycles(100);
+			}
+			else
+			{
+				AUDIO_ProcessAList();
+			}
 
 			emustatus.AListCount++;
 		}
@@ -315,7 +339,15 @@ void RunSPTask(void)
 		__try
 		{
 			DO_PROFILIER_RDP;
-			VIDEO_ProcessRDPList();
+			if( rsp_plugin_is_loaded == TRUE && emuoptions.UsingRspPlugin == TRUE )
+			{
+				DoRspCycles(100);
+				//VIDEO_ProcessRDPList();
+			}
+			else
+			{
+				VIDEO_ProcessRDPList();
+			}
 
 			/* VIDEO_ProcessDList(); */
 		}
@@ -331,7 +363,9 @@ void RunSPTask(void)
 		break;
 	}
 
-	DO_PROFILIER_R4300I if(currentromoptions.DMA_Segmentation == USEDMASEG_YES) Set_SP_DLIST_Timer_Event(SPTASKPCLOCKS);
+	DO_PROFILIER_R4300I;
+	if(currentromoptions.DMA_Segmentation == USEDMASEG_YES && emuoptions.UsingRspPlugin == FALSE ) 
+		Set_SP_DLIST_Timer_Event(SPTASKPCLOCKS);
 	else
 		Trigger_RSPBreak();
 }
@@ -402,7 +436,7 @@ void Trigger_DPInterrupt(void)
 void Trigger_VIInterrupt(void)
 {
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY9
-	if((debug_opcode == 0) || ((debug_opcode) && (p_gHardwareState == &gHardwareState)))
+	if((debug_opcode != 1) || ((debug_opcode) && (p_gHardwareState == &gHardwareState)))
 #endif
 
 	/* only do the VI updatescreen for dyna, not for interpreter compare */
@@ -413,11 +447,15 @@ void Trigger_VIInterrupt(void)
 		DO_PROFILIER_VIDEO;
 		VIDEO_UpdateScreen();
 
-		DO_PROFILIER_R4300I framecounter++;
+		DO_PROFILIER_R4300I;
+		viCountePerSecond++;
 		if(Audio_Is_Initialized == 1)
 		{
 			DO_PROFILIER_AUDIO;
-			AUDIO_AiUpdate(FALSE);
+			if( CoreDoingAIUpdate )
+			{
+				AUDIO_AiUpdate(FALSE);
+			}
 
 			DO_PROFILIER_R4300I;
 		}
@@ -427,10 +465,8 @@ void Trigger_VIInterrupt(void)
 	if(currentromoptions.Max_FPS != MAXFPS_NONE && emuoptions.SyncVI)
 	{
 		QueryPerformanceCounter(&CurrentTime);
-		Elapsed.QuadPart = CurrentTime.QuadPart -
-		LastSecondTime.QuadPart;
-		tempvips = framecounter /
-		((double) Elapsed.QuadPart / (double) Freq.QuadPart);
+		Elapsed.QuadPart = CurrentTime.QuadPart - LastSecondTime.QuadPart;
+		tempvips = viCountePerSecond / ((double) Elapsed.QuadPart / (double) Freq.QuadPart);
 
 		/* if( tempvips > vips_speed_limits[currentromoptions.Max_FPS]+1.0) */
 		if(tempvips > vips_speed_limits[currentromoptions.Max_FPS])
@@ -477,6 +513,24 @@ void Trigger_VIInterrupt(void)
 		}
 
 		LastVITime = CurrentTime;
+	}
+
+	
+	if ((VI_STATUS_REG & 0x00000010) != 0) // Bit [4]     = divot_enable (normally on if antialiased, unless decal lines)
+	{
+		vi_field_number = 1 - vi_field_number;
+	} 
+	else 
+	{
+		vi_field_number = 0;
+	}
+
+	/* Apply the hack codes */
+	if(emuoptions.auto_apply_cheat_code)
+	{
+#ifndef CHEATCODE_LOCK_MEMORY
+		CodeList_ApplyAllCode(INGAME);
+#endif
 	}
 
 	/* set the interrupt to fire */
@@ -596,10 +650,12 @@ void Trigger_Address_Error_Exception(uint32 addr, char *opcode, int exception)
     Call this function to clear AI/VI/SI/SP/DP interrupts
  =======================================================================================================================
  */
+extern uint32 fpu_exception_count;
 void TriggerFPUUnusableException(void)
 {
 	SET_EXCEPTION(EXC_CPU) gHWS_COP0Reg[CAUSE] &= 0xCFFFFFFF;
 	gHWS_COP0Reg[CAUSE] |= CAUSE_CE1;
+	fpu_exception_count++;
 
 	/*
 	 * Should test the CPU Delay slot bit £
@@ -630,7 +686,7 @@ void EnableFPUUnusableException(void)
 {
 	/* TRACE0("Enable FPU Exception"); */
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY10
-	if(debug_opcode == 0)
+	if(debug_opcode != 1)
 #endif
 		dyna_instruction[0x11] = dyna4300i_cop1_with_exception; /* this is for dyna */
 
@@ -639,7 +695,7 @@ void EnableFPUUnusableException(void)
 		now_do_dyna_instruction[0x11] = dyna4300i_cop1_with_exception;
 #endif
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY12
-	if(debug_opcode == 0 || emustatus.cpucore == INTERPRETER)
+	if(debug_opcode != 1 || emustatus.cpucore == INTERPRETER)
 #endif
 		CPU_instruction[0x11] = COP1_NotAvailable_instr;		/* this is for interpreter */
 }
@@ -653,7 +709,7 @@ void DisableFPUUnusableException(void)
 {
 	/* TRACE0("Disable FPU Exception"); */
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY13
-	if(debug_opcode == 0)
+	if(debug_opcode != 1)
 #endif
 	{
 		dyna_instruction[0x11] = dyna4300i_cop1;	/* this is for dyna */
@@ -664,7 +720,7 @@ void DisableFPUUnusableException(void)
 		now_do_dyna_instruction[0x11] = dyna4300i_cop1;
 #endif
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY15
-	if(debug_opcode == 0 || emustatus.cpucore == INTERPRETER)
+	if(debug_opcode != 1 || emustatus.cpucore == INTERPRETER)
 #endif
 		CPU_instruction[0x11] = COP1_instr;			/* this is for interpreter */
 }

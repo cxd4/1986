@@ -873,11 +873,19 @@ void GetFileName(char *Directory, char *Ext)
 	int		i;
 	/*~~~~~~~~~~~~~~~~~*/
 
-	for(i = 0; i < 8; i++) CRC[i] = ((char *) &rominfo.crc1)[i ^ 3];
+	for(i = 0; i < 8; i++)
+	{
+		CRC[i] = ((char *) &rominfo.crc1)[i ^ 3];
+	}
 
 	strcpy(romname, rominfo.name);
 	for(i = 0; i < (int) strlen(romname); i++)
-		if(romname[i] == ':') romname[i] = '-';
+	{
+		if(romname[i] == ':' || romname[i] == '/' )
+		{
+			romname[i] = '-';
+		}
+	}
 
 	sprintf
 	(
@@ -897,7 +905,7 @@ void GetFileName(char *Directory, char *Ext)
     Write MemPak Data to File //
  =======================================================================================================================
  */
-BOOL FileIO_WriteMemPak(int pak_no)
+void FileIO_WriteMemPak(int pak_no)
 {
 	/*~~~~~~~~~~~~~~~~~~~~~~~*/
 	char	temp[1024], ext[5];
@@ -911,12 +919,18 @@ BOOL FileIO_WriteMemPak(int pak_no)
 	if(stream == NULL)
 	{
 		DisplayError("Can not Write MEMPAK to file %s", temp);
-		return TRUE;
 	}
-
-	TRACE1("Write MEMPAK to file: %s", temp) fwrite(gamesave.mempak[0], 1024 * 32, 1, stream);
-	fclose(stream);
-	return FALSE;
+	else
+	{
+#ifdef DEBUG_COMMON
+		if( debugoptions.debug_si_mempak )
+		{
+			TRACE1("Write MEMPAK to file: %s", temp);
+		}
+#endif
+		fwrite(gamesave.mempak[0], 1024 * 32, 1, stream);
+		fclose(stream);
+	}
 }
 
 /*
@@ -924,7 +938,7 @@ BOOL FileIO_WriteMemPak(int pak_no)
     Load MemPak Data from File //
  =======================================================================================================================
  */
-BOOL FileIO_LoadMemPak(int pak_no)
+void FileIO_LoadMemPak(int pak_no)
 {
 	/*~~~~~~~~~~~~~~~~~~~~~~~*/
 	char	temp[1024], ext[5];
@@ -938,10 +952,8 @@ BOOL FileIO_LoadMemPak(int pak_no)
 	if(stream == NULL)
 	{
 		if(!FileIO_CreateMempakFile(temp))
-		/* if( !FileIO_CreateFile(temp, 1024*32*4) ) */
 		{
-			DisplayError("Can not Load MEMPAK from file %s", temp);
-			return TRUE;
+			DisplayError("Can not create an empty MEMPAK file: ", temp);
 		}
 		else
 		{
@@ -949,14 +961,20 @@ BOOL FileIO_LoadMemPak(int pak_no)
 			if(stream == NULL)
 			{
 				DisplayError("Can not Load MEMPAK from file %s", temp);
-				return TRUE;
 			}
 		}
 	}
-
-	TRACE1("Load MEMPAK from file: %s", temp) fread(gamesave.mempak[0], 1024 * 32, 1, stream);
-	fclose(stream);
-	return FALSE;
+	else
+	{
+#ifdef DEBUG_COMMON
+		if( debugoptions.debug_si_mempak )
+		{
+			TRACE1("Load MEMPAK from file: %s", temp);
+		}
+#endif
+		fread(gamesave.mempak[0], 1024 * 32, 1, stream);
+		fclose(stream);
+	}
 }
 
 /*
@@ -964,7 +982,7 @@ BOOL FileIO_LoadMemPak(int pak_no)
     Write EEprom Data to File //
  =======================================================================================================================
  */
-BOOL FileIO_WriteEEprom(void)
+void FileIO_WriteEEprom(void)
 {
 	/*~~~~~~~~~~~~~~~*/
 	char	temp[1024];
@@ -976,19 +994,14 @@ BOOL FileIO_WriteEEprom(void)
 
 	if(stream != NULL)
 	{
-		TRACE1("Write EEPROM to file: %s", temp) fwrite
-			(
-				gamesave.EEprom,
-				currentromoptions.Eeprom_size == EEPROMSIZE_2KB ? 0x800 : 0x1000,
-				1,
-				stream
-			);
+		TRACE1("Write EEPROM to file: %s", temp);
+		fwrite(gamesave.EEprom, currentromoptions.Eeprom_size == EEPROMSIZE_4KB ? 0x800 : 0x1000, 1, stream);
 		fclose(stream);
-		return FALSE;
 	}
-
-	DisplayError("Can not write EEPROM to file");
-	return TRUE;
+	else
+	{
+		TRACE0("Can not write EEPROM to file");
+	}
 }
 
 /*
@@ -996,7 +1009,7 @@ BOOL FileIO_WriteEEprom(void)
     Load EEprom Data from File //
  =======================================================================================================================
  */
-BOOL FileIO_LoadEEprom(void)
+void FileIO_LoadEEprom(void)
 {
 	/*~~~~~~~~~~~~~~~*/
 	char	temp[1024];
@@ -1008,10 +1021,10 @@ BOOL FileIO_LoadEEprom(void)
 
 	if(stream == NULL)
 	{
-		if(!FileIO_CreateFile(temp, currentromoptions.Eeprom_size == EEPROMSIZE_2KB ? 0x800 : 0x1000))
+		if(!FileIO_CreateFile(temp, currentromoptions.Eeprom_size == EEPROMSIZE_4KB ? 0x800 : 0x1000))
 		{
 			DisplayError("Can not Load EEPROM from file %s", temp);
-			return TRUE;
+			return;
 		}
 		else
 		{
@@ -1019,16 +1032,17 @@ BOOL FileIO_LoadEEprom(void)
 			if(stream == NULL)
 			{
 				DisplayError("Can not Load EEPROM from file %s", temp);
-				return TRUE;
+				return;
 			}
 		}
 	}
+	else
+	{
+		TRACE1("Load EEPROM from file: %s", temp);
 
-	TRACE1("Load EEPROM from file: %s", temp);
-
-	fread(gamesave.EEprom, currentromoptions.Eeprom_size == EEPROMSIZE_2KB ? 0x800 : 0x1000, 1, stream);
-	fclose(stream);
-	return FALSE;
+		fread(gamesave.EEprom, currentromoptions.Eeprom_size == EEPROMSIZE_4KB ? 0x800 : 0x1000, 1, stream);
+		fclose(stream);
+	}
 }
 
 /*
@@ -1036,7 +1050,7 @@ BOOL FileIO_LoadEEprom(void)
     Write SRam Data to File //
  =======================================================================================================================
  */
-BOOL FileIO_WriteSRAM(void)
+void FileIO_WriteSRAM(void)
 {
 	/*~~~~~~~~~~~~~~~*/
 	char	temp[1024];
@@ -1051,14 +1065,11 @@ BOOL FileIO_WriteSRAM(void)
 		TRACE1("Write SRAM into file: %s", temp);
 		fwrite(gamesave.SRam, SRAM_SIZE, 1, stream);
 		fclose(stream);
-		return FALSE;
 	}
 	else
 	{
 		DisplayError("Can not create file to save SRAM");
 	}
-
-	return TRUE;
 }
 
 /*
@@ -1066,7 +1077,7 @@ BOOL FileIO_WriteSRAM(void)
     Load SRam Data from File //
  =======================================================================================================================
  */
-BOOL FileIO_ReadSRAM(void)
+void FileIO_ReadSRAM(void)
 {
 	/*~~~~~~~~~~~~~~~*/
 	char	temp[1024];
@@ -1081,23 +1092,19 @@ BOOL FileIO_ReadSRAM(void)
 		TRACE1("Load SRAM from file: %s", temp);
 		fread(gamesave.SRam, SRAM_SIZE, 1, stream);
 		fclose(stream);
-		return FALSE;
 	}
 	else
 	{
 		memset(gamesave.SRam, 0x00, SRAM_SIZE);
-
-		/* DisplayError("Can not load SRAM from file: ",temp); */
+		DisplayError("Can not load SRAM from file: ",temp);
 	}
-
-	return TRUE;
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-BOOL FileIO_CreateFLASHRAM(char *filename)
+void FileIO_CreateFLASHRAM(char *filename)
 {
 	/*~~~~~~~~~~~~*/
 	FILE	*stream;
@@ -1109,19 +1116,19 @@ BOOL FileIO_CreateFLASHRAM(char *filename)
 	if(stream == NULL)
 	{
 		DisplayError("Error to create a new flashram file: %s, please check your directory setting", filename);
-		return FALSE;
 	}
-
-	fwrite(gamesave.FlashRAM, 128 * 1024, 1, stream);
-	fclose(stream);
-	return TRUE;
+	else
+	{
+		fwrite(gamesave.FlashRAM, 128 * 1024, 1, stream);
+		fclose(stream);
+	}
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-BOOL FileIO_WriteFLASHRAM(void)
+void FileIO_WriteFLASHRAM(void)
 {
 	/*~~~~~~~~~~~~~~*/
 	char	temp[256];
@@ -1130,18 +1137,20 @@ BOOL FileIO_WriteFLASHRAM(void)
 
 	GetFileName(temp, "fla");
 	stream = fopen(temp, "wb");
-
-	TRACE1("Save Flashram to file: %s", temp) memcpy(gamesave.FlashRAM, pLOAD_UBYTE_PARAM_2(0xA8000000), 1024 * 128);
-	fwrite(gamesave.FlashRAM, 1024 * 128, 1, stream);
-	fclose(stream);
-	return TRUE;
+	if( stream != NULL )
+	{
+		TRACE1("Save Flashram to file: %s", temp);
+		memcpy(gamesave.FlashRAM, pLOAD_UBYTE_PARAM_2(0xA8000000), 1024 * 128);
+		fwrite(gamesave.FlashRAM, 1024 * 128, 1, stream);
+		fclose(stream);
+	}
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-BOOL FileIO_ReadFLASHRAM(void)
+void FileIO_ReadFLASHRAM(void)
 {
 	/*~~~~~~~~~~~~~~*/
 	char	temp[256];
@@ -1153,13 +1162,17 @@ BOOL FileIO_ReadFLASHRAM(void)
 
 	if(stream == NULL)
 	{
-		return FileIO_CreateFLASHRAM(temp);
+		FileIO_CreateFLASHRAM(temp);
 	}
+	else
+	{
+		TRACE1("Load Flashram from file: %s", temp);
 
-	TRACE1("Load Flashram from file: %s", temp) fread(gamesave.FlashRAM, 1024 * 128, 1, stream);
-	memcpy(pLOAD_UBYTE_PARAM_2(0xA8000000), gamesave.FlashRAM, 1024 * 128);
-	fclose(stream);
-	return TRUE;
+		fread(gamesave.FlashRAM, 1024 * 128, 1, stream);
+		memcpy(pLOAD_UBYTE_PARAM_2(0xA8000000), gamesave.FlashRAM, 1024 * 128);
+
+		fclose(stream);
+	}
 }
 
 extern int	StateFileNumber;
@@ -1203,11 +1216,17 @@ void FileIO_gzReadHardwareState(gzFile *stream)
  =======================================================================================================================
  =======================================================================================================================
  */
+uint32	Get_COUNT_Register(void);
+void DoOthersBeforeSaveState();
+void DoOthersAfterLoadState();
+
 void FileIO_gzWriteHardwareState(gzFile *stream)
 {
 	/*~~*/
 	int k;
 	/*~~*/
+
+	gHWS_COP0Reg[COUNT] = Get_COUNT_Register();	//Refresh the COUNT register
 
 	if(currentromoptions.Assume_32bit == ASSUME_32BIT_YES)
 	{
@@ -1247,6 +1266,8 @@ void FileIO_gzSaveStateFile(const char *filename)
 	}
 
 	TRACE1("Save state into gzip file: %s", filename);
+
+	DoOthersBeforeSaveState();
 
 	gzwrite(stream, (uint8 *) (&magic1964), sizeof(DWORD));
 	gzwrite(stream, (uint8 *) (&current_rdram_size), sizeof(uint32));
@@ -1360,6 +1381,7 @@ void FileIO_gzLoadStateFile(const char *filename)
 	gzread(stream, (uint8 *) gMS_GIO_REG, 0x804);			/* GIO_REG */
 	gzread(stream, (uint8 *) gMS_PIF, 0x800);				/* PIF */
 
+	InitTLB();
 	gzread(stream, (uint8 *) gMS_TLB, sizeof(tlb_struct) * MAXTLB);
 	Build_Whole_Direct_TLB_Lookup_Table();
 
@@ -1370,11 +1392,13 @@ void FileIO_gzLoadStateFile(const char *filename)
 
 	gzclose(stream);
 
-	if(debug_opcode)
+	if(debug_opcode!=0)
 	{
 		Debugger_Copy_Memory(&gMemoryState_Interpreter_Compare, &gMemoryState);
 		memcpy(&gHardwareState_Interpreter_Compare, &gHardwareState, sizeof(HardwareState));
 	}
+
+	DoOthersAfterLoadState();
 }
 
 /*

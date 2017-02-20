@@ -126,7 +126,7 @@ LRESULT CALLBACK DEBUGGER(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		UpdateFPR();
 		UpdateMisc();
 
-		if(debug_opcode)
+		if(debug_opcode!=0)
 		{
 			DisplayInterpreterCompareReg = 0;
 			DisplayDynaCompareReg = 0;
@@ -618,7 +618,7 @@ LRESULT APIENTRY CODELISTPROC(HWND hDlg, unsigned message, WORD wParam, LONG lPa
 			Pause();
 			break;
 		case IDC_RUN_CODELIST:
-			Play();
+			Play(emuoptions.auto_full_screen);
 			break;
 		case IDC_PRINT_TLB:
 			PrintTLB(FALSE);
@@ -1188,7 +1188,7 @@ void UpdateMisc(void)
 
 	pstate = &gHardwareState;
 
-	if(debug_opcode)
+	if(debug_opcode!=0)
 	{
 		if(DisplayInterpreterCompareReg)
 		{
@@ -1231,7 +1231,7 @@ void UpdateGPR(void)
 
 	pstate = &gHardwareState;
 
-	if(debug_opcode)
+	if(debug_opcode!=0)
 	{
 		if(DisplayInterpreterCompareReg)
 		{
@@ -1270,7 +1270,7 @@ void UpdateCOP0(void)
 
 	pstate = &gHardwareState;
 
-	if(debug_opcode)
+	if(debug_opcode!=0)
 	{
 		if(DisplayInterpreterCompareReg)
 		{
@@ -1309,7 +1309,7 @@ void UpdateFPR(void)
 
 	pstate = &gHardwareState;
 
-	if(debug_opcode)
+	if(debug_opcode!=0)
 	{
 		if(DisplayInterpreterCompareReg)
 		{

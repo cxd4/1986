@@ -480,7 +480,7 @@ void COMPARE_Run_Interpreter_Opcode(uint32 code)
  */
 void COMPARE_Run(uint32 Inter_Opcode_Address, uint32 code)
 {
-	if(debug_opcode == 0) return;
+	if(debug_opcode != 1) return;
 
 #ifdef TEST_OPCODE_DEBUGGER_INTEGRITY21
 	return;
@@ -1030,7 +1030,7 @@ void OpcodeDebugger(OP_PARAMS)
 	now_do_dyna_instruction[__OPCODE](PASS_PARAMS);
 	return;
 #endif
-	if(debug_opcode == 0)
+	if(debug_opcode != 1)
 	{
 		now_do_dyna_instruction[__OPCODE](PASS_PARAMS);
 		return;

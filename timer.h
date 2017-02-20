@@ -64,10 +64,12 @@ int						viframeskip;				/* This global parameter determines to skip a VI frame 
 /* after every few frames */
 int						viframeskipcount;
 int						framecounter;				/* To count how many frames are displayed per second */
+int						viCountePerSecond;			/* To count how many VI interrupts per second */
 float					vips;						/* VI/s */
 extern LARGE_INTEGER	Freq;
 extern LARGE_INTEGER	LastVITime;
 extern LARGE_INTEGER	LastSecondTime;
+
 
 void					CPUDoOtherTasks(void);
 
@@ -79,6 +81,7 @@ void					CPUDoOtherTasks(void);
 extern unsigned __int32 max_vi_lines;
 extern unsigned __int32 max_vi_count;
 extern unsigned __int32 vi_count_per_line;
+extern unsigned __int32 vi_field_number;
 
 #define NTSC_VI_MAGIC_NUMBER	625000
 #define PAL_VI_MAGIC_NUMBER		777809				/* 750000 //777809 */

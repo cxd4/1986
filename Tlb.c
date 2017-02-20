@@ -741,27 +741,49 @@ uint32 Trigger_TLB_Invalid_Exception(uint32 address, int operation)
  =======================================================================================================================
  =======================================================================================================================
  */
+void InitTLBOther(void);
+
 void InitTLB(void)
 {
 	/*~~*/
 	int i;
 	/*~~*/
 
-	for(i = 0; i < MAXTLB; i++) memset(&gMemoryState.TLB[i], 0, sizeof(tlb_struct));
+	for(i = 0; i < MAXTLB; i++)
+	{
+		memset(&gMemoryState.TLB[i], 0, sizeof(tlb_struct));
+	}
 
 	last_itlb_index = 0;
-	for(i = 0; i < MAXITLB; i++) ITLB_Index[i] = 0;
+	for(i = 0; i < MAXITLB; i++)
+	{
+		ITLB_Index[i] = 0;
+	}
 
 	last_dtlb_index = 0;
-	for(i = 0; i < MAXDTLB; i++) DTLB_Index[i] = 0;
+	for(i = 0; i < MAXDTLB; i++)
+	{
+		DTLB_Index[i] = 0;
+	}
 
 	/* Initialize the TLB Lookup Table */
-	for(i = 0; i < 0x100000; i++) Direct_TLB_Lookup_Table[i] = DUMMYDIRECTTLBVALUE; /* This is a magic number, to
-																					 * represent invalid TLB address */
+	for(i = 0; i < 0x100000; i++)
+	{
+		Direct_TLB_Lookup_Table[i] = DUMMYDIRECTTLBVALUE; 
+		/* This is a magic number, to represent invalid TLB address */
+	}
 
 	/* we probably need to review a little bit here laterly */
-	for(i = 0; i < 0x100000; i++) TLB_sDWORD_R[i] = sDWord[i >> 4] + 0x1000 * (i & 0xf);
+	for(i = 0; i < 0x100000; i++)
+	{
+		TLB_sDWORD_R[i] = sDWord[i >> 4] + 0x1000 * (i & 0xf);
+	}
 
+	InitTLBOther();
+}
+
+void InitTLBOther(void)
+{
 	/* some TLB hacks to speed up some games, but fails at others */
 	trigger_tlb_exception_faster = FALSE;
 	if(strncmp(currentromoptions.Game_Name, "GOLDENEYE", 9) == 0)
@@ -791,11 +813,12 @@ void InitTLB(void)
 				TLB_sDWORD_R[0x7f000 + i] = &gMS_ROM_Image[0x329f0 + i * 0x1000];
 			}
 		}
-
 		trigger_tlb_exception_faster = TRUE;
 	}
 	else if(strncmp(currentromoptions.Game_Name, "CONKER", 6) == 0)
+	{
 		trigger_tlb_exception_faster = TRUE;
+	}
 }
 
 /*
@@ -1362,13 +1385,21 @@ void Build_Whole_Direct_TLB_Lookup_Table(void)
 	 * Clean the whole table first £
 	 * memset(&Direct_TLB_Lookup_Table[0], 0xFF, sizeof(Direct_TLB_Lookup_Table));
 	 */
-	for(i = 0; i < 0x100000; i++) Direct_TLB_Lookup_Table[i] = DUMMYDIRECTTLBVALUE; /* This is a magic number, to
-																					 * represent invalid TLB address */
+	for(i = 0; i < 0x100000; i++)
+	{
+		Direct_TLB_Lookup_Table[i] = DUMMYDIRECTTLBVALUE; 
+		/* This is a magic number, to represent invalid TLB address */
+	}
 
 	for(i = 0; i < 0x100000; i++)
 	{
 		TLB_sDWORD_R[i] = sDWord[i >> 4] + 0x1000 * (i & 0xf);
 	}
 
-	for(i = 0; i <= NTLBENTRIES; i++) Build_Direct_TLB_Lookup_Table(i, BUILDMAP);
+	for(i = 0; i <= NTLBENTRIES; i++)
+	{
+		Build_Direct_TLB_Lookup_Table(i, BUILDMAP);
+	}
+
+	InitTLBOther();
 }

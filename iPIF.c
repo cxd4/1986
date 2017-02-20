@@ -36,6 +36,7 @@
 #include "win32/DLL_Input.h"
 #include "kaillera/Kaillera.h"
 #include "gamesave.h"
+#include "netplay.h"
 
 _u8 EEProm_Status_Byte = 0x00;
 
@@ -59,11 +60,15 @@ void Init_iPIF(void)
 
 	switch(currentromoptions.Eeprom_size)
 	{
-	case EEPROMSIZE_4KB:	EEProm_Status_Byte = 0xC0; break;
-
-	case EEPROMSIZE_2KB:	EEProm_Status_Byte = 0x80; break;
-
-	default:			 /* =EEPROMSIZE_NONE */EEProm_Status_Byte = 0x00; break;
+	case EEPROMSIZE_16KB:	
+		EEProm_Status_Byte = 0xC0; 
+		break;
+	case EEPROMSIZE_4KB:	
+		EEProm_Status_Byte = 0x80; 
+		break;
+	default:			 /* =EEPROMSIZE_NONE */
+		EEProm_Status_Byte = 0x00; 
+		break;
 	};
 }
 
@@ -234,58 +239,28 @@ void BuildCRC(_u8 *data, _u8 *crc)
  */
 void ReadControllerPak(int device, char *cmd)
 {
-	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	_u8		crc;
-	_u16	offset = *(_u16 *) &cmd[1];
-	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	uint8	crc;
+	uint16	offset = *(_u16 *) &cmd[1];
 
 	offset = (offset >> 8) | (offset << 8);
-
-	/* u16 offset = cmd[2]*0x100+cmd[1]; */
 	offset = offset >> 5;
 
-	if(offset > 0x400)
+	if(offset <= 0x400)
 	{
-		/*
-		 * offset is out of range, dont copy Data £
-		 * Handle Rumble Pack -> Rumble Pack Address: 0xC01B (offset = 0x600)
-		 */
-	}
-	else
-	{
-		/* Copy Data to Mempak */
-
-		/*~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-#ifdef DEBUG_DUMP_MEMPAK
-		int		i;
-		char	*str = generalmessage;
-		/*~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-		if(debugoptions.debug_si_mempak)
+		if(!gamesave.mempak_used[device])
 		{
-			TRACE2("Read MEMPAK %d, offset=0x%X", device, offset * 32);
-			for(i = 0; i < 32; i++)
-			{
-				sprintf(str, "%02x ", gamesave.mempak[device][offset * 32 + i]);
-				str += 3;
-				if((i + 1) % 8 == 0)
-				{
-					*str++ = '\0';
-					RefreshOpList(generalmessage);
-					str = generalmessage;
-				}
-			}
+			FileIO_LoadMemPak(device);
+			gamesave.mempak_used[device] = TRUE;
 
-			*str++ = '\0';
-			RefreshOpList(generalmessage);
+			if(gamesave.firstusedsavemedia == 0)
+			{
+				gamesave.firstusedsavemedia = MEMPAK_SAVETYPE;
+			}
 		}
-#endif
 		memcpy(&cmd[3], &(gamesave.mempak[device][offset * 32]), 32);
 	}
 
-	/* Build CRC of the Data */
-	BuildCRC(&cmd[3], &crc);
-
+	BuildCRC(&cmd[3], &crc);	/* Build CRC of the Data */
 	cmd[35] = crc;
 }
 
@@ -296,60 +271,32 @@ void ReadControllerPak(int device, char *cmd)
  */
 void WriteControllerPak(int device, char *cmd)
 {
-	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	_u8		crc;
-	_u16	offset = *(_u16 *) &cmd[1];
-	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	uint8	crc;
+	uint16	offset = *(_u16 *) &cmd[1];
 
 	offset = (offset >> 8) | (offset << 8);
-
-	/* u16 offset = cmd[2]*0x100+cmd[1]; */
 	offset = offset >> 5;
 
-	/* LogPIFData(bufin, TRUE); */
-	if(offset > 0x400)
+	if(offset <= 0x400)
 	{
-		/*
-		 * offset is out of range, dont copy Data £
-		 * Handle Rumble Pack -> Rumble Pack Address: 0xC01B (offset = 0x600)
-		 */
-	}
-	else
-	{
-		/* Copy Data to Mempak */
-
-		/*~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-#ifdef DEBUG_DUMP_MEMPAK
-		int		i;
-		char	*str = generalmessage;
-#endif
-		/*~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-		memcpy(&(gamesave.mempak[device][offset * 32]), &cmd[3], 32);
-#ifdef DEBUG_DUMP_MEMPAK
-		if(debugoptions.debug_si_mempak)
+		if(!gamesave.mempak_used[device])
 		{
-			TRACE2("Write MEMPAK %d, offset=0x%X", device, offset * 32) for(i = 0; i < 32; i++)
-			{
-				sprintf(str, "%02X ", gamesave.mempak[device][offset * 32 + i]);
-				str += 3;
-				if((i + 1) % 8 == 0)
-				{
-					*str++ = '\0';
-					RefreshOpList(generalmessage);
-					str = generalmessage;
-				}
-			}
+			FileIO_LoadMemPak(device);
+			gamesave.mempak_used[device] = TRUE;
 
-			*str++ = '\0';
-			RefreshOpList(generalmessage);
+			if(gamesave.firstusedsavemedia == 0)
+			{
+				gamesave.firstusedsavemedia = MEMPAK_SAVETYPE;
+			}
 		}
-#endif
+
+		/* Copy Data to Mempak */
+		memcpy(&(gamesave.mempak[device][offset * 32]), &cmd[3], 32);
+		gamesave.mempak_written[device] = TRUE;
+		FileIO_WriteMemPak(device);		//Save the file to disk
 	}
 
-	/* Build CRC of the Data */
-	BuildCRC(&cmd[3], &crc);
-
+	BuildCRC(&cmd[3], &crc);	/* Build CRC of the Data */
 	cmd[35] = crc;
 }
 
@@ -364,10 +311,7 @@ BOOL ControllerCommand(_u8 *cmd, int device)
 
 	if(Kaillera_Is_Running == TRUE)
 	{
-		/*
-		 * Need only the first device for kaillera mode cause this is the only device we
-		 * really use ;)
-		 */
+		// Need only the first device for kaillera mode cause this is the only device we really use ;)
 		if(!Controls[0].Present)
 		{
 			cmd[1] |= 0x80;
@@ -445,15 +389,15 @@ label_Jump:
 				}
 				else if(reclen > 0)
 				{
-					/*~~*/
 					int i;
-					/*~~*/
-
 					for(i = 0; i < Kaillera_Players; i++)
 					{
-						if(kBuffers[i].c != Kaillera_Counter)	/* This synchronizes all players */
+						if(kBuffers[i].c != Kaillera_Counter)	
+						{
+							/* This synchronizes all players */
 							/* but could make game play really slow */
 							goto label_Jump;
+						}
 					}
 				}
 				else
@@ -465,7 +409,14 @@ label_Jump:
 				memcpy(&Keys, &kBuffers[device].b, sizeof(BUTTONS));
 			}
 			else
-				CONTROLLER_GetKeys(device, &Keys);
+			{
+				if( NetplayInitialized )
+				{
+					netplay_get_keys(device, &Keys, emustatus.DListCount);
+				}
+				else
+					CONTROLLER_GetKeys(device, &Keys);
+			}
 
 			*(DWORD *) &cmd[3] = *(DWORD *) &Keys;
 			DEBUG_CONTROLLER_TRACE(TRACE2("Read controller %d, return %X", device, *(DWORD *) &Keys););
@@ -477,22 +428,11 @@ label_Jump:
 		switch(Controls[device].Plugin)
 		{
 		case PLUGIN_MEMPAK:
-			if(!gamesave.mempak_used[device])
-			{
-				FileIO_LoadMemPak(device);
-				gamesave.mempak_used[device] = TRUE;
-
-				if(gamesave.firstusedsavemedia == 0) gamesave.firstusedsavemedia = MEMPAK_SAVETYPE;
-			}
-
 			ReadControllerPak(device, &cmd[2]);
 			break;
-
 		case PLUGIN_NONE:
 		case PLUGIN_RUMBLE_PAK:
 		case PLUGIN_TANSFER_PAK:
-			break;
-
 		default:
 			break;
 		}
@@ -505,21 +445,11 @@ label_Jump:
 		switch(Controls[device].Plugin)
 		{
 		case PLUGIN_MEMPAK:
-			if(!gamesave.mempak_used[device])
-			{
-				if(!FileIO_LoadMemPak(device)) gamesave.mempak_used[device] = TRUE;
-				if(gamesave.firstusedsavemedia == 0) gamesave.firstusedsavemedia = MEMPAK_SAVETYPE;
-			}
-
 			WriteControllerPak(device, &cmd[2]);
-			gamesave.mempak_written[device] = TRUE;
 			break;
-
 		case PLUGIN_NONE:
 		case PLUGIN_RUMBLE_PAK:
 		case PLUGIN_TANSFER_PAK:
-			break;
-
 		default:
 			break;
 		}
@@ -527,10 +457,6 @@ label_Jump:
 		return FALSE;
 		break;
 
-	/*
-	 * case 0x8b: cmd[2] = 5; break; case 0x6: cmd[2] = 5; break; case 0xc0: cmd[2] 5;
-	 * break;
-	 */
 	default:
 		TRACE2("Unkown ControllerCommand %X, pc=%08X", cmd[2], gHWS_pc);
 #ifdef DEBUG_COMMON
@@ -586,12 +512,16 @@ void ReadEEprom(char *dest, long offset)
 		TRACE0("Read from EEPROM");
 	}
 #endif
+
 	if(!gamesave.EEprom_used)
 	{
 		FileIO_LoadEEprom();
 		gamesave.EEprom_used = TRUE;
 
-		if(gamesave.firstusedsavemedia == 0) gamesave.firstusedsavemedia = EEPROM_SAVETYPE;
+		if(gamesave.firstusedsavemedia == 0)
+		{
+			gamesave.firstusedsavemedia = EEPROM_SAVETYPE;
+		}
 	}
 
 	memcpy(dest, &gamesave.EEprom[offset], 8);
@@ -610,15 +540,20 @@ void WriteEEprom(char *src, long offset)
 		TRACE0("Write to EEPROM");
 	}
 #endif
+
 	if(!gamesave.EEprom_used)
 	{
 		FileIO_LoadEEprom();
 		gamesave.EEprom_used = TRUE;
 
-		if(gamesave.firstusedsavemedia == 0) gamesave.firstusedsavemedia = EEPROM_SAVETYPE;
+		if(gamesave.firstusedsavemedia == 0)
+		{
+			gamesave.firstusedsavemedia = EEPROM_SAVETYPE;
+		}
 	}
 
 	memcpy(&gamesave.EEprom[offset], src, 8);
+	FileIO_WriteEEprom();	//Write the changes to disk
 	gamesave.EEprom_written = TRUE;
 }
 
@@ -647,21 +582,15 @@ BOOL EEpromCommand(_u8 *cmd, int device)
 
 	/* Read from Eeprom */
 	case 0x04:
-		/* DisplayError("Read eeprom"); */
 		ReadEEprom(&cmd[4], cmd[3] * 8);
 		break;
 
 	/* Write to Eeprom */
 	case 0x05:
-		/* DisplayError("Write eeprom"); */
 		WriteEEprom(&cmd[4], cmd[3] * 8);
 		break;
 
 	default:
-		/*
-		 * DisplayError("Unknown EepromCommand %x", cmd[2]); £
-		 * exit(IPIF_EXIT);
-		 */
 		break;
 	}
 
@@ -728,45 +657,27 @@ void iPifCheck(void)
 		case 1:
 		case 2:
 		case 3:
-			DEBUG_CONTROLLER_TRACE
-			(
-			sprintf
-				(
-					tracemessage,
-					"PIF CMD: %02X %02X %02X %02X %02X %02X %02X",
-					cmd[0],
-					cmd[1],
-					cmd[2],
-					cmd[3],
-					cmd[4],
-					cmd[5],
-					cmd[6]
-				); RefreshOpList(tracemessage);
-			);
 			if(Controls[device].RawData)
 			{
 				CONTROLLER_ControllerCommand(device, cmd);
-
-				/*
-				 * if( cmd[2] < 0x02 || cmd[2] == 0xFF) // Read Controller Data or read controller
-				 * status £
-				 * {
-				 */
 				CONTROLLER_ReadController(device, cmd);
-
-				/* } */
 				break;
 			}
-			else if(!ControllerCommand(cmd, device))
+			else
 			{
-				count = 64;
-				break;
+				if(!ControllerCommand(cmd, device))
+				{
+					count = 64;
+				}
 			}
 			break;
 
 		/* EEprom Command */
 		case 4:
-			if(!EEpromCommand(cmd, device)) count = 64;
+			if(!EEpromCommand(cmd, device))
+			{
+				count = 64;
+			}
 			break;
 
 		default:
@@ -781,72 +692,32 @@ void iPifCheck(void)
 		case 0xFF:
 			if(debugoptions.debug_si_controller)
 			{
-				sprintf
-				(
-					tracemessage,
-					"Get Status: %02X %02X %02X %02X %02X %02X %02X",
-					cmd[0],
-					cmd[1],
-					cmd[2],
-					cmd[3],
-					cmd[4],
-					cmd[5],
-					cmd[6]
-				);
+				sprintf(tracemessage, "Get Status: %02X %02X %02X %02X %02X %02X %02X",
+						cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6]); 
 				RefreshOpList(tracemessage);
 			}
 			break;
 		case 0x01:
 			if(debugoptions.debug_si_controller)
 			{
-				sprintf
-				(
-					tracemessage,
-					"Read Controller: %02X %02X %02X %02X %02X %02X %02X",
-					cmd[0],
-					cmd[1],
-					cmd[2],
-					cmd[3],
-					cmd[4],
-					cmd[5],
-					cmd[6]
-				);
+				sprintf(tracemessage, "Read Controller: %02X %02X %02X %02X %02X %02X %02X",
+						cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6]); 
 				RefreshOpList(tracemessage);
 			}
 			break;
 		case 0x02:
 			if(debugoptions.debug_si_mempak)
 			{
-				sprintf
-				(
-					tracemessage,
-					"Read Mempak: %02X %02X %02X %02X %02X %02X %02X",
-					cmd[0],
-					cmd[1],
-					cmd[2],
-					cmd[3],
-					cmd[4],
-					cmd[5],
-					cmd[6]
-				);
+				sprintf(tracemessage, "Read Mempak: %02X %02X %02X %02X %02X %02X %02X",
+						cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6]); 
 				RefreshOpList(tracemessage);
 			}
 			break;
 		case 0x03:
 			if(debugoptions.debug_si_mempak)
 			{
-				sprintf
-				(
-					tracemessage,
-					"Write Mempak: %02X %02X %02X %02X %02X %02X %02X",
-					cmd[0],
-					cmd[1],
-					cmd[2],
-					cmd[3],
-					cmd[4],
-					cmd[5],
-					cmd[6]
-				);
+				sprintf(tracemessage, "Write Mempak: %02X %02X %02X %02X %02X %02X %02X",
+						cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6]); 
 				RefreshOpList(tracemessage);
 			}
 			break;
@@ -896,22 +767,21 @@ void iPifCheck(void)
  */
 void LogPIFData(char *data, BOOL input)
 {
-	/*~~~~~~~~~~~~*/
-	FILE	*stream;
-	/*~~~~~~~~~~~~*/
-
-	stream = fopen("c:/pif_data.txt", "at");
+	FILE *stream = fopen("c:/pif_data.txt", "at");
 	if(stream != NULL)
 	{
-		/*~~~~~~~~~~~~~~~~~~~~~~*/
 		int				i, j;
 		unsigned char	*p = data;
-		/*~~~~~~~~~~~~~~~~~~~~~~*/
 
 		if(input)
+		{
 			fprintf(stream, "\nIncoming\n");
+		}
 		else
+		{
 			fprintf(stream, "\nOutgoing\n");
+		}
+
 		for(i = 0; i < 8; i++)
 		{
 			for(j = 0; j < 8; j++)

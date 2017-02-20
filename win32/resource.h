@@ -186,6 +186,39 @@
 #define ID_DEBUG_EXCEPTION_SERVICES     292
 #define ID_CPU_IMPORTPJ64STATE          293
 #define ID_CPU_EXPORTPJ64STATE          294
+#define ID_NETPLAY_CONFIG               295
+#define ID_NETPLAY_ADDAREMOTEPLAYER     296
+#define ID_NETPLAY_DROPAREMOTEPLAYER    297
+#define ID_NETPLAY_ENABLENETPLAY        298
+#define ID_POPUP_ROM_SETTING            299
+#define ID_POPUP_CHEATCODE              300
+#define ID_POPUP_LOADPLAY               301
+#define ID_POPUP_LOADPLAYINFULLSCREEN   302
+#define ID_POPUP_LOADPLAYINWINDOWMODE   303
+#define ID_POPUP_LOADONLY               304
+#define ID_QUICKSETTING_DMASEGMENTATION 305
+#define ID_QUICKSETTING_FPUHACK         306
+#define ID_QUICKSETTING_SYNCVI          307
+#define ID_QUICKSETTING_CPUCOREUSINGDYNACOMPILER 308
+#define ID_QUICKSETTING_CPUCOREUSINGINTERPRETER 309
+#define ID_DSP_CONFIG                   311
+#define ID_RSP_CONFIG                   311
+#define ID_HEADERPOPUP_2_SORT_ASCENDING 312
+#define ID_HEADERPOPUP_SHOWALTERNATEROMNAME 313
+#define ID_HEADERPOPUP_SHOWROMFILENAME  314
+#define ID_HEADERPOPUP_2_SORT_DESCENDING 317
+#define ID_HEADERPOPUP_2_SELECTING      318
+#define ID_HEADERPOPUP_SHOW_INTERNAL_NAME 319
+#define ID_HEADERPOPUP_1_SORT_ASCENDING 320
+#define ID_HEADERPOPUP_1_SORT_DESCENDING 321
+#define ID_HEADERPOPUP_1_SELECTING      322
+#define ID_CPU_VIDEOFRAMESKIPPING_FULLAUTOMATIC 323
+#define ID_CPU_VIDEOFRAMESKIPPING_DISABLED 324
+#define ID_CPU_VIDEOFRAMESKIPPING_SKIP1PER6FRAMES 325
+#define ID_CPU_VIDEOFRAMESKIPPING_SKIP1PER5FRAMES 326
+#define ID_CPU_VIDEOFRAMESKIPPING_SKIP1PER4FRAMES 327
+#define ID_CPU_VIDEOFRAMESKIPPING_SKIP1PER3FRAMES 328
+#define ID_CPU_VIDEOFRAMESKIPPING_SKIP1PER2FRAMES 329
 #define IDC_EDIT                        401
 #define IDC_CPUR0                       1000
 #define IDC_GPR1                        1001
@@ -463,6 +496,7 @@
 #define IDC_UPDATE                      1379
 #define IDC_CHECK1                      1380
 #define IDC_OPCODETRACE                 1380
+#define IDC_USE_RSP_PLUGIN              1380
 #define IDC_CHECK_LOGGING               1381
 #define IDC_VEC181                      1381
 #define IDC_VEC182                      1382
@@ -654,6 +688,7 @@
 #define IDC_OPCODE_COMPARE2             1476
 #define IDC_OPCODE_DYNA_COMPARE         1476
 #define IDC_DEFAULTOPTIONS_EXPANSIONPAK 1476
+#define IDC_DISABLE_STATS               1476
 #define IDC_VEC277                      1477
 #define IDC_MANUAL_DP                   1477
 #define IDC_VEC278                      1478
@@ -679,9 +714,15 @@
 #define IDC_VEC295                      1495
 #define IDC_VEC296                      1496
 #define IDC_VEC297                      1497
+#define IDC_COL_SEL_TREE                1497
 #define IDC_VEC298                      1498
+#define IDC_COLSEL_UP                   1498
+#define IDC_COLSEL_DOWN                 1499
+#define IDC_ALT_NAME                    1500
 #define IDC_VEC301                      1501
+#define IDC_INTERNAL_NAME               1501
 #define IDC_VEC302                      1502
+#define IDC_ROM_FILENAME                1502
 #define IDC_VEC303                      1503
 #define IDC_VEC304                      1504
 #define IDC_VEC305                      1505
@@ -716,9 +757,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        157
-#define _APS_NEXT_COMMAND_VALUE         295
-#define _APS_NEXT_CONTROL_VALUE         1487
+#define _APS_NEXT_RESOURCE_VALUE        164
+#define _APS_NEXT_COMMAND_VALUE         330
+#define _APS_NEXT_CONTROL_VALUE         1509
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -44,6 +44,14 @@
 #define RM_METHOD		(cCON31 & FPCSR_RM_MASK)
 #define SAVE_RM
 
+#ifdef SAVE_RM
+#define SET_ROUNDING	_control87(RM_METHOD, 0x00000300);
+#else
+#define SET_ROUNDING
+#endif
+#define COP1_CONDITION_BIT		0x00800000
+#define NOT_COP1_CONDITION_BIT	0xFF7FFFFF
+
 #ifdef DEBUG_COMMON
 #define CHECK_ODD_FPR_REG
 #endif
@@ -126,6 +134,7 @@ uint32	FR_reg_offset = 1;
 void r4300i_COP1_add_s(uint32 Instruction)
 {
 	CHK_ODD_FPR_3_REG(RD_FS, SA_FD, RT_FT);
+	SET_ROUNDING;
 	(*((float *) &cFD)) = (*((float *) &cFS)) + (*((float *) &cFT));
 	SAVE_OP_COUNTER_INCREASE_INTERPRETER(2);
 }
@@ -137,6 +146,7 @@ void r4300i_COP1_add_s(uint32 Instruction)
 void r4300i_COP1_sub_s(uint32 Instruction)
 {
 	CHK_ODD_FPR_3_REG(RD_FS, SA_FD, RT_FT);
+	SET_ROUNDING;
 	(*((float *) &cFD)) = (*((float *) &cFS)) - (*((float *) &cFT));
 	SAVE_OP_COUNTER_INCREASE_INTERPRETER(2);
 }
@@ -148,6 +158,7 @@ void r4300i_COP1_sub_s(uint32 Instruction)
 void r4300i_COP1_mul_s(uint32 Instruction)
 {
 	CHK_ODD_FPR_3_REG(RD_FS, SA_FD, RT_FT);
+	SET_ROUNDING;
 	(*((float *) &cFD)) = (*((float *) &cFS)) * (*((float *) &cFT));
 	SAVE_OP_COUNTER_INCREASE_INTERPRETER(4);
 }
@@ -159,6 +170,7 @@ void r4300i_COP1_mul_s(uint32 Instruction)
 void r4300i_COP1_div_s(uint32 Instruction)
 {
 	CHK_ODD_FPR_3_REG(RD_FS, SA_FD, RT_FT);
+	SET_ROUNDING;
 	(*((float *) &cFD)) = (*((float *) &cFS)) / (*((float *) &cFT));
 	SAVE_OP_COUNTER_INCREASE_INTERPRETER(12);
 }
@@ -170,6 +182,7 @@ void r4300i_COP1_div_s(uint32 Instruction)
 void r4300i_COP1_add_d(uint32 Instruction)
 {
 	CHK_ODD_FPR_3_REG(RD_FS, SA_FD, RT_FT);
+	SET_ROUNDING;
 	{
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		uint64	u1 = read_64bit_fpu_reg(RD_FS);
@@ -188,6 +201,7 @@ void r4300i_COP1_add_d(uint32 Instruction)
 void r4300i_COP1_sub_d(uint32 Instruction)
 {
 	CHK_ODD_FPR_3_REG(RD_FS, SA_FD, RT_FT);
+	SET_ROUNDING;
 	{
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		uint64	u1 = read_64bit_fpu_reg(RD_FS);
@@ -206,6 +220,7 @@ void r4300i_COP1_sub_d(uint32 Instruction)
 void r4300i_COP1_mul_d(uint32 Instruction)
 {
 	CHK_ODD_FPR_3_REG(RD_FS, SA_FD, RT_FT);
+	SET_ROUNDING;
 	{
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		uint64	u1 = read_64bit_fpu_reg(RD_FS);
@@ -224,6 +239,7 @@ void r4300i_COP1_mul_d(uint32 Instruction)
 void r4300i_COP1_div_d(uint32 Instruction)
 {
 	CHK_ODD_FPR_3_REG(RD_FS, SA_FD, RT_FT);
+	SET_ROUNDING;
 	{
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		uint64	u1 = read_64bit_fpu_reg(RD_FS);
@@ -248,6 +264,7 @@ void r4300i_COP1_div_d(uint32 Instruction)
 void r4300i_COP1_abs_s(uint32 Instruction)
 {
 	CHK_ODD_FPR_2_REG(RD_FS, SA_FD);
+	SET_ROUNDING;
 
 	*((float *) &cFD) = (float) fabs((double) *((float *) &cFS));
 	SAVE_OP_COUNTER_INCREASE_INTERPRETER(27);
@@ -260,6 +277,7 @@ void r4300i_COP1_abs_s(uint32 Instruction)
 void r4300i_COP1_sqrt_s(uint32 Instruction)
 {
 	CHK_ODD_FPR_2_REG(RD_FS, SA_FD);
+	SET_ROUNDING;
 	*((float *) &cFD) = (float) sqrt((double) *((float *) &cFS));
 	SAVE_OP_COUNTER_INCREASE_INTERPRETER(1);
 }
@@ -271,6 +289,7 @@ void r4300i_COP1_sqrt_s(uint32 Instruction)
 void r4300i_COP1_neg_s(uint32 Instruction)
 {
 	CHK_ODD_FPR_2_REG(RD_FS, SA_FD);
+	SET_ROUNDING;
 	*((float *) &cFD) = -(*((float *) &cFS));
 	SAVE_OP_COUNTER_INCREASE_INTERPRETER(1);
 }
@@ -282,6 +301,7 @@ void r4300i_COP1_neg_s(uint32 Instruction)
 void r4300i_COP1_abs_d(uint32 Instruction)
 {
 	CHK_ODD_FPR_2_REG(RD_FS, SA_FD);
+	SET_ROUNDING;
 	{
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		uint64	u1 = read_64bit_fpu_reg(RD_FS);
@@ -299,6 +319,7 @@ void r4300i_COP1_abs_d(uint32 Instruction)
 void r4300i_COP1_sqrt_d(uint32 Instruction)
 {
 	CHK_ODD_FPR_2_REG(RD_FS, SA_FD);
+	SET_ROUNDING;
 	{
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		uint64	u1 = read_64bit_fpu_reg(RD_FS);
@@ -316,6 +337,7 @@ void r4300i_COP1_sqrt_d(uint32 Instruction)
 void r4300i_COP1_neg_d(uint32 Instruction)
 {
 	CHK_ODD_FPR_2_REG(RD_FS, SA_FD);
+	SET_ROUNDING;
 	{
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		uint64	u1 = read_64bit_fpu_reg(RD_FS);
@@ -338,7 +360,7 @@ void r4300i_COP1_bc1f(uint32 Instruction)
 	}
 	else
 	{
-		if(debug_opcode) CPUdelay = 0;
+		if(debug_opcode!=0) CPUdelay = 0;
 	}
 }
 
@@ -354,7 +376,7 @@ void r4300i_COP1_bc1t(uint32 Instruction)
 	}
 	else
 	{
-		if(debug_opcode) CPUdelay = 0;
+		if(debug_opcode!=0) CPUdelay = 0;
 	}
 }
 
@@ -370,7 +392,7 @@ void r4300i_COP1_bc1fl(uint32 Instruction)
 	}
 	else
 	{
-		if(debug_opcode) CPUdelay = 0;
+		if(debug_opcode!=0) CPUdelay = 0;
 		DELAY_SKIP
 	}
 }
@@ -387,7 +409,7 @@ void r4300i_COP1_bc1tl(uint32 Instruction)
 	}
 	else
 	{
-		if(debug_opcode) CPUdelay = 0;
+		if(debug_opcode!=0) CPUdelay = 0;
 		DELAY_SKIP
 	}
 }
@@ -1034,6 +1056,7 @@ void r4300i_sdc1(uint32 Instruction)
 
 /*
  =======================================================================================================================
+    Format: TRUNC.W.S fd, fs Purpose: To convert an FP value to 32-bit fixed-point, rounding toward zero.
  =======================================================================================================================
  */
 void r4300i_COP1_truncw_s(uint32 Instruction)

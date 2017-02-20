@@ -32,19 +32,19 @@
 #include "memory.h"
 #include "iPIF.h"
 #include "1964ini.h"
+#include "fileio.h"
 #include "win32/windebug.h"
 #include "debug_option.h"
 
 struct GAMESAVESTATUS	gamesave;
 
-extern					FileIO_ReadFLASHRAM(void);
-
 enum { FLASH_NOOP = 0, FLASH_ERASE = 1, FLASH_WRITE = 2, FLASH_STATUS = 3 };
-DWORD FlashRAM_Mode = FLASH_NOOP;
-BOOL dmastatus = TRUE;
-char FlashRAM_Buffer[128];
-DWORD FlashRAM_Offset = 0;
-DWORD FlashRAM_Status[2];
+
+DWORD	FlashRAM_Mode = FLASH_NOOP;
+BOOL	dmastatus = TRUE;
+char	FlashRAM_Buffer[128];
+DWORD	FlashRAM_Offset = 0;
+DWORD	FlashRAM_Status[2];
 
 /*
  =======================================================================================================================
@@ -101,12 +101,12 @@ void Flashram_Command(unsigned __int32 data)
 			case FLASH_ERASE:
 				DEBUG_FLASHRAM_TRACE(TRACE1("Executed Erase: %08X", FlashRAM_Offset));
 				memset(pLOAD_UBYTE_PARAM_2(0xA8000000) + FlashRAM_Offset, 0xFF, 128);
+				FileIO_WriteFLASHRAM();	//Write to disk
 				break;
 			case FLASH_WRITE:
 				DEBUG_FLASHRAM_TRACE(TRACE1("Executed Write: %08X", FlashRAM_Offset));
-
-				/* Debug (0, "FlashRAM Write: %08X", FlashRAM_Offset); */
 				memcpy(pLOAD_UBYTE_PARAM_2(0xA8000000) + FlashRAM_Offset, &FlashRAM_Buffer[0], 128);
+				FileIO_WriteFLASHRAM();	//Write to disk
 				break;
 			}
 		}

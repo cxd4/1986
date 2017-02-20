@@ -45,7 +45,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /GX /ZI /I ".." /D "WIN32" /D "WINDEBUG_1964" /D "_WINDOWS" /D "_MBCS" /D "DEBUG_COMMON" /D "_DEBUG" /D "VIDEO" /Fr /YX /FD /c
-# ADD CPP /nologo /Gr /Zp16 /MTd /W3 /Gm /Gi /ZI /I ".." /D "ENABLE_OPCODE_DEBUGGER" /D "DYNAREC" /D "DYN_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "VIDEO" /D "ZIP_SUPPORT" /D "HLE" /D "GRAPHICS_TRACER" /D "ZLIB_DLL" /D "ENABLE_64BIT_FPU" /D "DEBUG_COMMON" /D "WINDEBUG_1964" /D "_DEBUG" /FAcs /Fr /YX /FD /c
+# ADD CPP /nologo /Gr /Zp16 /MTd /W3 /Gm /Gi /ZI /I ".." /D "DYNAREC" /D "DYN_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "VIDEO" /D "ZIP_SUPPORT" /D "HLE" /D "GRAPHICS_TRACER" /D "ZLIB_DLL" /D "ENABLE_64BIT_FPU" /D "DEBUG_COMMON" /D "WINDEBUG_1964" /D "_DEBUG" /FAcs /Fr /YX /FD /c
 # SUBTRACT CPP /WX
 # ADD BASE MTL /nologo /D "NDEBUG" /win32
 # SUBTRACT BASE MTL /mktyplib203
@@ -78,8 +78,8 @@ LINK32=link.exe
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /G6 /Gr /W3 /Zi /O2 /Ob2 /I ".." /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /FAs /Fr /FD /c
 # SUBTRACT BASE CPP /YX
-# ADD CPP /nologo /G6 /Gr /Zp16 /MT /W3 /Gi /Ox /Ot /Oa /Ow /Og /Oi /Op /I ".." /D "DYNAREC" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "ZLIB_DLL" /D "WIN32_LEAN_AND_MEAN" /D "ENABLE_64BIT_FPU" /FAcs /FR /FD /c
-# SUBTRACT CPP /Os /YX
+# ADD CPP /nologo /G6 /Gr /MT /W3 /Gi /O1 /Op /I ".." /D "DYNAREC" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "ZLIB_DLL" /D "WIN32_LEAN_AND_MEAN" /D "ENABLE_64BIT_FPU" /FAcs /FR /FD /c
+# SUBTRACT CPP /YX
 # ADD BASE MTL /nologo /D "NDEBUG" /win32
 # SUBTRACT BASE MTL /mktyplib203
 # ADD MTL /nologo /D "NDEBUG" /win32
@@ -92,8 +92,8 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 dxguid.lib dinput.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib oleaut32.lib ole32.lib uuid.lib /nologo /subsystem:windows /pdb:none /machine:I386 /out:"../Release/1964.exe"
 # SUBTRACT BASE LINK32 /profile /debug /nodefaultlib
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib comdlg32.lib shell32.lib advapi32.lib zlib\zlib.lib comctl32.lib /nologo /subsystem:windows /machine:I386 /out:"../Release/1964.exe"
-# SUBTRACT LINK32 /profile /pdb:none /incremental:yes /map /debug /nodefaultlib
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib comdlg32.lib shell32.lib advapi32.lib zlib\zlib.lib comctl32.lib /nologo /subsystem:windows /map /machine:I386 /out:"../Release/1964.exe"
+# SUBTRACT LINK32 /profile /pdb:none /incremental:yes /debug /nodefaultlib
 
 !ELSEIF  "$(CFG)" == "1964 - Win32 Release Opcode Debugger"
 
@@ -111,8 +111,8 @@ LINK32=link.exe
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /G6 /Gr /MT /W3 /Gi /O1 /Op /I ".." /D "DYNAREC" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "ZLIB_DLL" /D "WIN32_LEAN_AND_MEAN" /D "ENABLE_64BIT_FPU" /FAcs /FR /FD /c
 # SUBTRACT BASE CPP /YX
-# ADD CPP /nologo /G6 /Gr /MT /W3 /Gi /O1 /Op /I ".." /D "ENABLE_OPCODE_DEBUGGER" /D "DYNAREC" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "ZLIB_DLL" /D "WIN32_LEAN_AND_MEAN" /D "ENABLE_64BIT_FPU" /FAcs /FD /c
-# SUBTRACT CPP /Fr /YX
+# ADD CPP /nologo /G6 /Gr /MT /W3 /Gi /O1 /Op /I ".." /D "ENABLE_OPCODE_DEBUGGER" /D "DYNAREC" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "ZLIB_DLL" /D "WIN32_LEAN_AND_MEAN" /D "ENABLE_64BIT_FPU" /FAcs /FR /FD /c
+# SUBTRACT CPP /YX
 # ADD BASE MTL /nologo /D "NDEBUG" /win32
 # SUBTRACT BASE MTL /mktyplib203
 # ADD MTL /nologo /D "NDEBUG" /win32
@@ -319,6 +319,14 @@ SOURCE=.\n64rcp.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\netplay.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\netplay.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\profiler.c
 # End Source File
 # Begin Source File
@@ -348,6 +356,14 @@ SOURCE=.\win32\Dll_Input.c
 # Begin Source File
 
 SOURCE=.\win32\Dll_Input.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\win32\DLL_Rsp.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\win32\DLL_Rsp.h
 # End Source File
 # Begin Source File
 
@@ -484,7 +500,23 @@ SOURCE=.\dynaRec\x86.h
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # Begin Source File
 
+SOURCE=.\win32\19644.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\win32\19646.ico
+# End Source File
+# Begin Source File
+
 SOURCE=.\win32\audio.bmp
+# End Source File
+# Begin Source File
+
+SOURCE=.\win32\bitmap2.bmp
+# End Source File
+# Begin Source File
+
+SOURCE=.\win32\bmp00001.bmp
 # End Source File
 # Begin Source File
 
@@ -492,11 +524,23 @@ SOURCE=.\win32\icon2.ico
 # End Source File
 # Begin Source File
 
+SOURCE=.\win32\icon3.ico
+# End Source File
+# Begin Source File
+
 SOURCE=.\win32\input.bmp
 # End Source File
 # Begin Source File
 
+SOURCE=.\win32\logo.bmp
+# End Source File
+# Begin Source File
+
 SOURCE=.\win32\resource.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\win32\rom_open.bmp
 # End Source File
 # Begin Source File
 

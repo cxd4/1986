@@ -51,7 +51,7 @@ char		*codecheck_type_names[] =
 };
 char		*maxfps_type_names[] = { "Default", "No Limit", "NTSC 60 fps", "PAL 50 fps", "Auto Sync" };
 char		*usetlb_type_names[] = { "Default", "Yes", "No" };
-char		*eepromsize_type_names[] = { "Default", "No EEPROM", "2KB EEPROM", "4KB EEPROM" };
+char		*eepromsize_type_names[] = { "Default", "No EEPROM", "4KB EEPROM", "16KB EEPROM" };
 char		*counter_factor_names[] = { "Default", "CF=1", "CF=2", "CF=3", "CF=4", "CF=5", "CF=6", "CF=7", "CF=8", };
 char		*register_caching_names[] = { "Default", "Yes", "No" };
 char		*use_fpu_hack_names[] = { "Default", "Yes", "No" };
@@ -97,7 +97,7 @@ void SetDefaultOptions(void)
 	defaultoptions.RDRAM_Size = RDRAMSIZE_4MB;
 	defaultoptions.Save_Type = ANYUSED_SAVETYPE;
 	defaultoptions.Use_TLB = USETLB_YES;
-	defaultoptions.Eeprom_size = EEPROMSIZE_2KB;
+	defaultoptions.Eeprom_size = EEPROMSIZE_4KB;
 	defaultoptions.Use_Register_Caching = USEREGC_YES;
 	defaultoptions.Counter_Factor = COUTERFACTOR_2;
 	defaultoptions.FPU_Hack = USEFPUHACK_YES;

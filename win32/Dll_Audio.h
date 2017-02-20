@@ -62,4 +62,6 @@ extern void (__cdecl *_AUDIO_Under_Selecting_Test) (HWND);
 extern void (__cdecl *_AUDIO_Under_Selecting_About) (HWND);
 
 extern HINSTANCE	hinstLibAudio;
+extern BOOL	CoreDoingAIUpdate;
+
 #endif

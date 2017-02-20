@@ -1101,7 +1101,7 @@ void r4300i_COP0_mtc0(uint32 Instruction)
 		}
 
 		/* Test the exception bit */
-		if((gRT & EXL) == 0 && (gHWS_COP0Reg[STATUS] & EXL == 1))
+		if((gRT & EXL) == 0 && ((gHWS_COP0Reg[STATUS] & EXL) == 1))
 		{
 			TRACE3("EXL Bit is cleared at PC = %8X, COMPARE=%8X , PC=0x%08X", gRT, gHWS_COP0Reg[COMPARE], gHWS_pc);
 
@@ -1115,10 +1115,10 @@ void r4300i_COP0_mtc0(uint32 Instruction)
 		}
 
 		/* Test the IE bit */
-		if((gRT & IE == 1) && (gHWS_COP0Reg[STATUS] & IE == 0)) /* If enable interrupt */
+		if(((gRT & IE) == 1) && ((gHWS_COP0Reg[STATUS] & IE) == 0)) /* If enable interrupt */
 		{
 			/* CPU will check interrupts at the next cycle */
-			TRACE3("Interrupt is enabled at PC = %8X, COMPARE=%8X , PC=0x%08X", gRT, gHWS_COP0Reg[COMPARE], gHWS_pc);
+			///TRACE3("Interrupt is enabled at PC = %8X, COMPARE=%8X , PC=0x%08X", gRT, gHWS_COP0Reg[COMPARE], gHWS_pc);
 			if((gHWS_COP0Reg[CAUSE] & gHWS_COP0Reg[STATUS] & 0x0000FF00))
 			{
 				CPUNeedToCheckInterrupt = TRUE;
@@ -1188,7 +1188,7 @@ void r4300i_bgez(uint32 Instruction)
 	}
 	else
 	{
-		if(debug_opcode) CPUdelay = 0;
+		if(debug_opcode!=0) CPUdelay = 0;
 	}
 }
 
@@ -1204,7 +1204,7 @@ void r4300i_bgezal(uint32 Instruction)
 	}
 	else
 	{
-		if(debug_opcode) CPUdelay = 0;
+		if(debug_opcode!=0) CPUdelay = 0;
 	}
 }
 
@@ -1220,7 +1220,7 @@ void r4300i_bgezall(uint32 Instruction)
 	}
 	else
 	{
-		if(debug_opcode) CPUdelay = 0;
+		if(debug_opcode!=0) CPUdelay = 0;
 		DELAY_SKIP
 	}
 }
@@ -1237,7 +1237,7 @@ void r4300i_bgezl(uint32 Instruction)
 	}
 	else
 	{
-		if(debug_opcode) CPUdelay = 0;
+		if(debug_opcode!=0) CPUdelay = 0;
 		DELAY_SKIP
 	}
 }
@@ -1254,7 +1254,7 @@ void r4300i_bltz(uint32 Instruction)
 	}
 	else
 	{
-		if(debug_opcode) CPUdelay = 0;
+		if(debug_opcode!=0) CPUdelay = 0;
 	}
 }
 
@@ -1270,7 +1270,7 @@ void r4300i_bltzal(uint32 Instruction)
 	}
 	else
 	{
-		if(debug_opcode) CPUdelay = 0;
+		if(debug_opcode!=0) CPUdelay = 0;
 	}
 }
 
@@ -1286,7 +1286,7 @@ void r4300i_bltzall(uint32 Instruction)
 	}
 	else
 	{
-		if(debug_opcode) CPUdelay = 0;
+		if(debug_opcode!=0) CPUdelay = 0;
 		DELAY_SKIP
 	}
 }
@@ -1303,7 +1303,7 @@ void r4300i_bltzl(uint32 Instruction)
 	}
 	else
 	{
-		if(debug_opcode) CPUdelay = 0;
+		if(debug_opcode!=0) CPUdelay = 0;
 		DELAY_SKIP
 	}
 }
@@ -1320,7 +1320,7 @@ void r4300i_bgtz(uint32 Instruction)
 	}
 	else
 	{
-		if(debug_opcode) CPUdelay = 0;
+		if(debug_opcode!=0) CPUdelay = 0;
 	}
 }
 
@@ -1336,7 +1336,7 @@ void r4300i_bgtzl(uint32 Instruction)
 	}
 	else
 	{
-		if(debug_opcode) CPUdelay = 0;
+		if(debug_opcode!=0) CPUdelay = 0;
 		DELAY_SKIP
 	}
 }
@@ -1353,7 +1353,7 @@ void r4300i_blez(uint32 Instruction)
 	}
 	else
 	{
-		if(debug_opcode) CPUdelay = 0;
+		if(debug_opcode!=0) CPUdelay = 0;
 	}
 }
 
@@ -1369,7 +1369,7 @@ void r4300i_blezl(uint32 Instruction)
 	}
 	else
 	{
-		if(debug_opcode) CPUdelay = 0;
+		if(debug_opcode!=0) CPUdelay = 0;
 		DELAY_SKIP
 	}
 }
@@ -1384,7 +1384,7 @@ void r4300i_bne(uint32 Instruction)
 	{
 		R4300I_SPEEDHACK DELAY_SET
 	}
-	else if(debug_opcode)
+	else if(debug_opcode!=0)
 		CPUdelay = 0;
 }
 
@@ -1400,7 +1400,7 @@ void r4300i_bnel(uint32 Instruction)
 	}
 	else
 	{
-		if(debug_opcode) CPUdelay = 0;
+		if(debug_opcode!=0) CPUdelay = 0;
 		DELAY_SKIP
 	}
 }
@@ -1417,7 +1417,7 @@ void r4300i_beql(uint32 Instruction)
 	}
 	else
 	{
-		if(debug_opcode) CPUdelay = 0;
+		if(debug_opcode!=0) CPUdelay = 0;
 		DELAY_SKIP
 	}
 }
@@ -1434,7 +1434,7 @@ void r4300i_beq(uint32 Instruction)
 	}
 	else
 	{
-		if(debug_opcode) CPUdelay = 0;
+		if(debug_opcode!=0) CPUdelay = 0;
 	}
 }
 
@@ -2169,7 +2169,7 @@ void r4300i_Init(void)
 {
 	r4300i_InitHardware(&gHardwareState);
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY2
-	if(debug_opcode)
+	if(debug_opcode!=0)
 	{
 		r4300i_InitHardware(&gHardwareState_Interpreter_Compare);
 		r4300i_InitHardware(&gHardwareState_Flushed_Dynarec_Compare);
@@ -2185,7 +2185,7 @@ void r4300i_Reset(void)
 {
 	r4300i_ResetMemory(&gMemoryState);
 
-	if(debug_opcode)
+	if(debug_opcode!=0)
 	{
 		r4300i_ResetMemory(&gMemoryState_Interpreter_Compare);
 	}
@@ -2248,6 +2248,131 @@ void r4300i_InitHardware(HardwareState *gHWState)
 	gHWState->COP0Reg[CONFIG] = 0x0006e463;						/* zils boot doc ... */
 	gHWState->COP0Reg[PREVID] = 0x00000b00;
 	gHWState->COP1Con[0] = 0x00000511;
+
+	/* Copied from PJ64, try to solve the Zelda's RSP LLE error msg problem */
+	switch (rominfo.countrycode) {
+	case 0x44: //Germany
+	case 0x46: //french
+	case 0x49: //Italian
+	case 0x50: //Europe
+	case 0x53: //Spanish
+	case 0x55: //Australia
+	case 0x58: // ????
+	case 0x59: // X (PAL)
+		switch (rominfo.CIC) {
+		case 0x3f:	// 2 or 1
+			gHWState->GPR[5]=0xFFFFFFFFC0F1D859;
+			gHWState->GPR[14]=0x000000002DE108EA;
+			gHWState->GPR[24]=0x0000000000000000;
+			break;
+		case 0x78:	// 3
+			gHWState->GPR[5]=0xFFFFFFFFD4646273;
+			gHWState->GPR[14]=0x000000001AF99984;
+			gHWState->GPR[24]=0x0000000000000000;
+			break;
+		case 0x91:	//5
+			*(&SP_IMEM+1) = 0xBDA807FC;
+			gHWState->GPR[5]=0xFFFFFFFFDECAAAD1;
+			gHWState->GPR[14]=0x000000000CF85C13;
+			gHWState->GPR[24]=0x0000000000000002;
+			break;
+		case 0x85:	//6
+			gHWState->GPR[5]=0xFFFFFFFFB04DC903;
+			gHWState->GPR[14]=0x000000001AF99984;
+			gHWState->GPR[24]=0x0000000000000002;
+			break;
+		}
+		
+		gHWState->GPR[20]=0x0000000000000000;
+		gHWState->GPR[23]=0x0000000000000006;
+		gHWState->GPR[31]=0xFFFFFFFFA4001554;
+		break;
+		case 0x37: // 7 (Beta)
+		case 0x41: // ????
+		case 0x45: //USA
+		case 0x4A: //Japan
+		default:
+			switch (rominfo.CIC) {
+			case 0x3f:	// 2 or 1
+				gHWState->GPR[5]=0xFFFFFFFFC95973D5;
+				gHWState->GPR[14]=0x000000002449A366;
+				break;
+			case 0x78:	// 3
+				gHWState->GPR[5]=0xFFFFFFFF95315A28;
+				gHWState->GPR[14]=0x000000005BACA1DF;
+				break;
+			case 0x91:	//5
+				*(&SP_IMEM+1) = 0x8DA807FC;
+				gHWState->GPR[5]=0x000000005493FB9A;
+				gHWState->GPR[14]=0xFFFFFFFFC2C20384;
+			case 0x85:	//6
+				gHWState->GPR[5]=0xFFFFFFFFE067221F;
+				gHWState->GPR[14]=0x000000005CD2B70F;
+				break;
+			}
+			gHWState->GPR[20]=0x0000000000000001;
+			gHWState->GPR[23]=0x0000000000000000;
+			gHWState->GPR[24]=0x0000000000000003;
+			gHWState->GPR[31]=0xFFFFFFFFA4001550;
+	}
+	
+	switch (rominfo.CIC) {
+	case 1: 
+		gHWState->GPR[22]=0x000000000000003F; 
+		break;
+	case 0x3f:	// 2 or 1 
+		gHWState->GPR[1]=0x0000000000000001;
+		gHWState->GPR[2]=0x000000000EBDA536;
+		gHWState->GPR[3]=0x000000000EBDA536;
+		gHWState->GPR[4]=0x000000000000A536;
+		gHWState->GPR[12]=0xFFFFFFFFED10D0B3;
+		gHWState->GPR[13]=0x000000001402A4CC;
+		gHWState->GPR[15]=0x000000003103E121;
+		gHWState->GPR[22]=0x000000000000003F; 
+		gHWState->GPR[25]=0xFFFFFFFF9DEBB54F;
+		break;
+	case 0x78:	// 3
+		gHWState->GPR[1]=0x0000000000000001;
+		gHWState->GPR[2]=0x0000000049A5EE96;
+		gHWState->GPR[3]=0x0000000049A5EE96;
+		gHWState->GPR[4]=0x000000000000EE96;
+		gHWState->GPR[12]=0xFFFFFFFFCE9DFBF7;
+		gHWState->GPR[13]=0xFFFFFFFFCE9DFBF7;
+		gHWState->GPR[15]=0x0000000018B63D28;
+		gHWState->GPR[22]=0x0000000000000078; 
+		gHWState->GPR[25]=0xFFFFFFFF825B21C9;
+		break;
+	case 0x91:	//5
+		*(&SP_IMEM+0) = 0x3C0DBFC0;
+		*(&SP_IMEM+2) = 0x25AD07C0;
+		*(&SP_IMEM+3) = 0x31080080;
+		*(&SP_IMEM+4) = 0x5500FFFC;
+		*(&SP_IMEM+5) = 0x3C0DBFC0;
+		*(&SP_IMEM+6) = 0x8DA80024;
+		*(&SP_IMEM+7) = 0x3C0BB000;
+		gHWState->GPR[1]=0x0000000000000000;
+		gHWState->GPR[2]=0xFFFFFFFFF58B0FBF;
+		gHWState->GPR[3]=0xFFFFFFFFF58B0FBF;
+		gHWState->GPR[4]=0x0000000000000FBF;
+		gHWState->GPR[12]=0xFFFFFFFF9651F81E;
+		gHWState->GPR[13]=0x000000002D42AAC5;
+		gHWState->GPR[15]=0x0000000056584D60;
+		gHWState->GPR[22]=0x0000000000000091; 
+		gHWState->GPR[25]=0xFFFFFFFFCDCE565F;
+		break;
+	case 0x85:	//6
+		gHWState->GPR[1]=0x0000000000000000;
+		gHWState->GPR[2]=0xFFFFFFFFA95930A4;
+		gHWState->GPR[3]=0xFFFFFFFFA95930A4;
+		gHWState->GPR[4]=0x00000000000030A4;
+		gHWState->GPR[12]=0xFFFFFFFFBCB59510;
+		gHWState->GPR[13]=0xFFFFFFFFBCB59510;
+		gHWState->GPR[15]=0x000000007A3C07F4;
+		gHWState->GPR[22]=0x0000000000000085; 
+		gHWState->GPR[25]=0x00000000465E3F72;
+		break;
+	}	
+	/* End of copied from PJ64, try to solve the Zelda's RSP LLE error msg problem */
 
 	CPUdelayPC = 0;
 	CPUdelay = 0;
@@ -2367,7 +2492,7 @@ _int32 Check_LW(uint32 QuerAddr)
 	/* VI_CURRENT_REG */
 	case 0xA4400010:
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY3
-		if(debug_opcode == 0 || p_gMemoryState != &gMemoryState)
+		if(debug_opcode != 1 || p_gMemoryState != &gMemoryState)
 		{
 			Count_Down(VI_COUNTER_INC_PER_LINE);
 		}
@@ -2375,9 +2500,8 @@ _int32 Check_LW(uint32 QuerAddr)
 #else
 		Count_Down(VI_COUNTER_INC_PER_LINE);
 #endif
-		VI_CURRENT_REG = (Get_VIcounter() / VI_COUNTER_INC_PER_LINE + VI_INTR_REG) %
-		(max_vi_lines + 1);
-		tempGPR = VI_CURRENT_REG;
+		VI_CURRENT_REG = (Get_VIcounter() / VI_COUNTER_INC_PER_LINE + VI_INTR_REG) % (max_vi_lines + 1);
+		tempGPR = VI_CURRENT_REG & 0xFFFFFFFE + vi_field_number;
 
 		/* TRACE1("VI CURRENT_REG is read, val=%08X", VI_CURRENT_REG); */
 		break;
@@ -2596,8 +2720,13 @@ void Check_SW(uint32 QuerAddr, uint32 rt_ft)
 		DO_PROFILIER_AUDIO;
 		AUDIO_AiLenChanged();
 
-		AUDIO_AiUpdate(FALSE);
-		DO_PROFILIER_R4300I break;
+		if( CoreDoingAIUpdate )
+		{
+			AUDIO_AiUpdate(FALSE);
+		}
+		
+		DO_PROFILIER_R4300I;
+		break;
 
 	default:
 		__try

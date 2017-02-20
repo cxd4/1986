@@ -25,7 +25,7 @@
 
 void	COMPARE_Run(uint32 Inter_Opcode_Address, uint32 code);
 #define _SAFTY_CPU_(x) \
-	if(debug_opcode) COMPARE_Run((uint32) & x, reg->code);
+	if(debug_opcode!=0) COMPARE_Run((uint32) & x, reg->code);
 
 extern void dyna4300i_reserved(OP_PARAMS);
 extern void dyna4300i_reserved1(OP_PARAMS);

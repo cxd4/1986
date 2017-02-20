@@ -24,6 +24,7 @@
 #define _ROMLIST_H__1964_
 
 #include <windows.h>
+#include <commctrl.h>
 #include "globals.h"
 #include "1964ini.h"
 
@@ -46,27 +47,34 @@ enum
 	ROMLIST_COMMENT_INVERT
 };
 
+enum
+{
+	ROMLIST_DISPLAY_INTERNAL_NAME,
+	ROMLIST_DISPLAY_ALTER_NAME,
+	ROMLIST_DISPLAY_FILENAME,
+};
+
 typedef struct ROMLIST_ENTRY_STRUCT ROMLIST_ENTRY;
 
 /* Global variabls */
 #define MAX_ROMLIST			2000
-#define ROMLIST_MAX_COLUMNS 4
 
 extern ROMLIST_ENTRY *romlist[MAX_ROMLIST];
 extern int romlist_count;
 extern int romlist_sort_method;
-extern int RomList_Column_Widths[ROMLIST_MAX_COLUMNS];
+extern int romlistNameToDisplay;
 
 /* Functions */
 BOOL RomListReadDirectory(const char *path);
 void ClearRomList(void);
 void InitRomList(void);
 int RomListAddEntry(INI_ENTRY *newentry, char *romfilename, long int filesize);
-void RomListOpenRom(int index);
+void RomListOpenRom(int index, BOOL RunThisRom);
 void RomListSelectRom(int index);
 void RomListRomOptions(int index);
 void RomListSaveCurrentPos(void);
 void RomListUseSavedPos(void);
+int  RomListGetSelectedIndex(void);
 
 HWND NewRomList_CreateListViewControl(HWND hwndParent);
 void NewRomList_ListViewHideHeader(HWND hwnd);
@@ -79,9 +87,39 @@ ROMLIST_ENTRY *RomListGet_Selected_Entry(void);
 void RomListSelectLoadedRomEntry(void);
 
 LRESULT APIENTRY RomListDialog(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
+LRESULT APIENTRY ColumnSelectDialog(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
+
 void ReadRomHeaderInMemory(INI_ENTRY *ini_entry);
 ROMLIST_ENTRY *RomListSelectedEntry(void);
 
 void ConvertInvalidInternalName(char *oldname, char *newname);
 BOOL InternalNameIsValid(char *name);
+
+long OnNotifyRomList(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+long OnNotifyRomListHeader(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+extern int romListHeaderClickedColumn;
+
+typedef enum {
+	ROMLIST_COL_GAMENAME=0,
+	ROMLIST_COL_COUNTRY,
+	ROMLIST_COL_SIZE,
+	ROMLIST_COL_STATUS,
+	ROMLIST_COL_GAMESAVE,
+	ROMLIST_COL_CICCHIP,
+	ROMLIST_COL_CRC1,
+	ROMLIST_COL_CRC2
+} ColumnID;
+
+typedef struct{
+	ColumnID	colID;
+	char		*text;
+	int			colPos;
+	BOOL		enabled;
+	int			colWidth;
+	HTREEITEM	treeViewID;
+} ColumnType;
+
+extern ColumnType romListColumns[];
+extern const int numberOfRomListColumns;
+
 #endif /* ROMLIST_H */

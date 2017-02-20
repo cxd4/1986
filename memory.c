@@ -378,7 +378,7 @@ void InitVirtualMemory(void)
 	InitVirtualMemory1(&gMemoryState);
 
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY16
-	if(debug_opcode)
+	if(debug_opcode!=0)
 	{
 		InitVirtualMemory1(&gMemoryState_Interpreter_Compare);
 		opcode_debugger_memory_is_allocated = TRUE;
@@ -479,7 +479,7 @@ void InitVirtualRomMemory(uint32 memsize)
 	InitVirtualRomMemory1(&gMemoryState, memsize);
 
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY17
-	if(debug_opcode)
+	if(debug_opcode!=0)
 	{
 		gMemoryState_Interpreter_Compare.ROM_Image = gMemoryState.ROM_Image;
 	}
@@ -596,7 +596,7 @@ void ResetRdramSize(int setsize)
 				sDWord[i | 0xA000] = gMemoryState.dummyNoAccess;
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY18
 #ifdef ENABLE_OPCODE_DEBUGGER
-				if(debug_opcode)
+				if(debug_opcode!=0)
 				{
 					sDWORD_R__Debug[i | 0x8000] = gMemoryState_Interpreter_Compare.dummyNoAccess;
 					sDWORD_R__Debug[i | 0xA000] = gMemoryState_Interpreter_Compare.dummyNoAccess;
@@ -612,19 +612,30 @@ void ResetRdramSize(int setsize)
 
 			disable_exrdram_func_array();
 			retval = VirtualFree(gMemoryState.ExRDRAM, MEMORY_SIZE_EXRDRAM, MEM_DECOMMIT);
-			if(retval == 0) DisplayError("Error to release the ExRDRAM");
+			if(retval == 0)
+			{
+				DisplayError("Error to release the ExRDRAM");
+			}
+			else
+			{
+				gMemoryState.ExRDRAM = NULL;
+			}
 		}
 		else	/* Need to turn on the expansion pack */
 		{
-			if(gMS_ExRDRAM != NULL) retval = VirtualFree(gMemoryState.ExRDRAM, MEMORY_SIZE_EXRDRAM, MEM_DECOMMIT);
+			if(gMemoryState.ExRDRAM != NULL)
+			{
+				retval = VirtualFree(gMemoryState.ExRDRAM, MEMORY_SIZE_EXRDRAM, MEM_DECOMMIT);
+			}
 
-			gMS_ExRDRAM = (uint8 *) VirtualAlloc
+			gMemoryState.ExRDRAM = (uint8 *) VirtualAlloc
 				(
 					(((uint8 *) gMemoryState.RDRAM) + 0x400000),
 					MEMORY_SIZE_EXRDRAM,
 					MEM_COMMIT,
 					PAGE_READWRITE
 				);
+
 			if((uint32) gMemoryState.ExRDRAM != (uint32) gMemoryState.RDRAM + 0x400000)
 			{
 				DisplayError
@@ -635,7 +646,7 @@ void ResetRdramSize(int setsize)
 				);
 			}
 
-			if(debug_opcode)
+			if(debug_opcode!=0)
 			{
 				gMemoryState_Interpreter_Compare.ExRDRAM = (uint8 *) VirtualAlloc
 					(
@@ -662,7 +673,7 @@ void ResetRdramSize(int setsize)
 
 			Init_R_AND_W(sDWord, (uint8 *) gMemoryState.ExRDRAM, MEMORY_START_EXRDRAM, MEMORY_SIZE_EXRDRAM);
 #ifdef ENABLE_OPCODE_DEBUGGER
-			if(debug_opcode)
+			if(debug_opcode!=0)
 			{
 				Init_R_AND_W
 				(
@@ -686,7 +697,7 @@ void ResetRdramSize(int setsize)
 
 		Init_R_AND_W(sDWord, (uint8 *) gMemoryState.ExRDRAM, MEMORY_START_EXRDRAM, MEMORY_SIZE_EXRDRAM);
 #ifdef ENABLE_OPCODE_DEBUGGER
-		if(debug_opcode)
+		if(debug_opcode!=0)
 		{
 			Init_R_AND_W
 			(

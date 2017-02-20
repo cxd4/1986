@@ -415,7 +415,7 @@ start_compile:
 	 * of the functions. This needs to be replaced with a call to a crc detection
 	 * algortithm. £
 	 * Then HLE will be stable for other games. HLE default is "no" at the moment, and
-	 * user-disabled for our 0.8 prerelease.
+	 * user-disabled.
 	 */
 	gHWS_code = DynaFetchInstruction(gHWS_pc);
 	if(currentromoptions.Use_HLE == USEHLE_YES)
