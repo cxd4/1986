@@ -43,25 +43,14 @@
 
 void __cdecl	LogDyna(char *debug, ...);
 
-/*
- * setsize = 0 Default size £
- * setsize = RDRAMSIZE_4MB 4MB £
- * setsize = RDRAMSIZE_8MB 8MB
- */
 uint32			rdram_sizes[3] = { MEMORY_SIZE_NO_EXPANSION, MEMORY_SIZE_NO_EXPANSION, MEMORY_SIZE_WITH_EXPANSION };
 
-/* uint32 current_rdram_size = MEMORY_SIZE_WITH_EXPANSION; */
 uint32			current_rdram_size = MEMORY_SIZE_NO_EXPANSION;
-uint32			RDRAM_End_Address = 0x807FFFFF;
-uint32			RDRAM_Begin_Address = 0x80000000;
-uint32			ROM_End_Address;
-uint32			ROM_Begin_Address = 0xA0000000;
 BOOL			rdram_is_at_0x20000000 = FALSE;
 
 #include "globals.h"
 
 uint8			*dynarommap[0x10000];
-
 uint8			*sDWord[0x10000];
 uint8			*sDWord2[0x10000];
 uint8			*TLB_sDWord[0x100000];
@@ -360,7 +349,7 @@ void InitVirtualMemory1(MemoryState *gMemoryState)
 				PAGE_READWRITE
 			);
 
-		/* gMemoryState->C2A2 = (uint32*)gamesave.FlashRAM; //well, can not do this */
+		/* gMemoryState->C2A2 = (uint32*)gamesave.FlashRAM; //well, cannot do this */
 	}
 
 	memset(gMemoryState->dummyAllZero, 0, MEMORY_SIZE_DUMMY);
@@ -475,7 +464,6 @@ void InitVirtualRomMemory1(MemoryState *gMemoryState, uint32 memsize)
  */
 void InitVirtualRomMemory(uint32 memsize)
 {
-	ROM_End_Address = 0xA0000000 + memsize - 1;
 	InitVirtualRomMemory1(&gMemoryState, memsize);
 
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY17
@@ -716,8 +704,6 @@ void ResetRdramSize(int setsize)
 
 		enable_exrdram_func_array();
 	}
-
-	RDRAM_End_Address = 0x80000000 + current_rdram_size - 1;
 
 	SetStatusBarText(3, setsize == RDRAMSIZE_4MB ? "4MB" : "8MB");
 }

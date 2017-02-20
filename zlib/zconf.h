@@ -3,7 +3,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
-/* @(#) $Id: zconf.h,v 1.1.1.1 2001/04/07 05:11:51 Deshan Yang Exp $ */
+/* @(#) $Id$ */
 
 #ifndef _ZCONF_H
 #define _ZCONF_H
@@ -92,7 +92,10 @@
 #endif
 
 /* Old Borland C incorrectly complains about missing returns: */
-#if defined(__BORLANDC__) && (__BORLANDC__ < 0x500)
+#if defined(__BORLANDC__) && (__BORLANDC__ < 0x460)
+#  define NEED_DUMMY_RETURN
+#endif
+#if defined(__TURBOC__) && !defined(__BORLANDC__)
 #  define NEED_DUMMY_RETURN
 #endif
 
@@ -160,17 +163,24 @@
 #  endif
 #endif
 
+#if defined(WIN32) && (!defined(ZLIB_WIN32_NODLL)) && (!defined(ZLIB_DLL))
+#  define ZLIB_DLL
+#endif
+
 /* Compile with -DZLIB_DLL for Windows DLL support */
 #if defined(ZLIB_DLL)
-#  if defined(_WINDOWS) || defined(WINDOWS)
-#    ifdef FAR
-#      undef FAR
+#  if defined(_WINDOWS) || defined(WINDOWS) || defined(WIN32)
+#    ifndef WINAPI
+#      ifdef FAR
+#        undef FAR
+#      endif
+#      include <windows.h>
 #    endif
-#    include <windows.h>
-#    define ZEXPORT  WINAPI
 #    ifdef WIN32
+#      define ZEXPORT  WINAPI
 #      define ZEXPORTVA  WINAPIV
 #    else
+#      define ZEXPORT  WINAPI _export
 #      define ZEXPORTVA  FAR _cdecl _export
 #    endif
 #  endif
@@ -178,7 +188,7 @@
 #    if (__BORLANDC__ >= 0x0500) && defined (WIN32)
 #      include <windows.h>
 #      define ZEXPORT __declspec(dllexport) WINAPI
-#      define ZEXPORTRVA __declspec(dllexport) WINAPIV
+#      define ZEXPORTVA __declspec(dllexport) WINAPIV
 #    else
 #      if defined (_Windows) && defined (__DLL__)
 #        define ZEXPORT _export
@@ -238,6 +248,9 @@ typedef uLong FAR uLongf;
 #ifdef HAVE_UNISTD_H
 #  include <sys/types.h> /* for off_t */
 #  include <unistd.h>    /* for SEEK_* and off_t */
+#  ifdef VMS
+#    include <unixio.h>   /* for off_t */
+#  endif
 #  define z_off_t  off_t
 #endif
 #ifndef SEEK_SET

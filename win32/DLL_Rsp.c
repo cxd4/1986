@@ -200,6 +200,9 @@ void InitializeRSP (void)
 	{ 
 		InitiateRSP_1_1(RspInfo11, &RspTaskValue); 
 	}
+#ifndef _DEBUG
+	//InitiateInternalRSP(RspInfo11, &RspTaskValue);
+#endif
 }
 
 BOOL LoadRSPPlugin(char * libname) 

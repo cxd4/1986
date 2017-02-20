@@ -23,7 +23,6 @@
 #ifndef _FILEIO_H__1964_
 #define _FILEIO_H__1964_
 
-#include <windows.h>
 #include "1964ini.h"
 
 /* function declarations */
@@ -37,10 +36,8 @@ void		FileIO_WriteMemPak(int pak_no);
 void		FileIO_LoadMemPak(int pak_no);
 void		FileIO_WriteEEprom(void);
 void		FileIO_LoadEEprom(void);
-void		FileIO_WriteSRAM(void);
-void		FileIO_ReadSRAM(void);
-void		FileIO_WriteFLASHRAM(void);
-void		FileIO_ReadFLASHRAM(void);
+void		FileIO_WriteFLASHRAM(int, int, int);
+void		FileIO_ReadFLASHRAM(int, int, int);
 void		FileIO_SaveState(void);
 void		FileIO_LoadState(void);
 void		FileIO_gzSaveState(void);
@@ -55,4 +52,5 @@ void		SwapRomName(uint8 *name);
 
 extern BOOL Is_Reading_Rom_File;
 extern BOOL To_Stop_Reading_Rom_File;
+extern void Close_Save();
 #endif

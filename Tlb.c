@@ -22,7 +22,6 @@
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
 #include <windows.h>
-#include <stdio.h>
 #include "globals.h"
 #include "r4300i.h"
 #include "hardware.h"
@@ -448,7 +447,7 @@ uint32 TranslateTLBAddress(uint32 address, int operation)
 		 * this entry if both EntroLo0 and EntryLo1 are invalid £
 		 * compare upper bits £
 		 * This is a unreasonable hack, I should not use this 0x1FFFFFFF mask, but £
-		 * I can not find the bugs in dyna, without this mask, many games will not work
+		 * I cannot find the bugs in dyna, without this mask, many games will not work
 		 * well £
 		 * games like Snowboard Kids 2 £
 		 * if ((address & theTLB->MyHiMask &0x1FFFFFFF ) == (theTLB->EntryHi &
@@ -542,6 +541,20 @@ uint32 TranslateTLBAddress(uint32 address, int operation)
 }
 
 extern uint32	TLB_Error_Vector;
+
+void __cdecl error(char *Message, ...)
+{
+	/*~~~~~~~~~~~~~*/
+	char	Msg[400];
+	va_list ap;
+	/*~~~~~~~~~~~~~*/
+
+	va_start(ap, Message);
+	vsprintf(Msg, Message, ap);
+	va_end(ap);
+
+	MessageBox(NULL, Msg, "Error", MB_OK | MB_ICONINFORMATION);
+}
 
 /*
  =======================================================================================================================
@@ -639,8 +652,7 @@ step2:
 	else
 	{
 		TLB_Error_Vector = TLB_Refill_Exception_Vector;
-		HandleExceptions(TLB_Refill_Exception_Vector);
-
+        HandleExceptions(TLB_Error_Vector);
 		if(emustatus.cpucore == DYNACOMPILER)
 		{
 			if(newtlb)	/* if a new TLB entry is written in the TLB exception service routine */
@@ -650,14 +662,15 @@ step2:
 			}
 			else
 			{
-				/* Redo TLB lookup, of course, redo will still fail, need a little optimize here */
+				//return(address);
+				/* Redo TLB lookup, of course, redo will still fail, need a little optimization here */
 				return(RedoTLBLookupAfterException(address, operation));
 			}
 		}
 		else
 		{
 			TRACE1("TLB Refill for load/store, vaddr=%08X", address);
-			return(0x80800000); /* return a address to garante a invalid address */
+			return(0x80800000); /* return an address to guarante an invalid address */
 			/* so store opcode will not overwite any valid address */
 		}
 	}
@@ -773,7 +786,7 @@ void InitTLB(void)
 		/* This is a magic number, to represent invalid TLB address */
 	}
 
-	/* we probably need to review a little bit here laterly */
+	/* we probably need to review a little bit here later */
 	for(i = 0; i < 0x100000; i++)
 	{
 		TLB_sDWORD_R[i] = sDWord[i >> 4] + 0x1000 * (i & 0xf);
@@ -1202,7 +1215,7 @@ void Build_Direct_TLB_Lookup_Table(int index, BOOL tobuild)
 
 	if((theTLB->EntryLo0 & theTLB->EntryLo1 & 1) == 0)	/* g bit == 0 */
 	{
-		return; /* should check teh ASID field, but we can not support ASID in direct TLB lookup */
+		return; /* should check teh ASID field, but we cannot support ASID in direct TLB lookup */
 	}
 
 	/* Step 1: To calculate the mapped address range that this TLB entry is mapping */

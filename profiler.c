@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include "globals.h"
 #include "timer.h"
+#include "n64rcp.h"
 #include "win32/windebug.h"
 
 char			*profiler_process_names[] = { "R4300i", "Video", "Audio", "Compiler", "Idle", "RSP", "RDP" };
@@ -108,7 +109,7 @@ void format_profiler_result_msg(char *msg)
 	sprintf
 	(
 		msg,
-		"r4300i-%2d%% video-%2d%% audio-%2d%% compiler-%2d%% idle-%2d%%",
+		"core-%2d%% video-%2d%% audio-%2d%% compiler-%2d%% idle-%2d%%",
 		(uint32) (profiler_timer_count[R4300I_PROF] * 100 / totaltimer),
 		(uint32) (profiler_timer_count[VIDEO_PROF] * 100 / totaltimer),
 		(uint32) (profiler_timer_count[AUDIO_PROF] * 100 / totaltimer),

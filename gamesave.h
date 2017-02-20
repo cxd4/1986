@@ -23,9 +23,6 @@
 #ifndef _GAMESAVE_H__1964_
 #define _GAMESAVE_H__1964_
 
-/* EEprom */
-enum { EEPROM_FILE_SIZE_2KB = 0x800, EEPROM_FILE_SIZE_4KB = 0x1000 };
-
 /* SRam */
 #define SRAM_SIZE	0x8000
 #define SRAM_MASK	0x7FFF
@@ -40,11 +37,9 @@ struct GAMESAVESTATUS
 	BOOL	EEprom_written;
 	BOOL	Sram_used;
 	BOOL	Sram_written;
-	BOOL	FlashRamUsed;
 	BOOL	FlashRam_written;
 	uint8	EEprom[0x1000];				/* 4KB */
 	uint8	SRam[SRAM_SIZE];			/* 0x8000 Bytes */
-	uint8	FlashRAM[FLASHRAM_SIZE];	/* 0x20000 Bytes */
 	int		firstusedsavemedia;
 	uint8	mempak[4][1024 * 32];		/* Define 4 mempak, each one is 32K */
 	BOOL	mempak_used[4];				/* status of each mempak */

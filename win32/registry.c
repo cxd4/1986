@@ -22,8 +22,6 @@
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
 #include <windows.h>
-#include "../globals.h"
-#include "resource.h"
 #include "registry.h"
 #include "../1964ini.h"
 #include "../debug_option.h"
@@ -32,7 +30,7 @@
 #include "windebug.h"
 #include "../romlist.h"
 
-#define MAIN_1964_KEY		"Software\\1964emu_080\\GUI"
+#define MAIN_1964_KEY		"Software\\1964emu_085\\GUI"
 #define KEY_WINDOW_X		"WindowXPos"
 #define KEY_WINDOW_Y		"WindowYPos"
 #define KEY_MAXIMIZED		"Maximized"
@@ -124,9 +122,9 @@ void ReadConfiguration(void)
 	strcpy(user_set_plugin_directory, ReadRegistryStrVal(MAIN_1964_KEY, "PluginDirectory"));
 	if(strlen(user_set_plugin_directory) == 0) strcpy(user_set_plugin_directory, default_plugin_directory);
 
-	emuoptions.auto_run_rom = ReadRegistryDwordVal(MAIN_1964_KEY, "AutoRunRom");
+	emuoptions.auto_run_rom = 1; //0.8.5: This is no longer a user option
 	emuoptions.auto_full_screen = ReadRegistryDwordVal(MAIN_1964_KEY, "AutoFullScreen");
-	emuoptions.auto_apply_cheat_code = ReadRegistryDwordVal(MAIN_1964_KEY, "AutoApplyCheat");
+	//emuoptions.auto_apply_cheat_code = ReadRegistryDwordVal(MAIN_1964_KEY, "AutoApplyCheat");
 	emuoptions.UsingRspPlugin = ReadRegistryDwordVal(MAIN_1964_KEY, "UsingRspPlugin");
 
 	guioptions.pause_at_inactive = ReadRegistryDwordVal(MAIN_1964_KEY, "PauseWhenInactive");
@@ -478,9 +476,6 @@ void WriteConfiguration(void)
 
 	cbData = sizeof(DwordData);
 
-	DwordData = emuoptions.auto_run_rom;
-	RegSetValueEx(hKey2, "AutoRunRom", 0, REG_DWORD, (LPBYTE) & DwordData, cbData);
-
 	DwordData = emuoptions.SyncVI;
 	RegSetValueEx(hKey2, "emuoptions.SyncVI", 0, REG_DWORD, (LPBYTE) & DwordData, cbData);
 
@@ -673,9 +668,10 @@ void InitAll1964Options(void)
 	strcat(default_save_directory, "Save\\");
 
 	strcpy(gRegSettings.ROMPath, "");
-	strcpy(gRegSettings.AudioPlugin, "AziAudioHLE013b.dll");
-	strcpy(gRegSettings.VideoPlugin, "1964ogl.dll");
-	strcpy(gRegSettings.InputPlugin, "NooTe_DI.dll");
+	//JoelTODO: config Plugins here.
+	strcpy(gRegSettings.AudioPlugin, "AudioHLE.dll");
+	strcpy(gRegSettings.VideoPlugin, "DaedalusD3D8.dll");
+	strcpy(gRegSettings.InputPlugin, "Basic Keyboard Plugin.dll");
 	strcpy(user_set_rom_directory, "");
 	strcpy(directories.last_rom_directory, "");
 	strcpy(user_set_save_directory, default_save_directory);

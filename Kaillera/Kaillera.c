@@ -80,6 +80,7 @@ int LoadDllKaillera(void)
  */
 int UnloadDllKaillera(void)
 {
+	//kailleraShutdown();
 	bKailleraDllLoaded = FALSE;
 
 	pDllKailleraGetVersion = NULL;

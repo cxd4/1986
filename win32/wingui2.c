@@ -21,15 +21,15 @@
  * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
+
+#ifdef WIN32_LEAN_AND_MEAN
+#undef WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <shellapi.h>
+#include <dsound.h>
+#define WIN32_LEAN_AND_MEAN
 #include "../debug_option.h"
-#include "../globals.h"
-#include "../hardware.h"
 #include "../interrupt.h"
-#include "../r4300i.h"
 #include "../n64rcp.h"
 #include "wingui.h"
 #include "dll_audio.h"
@@ -50,6 +50,7 @@
 
 void CountryCodeToCountryName_and_TVSystem(int countrycode, char *countryname, int *tvsystem)
 {
+	//Keep Country Name < 10 characters!
 	switch(countrycode)
 	{
 	/* Demo */
@@ -65,7 +66,7 @@ void CountryCodeToCountryName_and_TVSystem(int countrycode, char *countryname, i
 
 	case 0x41:
 		*tvsystem = TV_SYSTEM_NTSC;
-		strcpy(countryname, "USA and Japan");
+		strcpy(countryname, "USA/Japan");
 		break;
 
 	/* Germany */
@@ -258,10 +259,6 @@ void __cdecl DisplayCriticalMessage(char *Message, ...)
 				(LPARAM) critical_msg_buffer
 			);
 		}
-		else
-		{
-			DisplayError(Msg);
-		}
 	}
 }
 
@@ -286,7 +283,7 @@ void __cdecl DisplayError(char *Message, ...)
 
 	if(guistatus.IsFullScreen == 0)
 	{
-		MessageBox(NULL, Msg, "Error", MB_OK | MB_ICONINFORMATION);
+//		MessageBox(NULL, Msg, "Error", MB_OK | MB_ICONINFORMATION);
 	}
 
 	DisplayCriticalMessage(Msg);
@@ -452,6 +449,7 @@ LRESULT APIENTRY CriticalMessageDialog(HWND hDlg, unsigned message, WORD wParam,
     type = 0 Load all plugins type = 1 Load video plugin type = 2 Load audio plugin type = 3 Load input plugin
  =======================================================================================================================
  */
+LPDIRECTSOUND lpds;
 void LoadPlugins(int type)
 {
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -459,9 +457,7 @@ void LoadPlugins(int type)
 	char	VideoPath[_MAX_PATH];
 	char	InputPath[_MAX_PATH];
 	char	StartPath[_MAX_PATH];
-	char	NullSndPath[_MAX_PATH];
-	/* int Crapped = 0; */
-	int		Audio = 0;
+	static int		Audio = 0;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	SetDefaultOptions();
@@ -513,7 +509,7 @@ void LoadPlugins(int type)
 		/* Load Video plugin */
 		if(LoadVideoPlugin(VideoPath) == FALSE)
 		{
-			DisplayError("Can not load video plugin, check the file path or the plugin directory setting");
+			DisplayError("Cannot load video plugin, check the file path or the plugin directory setting");
 			strcpy(gRegSettings.VideoPlugin, "");
 			WriteConfiguration();
 			CloseVideoPlugin();
@@ -550,7 +546,7 @@ void LoadPlugins(int type)
 		/* Load Input plugin DLL */
 		if(LoadControllerPlugin(InputPath) == FALSE)
 		{
-			DisplayError("Can not load controller plugin, check the file path or the plugin directory setting");
+			DisplayError("Cannot load controller plugin, check the file path or the plugin directory setting");
 			strcpy(gRegSettings.InputPlugin, "");
 			WriteConfiguration();
 			CloseControllerPlugin();
@@ -601,16 +597,34 @@ void LoadPlugins(int type)
 			}
 		}
 
+		if (Audio_Is_Initialized)
+		{
+			HRESULT hr;
+
+			__try {
+				    if ( FAILED( hr = DirectSoundCreate( NULL, &lpds, NULL ) ) ) {
+						Audio = 0;
+					}
+				    if ( lpds ) {
+						IDirectSound_Release(lpds);
+					}
+				}
+			__except(NULL, EXCEPTION_EXECUTE_HANDLER){
+				Audio = 0;
+				__try { if ( lpds ) IDirectSound_Release(lpds);}__except(NULL, EXCEPTION_EXECUTE_HANDLER){}
+			}
+		}
+
 		if(Audio == 0)
 		{
-			DisplayError("Can not load audio plugin, check the file path or the plugin directory setting");
+			DisplayError("Cannot load audio plugin, check the file path or the plugin directory setting");
 			CloseAudioPlugin();
 			strcpy(gRegSettings.AudioPlugin, "");
+			strcpy(AudioPath, StartPath);
+			strcpy(gRegSettings.AudioPlugin, "No Audio 1964.dll");
+			strcat(AudioPath, gRegSettings.AudioPlugin);
 			WriteConfiguration();
-
-			strcpy(NullSndPath, StartPath);
-			strcpy(gRegSettings.AudioPlugin, "No Sound.dll");
-			strcat(NullSndPath, gRegSettings.AudioPlugin);
+			LoadAudioPlugin(AudioPath);
 		}
 	}
 
@@ -624,7 +638,7 @@ void LoadPlugins(int type)
 		(
 			gui.hwnd1964main,
 			guistatus.window_position.left,
-			guistatus.window_position.top+2,
+			guistatus.window_position.top,
 			guistatus.clientwidth,
 			guistatus.clientheight,
 			TRUE
@@ -638,6 +652,8 @@ void LoadPlugins(int type)
 	}
 
 	Set_Ready_Message();
+	if (Audio == 0)
+		SetStatusBarText(1, "dsound fail");
 }
 
 /*
@@ -801,19 +817,7 @@ skipdll:
 					FreeLibrary(hinstLib);
 					EndDialog(hDlg, TRUE);
 
-					if( emuoptions.UsingRspPlugin != SendDlgItemMessage(hDlg, IDC_USE_RSP_PLUGIN, BM_GETCHECK, (WPARAM)NULL, (LPARAM)NULL) )
-					{
-						if( emuoptions.UsingRspPlugin )
-						{
-							emuoptions.UsingRspPlugin = FALSE;
-							EnableMenuItem(gui.hMenu1964main, ID_RSP_CONFIG, MF_GRAYED);
-						}
-						else
-						{
-							emuoptions.UsingRspPlugin = TRUE;
-							EnableMenuItem(gui.hMenu1964main, ID_RSP_CONFIG, MF_ENABLED);
-						}
-					}
+					emuoptions.UsingRspPlugin = SendDlgItemMessage(hDlg, IDC_USE_RSP_PLUGIN, BM_GETCHECK, (WPARAM)NULL, (LPARAM)NULL);
 
 					if(strcmp(gRegSettings.VideoPlugin, temp_video_plugin) != 0)
 					{

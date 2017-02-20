@@ -22,9 +22,6 @@
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
 #include <windows.h>
-#include <string.h>
-#include <stdio.h>
-#include "globals.h"
 #include "r4300i.h"
 #include "n64rcp.h"
 #include "gamesave.h"
@@ -101,12 +98,12 @@ void Flashram_Command(unsigned __int32 data)
 			case FLASH_ERASE:
 				DEBUG_FLASHRAM_TRACE(TRACE1("Executed Erase: %08X", FlashRAM_Offset));
 				memset(pLOAD_UBYTE_PARAM_2(0xA8000000) + FlashRAM_Offset, 0xFF, 128);
-				FileIO_WriteFLASHRAM();	//Write to disk
+				FileIO_WriteFLASHRAM(0,0,0);	//Write to disk
 				break;
 			case FLASH_WRITE:
 				DEBUG_FLASHRAM_TRACE(TRACE1("Executed Write: %08X", FlashRAM_Offset));
 				memcpy(pLOAD_UBYTE_PARAM_2(0xA8000000) + FlashRAM_Offset, &FlashRAM_Buffer[0], 128);
-				FileIO_WriteFLASHRAM();	//Write to disk
+				FileIO_WriteFLASHRAM(0,0,0);	//Write to disk
 				break;
 			}
 		}
@@ -153,13 +150,8 @@ void DMA_Flashram_To_RDRAM(unsigned __int32 rdramaddr, unsigned __int32 flashram
 	 * DEBUG_FLASHRAM_TRACE(TRACE3("DMA FlashRAM->RDRAM: %08X, %08X, %i",
 	 * flashramaddr, rdramaddr, len));
 	 */
-	if(gamesave.firstusedsavemedia == 0) gamesave.firstusedsavemedia = FLASHRAM_SAVETYPE;
 
-	if(gamesave.FlashRamUsed == FALSE)
-	{
-		gamesave.FlashRamUsed = TRUE;
-		FileIO_ReadFLASHRAM();
-	}
+	FileIO_ReadFLASHRAM(0,0,0);
 
 	if(FlashRAM_Mode == FLASH_STATUS)
 	{
@@ -215,11 +207,7 @@ void DMA_RDRAM_To_Flashram(unsigned __int32 rdramaddr, unsigned __int32 flashram
 	 */
 	if(gamesave.firstusedsavemedia == 0) gamesave.firstusedsavemedia = FLASHRAM_SAVETYPE;
 
-	if(gamesave.FlashRamUsed == FALSE)
-	{
-		gamesave.FlashRamUsed = TRUE;
-		FileIO_ReadFLASHRAM();
-	}
+	FileIO_ReadFLASHRAM(0,0,0);
 
 	if(flashramaddr == 0xA8000000 || flashramaddr == 0x88000000)
 	{

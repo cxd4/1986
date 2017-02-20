@@ -151,13 +151,43 @@ void VIDEO_GetDllInfo(PLUGIN_INFO *Plugin_Info)
  =======================================================================================================================
  =======================================================================================================================
  */
+
+g_GFX_PluginRECT GFX_PluginRECT;
+
+// If the plugin wants to resize the window, respect its wishes,
+// but not until after the rom is loaded.
+void GetPluginsResizeRequest(LPRECT lpRect)
+{
+	RECT RequestRect;
+	GetWindowRect(gui.hwnd1964main, &RequestRect);
+	if ( (RequestRect.right  != lpRect->right)  || 
+	   (RequestRect.left   != lpRect->left)   ||
+	   (RequestRect.top    != lpRect->top)    || 
+	   (RequestRect.bottom != lpRect->bottom) )
+
+		if ( ((RequestRect.right - RequestRect.left) > 300) && 
+			 ((RequestRect.bottom - RequestRect.top) > 200) )
+		{
+			GFX_PluginRECT.rect.left   = RequestRect.left;
+			GFX_PluginRECT.rect.right  = RequestRect.right;
+			GFX_PluginRECT.rect.top    = RequestRect.top;
+			GFX_PluginRECT.rect.bottom = RequestRect.bottom;
+			GFX_PluginRECT.UseThis     = TRUE;
+		}
+}
+
 BOOL VIDEO_InitiateGFX(GFX_INFO Gfx_Info)
 {
+	RECT Rect;
+	
+	GFX_PluginRECT.UseThis = FALSE;
+
 	__try
 	{
+		GetWindowRect(gui.hwnd1964main, &Rect);
 		_VIDEO_InitiateGFX(Gfx_Info);
+		GetPluginsResizeRequest(&Rect);
 	}
-
 	__except(NULL, EXCEPTION_EXECUTE_HANDLER)
 	{
 		/* DisplayError("Cannot Initialize Graphics"); */
@@ -186,7 +216,10 @@ void VIDEO_RomOpen(void)
 	{
 		__try
 		{
+			RECT Rect;
+			GetWindowRect(gui.hwnd1964main, &Rect);
 			_VIDEO_RomOpen();
+			GetPluginsResizeRequest(&Rect);
 		}
 
 		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
@@ -222,6 +255,8 @@ void VIDEO_RomClosed(void)
  */
 void VIDEO_ChangeWindow(int window)
 {
+	int passed = 0;
+
 	if(GfxPluginVersion == 0x0103)
 	{
 		if(_VIDEO_ChangeWindow_1_3 != NULL)
@@ -229,11 +264,14 @@ void VIDEO_ChangeWindow(int window)
 			__try
 			{
 				_VIDEO_ChangeWindow_1_3();
+				guistatus.IsFullScreen ^= 1;
+				passed = 1;
 			}
 
 			__except(NULL, EXCEPTION_EXECUTE_HANDLER)
 			{
 				DisplayError("VIDEO ChangeWindow failed");
+				passed = 0;
 			}
 		}
 	}
@@ -244,13 +282,40 @@ void VIDEO_ChangeWindow(int window)
 			__try
 			{
 				_VIDEO_ChangeWindow(window);
+				guistatus.IsFullScreen ^= 1;
+				passed = 1;
 			}
 
 			__except(NULL, EXCEPTION_EXECUTE_HANDLER)
 			{
 				DisplayError("VIDEO ChangeWindow failed");
+				passed = 0;
 			}
 		}
+	}
+
+	if( guistatus.IsFullScreen && (passed==1))
+	{
+		EnableWindow(gui.hToolBar, FALSE);
+		ShowWindow(gui.hToolBar, SW_HIDE);
+		EnableWindow(gui.hReBar, FALSE);
+		ShowWindow(gui.hReBar, SW_HIDE);
+		EnableWindow((HWND)gui.hMenu1964main, FALSE);
+		ShowWindow((HWND)gui.hMenu1964main, FALSE);
+		ShowWindow(gui.hStatusBar, SW_HIDE);
+		ShowCursor(FALSE);
+	}
+	else
+	{
+		ShowWindow(gui.hReBar, SW_SHOW);
+		EnableWindow(gui.hReBar, TRUE);
+		EnableWindow(gui.hToolBar, TRUE);
+		EnableWindow((HWND)gui.hMenu1964main, TRUE);
+		ShowWindow(gui.hToolBar, SW_SHOW);
+		ShowWindow(gui.hStatusBar, SW_SHOW);
+		ShowWindow((HWND)gui.hMenu1964main, TRUE);
+		ShowCursor(TRUE);
+		DockStatusBar();
 	}
 }
 
@@ -307,9 +372,18 @@ void CloseVideoPlugin(void)
  */
 void VIDEO_DllConfig(HWND hParent)
 {
+	RECT Rect;
+
 	if(_VIDEO_DllConfig != NULL)
 	{
+		GetWindowRect(gui.hwnd1964main, &Rect);
 		_VIDEO_DllConfig(hParent);
+		GetPluginsResizeRequest(&Rect);
+		if (Rom_Loaded == FALSE)
+		SetWindowPos(gui.hwnd1964main, NULL, Rect.left, Rect.top, 
+			Rect.right-Rect.left, 
+			Rect.bottom-Rect.top,
+			SWP_NOZORDER | SWP_SHOWWINDOW);
 	}
 	else
 	{
@@ -365,8 +439,13 @@ void VIDEO_MoveScreen(int x, int y)
  =======================================================================================================================
  =======================================================================================================================
  */
+#include "../n64rcp.h"
 void VIDEO_UpdateScreen(void)
 {
+	//static int recall = 0x04000000+307200*2;
+	//static int k=0;
+
+
 	if(_VIDEO_UpdateScreen != NULL) __try
 	{
 		_VIDEO_UpdateScreen();
@@ -394,77 +473,7 @@ void VIDEO_DrawScreen(void)
 		DisplayError("Video DrawScreen failed.");
 	}
 
-	VIDEO_UpdateScreen();
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void VIDEO_ExtraChangeResolution(HWND hParent, long res, HWND hChild)
-{
-	/*~~~~~~~~~~~~~~~~*/
-	int statusbarheight;
-	/*~~~~~~~~~~~~~~~~*/
-
-	if(_VIDEO_ExtraChangeResolution != NULL)
-	{
-		_VIDEO_ExtraChangeResolution(hParent, res, hChild);
-	}
-	else
-	{
-		/*~~~~~~~~~~~~~~~~~~~~~~~~*/
-		RECT	rect, rectstatusbar;
-		/*~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-		GetWindowRect(hParent, &rect);
-		if(gui.hStatusBar != NULL)
-		{
-			GetWindowRect(gui.hStatusBar, &rectstatusbar);
-			statusbarheight = rectstatusbar.bottom - rectstatusbar.top + 1;
-		}
-		else
-		{
-			statusbarheight = 0;
-		}
-
-		rect.right = res + rect.left;
-		switch(res)
-		{
-		case 320:	rect.bottom = 240 + rect.top + statusbarheight; break;
-		case 640:	rect.bottom = 480 + rect.top + statusbarheight; break;
-		case 800:	rect.bottom = 600 + rect.top + statusbarheight; break;
-		case 1024:	rect.bottom = 768 + rect.top + statusbarheight; break;
-		case 1280:	rect.bottom = 1024 + rect.top + statusbarheight; break;
-		case 1600:	rect.bottom = 1200 + rect.top + statusbarheight; break;
-		case 1920:	rect.bottom = 1440 + rect.top + statusbarheight; break;
-		default:	rect.bottom = 480 + rect.top + statusbarheight; break;
-		}
-
-		AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, TRUE);
-		SetWindowPos
-		(
-			hParent,
-			HWND_TOP,
-			rect.left,
-			rect.top,
-			rect.right - rect.left,
-			rect.bottom - rect.top,
-			SWP_SHOWWINDOW
-		);
-
-		/* DisplayError("%s: does not support changing resolution.", "Video Plugin"); */
-	}
-
-	DockStatusBar();
-	NewRomList_ListViewChangeWindowRect();
-	InvalidateRect(gui.hwnd1964main, NULL, TRUE);
-
-	if(emustatus.Emu_Is_Running)
-	{
-		NewRomList_ListViewHideHeader(gui.hwndRomList);
-		ShowWindow(gui.hwndRomList, SW_HIDE);
-	}
+	//VIDEO_UpdateScreen();
 }
 
 /*

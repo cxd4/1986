@@ -24,8 +24,8 @@
 #ifndef _HARDWARE_H__1964_
 #define _HARDWARE_H__1964_
 
-#include <windows.h>
-#include <process.h>
+typedef		int			BOOL;
+
 #include "globals.h"	/* loads the rom and handle endian stuff */
 
 /*

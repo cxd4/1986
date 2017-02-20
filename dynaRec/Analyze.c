@@ -21,6 +21,7 @@
  * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
+#include <windows.h>
 #include "../r4300i.h"
 #include "OpcodeDebugger.h"
 #include "../Compiler.h"
@@ -522,6 +523,7 @@ extern uint32	FetchInstruction(void);
     Reorder_Instructions_In_Block().
  =======================================================================================================================
  */
+extern void __cdecl error(char *Message, ...);
 void AnalyzeBlock(void)
 {
 	/*~~~~~~~~~~~~~~~~~~~~~*/
@@ -539,11 +541,11 @@ void AnalyzeBlock(void)
 
 	if(ITLB_Error) return;
 
-	/*
-	 * Rice: This is still in development, but you can uncomment the next line to try
-	 * it out. It's cool. So far only a few games work with it (somewhat).
-	 * Reorder_Instructions_In_Block();
-	 */
+//	/*
+//	 * Rice: This is still in development, but you can uncomment the next line to try
+//	 * it out. It's cool. So far only a few games work with it (somewhat).
+//	 Reorder_Instructions_In_Block();
+//	 */
 	while(!EndOfBlock)
 	{
 		/*~~~~~~~*/
@@ -634,8 +636,36 @@ _start:
 					ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
 					ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
 				}
+				else if((fmt == 25)||(fmt==26)||(fmt==29)||(fmt==31)) /* div, divu, dmultu, ddivu*/
+				{
+					ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
+					ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
+				}
+
+				else if((fmt == 18)) /* mflo */
+				{
+					ConstMap[RD_FS].FinalAddressUsedAt = gHWS_pc;
+					ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
+				}
+				
+				else if ((fmt==10)||(fmt==11)||(fmt==5)||(fmt==1))
+				{
+					//unused. do nothing.
+				}
+				else if ((fmt==8)||(fmt==9)) //jal, jalr
+				{
+					if(EndOfBlock) break;
+					ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
+					gHWS_pc += 4;
+					EndOfBlock = 1;
+					goto _start;
+					break;
+				}
 				else
+				{
+					//error("%d", fmt);
 					goto _invalidate;
+				}
 				break;
 			case 1: /* Regimm Instructions */
 				/* it is assumed that more times than not, delay slots will be executed. */
@@ -646,14 +676,18 @@ _start:
 				EndOfBlock = 1;
 				goto _start;
 				break;
-			case 8: /* jr */
-			case 9: /* jalr */
-				ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
-				break;
 
 				/* just invalidate our analysis. We don't do enough of it yet :) */
-_invalidate:
+
+			case 16: //COP0 instruction
+			{
+				if (RS_BASE_FMT==16)
+					if ((_FUNCTION_) == 24) //eret
+						goto _invalidate;
+			}
+			break;
 			default:
+_invalidate:
 				/* DisplayError("%d %d", opcode, fmt); */
 				if(!EndOfBlock)
 					for(k = 33; k >= 0; k--)

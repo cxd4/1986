@@ -23,7 +23,6 @@
 #ifndef _EMULATOR_H__1964_
 #define _EMULATOR_H__1964_
 
-#include <windows.h>
 #include "debug_option.h"
 #include "dynarec/dynalog.h"
 
@@ -32,7 +31,6 @@ enum { INIT_EMU_AFTER_PAUSE, REFRESH_DYNA_AFTER_PAUSE, DO_NOTHING_AFTER_PAUSE };
 enum GAME_STOP_REASON { EMURUNNING, EMUSTOP, EMUPAUSE, EMUSWITCHCORE, EMURESUME, VIDEOCRASH, CPUCRASH };
 
 extern HANDLE CPUThreadHandle;
-extern HANDLE AudioThreadHandle;
 extern int Audio_Is_Initialized;
 
 struct EmuStatus
@@ -43,6 +41,7 @@ struct EmuStatus
 	int						ControllerReadCount;
 	BOOL					Emu_Is_Running;
 	BOOL					Emu_Is_Paused;	/* means the emu is still in running state, but just paused */
+	BOOL					Emu_Is_Resetting;	/* means the emu is still in running state, but just paused */
 	int						CodeCheckMethod;
 	int						exception_entry_count;
 	int						cpucore;

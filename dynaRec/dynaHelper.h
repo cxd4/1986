@@ -46,7 +46,8 @@ void DoSpeedHack(void)
 {
 	if(Is_CPU_Doing_Other_Tasks()) return;
 
-	Count_Down_All();
+	//Count_Down_All
+	countdown_counter = 0;
 }
 
 extern void TriggerFPUUnusableException(void);

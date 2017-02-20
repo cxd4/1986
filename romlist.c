@@ -21,20 +21,12 @@
  * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
-#include <windows.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include "hardware.h"
-#include "globals.h"
-#include "1964ini.h"
 #include "romlist.h"
 #include "fileio.h"
 #include "cheatcode.h"
-#include "win32/registry.h"
 #include "win32/wingui.h"
 #include "win32/windebug.h"
 #include "debug_option.h"
-#include "commctrl.h"
 #include "memory.h"
 #include "kaillera/kaillera.h"
 #include "emulator.h"
@@ -46,9 +38,7 @@ int				romlist_sort_method = ROMLIST_GAMENAME;
 int				romlistNameToDisplay = ROMLIST_DISPLAY_ALTER_NAME;
 int				selected_rom_index;
 static char		savedrompath[_MAX_PATH];
-
 int				romListHeaderClickedColumn = 0;
-
 void			RomListGetGoodRomNameToDisplay(char *buf, int index);
 
 ColumnType romListColumns[] =
@@ -129,7 +119,7 @@ BOOL RomListReadDirectory(const char *spath)
 		return(FALSE);
 	}
 
-	SetStatusBarText(0, "Looking for ROM file in the ROM directory and Generate List");
+	SetStatusBarText(0, "Updating ROM browser...");
 	do
 	{
 		if(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
@@ -200,7 +190,7 @@ BOOL RomListReadDirectory(const char *spath)
 				else
 				{
 					/*
-					 * Can not add to ini_entries list for some reason £
+					 * Cannot add to ini_entries list for some reason £
 					 * Skipped
 					 */
 					continue;
@@ -265,7 +255,7 @@ int RomListAddEntry(INI_ENTRY *newentry, char *romfilename, long filesize)
 
 	if(romlist_count == MAX_ROMLIST)
 	{
-		DisplayError("Your directory contains too many roms, I can not display it");
+		DisplayError("Your directory contains too many roms, I cannot display it");
 		return -1;
 	}
 
@@ -349,15 +339,25 @@ void RomListOpenRom(int index, BOOL RunThisRom)
 			CodeList_ReadCode(rominfo.name);
 
 			EnableMenuItem(gui.hMenu1964main, ID_ROM_START, MF_ENABLED);
+			EnableRadioButtons(TRUE);
 			EnableMenuItem(gui.hMenu1964main, ID_ROM_PAUSE, MF_GRAYED);
 			EnableMenuItem(gui.hMenu1964main, ID_FILE_ROMINFO, MF_ENABLED);
+			EnableButton(ID_BUTTON_ROM_PROPERTIES, TRUE);
 			EnableMenuItem(gui.hMenu1964main, ID_FILE_CHEAT, MF_ENABLED);
+
 
 			if( RunThisRom || Kaillera_Is_Running == TRUE)
 			{
-				Kill();
 				Play(emuoptions.auto_full_screen); /* autoplay */
 			}
+		}
+		else
+		{
+			EnableButton(ID_BUTTON_OPEN_ROM, TRUE);
+			EnableMenuItem(gui.hMenu1964main, ID_OPENROM, MF_ENABLED);
+			EnableButton(ID_BUTTON_SETUP_PLUGINS, TRUE);
+			EnableMenuItem(gui.hMenu1964main, IDM_PLUGINS, MF_ENABLED);
+
 		}
 	}
 }
@@ -866,6 +866,7 @@ BOOL WINAPI InitListViewItems(HWND hwndLV)
 
 		RomListGetGoodRomNameToDisplay(generalmessage, index);
 		lvi.pszText = generalmessage;
+
 		ListView_InsertItem(hwndLV, &lvi);
 
 		CountryCodeToCountryName_and_TVSystem(romlist[index]->pinientry->countrycode, countryname, &tvsystem);
@@ -873,10 +874,11 @@ BOOL WINAPI InitListViewItems(HWND hwndLV)
 		colinfo.mask = LVCF_TEXT;
 		colinfo.pszText = textbuf;
 		colinfo.cchTextMax = 99;
-		
+
 		for( i=1; i< numberOfRomListColumns; i++)
 		{
-			if( ListView_GetColumn(hwndLV, i, &colinfo) )
+			__try {
+			ListView_GetColumn(hwndLV, i, &colinfo);
 			{
 				if( stricmp(colinfo.pszText, romListColumns[1].text) == 0 )	//Country name
 				{
@@ -908,10 +910,12 @@ BOOL WINAPI InitListViewItems(HWND hwndLV)
 					sprintf(size, "%08X", romlist[index]->pinientry->crc2);
 					ListView_SetItemText(hwndLV, index, i, size);
 				}
+			}}__except(NULL, EXCEPTION_EXECUTE_HANDLER)
+			{
 			}
+
 		}
 	}
-
 	if(romlist_count > 0) ListView_SetSelectionMark(hwndLV, 0);
 	return TRUE;
 }
@@ -951,6 +955,245 @@ BOOL WINAPI InitListViewColumns(HWND hwndLV, int windowwidth)
 	return TRUE;
 }
 
+HWND WINAPI CreateRebar(HWND hwndOwner)
+{
+   REBARINFO     rbi;
+   REBARBANDINFO rbBand;
+   HWND   hwndRB;
+   DWORD  dwBtnSize;
+   INITCOMMONCONTROLSEX icex;
+   
+   icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
+   icex.dwICC   = ICC_COOL_CLASSES|ICC_BAR_CLASSES;
+   InitCommonControlsEx(&icex);
+   hwndRB = CreateWindowEx(WS_EX_TOOLWINDOW,
+                           REBARCLASSNAME,
+                           NULL,
+                           WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|
+                           WS_CLIPCHILDREN|RBS_VARHEIGHT|
+                           CCS_NODIVIDER,
+                           0,0,0,0,
+                           gui.hwnd1964main,
+                           NULL,
+                           gui.hInst,
+                           NULL);
+   if(!hwndRB)
+      return NULL;
+   // Initialize and send the REBARINFO structure.
+   rbi.cbSize = sizeof(REBARINFO);  // Required when using this
+                                    // structure.
+   rbi.fMask  = 0;
+   rbi.himl   = (HIMAGELIST)NULL;
+   if(!SendMessage(hwndRB, RB_SETBARINFO, 0, (LPARAM)&rbi))
+      return NULL;
+   // Initialize structure members that both bands will share.
+   rbBand.cbSize = sizeof(REBARBANDINFO);  // Required
+   rbBand.fMask  = RBBIM_COLORS | RBBIM_TEXT /*| RBBIM_BACKGROUND */| 
+                   RBBIM_STYLE | RBBIM_CHILD | RBBIM_CHILDSIZE | 
+                   RBBIM_SIZE;
+   rbBand.fStyle = RBBS_CHILDEDGE;
+ 
+   // Get the height of the toolbar.
+   dwBtnSize = SendMessage(gui.hToolBar, TB_GETBUTTONSIZE, 0,0);
+
+   // Set values unique to the band with the toolbar.
+   rbBand.lpText     = "";
+   rbBand.hwndChild  = gui.hToolBar;
+   rbBand.cxMinChild = 0;
+   rbBand.cyMinChild = HIWORD(dwBtnSize);
+   rbBand.cx         = 250;
+	rbBand.clrFore = GetSysColor(COLOR_BTNTEXT);
+	rbBand.clrBack = GetSysColor(COLOR_BTNFACE);
+   // Add the band that has the toolbar.
+   SendMessage(hwndRB, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand);
+   return (hwndRB);
+}
+
+void EnableRadioButtons(BOOL bEnable)
+{
+	EnableButton(ID_BUTTON_PLAY, bEnable);
+	CheckButton(ID_BUTTON_PLAY, FALSE);
+	EnableButton(ID_BUTTON_PAUSE, bEnable);
+	CheckButton(ID_BUTTON_PAUSE, FALSE);
+	EnableButton(ID_BUTTON_STOP, bEnable);
+	CheckButton(ID_BUTTON_STOP, FALSE);
+	EnableButton(ID_BUTTON_RESET, bEnable);
+	CheckButton(ID_BUTTON_RESET, FALSE);
+
+	//Enable or disable buttons and menus that open a web browser
+	EnableButton(ID_BUTTON_HELP, bEnable^1);
+	EnableButton(ID_BUTTON_HOME_PAGE, bEnable^1);
+	EnableButton(ID_BUTTON_OPEN_ROM, bEnable^1);
+	if (bEnable == TRUE)
+	{
+		EnableMenuItem(gui.hMenu1964main, ID_CHECKWEB, MF_GRAYED);
+		EnableMenuItem(gui.hMenu1964main, ID_OPENROM, MF_GRAYED);
+		EnableMenuItem(gui.hMenu1964main, ID_ONLINE_HELP, MF_GRAYED);
+	}
+	else
+	{
+		EnableMenuItem(gui.hMenu1964main, ID_CHECKWEB, MF_ENABLED);
+		EnableMenuItem(gui.hMenu1964main, ID_OPENROM, MF_ENABLED);
+		EnableMenuItem(gui.hMenu1964main, ID_ONLINE_HELP, MF_ENABLED);
+	}
+}
+
+BYTE ChangeButtonState(int nID)
+{
+	TBBUTTONINFO ButtonInfo;
+	int temp;
+
+	ButtonInfo.cbSize = sizeof(TBBUTTONINFO);
+	ButtonInfo.dwMask = TBIF_STATE;
+
+	SendMessage(gui.hToolBar, TB_GETBUTTONINFO, nID,
+	(LPARAM)(LPTBBUTTONINFO) &ButtonInfo);
+
+	ButtonInfo.fsState ^= TBSTATE_CHECKED;
+	temp = ButtonInfo.fsState;
+
+	SendMessage(gui.hToolBar, TB_SETBUTTONINFO, nID,
+	(LPARAM)(LPTBBUTTONINFO) &ButtonInfo);
+
+	return (temp);
+}
+
+void CheckButton(int nID, BOOL bCheck)
+{
+	TBBUTTONINFO ButtonInfo;
+
+	ButtonInfo.cbSize = sizeof(TBBUTTONINFO);
+	ButtonInfo.dwMask = TBIF_STATE;
+
+	SendMessage(gui.hToolBar, TB_GETBUTTONINFO, nID,
+	(LPARAM)(LPTBBUTTONINFO) &ButtonInfo);
+
+	if (bCheck)
+		ButtonInfo.fsState |= TBSTATE_CHECKED;
+	else
+		ButtonInfo.fsState &= ~TBSTATE_CHECKED;
+
+	SendMessage(gui.hToolBar, TB_SETBUTTONINFO, nID,
+	(LPARAM)(LPTBBUTTONINFO) &ButtonInfo);
+}
+
+void EnableButton(int nID, BOOL bEnable)
+{
+	TBBUTTONINFO ButtonInfo;
+
+	ButtonInfo.cbSize = sizeof(TBBUTTONINFO);
+	ButtonInfo.dwMask = TBIF_STATE;
+
+	SendMessage(gui.hToolBar, TB_GETBUTTONINFO, nID,
+	(LPARAM)(LPTBBUTTONINFO) &ButtonInfo);
+
+	if (bEnable)
+		ButtonInfo.fsState |= TBSTATE_ENABLED;
+	else
+	{
+		ButtonInfo.fsState &= ~TBSTATE_CHECKED;
+		ButtonInfo.fsState &= ~TBSTATE_ENABLED;
+	}
+
+	SendMessage(gui.hToolBar, TB_SETBUTTONINFO, nID,
+	(LPARAM)(LPTBBUTTONINFO) &ButtonInfo);
+}
+
+
+void SetupToolBar()
+{
+		TBADDBITMAP tbab;
+         TBBUTTON tbb[13];
+
+      	gui.hToolBar = CreateWindowEx
+		(	
+			0, 
+			TOOLBARCLASSNAME, 
+			NULL,
+		    WS_CHILD | WS_VISIBLE | TBSTYLE_FLAT | TBSTYLE_TRANSPARENT | TBSTYLE_TOOLTIPS
+			| WS_CLIPCHILDREN |
+			WS_CLIPSIBLINGS | CCS_NODIVIDER,
+			0, 
+			0, 
+			0, 
+			0,
+	        gui.hwnd1964main, 
+			(HMENU)IDR_TOOLBAR1, 
+			(HINSTANCE) gui.hInst, 
+			NULL
+		);
+
+		 // Send the TB_BUTTONSTRUCTSIZE message, which is required for
+         // backward compatibility.
+         SendMessage(gui.hToolBar, TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
+
+         tbab.hInst = gui.hInst;
+         tbab.nID = IDR_TOOLBAR1;
+         SendMessage(gui.hToolBar, TB_ADDBITMAP, 4, (LPARAM)&tbab);
+
+         ZeroMemory(tbb, sizeof(tbb));
+         
+     	 tbb[0].iBitmap = 0;
+         tbb[0].fsState = TBSTATE_ENABLED;
+         tbb[0].fsStyle = TBSTYLE_BUTTON;
+         tbb[0].idCommand = ID_BUTTON_OPEN_ROM;
+
+         tbb[1].fsStyle = TBSTYLE_SEP;
+
+		 tbb[2].iBitmap = 4;
+         tbb[2].fsState = TBSTATE_ENABLED;
+         tbb[2].fsStyle = TBSTYLE_CHECKGROUP;
+         tbb[2].idCommand = ID_BUTTON_PLAY;
+
+		 tbb[3].iBitmap = 5;
+         tbb[3].fsState = TBSTATE_ENABLED;
+         tbb[3].fsStyle = TBSTYLE_CHECKGROUP;
+         tbb[3].idCommand = ID_BUTTON_PAUSE;
+
+		 tbb[4].iBitmap = 6;
+         tbb[4].fsState = TBSTATE_ENABLED;
+         tbb[4].fsStyle = TBSTYLE_BUTTON; 
+         tbb[4].idCommand = ID_BUTTON_STOP;
+
+		 tbb[5].iBitmap = 8;
+         tbb[5].fsState = TBSTATE_ENABLED;
+         tbb[5].fsStyle = TBSTYLE_BUTTON;
+         tbb[5].idCommand = ID_BUTTON_RESET;
+
+		 tbb[6].fsStyle = TBSTYLE_SEP;
+		 
+         tbb[7].iBitmap = 7;
+         tbb[7].fsState = TBSTATE_ENABLED;
+         tbb[7].fsStyle = TBSTYLE_BUTTON;
+         tbb[7].idCommand = ID_BUTTON_SETUP_PLUGINS;
+
+         tbb[8].iBitmap = 3;
+         tbb[8].fsState = 0;
+         tbb[8].fsStyle = TBSTYLE_BUTTON;
+         tbb[8].idCommand = ID_BUTTON_ROM_PROPERTIES;
+		 
+         tbb[9].iBitmap = 9;
+         tbb[9].fsState = TBSTATE_ENABLED;
+         tbb[9].fsStyle = TBSTYLE_BUTTON;
+         tbb[9].idCommand = ID_BUTTON_HELP;
+
+		 tbb[10].iBitmap = 2;
+         tbb[10].fsState = TBSTATE_ENABLED;
+         tbb[10].fsStyle = TBSTYLE_BUTTON;
+         tbb[10].idCommand = ID_BUTTON_HOME_PAGE;
+
+		 tbb[11].fsStyle = TBSTYLE_SEP;
+
+		 tbb[12].iBitmap = 1;
+         tbb[12].fsState = TBSTATE_ENABLED;
+         tbb[12].fsStyle = TBSTYLE_BUTTON;
+         tbb[12].idCommand = ID_BUTTON_FULL_SCREEN;
+
+		 SendMessage(gui.hToolBar, TB_ADDBUTTONS, 13, (LPARAM)&tbb);
+		 gui.hReBar = CreateRebar(gui.hwnd1964main);
+}
+
+
 /*
  =======================================================================================================================
  =======================================================================================================================
@@ -960,6 +1203,7 @@ HWND NewRomList_CreateListViewControl(HWND hwndParent)
 	/*~~~~~~~~~~~~~*/
 	HWND	hwndLV;
 	RECT	rcParent;
+
 	/*~~~~~~~~~~~~~*/
 
 	if(!guioptions.display_romlist) return NULL;
@@ -970,6 +1214,7 @@ HWND NewRomList_CreateListViewControl(HWND hwndParent)
 	 */
 	InitCommonControls();
 	GetClientRect(hwndParent, &rcParent);
+
 	if(gui.hStatusBar != NULL)
 	{
 		/*~~~~~~~~~~~~~~~~*/
@@ -980,6 +1225,17 @@ HWND NewRomList_CreateListViewControl(HWND hwndParent)
 		rcParent.bottom -= (rcStatusBar.bottom - rcStatusBar.top - 1);
 	}
 
+	if(gui.hToolBar != NULL)
+	{
+		/*~~~~~~~~~~~~~~~~*/
+		RECT	rcToolBar;
+		/*~~~~~~~~~~~~~~~~*/
+
+		GetWindowRect(gui.hToolBar, &rcToolBar);
+		rcParent.top += (rcToolBar.bottom - rcToolBar.top - 1);
+		rcParent.bottom -= (rcToolBar.bottom - rcToolBar.top - 1);
+	}
+
 	/* Create the list view window. */
 	hwndLV = CreateWindow
 		(
@@ -987,7 +1243,7 @@ HWND NewRomList_CreateListViewControl(HWND hwndParent)
 			"",
 			WS_CHILD | LVS_REPORT | LVS_SINGLESEL,
 			0,
-			0,
+			rcParent.top,
 			rcParent.right,
 			rcParent.bottom,
 			hwndParent,
@@ -995,6 +1251,7 @@ HWND NewRomList_CreateListViewControl(HWND hwndParent)
 			gui.hInst,
 			NULL
 		);
+
 	if(hwndLV == NULL)
 	{
 		DisplayError("Error to create listview");
@@ -1095,7 +1352,7 @@ BOOL InternalNameIsValid(char *name)
  =======================================================================================================================
  =======================================================================================================================
  */
-void NewRomList_Sort(void)
+void NewRomList_Sort()
 {
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	struct ROMLIST_ENTRY_STRUCT *temp;
@@ -1108,6 +1365,7 @@ void NewRomList_Sort(void)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	TRACE1("Sort rom list: %d", romlist_count);
+
 	for(i = 0; i < romlist_count - 1; i++)
 	{
 		RomListGetGoodRomNameToDisplay(gamename1, i);
@@ -1241,40 +1499,7 @@ void RomListRememberColumnWidth(void)
 	}
 }
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void RomListGetGoodRomNameToDisplay(char *buf, int index)
-{
-	switch( romlistNameToDisplay )
-	{
-	case ROMLIST_DISPLAY_ALTER_NAME:
-		if(strlen(romlist[index]->pinientry->Alt_Title) > 1)
-		{
-			strcpy(buf, romlist[index]->pinientry->Alt_Title);
-			break;
-		}
-	case ROMLIST_DISPLAY_INTERNAL_NAME:
-		if(InternalNameIsValid(romlist[index]->pinientry->Game_Name))
-		{
-			strcpy(buf, romlist[index]->pinientry->Game_Name);
-			break;
-		}		
-	case ROMLIST_DISPLAY_FILENAME:
-		{
-			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-			char	drive[_MAX_DIR], dir[_MAX_DIR];
-			char	fname[_MAX_DIR], ext[_MAX_EXT];
-			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-			
-			_splitpath(romlist[index]->romfilename, drive, dir, fname, ext);
-			strcat(fname, ext);
-			strcpy(buf, fname);
-		}
-		break;
-	}
-}
+
 
 /*
  =======================================================================================================================
@@ -1323,8 +1548,13 @@ long OnNotifyRomList(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		switch(((LPNMHDR) lParam)->code)
 		{
 		case NM_DBLCLK:
+			EnableButton(ID_BUTTON_OPEN_ROM, FALSE);
+			EnableMenuItem(gui.hMenu1964main, ID_OPENROM, MF_GRAYED);
+			EnableButton(ID_BUTTON_SETUP_PLUGINS, FALSE);
+			EnableMenuItem(gui.hMenu1964main, IDM_PLUGINS, MF_GRAYED);
+
 			RomListSelectRom(((LPNMLISTVIEW) lParam)->iItem);
-			RomListOpenRom(((LPNMLISTVIEW) lParam)->iItem, emuoptions.auto_run_rom);
+			RomListOpenRom(((LPNMLISTVIEW) lParam)->iItem, 1);
 			break;
 		case NM_RCLICK:
 			if( itemNo >= 0 )
@@ -1335,6 +1565,7 @@ long OnNotifyRomList(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				int y = ((LPNMLISTVIEW) lParam)->ptAction.y;
 				RomListSelectRom(((LPNMLISTVIEW) lParam)->iItem);
 				EnableMenuItem(gui.hMenu1964main, ID_FILE_ROMINFO, MF_ENABLED);
+				EnableButton(ID_BUTTON_ROM_PROPERTIES, TRUE);
 				EnableMenuItem(gui.hMenu1964main, ID_FILE_CHEAT, MF_ENABLED);
 				
 				GetWindowRect(gui.hwndRomList, &pos);
@@ -1351,6 +1582,7 @@ long OnNotifyRomList(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case NM_CLICK:
 			RomListSelectRom(((LPNMLISTVIEW) lParam)->iItem);
 			EnableMenuItem(gui.hMenu1964main, ID_FILE_ROMINFO, MF_ENABLED);
+			EnableButton(ID_BUTTON_ROM_PROPERTIES, TRUE);
 			EnableMenuItem(gui.hMenu1964main, ID_FILE_CHEAT, MF_ENABLED);
 			break;
 		case LVN_COLUMNCLICK:

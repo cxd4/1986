@@ -19,14 +19,11 @@
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
 #include <windows.h>
-#include <memory.h>
 #include "interrupt.h"
-#include "globals.h"
 #include "r4300i.h"
 #include "n64rcp.h"
 #include "dma.h"
 #include "debug_option.h"
-#include "timer.h"
 #include "iPIF.h"
 #include "timer.h"
 #include "emulator.h"
@@ -38,7 +35,6 @@
 #include "win32/windebug.h"
 #include "compiler.h"
 #include "fileio.h"
-#include "gamesave.h"
 
 #ifdef SAVEOPCOUNTER
 #define EXTRA_DMA_TIMING(val)	DMAIncreaseTimer(val);
@@ -111,7 +107,7 @@ void FastPIMemoryCopy(void)
 	unsigned register __int32	target; /* = PIDMATargetMemory+PIDMATargetAddress; */
 	unsigned register __int32	source; /* = PIDMASourceMemory+PIDMASourceAddress; */
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	
+
 	if(PIDMAInProgress == DMA_PI_WRITE && currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY)
 	{
 		Check_And_Invalidate_Compiled_Blocks_By_DMA(PIDMATargetAddress, PIDMALength, "PIDMA");
@@ -125,14 +121,14 @@ void FastPIMemoryCopy(void)
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		int i = -(((__int32) PIDMALength) >> 2);
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-		
+
 		__asm
 		{
-			align 16
 			pushad
 			mov eax, i
 			mov edx, target
 			mov ebx, source
+			align 16
 _Label :
 			test eax, eax
 			jz _Label2
@@ -146,6 +142,7 @@ _Label2 :
 			popad
 		}
 	}
+
 	else if((target & 1) == 0 && (source & 1) == 0 && (PIDMALength & 1) == 0)	/* WORD align */
 	{
 		for(i = -(((__int32) PIDMALength) >> 1); i < 0; i++)
@@ -210,19 +207,10 @@ void DMA_PI_MemCopy_From_DRAM_To_Cart(void)
 		}
 		else
 		{
-			if(gamesave.firstusedsavemedia == 0)
-			{
-				gamesave.firstusedsavemedia = SRAM_SAVETYPE;
-			}
-
-			if(gamesave.FlashRamUsed == FALSE)
-			{
-				gamesave.FlashRamUsed = TRUE;
-				FileIO_ReadFLASHRAM();
-			}
+			//FileIO_ReadFLASHRAM();
 			PIDMAInProgress = DMA_PI_READ;
-			FastPIMemoryCopy();
-			FileIO_WriteFLASHRAM();	//Write SRAM data to disk
+			//FastPIMemoryCopy();
+			FileIO_WriteFLASHRAM(PIDMATargetAddress, PIDMASourceAddress, PIDMALength);
 		}
 		PIDMAInProgress = NO_DMA_IN_PROGRESS;
 		EXTRA_DMA_TIMING(PIDMALength);
@@ -424,20 +412,10 @@ L1:
 		}
 		else
 		{
-			if(gamesave.firstusedsavemedia == 0)
-			{
-				gamesave.firstusedsavemedia = SRAM_SAVETYPE;
-			}
-
-			if(gamesave.FlashRamUsed == FALSE)
-			{
-				gamesave.FlashRamUsed = TRUE;
-				FileIO_ReadFLASHRAM();
-			}
-
+			FileIO_ReadFLASHRAM(PIDMASourceAddress, PIDMATargetAddress, PIDMALength);
 			PIDMAInProgress = DMA_PI_WRITE;
-			
-			__try
+
+/*			__try
 			{
 				FastPIMemoryCopy();
 			}
@@ -452,7 +430,7 @@ L1:
 					PIDMALength
 				)
 			}
-		}
+*/		}
 
 		PIDMAInProgress = NO_DMA_IN_PROGRESS;
 		EXTRA_DMA_TIMING(PIDMALength);
@@ -506,7 +484,7 @@ L1:
     Signal Processor DMA Read
  =======================================================================================================================
  */
-void DMA_MemCopy_DRAM_To_SP(void)
+void DMA_MemCopy_DRAM_To_SP(int WasCalledByRSP)
 {
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	uint32	sp_mem_addr_reg = SP_MEM_ADDR_REG;
@@ -533,7 +511,7 @@ void DMA_MemCopy_DRAM_To_SP(void)
 	if(SP_MEM_ADDR_REG & 0x3)
 	{
 		/*
-		 * DisplayError("Warning, SP DMA, need half word swap. RDRAM ADDR = %08X,
+		 * DisplayError("Warning, SP DMA, needs half word swap. RDRAM ADDR = %08X,
 		 * SP_MEM_ADDR_REG=%08X", SPDMASourceAddress, SPDMATargetAddress);
 		 */
 		TRACE2
@@ -547,7 +525,7 @@ void DMA_MemCopy_DRAM_To_SP(void)
 	SPDMALength = (SP_RD_LEN_REG & 0x00000FFF) +
 	1;	/* SP_RD_LEN_REG bit [0-11] is length to transfer */
 
-	if(currentromoptions.DMA_Segmentation == USEDMASEG_YES)
+	if((currentromoptions.DMA_Segmentation == USEDMASEG_YES) && (!WasCalledByRSP))
 	{
 		DEBUG_SP_DMA_TRACE0("SP DMA Starting");
 
@@ -577,6 +555,10 @@ void DMA_MemCopy_DRAM_To_SP(void)
 	{
 		__try
 		{
+//			//ignore IMEM for speed (if not using low-level RSP)
+//			if ((emuoptions.UsingRspPlugin == FALSE) && (sp_mem_addr_reg & 0x00001000))
+//				;
+//			else
 			memcpy
 			(
 				&gMS_SP_MEM[(sp_mem_addr_reg & 0x1FFF) >> 2],
@@ -610,7 +592,7 @@ void DMA_MemCopy_DRAM_To_SP(void)
     Signal Processor DMA Write
  =======================================================================================================================
  */
-void DMA_MemCopy_SP_to_DRAM(void)
+void DMA_MemCopy_SP_to_DRAM(int WasCalledByRSP)
 {
 	/*~~~~~~~~~~~~*/
 	uint16	segment;
@@ -626,7 +608,7 @@ void DMA_MemCopy_SP_to_DRAM(void)
 	if(SP_DRAM_ADDR_REG & 0x7)
 	{
 		/*
-		 * DisplayError("Warning, SP DMA, address does not align as requirement. RDRAM
+		 * DisplayError("Warning, SP DMA, address does not align as required. RDRAM
 		 * ADDR = %08X", SP_DRAM_ADDR_REG);
 		 */
 		TRACE2
@@ -653,7 +635,7 @@ void DMA_MemCopy_SP_to_DRAM(void)
 #endif
 	SPDMALength = (SP_WR_LEN_REG & 0x00000FFF) + 1;	/* SP_RD_LEN_REG bit [0-11] is length to transfer */
 
-	if(currentromoptions.DMA_Segmentation == USEDMASEG_YES)
+	if((currentromoptions.DMA_Segmentation == USEDMASEG_YES) && (!WasCalledByRSP))
 	{
 		DEBUG_SP_DMA_TRACE0("SP DMA Starting");
 
@@ -997,6 +979,7 @@ void DoSPDMASegment(void)
 	{
 		if(SPDMAInProgress == DMA_SP_WRITE)
 		{
+			
 			memcpy
 			(
 				&gMS_RDRAM[SP_DRAM_ADDR_REG & 0x00FFFFFF],
@@ -1006,6 +989,13 @@ void DoSPDMASegment(void)
 		}
 		else
 		{
+//			//ignore IMEM for speed (if not using low-level RSP)
+//			if ((emuoptions.UsingRspPlugin == FALSE) && (SP_MEM_ADDR_REG & 0x00001000))
+//			{
+//				//Do Nothing
+//			}
+//			else
+						
 			memcpy
 			(
 				&gMS_SP_MEM[(SP_MEM_ADDR_REG & 0x1FFF) >> 2],
@@ -1046,7 +1036,7 @@ void DoSIDMASegment(void)
 		Do_DMA_MemCopy_DRAM_to_SI();
 		DEBUG_SI_DMA_TRACE0("SI DMA Read Finished");
 		SI_STATUS_REG |= SI_STATUS_RD_BUSY; /* Set SI is busy doing IO */
-		Set_SI_IO_Timer_Event(SI_IO_DELAY); /* this value is important, can not be too large */
+		Set_SI_IO_Timer_Event(SI_IO_DELAY); /* this value is important, cannot be too large */
 	}
 	else	/* SIDMAInProgress == DMA_SI_WRITE */
 	{

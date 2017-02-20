@@ -21,12 +21,7 @@
  * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
-#include <windows.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include "globals.h"
-#include "hardware.h"
-#include "1964ini.h"
+
 #include "romlist.h"
 
 uint32		ConvertHexCharToInt(char c);
@@ -51,7 +46,7 @@ char		*codecheck_type_names[] =
 };
 char		*maxfps_type_names[] = { "Default", "No Limit", "NTSC 60 fps", "PAL 50 fps", "Auto Sync" };
 char		*usetlb_type_names[] = { "Default", "Yes", "No" };
-char		*eepromsize_type_names[] = { "Default", "No EEPROM", "4KB EEPROM", "16KB EEPROM" };
+char		*eepromsize_type_names[] = { "Default", "No EEPROM", "4Kb EEPROM", "16Kb EEPROM" };
 char		*counter_factor_names[] = { "Default", "CF=1", "CF=2", "CF=3", "CF=4", "CF=5", "CF=6", "CF=7", "CF=8", };
 char		*register_caching_names[] = { "Default", "Yes", "No" };
 char		*use_fpu_hack_names[] = { "Default", "Yes", "No" };
@@ -117,6 +112,8 @@ void SetDefaultOptions(void)
  */
 void GenerateCurrentRomOptions(void)
 {
+	__try{
+
 	CopyIniEntry(&currentromoptions, RomListSelectedEntry()->pinientry);
 
 	if(RomListSelectedEntry()->pinientry->Code_Check == 0) currentromoptions.Code_Check = defaultoptions.Code_Check;
@@ -159,8 +156,13 @@ void GenerateCurrentRomOptions(void)
 	&&	RomListSelectedEntry()->pinientry->Link_4KB_Blocks == USE4KBLINKBLOCK_YES
 	)
 	{
-		DisplayError("Link 4KB can not be used when self-mod code checking method is not PROTECT_MEMORY or No_Check, setting the Link_4KB to No");
+		DisplayError("Link 4KB cannot be used when self-mod code checking method is not PROTECT_MEMORY or No_Check, setting the Link_4KB to No");
 		RomListSelectedEntry()->pinientry->Link_4KB_Blocks = USE4KBLINKBLOCK_NO;
+	}
+	}
+	__except(NULL,EXCEPTION_EXECUTE_HANDLER)
+	{
+		DisplayError("Error Generating Rom Options. Possibly Corrupt ROM.");
 	}
 }
 
@@ -221,7 +223,7 @@ INI_ENTRY *GetNewIniEntry(void)
     Return value: £
     1) New entry, return the index of new entry £
     2) Overwrite old entry, return the index of old entry £
-    3) Can not insert new entry to list, return -1
+    3) Cannot insert new entry to list, return -1
  =======================================================================================================================
  */
 int AddIniEntry(const INI_ENTRY *pnewentry)
@@ -297,7 +299,7 @@ int AddIniEntry(const INI_ENTRY *pnewentry)
 			p = GetNewIniEntry();
 			if(p == NULL)
 			{
-				return -1;	/* Can not insert any new entry */
+				return -1;	/* Cannot insert any new entry */
 			}
 
 			/* A new entry */
@@ -320,7 +322,7 @@ int AddIniEntry(const INI_ENTRY *pnewentry)
 	}
 	else
 	{
-		return -1;			/* Can not insert new entry */
+		return -1;			/* Cannot insert new entry */
 	}
 }
 
@@ -616,7 +618,10 @@ BOOL WriteIniEntry(FILE *pstream, const INI_ENTRY *p)
 	if(p->Max_FPS != 0 && p->Max_FPS != defaultoptions.Max_FPS) fprintf(pstream, "Max FPS=%d\n", p->Max_FPS);
 	if(p->Save_Type != 0 && p->Save_Type != defaultoptions.Save_Type)
 		fprintf(pstream, "Save Type=%d\n", p->Save_Type);
-	if(p->Use_TLB != 0 && p->Save_Type != defaultoptions.Use_TLB) fprintf(pstream, "TLB=%d\n", p->Use_TLB);
+	if(p->Use_TLB != 0 && p->Use_TLB != defaultoptions.Use_TLB) 
+	{
+		fprintf(pstream, "TLB=%d\n", p->Use_TLB);
+	}
 	if(p->Eeprom_size != 0 && p->Eeprom_size != defaultoptions.Eeprom_size)
 		fprintf(pstream, "EEPROM Size=%d\n", p->Eeprom_size);
 	if(p->Counter_Factor != 0 && p->Counter_Factor != defaultoptions.Counter_Factor)

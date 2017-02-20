@@ -21,16 +21,9 @@
 // 1.	Only display the cheat codes available for the certain rom, hide codes that
 //		are not for the current rom
 // 2.	Have rom CRC info in the 1964.cht
-
-
 #include <windows.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include "globals.h"
 #include "r4300i.h"
-#include "1964ini.h"
 #include "cheatcode.h"
-#include "hardware.h"
 #include "win32/wingui.h"
 #include "win32/windebug.h"
 #include "romlist.h"
@@ -203,7 +196,7 @@ BOOL CodeList_ReadCode(char *intername_rom_name)
 		codegrouplist = VirtualAlloc(NULL, numberofgroups * sizeof(CODEGROUP), MEM_COMMIT, PAGE_READWRITE);
 		if(codegrouplist == NULL)
 		{
-			DisplayError("Can not allocate memory to load cheat codes");
+			DisplayError("Cannot allocate memory to load cheat codes");
 			return FALSE;
 		}
 
@@ -245,6 +238,7 @@ BOOL CodeList_ReadCode(char *intername_rom_name)
 			}
 
 			codegrouplist[codegroupcount].active = line[c1 + 1] - '0';
+
 			c1 += 2;
 
 			for(c2 = 0; c2 < (strlen(line) - c1 - 1) / 14; c2++, codegrouplist[codegroupcount].codecount++)
@@ -313,7 +307,7 @@ BOOL CodeList_SaveCode(void)
 	stream2 = fopen(bakfilepath, "wt");
 	if(stream2 == NULL)
 	{
-		DisplayError("Can not open 1964.cht file to write.");
+		DisplayError("Cannot open 1964.cht file to write.");
 		return FALSE;
 	}
 
@@ -709,6 +703,15 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 	switch(message)
 	{
 	case WM_INITDIALOG:
+		SendDlgItemMessage
+		(
+			hDlg,
+			IDC_DEFAULTOPTIONS_AUTOCHEAT,
+			BM_SETCHECK,
+			emuoptions.auto_apply_cheat_code ? BST_CHECKED : BST_UNCHECKED,
+			0
+		);
+
 		SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_RESETCONTENT, 0, 0);
 		SetDlgItemText(hDlg, IDC_GAMESHARK_NAME, "");
 		SetDlgItemText(hDlg, IDC_GAMESHARK_CODE, "");
@@ -768,13 +771,18 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 		case 0:
 			switch(wParam)
 			{
+			case IDC_DEFAULTOPTIONS_AUTOCHEAT:	
+				emuoptions.auto_apply_cheat_code ^= 1;
+
+			break;
+			
 			case IDC_GAMESHARK_ADD:
 				if( codegroupcount >= MAX_CHEATCODE_GROUP_PER_ROM) 
 				{
-					DisplayError("Can not have more than %d groups for this rom", MAX_CHEATCODE_GROUP_PER_ROM);
+					DisplayError("Cannot have more than %d groups for this rom", MAX_CHEATCODE_GROUP_PER_ROM);
 					break;
 				}
-				
+
 				codeerror = FALSE;
 
 				/* Check name */
@@ -888,7 +896,7 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 							);
 						if(newgrouplist == NULL)
 						{
-							DisplayError("Can not allocate memory to add a new code group");
+							DisplayError("Cannot allocate memory to add a new code group");
 							break;
 						}
 						else
@@ -986,25 +994,6 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 					SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_SETCURSEL, index, 0);
 				}
 
-				codemodified = TRUE;		/* Codes are modified, we will save it when quit from the dialog */
-				break;
-			case IDC_GAMESHARK_ACTIVATEALL:
-				index = SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_GETCARETINDEX, 0, 0);
-				{
-					/*~~*/
-					int i;
-					/*~~*/
-
-					for(i = 0; i < codegroupcount; i++)
-					{
-						codegrouplist[i].active = TRUE;
-						SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_DELETESTRING, i, 0);
-						sprintf(generalmessage, "* %s", codegrouplist[i].name);
-						SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_INSERTSTRING, i, (LPARAM) generalmessage);
-					}
-				}
-
-				SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_SETCURSEL, index, 0);
 				codemodified = TRUE;		/* Codes are modified, we will save it when quit from the dialog */
 				break;
 			case IDC_GAMESHARK_DEACTIVATEALL:
@@ -1480,7 +1469,7 @@ void CheatCodeProtectBlock( uint32 addr, int groupIndex, uint8 val )	//Protect t
 		{
 			if( AllocateOneCheatCodeMemoryMap(block) == FALSE )
 			{
-				return;	//Can not allocate memory
+				return;	//Cannot allocate memory
 			}
 		}
 
@@ -1617,7 +1606,7 @@ BOOL AllocateOneCheatCodeMemoryMap(uint32 block)
 		}
 		else
 		{
-			DisplayError("Out of memory, can not allocate more memory to apply cheat code");
+			DisplayError("Out of memory, cannot allocate more memory to apply cheat code");
 			return FALSE;
 		}
 	}

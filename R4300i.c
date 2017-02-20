@@ -23,25 +23,712 @@
  */
 #include <windows.h>
 #include "debug_option.h"
-#include "globals.h"
 #include "r4300i.h"
-#include "hardware.h"
 #include "n64rcp.h"
 #include "memory.h"
-#include "iPIF.h"
-#include "timer.h"
-#include "memory.h"
 #include "1964ini.h"
-#include "interrupt.h"
 #include "gamesave.h"
-#include "dma.h"
-#include "emulator.h"
 #include "timer.h"
 #include "interrupt.h"
 #include "win32/DLL_Video.h"
 #include "win32/DLL_Audio.h"
 #include "win32/windebug.h"
 #include "win32/wingui.h"
+#include "dma.h"
+
+void	SPECIAL_instr(uint32 Instruction);
+void	REGIMM_instr(uint32 Instruction);
+void	COP0_instr(uint32 Instruction);
+void	COP1_instr(uint32 Instruction);
+void	TLB_instr(uint32 Instruction);
+void	COP1_BC_instr(uint32 Instruction);
+void	COP1_S_instr(uint32 Instruction);
+void	COP1_D_instr(uint32 Instruction);
+void	COP1_W_instr(uint32 Instruction);
+void	COP1_L_instr(uint32 Instruction);
+
+void (*CPU_instruction[64]) (uint32 Instruction) =
+{
+	SPECIAL_instr,	//0
+	REGIMM_instr,	//1
+	r4300i_j,		//2
+	r4300i_jal,		//3
+	r4300i_beq,		//4
+	r4300i_bne,		//5
+	r4300i_blez,	//6
+	r4300i_bgtz,	//7
+	r4300i_addi,	//8
+	r4300i_addiu,	//9
+	r4300i_slti,	//10
+	r4300i_sltiu,	//11
+	r4300i_andi,	//12
+	r4300i_ori,		//13
+	r4300i_xori,	//14
+	r4300i_lui,		//15
+	COP0_instr,		//16
+	COP1_instr,		//17
+	UNUSED,			//18
+	UNUSED,			//19
+	r4300i_beql,	//20
+	r4300i_bnel,	//21
+	r4300i_blezl,	//22
+	r4300i_bgtzl,	//23
+	r4300i_daddi,	//24
+	r4300i_daddiu,	//25
+	r4300i_ldl,		//26
+	r4300i_ldr,		//27
+	UNUSED,			//28
+	UNUSED,			//29
+	UNUSED,			//30
+	UNUSED,			//31
+	r4300i_lb,		//32
+	r4300i_lh,		//33
+	r4300i_lwl,		//34
+	r4300i_lw,		//35
+	r4300i_lbu,		//36
+	r4300i_lhu,		//37
+	r4300i_lwr,		//38
+	r4300i_lwu,		//39
+	r4300i_sb,		//40
+	r4300i_sh,		//41
+	r4300i_swl,		//42
+	r4300i_sw,		//43
+	r4300i_sdl,		//44
+	r4300i_sdr,		//45
+	r4300i_swr,		//46
+	r4300i_cache,	//47
+	r4300i_ll,		//48
+	r4300i_lwc1,	//49
+	UNUSED,			//50
+	UNUSED,			//51
+	r4300i_lld,		//52
+	r4300i_ldc1,	//53
+	UNUSED,			//54
+	r4300i_ld,		//55
+	r4300i_sc,		//56
+	r4300i_swc1,	//57
+	UNUSED,			//58
+	UNUSED,			//59
+	r4300i_scd,		//60
+	r4300i_sdc1,	//61
+	UNUSED,			//62
+	r4300i_sd		//63
+};
+
+void (*SPECIAL_Instruction[64]) (uint32 Instruction) =
+{
+	r4300i_sll,		//0
+	UNUSED,			//1
+	r4300i_srl,		//2
+	r4300i_sra,		//3
+	r4300i_sllv,	//4
+	UNUSED,			//5
+	r4300i_srlv,	//6
+	r4300i_srav,	//7
+	r4300i_jr,		//8
+	r4300i_jalr,	//9
+	UNUSED,			//10
+	UNUSED,			//11
+	r4300i_syscall,	//12
+	r4300i_break,	//13
+	UNUSED,			//14
+	r4300i_sync,	//15
+	r4300i_mfhi,	//16
+	r4300i_mthi,	//17
+	r4300i_mflo,	//18
+	r4300i_mtlo,	//19
+	r4300i_dsllv,	//20
+	UNUSED,			//21
+	r4300i_dsrlv,	//22
+	r4300i_dsrav,	//23
+	r4300i_mult,	//24
+	r4300i_multu,	//25
+	r4300i_div,		//26
+	r4300i_divu,	//27
+	r4300i_dmult,	//28
+	r4300i_dmultu,	//29
+	r4300i_ddiv,	//30
+	r4300i_ddivu,	//31
+	r4300i_add,		//32
+	r4300i_addu,	//33
+	r4300i_sub,		//34
+	r4300i_subu,	//35
+	r4300i_and,		//36
+	r4300i_or,		//37
+	r4300i_xor,		//38
+	r4300i_nor,		//39
+	UNUSED,			//40
+	UNUSED,			//41
+	r4300i_slt,		//42
+	r4300i_sltu,	//43
+	r4300i_dadd,	//44
+	r4300i_daddu,	//45
+	r4300i_dsub,	//46
+	r4300i_dsubu,	//47
+	r4300i_tge,		//48
+	r4300i_tgeu,	//49
+	r4300i_tlt,		//50
+	r4300i_tltu,	//51
+	r4300i_teq,		//52
+	UNUSED,			//53
+	r4300i_tne,		//54
+	UNUSED,			//55
+	r4300i_dsll,	//56
+	UNUSED,			//57
+	r4300i_dsrl,	//58
+	r4300i_dsra,	//59
+	r4300i_dsll32,	//60
+	UNUSED,			//61
+	r4300i_dsrl32,	//62
+	r4300i_dsra32	//63
+};
+
+void (*REGIMM_Instruction[32]) (uint32 Instruction) =
+{
+	r4300i_bltz,
+	r4300i_bgez,
+	r4300i_bltzl,
+	r4300i_bgezl,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	r4300i_tgei,
+	r4300i_tgeiu,
+	r4300i_tlti,
+	r4300i_tltiu,
+	r4300i_teqi,
+	UNUSED,
+	r4300i_tnei,
+	UNUSED,
+	r4300i_bltzal,
+	r4300i_bgezal,
+	r4300i_bltzall,
+	r4300i_bgezall,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED
+};
+
+void (*COP0_Instruction[32]) (uint32 Instruction) =
+{
+	r4300i_COP0_mfc0,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	r4300i_COP0_mtc0,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	TLB_instr,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED
+};
+
+void (*TLB_Instruction[64]) (uint32 Instruction) =
+{
+	UNUSED,				//0
+	r4300i_COP0_tlbr,	//1
+	r4300i_COP0_tlbwi,	//2
+	UNUSED,				//3
+	UNUSED,				//4
+	UNUSED,				//5
+	r4300i_COP0_tlbwr,	//6
+	UNUSED,				//7
+	r4300i_COP0_tlbp,	//8
+	UNUSED,				//9
+	UNUSED,				//10
+	UNUSED,				//11
+	UNUSED,				//12
+	UNUSED,				//13
+	UNUSED,				//14
+	UNUSED,				//15
+	UNUSED,				//16
+	UNUSED,				//17
+	UNUSED,				//18
+	UNUSED,				//19
+	UNUSED,				//20
+	UNUSED,				//21
+	UNUSED,				//22
+	UNUSED,				//23
+	r4300i_COP0_eret,	//24
+	UNUSED,				//25
+	UNUSED,				//26
+	UNUSED,				//27
+	UNUSED,				//28
+	UNUSED,				//29
+	UNUSED,				//30
+	UNUSED,				//31
+	UNUSED,				//32
+	UNUSED,				//33
+	UNUSED,				//34
+	UNUSED,				//35
+	UNUSED,				//36
+	UNUSED,				//37
+	UNUSED,				//38
+	UNUSED,				//39
+	UNUSED,				//40
+	UNUSED,				//41
+	UNUSED,				//42
+	UNUSED,				//43
+	UNUSED,				//44
+	UNUSED,				//45
+	UNUSED,				//46
+	UNUSED,				//47
+	UNUSED,				//48
+	UNUSED,				//49
+	UNUSED,				//50
+	UNUSED,				//51
+	UNUSED,				//52
+	UNUSED,				//53
+	UNUSED,				//54
+	UNUSED,				//55
+	UNUSED,				//56
+	UNUSED,				//57
+	UNUSED,				//58
+	UNUSED,				//59
+	UNUSED,				//60
+	UNUSED,				//61
+	UNUSED,				//62
+	UNUSED 				//63
+};
+
+void (*COP1_Instruction[32]) (uint32 Instruction) =
+{
+	r4300i_COP1_mfc1,
+	r4300i_COP1_dmfc1,
+	r4300i_COP1_cfc1,
+	UNUSED,
+	r4300i_COP1_mtc1,
+	r4300i_COP1_dmtc1,
+	r4300i_COP1_ctc1,
+	UNUSED,
+	COP1_BC_instr,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	COP1_S_instr,
+	COP1_D_instr,
+	UNUSED,
+	UNUSED,
+	COP1_W_instr,
+	COP1_L_instr,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED
+};
+
+void (*COP1_BC_Instruction[4]) (uint32 Instruction) =
+{
+	r4300i_COP1_bc1f,
+	r4300i_COP1_bc1t,
+	r4300i_COP1_bc1fl,
+	r4300i_COP1_bc1tl
+};
+
+void (*COP1_S_Instruction[64]) (uint32 Instruction) =
+{
+	r4300i_COP1_add_s,
+	r4300i_COP1_sub_s,
+	r4300i_COP1_mul_s,
+	r4300i_COP1_div_s,
+	r4300i_COP1_sqrt_s,
+	r4300i_COP1_abs_s,
+	r4300i_COP1_mov_s,
+	r4300i_COP1_neg_s,
+	r4300i_COP1_roundl_s,
+	r4300i_COP1_truncl_s,
+	r4300i_COP1_ceill_s,
+	r4300i_COP1_floorl_s,
+	r4300i_COP1_roundw_s,
+	r4300i_COP1_truncw_s,
+	r4300i_COP1_ceilw_s,
+	r4300i_COP1_floorw_s,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	r4300i_COP1_cvtd_s,
+	UNUSED,
+	UNUSED,
+	r4300i_COP1_cvtw_s,
+	r4300i_COP1_cvtl_s,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	r4300i_C_F_S,
+	r4300i_C_UN_S,
+	r4300i_C_EQ_S,
+	r4300i_C_UEQ_S,
+	r4300i_C_OLT_S,
+	r4300i_C_ULT_S,
+	r4300i_C_OLE_S,
+	r4300i_C_ULE_S,
+	r4300i_C_SF_S,
+	r4300i_C_NGLE_S,
+	r4300i_C_SEQ_S,
+	r4300i_C_NGL_S,
+	r4300i_C_LT_S,
+	r4300i_C_NGE_S,
+	r4300i_C_LE_S,
+	r4300i_C_NGT_S
+};
+
+void (*COP1_D_Instruction[64]) (uint32 Instruction) =
+{
+	r4300i_COP1_add_d,
+	r4300i_COP1_sub_d,
+	r4300i_COP1_mul_d,
+	r4300i_COP1_div_d,
+	r4300i_COP1_sqrt_d,
+	r4300i_COP1_abs_d,
+	r4300i_COP1_mov_d,
+	r4300i_COP1_neg_d,
+	r4300i_COP1_roundl_d,
+	r4300i_COP1_truncl_d,
+	r4300i_COP1_ceill_d,
+	r4300i_COP1_floorl_d,
+	r4300i_COP1_roundw_d,
+	r4300i_COP1_truncw_d,
+	r4300i_COP1_ceilw_d,
+	r4300i_COP1_floorw_d,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	r4300i_COP1_cvts_d,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	r4300i_COP1_cvtw_d,
+	r4300i_COP1_cvtl_d,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	r4300i_C_F_D,
+	r4300i_C_UN_D,
+	r4300i_C_EQ_D,
+	r4300i_C_UEQ_D,
+	r4300i_C_OLT_D,
+	r4300i_C_ULT_D,
+	r4300i_C_OLE_D,
+	r4300i_C_ULE_D,
+	r4300i_C_SF_D,
+	r4300i_C_NGLE_D,
+	r4300i_C_SEQ_D,
+	r4300i_C_NGL_D,
+	r4300i_C_LT_D,
+	r4300i_C_NGE_D,
+	r4300i_C_LE_D,
+	r4300i_C_NGT_D
+};
+
+void (*COP1_W_Instruction[64]) (uint32 Instruction) =
+{
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	r4300i_COP1_cvts_w,
+	r4300i_COP1_cvtd_w,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED
+};
+
+void (*COP1_L_Instruction[64]) (uint32 Instruction) =
+{
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	r4300i_COP1_cvts_l,
+	r4300i_COP1_cvtd_l,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED,
+	UNUSED
+};
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void SPECIAL_instr(uint32 Instruction)
+{
+	SPECIAL_Instruction[_FUNCTION_](Instruction);
+}
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void REGIMM_instr(uint32 Instruction)
+{
+	REGIMM_Instruction[RT_FT](Instruction);
+}
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void COP0_instr(uint32 Instruction)
+{
+	COP0_Instruction[RS_BASE_FMT](Instruction);
+}
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void COP1_instr(uint32 Instruction)
+{
+	COP1_Instruction[RS_BASE_FMT](Instruction);
+}
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void TLB_instr(uint32 Instruction)
+{
+	TLB_Instruction[_FUNCTION_](Instruction);
+}
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void COP1_BC_instr(uint32 Instruction)
+{
+	COP1_BC_Instruction[(_ND_ << 1) | _TF_](Instruction);
+}
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void COP1_S_instr(uint32 Instruction)
+{
+	COP1_S_Instruction[_FUNCTION_](Instruction);
+}
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void COP1_D_instr(uint32 Instruction)
+{
+	COP1_D_Instruction[_FUNCTION_](Instruction);
+}
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void COP1_W_instr(uint32 Instruction)
+{
+	COP1_W_Instruction[_FUNCTION_](Instruction);
+}
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void COP1_L_instr(uint32 Instruction)
+{
+	COP1_L_Instruction[_FUNCTION_](Instruction);
+}
+
 
 /*
  * r4300i.c internal macro definition £
@@ -66,11 +753,9 @@ void r4300i_break(uint32 Instruction)
 {
 	/* Trigger the BREAK Exception */
 	TRACE2("BREAK, PC=%08X, code=%08X", gHWS_pc, Instruction >> 6);
-
-	/*
-	 * SET_EXCEPTION(EXC_BREAK); £
-	 * HandleExceptions(0x80000180);
-	 */
+	
+	 SET_EXCEPTION(EXC_BREAK); 
+	 HandleExceptions(0x80000180);
 }
 
 /*
@@ -96,7 +781,8 @@ void r4300i_syscall(uint32 Instruction)
 	TRACE1("SYSCALL, PC=%08X", gHWS_pc);
 
 	/* DisplayError("SYSCALL, PC=%08X", gHWS_pc); */
-	SET_EXCEPTION(EXC_SYSCALL) HandleExceptions(0x80000180);
+	SET_EXCEPTION(EXC_SYSCALL) 
+	HandleExceptions(0x80000180);
 }
 
 /*
@@ -111,7 +797,7 @@ void UNUSED(uint32 Instruction)
 	 * HandleExceptions(0x80000180); £
 	 * DisplayError("%08X: Illegal opcode request.", gHWS_pc);
 	 */
-	TRACE1("Invalid Instructin, PC=%08X", gHWS_pc);
+	TRACE1("Invalid Instruction, PC=%08X", gHWS_pc);
 }
 
 /*
@@ -120,7 +806,6 @@ void UNUSED(uint32 Instruction)
  */
 void r4300i_add(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "add");
 	gRD = (_int64) ((_int32) gRS + (_int32) gRT);
 }
 
@@ -130,8 +815,6 @@ void r4300i_add(uint32 Instruction)
  */
 void r4300i_addu(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "addu");
-
 	gRD = (_int64) ((_int32) gRS + (_int32) gRT);
 }
 
@@ -141,7 +824,6 @@ void r4300i_addu(uint32 Instruction)
  */
 void r4300i_addi(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RT_FT, "addi");
 	sLOGICAL_WITH_IMM(+);
 }
 
@@ -151,7 +833,6 @@ void r4300i_addi(uint32 Instruction)
  */
 void r4300i_addiu(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RT_FT, "addiu");
 	sLOGICAL_WITH_IMM(+);
 }
 
@@ -161,7 +842,6 @@ void r4300i_addiu(uint32 Instruction)
  */
 void r4300i_dadd(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "dadd");
 	sDLOGICAL(+);
 }
 
@@ -171,7 +851,6 @@ void r4300i_dadd(uint32 Instruction)
  */
 void r4300i_daddu(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "daddu");
 	sDLOGICAL(+);
 }
 
@@ -181,7 +860,6 @@ void r4300i_daddu(uint32 Instruction)
  */
 void r4300i_daddi(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RT_FT, "daddi");
 	sDLOGICAL_WITH_IMM(+);
 }
 
@@ -191,7 +869,6 @@ void r4300i_daddi(uint32 Instruction)
  */
 void r4300i_daddiu(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RT_FT, "daddiu");
 	sDLOGICAL_WITH_IMM(+);
 }
 
@@ -202,7 +879,6 @@ void r4300i_daddiu(uint32 Instruction)
  */
 void r4300i_dadd_32bit(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "dadd");
 	gHWS_GPR[RD_FS] = (_int64) (_int32) gHWS_GPR[RS_BASE_FMT] + (_int64) (_int32) gHWS_GPR[RT_FT];
 }
 
@@ -212,7 +888,6 @@ void r4300i_dadd_32bit(uint32 Instruction)
  */
 void r4300i_daddu_32bit(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "daddu");
 	gHWS_GPR[RD_FS] = (_int64) (_int32) gHWS_GPR[RS_BASE_FMT] + (_int64) (_int32) gHWS_GPR[RT_FT];
 }
 
@@ -222,7 +897,6 @@ void r4300i_daddu_32bit(uint32 Instruction)
  */
 void r4300i_daddi_32bit(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RT_FT, "daddi");
 	gHWS_GPR[RT_FT] = (_int64) (_int32) gHWS_GPR[RS_BASE_FMT] + (_int64) (_int32) OFFSET_IMMEDIATE;
 }
 
@@ -232,7 +906,6 @@ void r4300i_daddi_32bit(uint32 Instruction)
  */
 void r4300i_daddiu_32bit(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RT_FT, "daddi");
 	gHWS_GPR[RT_FT] = (_int64) (_int32) gHWS_GPR[RS_BASE_FMT] + (_int64) (_int32) OFFSET_IMMEDIATE;
 }
 
@@ -242,7 +915,6 @@ void r4300i_daddiu_32bit(uint32 Instruction)
  */
 void r4300i_sub(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "sub");
 	sLOGICAL(-);
 }
 
@@ -252,7 +924,6 @@ void r4300i_sub(uint32 Instruction)
  */
 void r4300i_subu(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "subu");
 	sLOGICAL(-);
 }
 
@@ -262,7 +933,6 @@ void r4300i_subu(uint32 Instruction)
  */
 void r4300i_dsub(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "dsub");
 	sDLOGICAL(-);
 }
 
@@ -272,7 +942,6 @@ void r4300i_dsub(uint32 Instruction)
  */
 void r4300i_dsubu(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "dsubu");
 	sDLOGICAL(-);
 }
 
@@ -282,7 +951,6 @@ void r4300i_dsubu(uint32 Instruction)
  */
 void r4300i_and(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "and");
 	uDLOGICAL(&);
 }
 
@@ -292,7 +960,6 @@ void r4300i_and(uint32 Instruction)
  */
 void r4300i_andi(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RT_FT, "andi");
 	uDLOGICAL_WITH_IMM(&);
 }
 
@@ -302,7 +969,6 @@ void r4300i_andi(uint32 Instruction)
  */
 void r4300i_or(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "or");
 	uDLOGICAL( | );
 }
 
@@ -312,7 +978,6 @@ void r4300i_or(uint32 Instruction)
  */
 void r4300i_ori(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RT_FT, "ori");
 	uDLOGICAL_WITH_IMM( | );
 }
 
@@ -322,7 +987,6 @@ void r4300i_ori(uint32 Instruction)
  */
 void r4300i_xor(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "xor");
 	uDLOGICAL( ^ );
 }
 
@@ -332,7 +996,6 @@ void r4300i_xor(uint32 Instruction)
  */
 void r4300i_xori(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RT_FT, "xori");
 	uDLOGICAL_WITH_IMM( ^ );
 }
 
@@ -342,7 +1005,6 @@ void r4300i_xori(uint32 Instruction)
  */
 void r4300i_nor(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "nor");
 	gRD = ~((uint64) gRS | (uint64) gRT);
 }
 
@@ -366,10 +1028,7 @@ void r4300i_lb(uint32 Instruction)
 	uint32	rt_ft = RT_FT;
 	/*~~~~~~~~~~~~~~~~~~*/
 
-	CHECK_R0_EQUAL_0(rt_ft, "lb");
-
 	QUER_ADDR;
-
 	gHWS_GPR[rt_ft] = r4300i_lb_faster(QuerAddr);
 }
 
@@ -393,9 +1052,7 @@ void r4300i_lbu(uint32 Instruction)
 	uint32	rt_ft = RT_FT;
 	/*~~~~~~~~~~~~~~~~~~*/
 
-	CHECK_R0_EQUAL_0(rt_ft, "lbu");
 	QUER_ADDR;
-
 	gHWS_GPR[rt_ft] = r4300i_lbu_faster(QuerAddr);
 }
 
@@ -418,8 +1075,6 @@ void r4300i_lh(uint32 Instruction)
 	uint32	QuerAddr;
 	uint32	rt_ft = RT_FT;
 	/*~~~~~~~~~~~~~~~~~~*/
-
-	CHECK_R0_EQUAL_0(rt_ft, "lh");
 
 	QUER_ADDR;
 	CHECKING_ADDR_ALIGNMENT(QuerAddr, 0x1, "LH", EXC_RADE) gHWS_GPR[rt_ft] = r4300i_lh_faster(QuerAddr);
@@ -445,7 +1100,6 @@ void r4300i_lhu(uint32 Instruction)
 	uint32	rt_ft = RT_FT;
 	/*~~~~~~~~~~~~~~~~~~*/
 
-	CHECK_R0_EQUAL_0(rt_ft, "lhu");
 	QUER_ADDR;
 	CHECKING_ADDR_ALIGNMENT(QuerAddr, 0x1, "LHU", EXC_RADE) gHWS_GPR[rt_ft] = r4300i_lhu_faster(QuerAddr);
 }
@@ -459,8 +1113,6 @@ void r4300i_lwu(uint32 Instruction)
 	/*~~~~~~~~~~~~~*/
 	uint32	QuerAddr;
 	/*~~~~~~~~~~~~~*/
-
-	CHECK_R0_EQUAL_0(RT_FT, "lwu");
 
 	QUER_ADDR;
 	CHECKING_ADDR_ALIGNMENT(QuerAddr, 0x3, "lwu", EXC_RADE) * (uint64 *) &gRT = (uint64) (MEM_READ_UWORD(QuerAddr));
@@ -476,9 +1128,9 @@ void r4300i_ll(uint32 Instruction)
 	uint32	QuerAddr;
 	/*~~~~~~~~~~~~~*/
 
-	CHECK_R0_EQUAL_0(RT_FT, "ll");
 	QUER_ADDR;
-	CHECKING_ADDR_ALIGNMENT(QuerAddr, 0x3, "LL", EXC_RADE) gRT = MEM_READ_SWORD(QuerAddr);
+	CHECKING_ADDR_ALIGNMENT(QuerAddr, 0x3, "LL", EXC_RADE) 
+	gRT = MEM_READ_SWORD(QuerAddr);
 	gHWS_LLbit = 1; /* Unconditionally ?? */
 }
 
@@ -507,9 +1159,7 @@ void r4300i_ld(uint32 Instruction)
 	uint32	rt_ft = RT_FT;
 	/*~~~~~~~~~~~~~~~~~~*/
 
-	CHECK_R0_EQUAL_0(rt_ft, "ld");
 	QUER_ADDR;
-
 	r4300i_ld_faster(QuerAddr, rt_ft);
 }
 
@@ -703,7 +1353,6 @@ void r4300i_mtlo(uint32 Instruction)
 void r4300i_sll(uint32 Instruction)
 {
 	if(RD_FS == 0 && RT_FT == 0 && gRT == 0) return;	/* NOP */
-	CHECK_R0_EQUAL_0(RD_FS, "sll");
 
 	/* uLOGICAL_SHIFT(<<, SA_FD); */
 	gRD = (__int64) (__int32) ((uint32) gRT << SA_FD);
@@ -715,7 +1364,6 @@ void r4300i_sll(uint32 Instruction)
  */
 void r4300i_sllv(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "sllv");
 	uLOGICAL_SHIFT( << , (gRS & 0x1F));
 
 	/* gRD = (__int64)(__int32)((uint32)gRT << (uint32)(gRS&0x1F)); */
@@ -727,7 +1375,6 @@ void r4300i_sllv(uint32 Instruction)
  */
 void r4300i_dsll(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "dsll");
 	(uint64) gRD = (uint64) gRT << SA_FD;
 }
 
@@ -737,7 +1384,6 @@ void r4300i_dsll(uint32 Instruction)
  */
 void r4300i_dsllv(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "dsllv");
 	(uint64) gRD = (uint64) gRT << (((uint32) gRS) & 0x3F);
 }
 
@@ -747,7 +1393,6 @@ void r4300i_dsllv(uint32 Instruction)
  */
 void r4300i_dsll32(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "dsll32");
 	(uint64) gRD = (uint64) gRT << (32 + SA_FD);
 
 	/*
@@ -766,7 +1411,6 @@ void r4300i_srl(uint32 Instruction)
 	 * TRACE0("SRL"); £
 	 * TRACE2("original gRT = %08X%08X", (uint32)(gRT>>32), (uint32)gRT);
 	 */
-	CHECK_R0_EQUAL_0(RD_FS, "srl");
 	gRD = (__int64) (__int32) ((uint32) gRT >> SA_FD);
 
 	/*
@@ -785,7 +1429,6 @@ void r4300i_srlv(uint32 Instruction)
 	 * TRACE0("SRLV"); £
 	 * TRACE2("original gRT = %08X%08X", (uint32)(gRT>>32), (uint32)gRT);
 	 */
-	CHECK_R0_EQUAL_0(RD_FS, "srlv");
 	gRD = (__int64) (__int32) ((uint32) gRT >> (((uint32) gRS) & 0x1F));
 
 	/*
@@ -805,7 +1448,6 @@ void r4300i_dsrl(uint32 Instruction)
 	 * TRACE0("DSRL"); £
 	 * TRACE2("original gRT = %08X%08X", (uint32)(gRT>>32), (uint32)gRT);
 	 */
-	CHECK_R0_EQUAL_0(RD_FS, "dsrl");
 	(uint64) gRD = (uint64) gRT >> SA_FD;
 
 	/* TRACE3("SA=%d, Result gRD = %08X%08X", SA_FD, (uint32)(gRD>>32), (uint32)gRD); */
@@ -817,7 +1459,6 @@ void r4300i_dsrl(uint32 Instruction)
  */
 void r4300i_dsrlv(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "dsrlv");
 	(uint64) gRD = (uint64) gRT >> (((uint32) gRS) & 0x3F);
 
 	/*
@@ -832,7 +1473,6 @@ void r4300i_dsrlv(uint32 Instruction)
  */
 void r4300i_dsrl32(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "dsrl32");
 	(uint64) gRD = (uint64) gRT >> (SA_FD + 32);
 
 	/*
@@ -849,7 +1489,6 @@ void r4300i_dsrl32(uint32 Instruction)
  */
 void r4300i_sra(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "sra");
 	gRD = (__int64) ((__int32) gRT >> SA_FD);
 }
 
@@ -859,7 +1498,6 @@ void r4300i_sra(uint32 Instruction)
  */
 void r4300i_srav(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "srav");
 	gRD = (__int64) ((__int32) gRT >> (((uint32) gRS) & 0x1F));
 }
 
@@ -870,7 +1508,6 @@ void r4300i_srav(uint32 Instruction)
  */
 void r4300i_dsrav(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "dsrav");
 	gRD = gRT >> (((uint32) gRS) & 0x3F);
 }
 
@@ -880,7 +1517,6 @@ void r4300i_dsrav(uint32 Instruction)
  */
 void r4300i_dsra(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "dsra");
 	gRD = gRT >> SA_FD;
 	TRACE0("r4300i_dsra");
 }
@@ -891,7 +1527,6 @@ void r4300i_dsra(uint32 Instruction)
  */
 void r4300i_dsra32(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "dsra32");
 	gRD = gRT >> (SA_FD + 32);
 }
 
@@ -901,7 +1536,6 @@ void r4300i_dsra32(uint32 Instruction)
  */
 void r4300i_slt(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "slt");
 	if(gRS < gRT)
 		gRD = 1;
 	else
@@ -914,7 +1548,6 @@ void r4300i_slt(uint32 Instruction)
  */
 void r4300i_sltu(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RD_FS, "sltu");
 	if((uint64) gRS < (uint64) gRT)
 		gRD = 1;
 	else
@@ -927,7 +1560,6 @@ void r4300i_sltu(uint32 Instruction)
  */
 void r4300i_slti(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RT_FT, "slti");
 	if(gRS < (_int64) (_int32) (_int16) (uint16) OFFSET_IMMEDIATE)
 		gRT = 1;
 	else
@@ -940,7 +1572,6 @@ void r4300i_slti(uint32 Instruction)
  */
 void r4300i_sltiu(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RT_FT, "sltiu");
 	if((uint64) gRS < (uint64) (_int64) (_int32) (_int16) (uint16) OFFSET_IMMEDIATE)
 		gRT = 1;
 	else
@@ -957,7 +1588,6 @@ void	Init_Count_Down_Counters(void);
 
 void r4300i_COP0_mfc0(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RT_FT, "mfc0");
 	switch(RD_FS)
 	{
 	case INDEX:		/* The INDEX Register */
@@ -1160,7 +1790,6 @@ void r4300i_COP0_mtc0(uint32 Instruction)
  */
 void r4300i_lui(uint32 Instruction)
 {
-	CHECK_R0_EQUAL_0(RT_FT, "lui");
 	gRT = (__int64) (__int32) (OFFSET_IMMEDIATE << (uint32) 16);
 }
 
@@ -1173,7 +1802,8 @@ void r4300i_do_speedhack(void)
 	/* Before SPEEDHACK, let CPU to finish all other tasks, let DMA, SP Task and so on */
 	if(Is_CPU_Doing_Other_Tasks()) return;
 
-	Count_Down_All();
+	//Count_Down_All
+	countdown_counter = 0;
 }
 
 /*
@@ -1233,7 +1863,8 @@ void r4300i_bgezl(uint32 Instruction)
 {
 	if(gRS >= 0)
 	{
-		R4300I_SPEEDHACK DELAY_SET
+		R4300I_SPEEDHACK
+		DELAY_SET
 	}
 	else
 	{
@@ -1250,7 +1881,8 @@ void r4300i_bltz(uint32 Instruction)
 {
 	if(gRS < 0)
 	{
-		R4300I_SPEEDHACK DELAY_SET
+		R4300I_SPEEDHACK
+		DELAY_SET
 	}
 	else
 	{
@@ -1264,9 +1896,12 @@ void r4300i_bltz(uint32 Instruction)
  */
 void r4300i_bltzal(uint32 Instruction)
 {
-	CHECK_RS_EQUAL_RA(RS_BASE_FMT, "bltzal") INTERPRETIVE_LINK(RA) if(gRS < 0)
+	CHECK_RS_EQUAL_RA(RS_BASE_FMT, "bltzal")
+	INTERPRETIVE_LINK(RA)
+	if(gRS < 0)
 	{
-		R4300I_SPEEDHACK DELAY_SET
+		R4300I_SPEEDHACK
+		DELAY_SET
 	}
 	else
 	{
@@ -1280,9 +1915,12 @@ void r4300i_bltzal(uint32 Instruction)
  */
 void r4300i_bltzall(uint32 Instruction)
 {
-	CHECK_RS_EQUAL_RA(RS_BASE_FMT, "bltzall") INTERPRETIVE_LINK(RA) if(gRS < 0)
+	CHECK_RS_EQUAL_RA(RS_BASE_FMT, "bltzall")
+	INTERPRETIVE_LINK(RA)
+	if(gRS < 0)
 	{
-		R4300I_SPEEDHACK DELAY_SET
+		R4300I_SPEEDHACK
+		DELAY_SET
 	}
 	else
 	{
@@ -1299,7 +1937,8 @@ void r4300i_bltzl(uint32 Instruction)
 {
 	if(gRS < 0)
 	{
-		R4300I_SPEEDHACK DELAY_SET
+		R4300I_SPEEDHACK
+		DELAY_SET
 	}
 	else
 	{
@@ -1316,7 +1955,8 @@ void r4300i_bgtz(uint32 Instruction)
 {
 	if(gRS > 0)
 	{
-		R4300I_SPEEDHACK DELAY_SET
+		R4300I_SPEEDHACK
+		DELAY_SET
 	}
 	else
 	{
@@ -1332,7 +1972,8 @@ void r4300i_bgtzl(uint32 Instruction)
 {
 	if(gRS > 0)
 	{
-		R4300I_SPEEDHACK DELAY_SET
+		R4300I_SPEEDHACK
+		DELAY_SET
 	}
 	else
 	{
@@ -1349,7 +1990,8 @@ void r4300i_blez(uint32 Instruction)
 {
 	if(gRS <= 0)
 	{
-		R4300I_SPEEDHACK DELAY_SET
+		R4300I_SPEEDHACK
+		DELAY_SET
 	}
 	else
 	{
@@ -1365,7 +2007,8 @@ void r4300i_blezl(uint32 Instruction)
 {
 	if(gRS <= 0)
 	{
-		R4300I_SPEEDHACK DELAY_SET
+		R4300I_SPEEDHACK
+		DELAY_SET
 	}
 	else
 	{
@@ -1382,7 +2025,8 @@ void r4300i_bne(uint32 Instruction)
 {
 	if((uint64) gRS != (uint64) gRT)
 	{
-		R4300I_SPEEDHACK DELAY_SET
+		R4300I_SPEEDHACK
+		DELAY_SET
 	}
 	else if(debug_opcode!=0)
 		CPUdelay = 0;
@@ -1396,7 +2040,8 @@ void r4300i_bnel(uint32 Instruction)
 {
 	if((uint64) gRS != (uint64) gRT)
 	{
-		R4300I_SPEEDHACK DELAY_SET
+		R4300I_SPEEDHACK
+		DELAY_SET
 	}
 	else
 	{
@@ -1413,7 +2058,8 @@ void r4300i_beql(uint32 Instruction)
 {
 	if((uint64) gRS == (uint64) gRT)
 	{
-		R4300I_SPEEDHACK DELAY_SET
+		R4300I_SPEEDHACK
+		DELAY_SET
 	}
 	else
 	{
@@ -1430,7 +2076,8 @@ void r4300i_beq(uint32 Instruction)
 {
 	if((uint64) gRS == (uint64) gRT)
 	{
-		R4300I_SPEEDHACK DELAY_SET
+		R4300I_SPEEDHACK
+		DELAY_SET
 	}
 	else
 	{
@@ -1888,8 +2535,6 @@ void r4300i_lwl(uint32 Instruction)
 	LOAD_TLB_FUN	vAddr = QuerAddr & 0xfffffffc;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	CHECK_R0_EQUAL_0(RT_FT, "lwl");
-
 	LoadWord1 = MEM_READ_UWORD(vAddr);
 
 	switch(QuerAddr & 3)
@@ -1921,8 +2566,6 @@ void r4300i_lwr(uint32 Instruction)
 	uint32			vAddr;
 	LOAD_TLB_FUN	vAddr = QuerAddr & 0xfffffffc;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-	CHECK_R0_EQUAL_0(RT_FT, "lwr");
 
 	LoadWord1 = MEM_READ_UWORD(vAddr);
 
@@ -2030,7 +2673,7 @@ void r4300i_ldl(uint32 Instruction)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	uint64			tempdword;
 	uint32			rt_ft = RT_FT;
-	LOAD_TLB_FUN	CHECK_R0_EQUAL_0(RT_FT, "ldl");
+	LOAD_TLB_FUN
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	tempdword = (uint64) MEM_READ_UWORD((QuerAddr & 0xFFFFFFF8));
@@ -2059,7 +2702,7 @@ void r4300i_ldr(uint32 Instruction)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	uint64			tempdword;
 	uint32			rt_ft = RT_FT;
-	LOAD_TLB_FUN	CHECK_R0_EQUAL_0(RT_FT, "ldr");
+	LOAD_TLB_FUN
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	tempdword = (uint64) MEM_READ_UWORD((QuerAddr & 0xFFFFFFF8));
@@ -2410,31 +3053,23 @@ void r4300i_ResetMemory(MemoryState *gMemoryState)
 	memset(gMemoryState->ramRegs0, 0, MEMORY_SIZE_RAMREGS0);
 	memset(gMemoryState->ramRegs4, 0, MEMORY_SIZE_RAMREGS4);
 	memset(gMemoryState->ramRegs8, 0, MEMORY_SIZE_RAMREGS8);
-
 	memset(gMemoryState->SP_MEM, 0, MEMORY_SIZE_SPMEM);
 	memset(gMemoryState->SP_REG_1, 0, MEMORY_SIZE_SPREG_1);
 	memset(gMemoryState->SP_REG_2, 0, MEMORY_SIZE_SPREG_2);
 	gMemoryState->SP_REG_1[0x4] = SP_STATUS_HALT;	/* SP_STATUS_REG */
-
 	memset(gMemoryState->DPC, 0, MEMORY_SIZE_DPC);
 	memset(gMemoryState->DPS, 0, MEMORY_SIZE_DPS);
-
 	memset(gMemoryState->MI, 0, MEMORY_SIZE_MI);
 	gMemoryState->MI[1] = 0x01010101;				/* MI_VERSION_REG */
-
 	memset(gMemoryState->VI, 0, MEMORY_SIZE_VI);
 	memset(gMemoryState->AI, 0, MEMORY_SIZE_AI);
 	memset(gMemoryState->PI, 0, MEMORY_SIZE_PI);
-
 	memset(gMemoryState->RI, 0, MEMORY_SIZE_RI);
 	gMemoryState->RI[1] = 1;						/* RI_CONFIG_REG */
-
 	memset(gMemoryState->SI, 0, MEMORY_SIZE_SI);
 	memset(gMemoryState->C2A1, 0, MEMORY_SIZE_C2A1);
 	memset(gMemoryState->C1A1, 0, MEMORY_SIZE_C1A1);
-
 	memset(gMemoryState->C2A2, 0, MEMORY_SIZE_C2A2);
-
 	memset(gMemoryState->C1A3, 0, MEMORY_SIZE_C1A3);
 	memset(gMemoryState->GIO_REG, 0, MEMORY_SIZE_GIO_REG);
 	memset(gMemoryState->PIF, 0, MEMORY_SIZE_PIF);
@@ -2465,7 +3100,8 @@ _int32 Check_LW(uint32 QuerAddr)
 
 	if((QuerAddr & 0xFF000000) == 0x84000000) QuerAddr |= 0xA0000000;
 
-	CHECK_FLASHRAM_LW(QuerAddr);
+	if (currentromoptions.Save_Type == FLASHRAM_SAVETYPE)
+		CHECK_FLASHRAM_LW(QuerAddr);
 
 	switch(QuerAddr)
 	{
@@ -2533,15 +3169,6 @@ _int32 Check_LW(uint32 QuerAddr)
 	DebugIO(QuerAddr, "Read", tempGPR);
 #endif
 
-	/*
-	 * AI status (R): [31]/[0] ai_full (addr & len buffer full), [30] ai_busy Note
-	 * that a 1->0 transition in ai_full will set interrupt (W): clear audio interrupt £
-	 * if( (AI_STATUS_REG & 0x80000001) != (Saved_AI_STATUS_REG & 0x80000001) ) { if(
-	 * ((Saved_AI_STATUS_REG & 0x80000000) && (AI_STATUS_REG & 0x8000000) == 0 ) ||
-	 * ((Saved_AI_STATUS_REG & 0x00000001) && (AI_STATUS_REG & 0x0000001) == 0 ) ) {
-	 * //DisplayError("AI_STATUS_REG Trigger AI interrupt"); Trigger_AIInterrupt(); }
-	 * Saved_AI_STATUS_REG = AI_STATUS_REG; }
-	 */
 	return(tempGPR);
 }
 
@@ -2563,6 +3190,7 @@ void Check_SW(uint32 QuerAddr, uint32 rt_ft)
 
 	if((QuerAddr & 0xFF000000) == 0x84000000) QuerAddr |= 0xA0000000;
 
+	if (currentromoptions.Save_Type == FLASHRAM_SAVETYPE)
 	if(QuerAddr >= 0xA8000000 && QuerAddr < 0xA8020000)
 	{
 		if(QuerAddr == FLASHRAM_COMMAND_REG_ADDR)
@@ -2692,11 +3320,11 @@ void Check_SW(uint32 QuerAddr, uint32 rt_ft)
 		break;
 	/* SP_WR_LEN_REG */case 0xA404000C:
 		SP_WR_LEN_REG = RTVal;
-		DMA_MemCopy_SP_to_DRAM();
+		DMA_MemCopy_SP_to_DRAM(0);
 		break;
 	/* SP_RD_LEN_REG */case 0xA4040008:
 		SP_RD_LEN_REG = RTVal;
-		DMA_MemCopy_DRAM_To_SP();
+		DMA_MemCopy_DRAM_To_SP(0);
 		break;
 	/* SI_PIF_ADDR_WR64B_REG */case 0xA4800010:
 		SI_PIF_ADDR_WR64B_REG = RTVal;
@@ -2719,7 +3347,6 @@ void Check_SW(uint32 QuerAddr, uint32 rt_ft)
 		DEBUG_AUDIO_MACRO(TRACE3("%08X: Play %d bytes of audio at %08X", gHWS_pc, AI_LEN_REG, AI_DRAM_ADDR_REG));
 		DO_PROFILIER_AUDIO;
 		AUDIO_AiLenChanged();
-
 		if( CoreDoingAIUpdate )
 		{
 			AUDIO_AiUpdate(FALSE);

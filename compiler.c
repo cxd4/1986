@@ -27,7 +27,6 @@
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
 #include <windows.h>
-#include "globals.h"
 #include "debug_option.h"
 #include "dynarec/dynarec.h"
 #include "hle.h"
@@ -65,7 +64,6 @@ void					Set_Translate_PC(void);
 void					Interrupts(uint32 JumpType, uint32 targetpc, uint32 DoLink, uint32 LinkVal);
 void					DisplayLinkPC(void);
 void					DisplayPC(void);
-
 void					RefreshDynaDuringGamePlay(void);
 void					AnalyzeBlock(void);
 void					Dyna_Code_Check_None(void);
@@ -167,10 +165,7 @@ unsigned __int32 DynaFetchInstruction2(uint32 pc)
 		compilerstatus.realpc_fetched = TranslateITLBAddress(compilerstatus.realpc_fetched);
 		if(ITLB_Error)
 		{
-			/*
-			 * DisplayError("Warning, ITLB error happens during Dyna instruction fetch, and
-			 * this is not the beginning of the block");
-			 */
+            DisplayError("Warning, ITLB error happens during Dyna instruction fetch, and this is not the beginning of the block.");
 			TRACE1("ITLB error happens when fetching branch delay slot opcode, pc=%08X", compilerstatus.realpc_fetched);
 			HandleExceptions(TLB_Error_Vector);
 
@@ -179,10 +174,7 @@ unsigned __int32 DynaFetchInstruction2(uint32 pc)
 			compilerstatus.realpc_fetched = TranslateITLBAddress(compilerstatus.realpc_fetched);
 			if(ITLB_Error)
 			{
-				/*
-				 * DisplayError("Warning, ITLB error happens during Dyna instruction fetch, and
-				 * this is not the beginning of the block");
-				 */
+				DisplayError("Warning, ITLB error happens during Dyna instruction fetch, and this is not the beginning of the block");
 				TRACE1
 				(
 					"Warning, ITLB error happens when fetching branch delay slot opcode the 2nd time, pc=%08X",
@@ -200,7 +192,7 @@ unsigned __int32 DynaFetchInstruction2(uint32 pc)
 						"Warning, ITLB error happens when fetching branch delay slot opcode the 3rd time, pc=%08X",
 						compilerstatus.realpc_fetched
 					);
-					DisplayError("Can not solve ITLB exception");
+					DisplayError("Cannot solve ITLB exception");
 					compilerstatus.realpc_fetched = savepc - 4;
 					compilerstatus.realpc_fetched = TranslateITLBAddress(compilerstatus.realpc_fetched);
 					compilerstatus.realpc_fetched += 4;
@@ -314,7 +306,7 @@ begin:
 
 start_compile:
 	k = 0;
-	if(compilerstatus.Is_Compiling > 1) DisplayError("Compiler is re-entered, can not support it.");
+	if(compilerstatus.Is_Compiling > 1) DisplayError("Compiler is re-entered, cannot support it.");
 
 	templCodePosition = compilerstatus.lCodePosition;
 	gMultiPass.WriteCode = 0;
@@ -567,7 +559,7 @@ start_compile:
 	DEBUG_PRINT_DYNA_COMPILE_INFO	gHWS_pc = compilerstatus.TempPC;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(compilerstatus.DynaBufferOverError)	/* ok, we have a buffer error, need to fresh the dyna buffer and recompile
+	if(compilerstatus.DynaBufferOverError)	/* ok, we have a buffer error, need to refresh the dyna buffer and recompile
 											 * this */
 
 	/* block again. */
@@ -625,7 +617,7 @@ void Invalidate4KBlock(uint32 addr, char *opcodename, int type, uint64 newvalue)
 		addr = addr & 0xDFFFFFFF;
 	else
 	{
-		CODE_DETECT_TRACE(TRACE0("Warning, can not invalidate a block not in RDRAM"));
+		CODE_DETECT_TRACE(TRACE0("Warning, cannot invalidate a block not in RDRAM"));
 		return;
 	}
 
@@ -719,10 +711,9 @@ void InvalidateOneBlock(uint32 pc)
 	/*~~~~~~~~~~~*/
 
 	/*
-	 * up to here, we have identified the new value is different from the old value £
-	 * and the old value was used as an code, not as a data, so we need to invalidate
-	 * the £
-	 * whole 4KB block and unprotect the 4KB block
+	 * up to here, we have identified the new value as different from the old value £
+	 * and the old value was used as code, not as data, so we need to invalidate
+	 * the whole 4KB block and unprotect the 4KB block
 	 */
 	for(offset = (pc & 0xFFFFF000); offset < (pc & 0xFFFFF000) + 0x1000; offset += 4)
 	{
@@ -767,15 +758,6 @@ void Dyna_Code_Check_QWORD(void)
 		*(uint32 *) ((uint8 *) sDYN_PC_LOOKUP[((pc + 4) | 0x80000000) >> 16] + (uint16) (pc + 4)) = 0;
 		*(uint32 *) (RDRAM_Copy + pc + 4) = *(uint32 *) (gMS_RDRAM + pc + 4);
 	}
-
-	/*
-	 * _asm{ mov eax, DWORD PTR g_pc_is_rdram mov edx, DWORD PTR gMS_RDRAM mov ebx,
-	 * DWORD PTR RDRAM_Copy mov ecx, DWORD PTR [eax+edx] cmp ecx, DWORD PTR [eax+ebx]
-	 * jne L2 mov ecx, DWORD PTR [eax+edx+4] cmp ecx, DWORD PTR [eax+ebx+4] je l3 L2:
-	 * mov Block, 0 // Set Block=Null mov ecx, DWORD PTR [eax+edx] mov DWORD PTR
-	 * [eax+ebx], ecx mov ecx, DWORD PTR [eax+edx+4] mov DWORD PTR [eax+ebx+4], ecx
-	 * L3: }
-	 */
 }
 
 /*
@@ -821,19 +803,6 @@ void Dyna_Code_Check_BLOCK(void)
 			break;
 		}
 	}
-
-	/*
-	 * _asm{ //block size mov eax, DWORD PTR Block xor ecx, ecx mov cx, WORD PTR
-	 * [eax-2] mov eax, DWORD PTR g_pc_is_rdram mov esi, DWORD PTR RDRAM_Copy lea esi,
-	 * DWORD PTR[eax+esi] mov edi, DWORD PTR gMS_RDRAM lea edi, DWORD PTR[eax+edi]
-	 * repe cmpsd cmp ecx,0 je L2 // Ok, block is different, now to invalidate the
-	 * block mov eax, DWORD PTR Block xor ecx, ecx mov cx, WORD PTR [eax-2] mov Block,
-	 * 0 // Set Block=Null mov eax, DWORD PTR g_pc_is_rdram mov esi, DWORD PTR
-	 * gMS_RDRAM lea esi, DWORD PTR[eax+esi] mov edi, DWORD PTR RDRAM_Copy lea edi,
-	 * DWORD PTR[eax+edi] repe movsd L2: } £
-	 * if( g_pc_is_rdram%0x80 == 4 ) Block = NULL; // this is to test dynabuffer
-	 * overrun
-	 */
 }
 
 /*
@@ -1440,11 +1409,4 @@ void Check_And_Invalidate_Compiled_Blocks_By_DMA(uint32 startaddr, uint32 len, c
 			}
 		}
 	}
-
-	/*
-	 * for( ; addr < startaddr+len; addr+=0x1000) { uint32 offset = (addr&0xFFFFF000)
-	 * ; UnprotectBlock(addr); Invalidate4KBlock(addr, "PIDMA", NOCHECKTYPE, 0); }
-	 * UnprotectBlock(startaddr+len-0x1); Invalidate4KBlock(startaddr+len-0x1,
-	 * "PIDMA", NOCHECKTYPE, 0);
-	 */
 }

@@ -81,4 +81,13 @@ extern void (__cdecl *_VIDEO_Under_Selecting_About) (HWND);
 
 extern HINSTANCE	hinstLibVideo;
 extern uint16		GfxPluginVersion;
+
+
+typedef struct g_GFX_PluginRECT
+{
+	RECT rect;
+	BOOL UseThis;
+} g_GFX_PluginRECT;
+
+extern g_GFX_PluginRECT GFX_PluginRECT;
 #endif

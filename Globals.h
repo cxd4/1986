@@ -23,7 +23,6 @@
 #ifndef _GLOBALS_H__1964_
 #define _GLOBALS_H__1964_
 
-#include <windows.h>
 
 /* Data Types */
 #define uint64	unsigned __int64
@@ -79,7 +78,7 @@ typedef struct
 
 extern uint32			gAllocationLength;
 extern t_rominfo		rominfo;
-extern volatile BOOL	Rom_Loaded;
+extern volatile int		Rom_Loaded;
 extern char				*CURRENT1964VERSION;
 extern char				generalmessage[256];
 #endif /* _GLOBALS_H__1964_ */

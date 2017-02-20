@@ -130,15 +130,6 @@
 #define DPC_CLR_BUFBUSY_REG		0x0000100
 #define DPC_CLR_CLOCK_REG		0x0000200
 
-extern void				Intr_PI(void);
-extern void				Intr_SI(void);
-extern void				Intr_AI(void);
-extern void				Intr_DP(void);
-extern void				Intr_SP(void);
-extern void				Intr_VI(void);
-
-extern unsigned _int32	iCurrentInterruptMask;
-
 #define IE			0x00000001
 #define EXL			0x00000002
 #define ERL			0x00000004
@@ -181,7 +172,6 @@ extern unsigned _int32	iCurrentInterruptMask;
 
 #define SET_EXCEPTION(exception)	{ gHWS_COP0Reg[CAUSE] &= NOT_EXCCODE; gHWS_COP0Reg[CAUSE] |= exception; }
 
-void			Intr_Common(void);
 void			CheckInterrupts(void);
 void __cdecl	printlist(char *Message, ...);
 void			Dbg_Handle_SP(unsigned __int32 value);
@@ -191,7 +181,6 @@ void			Handle_SP(unsigned __int32 value);
 void			Handle_MI(unsigned __int32 value);
 void			Handle_DPC(unsigned __int32 value);
 void			RunSPTask(void);
-void			Init_Bootstrap_Pointers(void);
 void			Trigger_RSPBreak(void);
 void			Trigger_SPInterrupt(void);
 void			Trigger_VIInterrupt(void);

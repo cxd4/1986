@@ -57,7 +57,6 @@ __int32 countdown_counter;
 void	Set_Countdown_Counter(void);
 uint32	Get_COUNT_Register(void);
 uint32	Get_VIcounter(void);
-void	Count_Down_All(void);
 void	Count_Down(uint32 count);
 void	Init_Count_Down_Counters(void);
 
@@ -277,7 +276,7 @@ void Add_New_Timer_Event(uint64 newtimer, int type)
 			blksize = *(uint16 *) (blk - 2) - 1;
 
 			/*
-			 * ok, now I have the block size, where am I in the block, I donno, guess I am in
+			 * ok, now I have the block size, where am I in the block, I dunno, guess I am in
 			 * the middle to end of the block
 			 */
 			new_target = new_target + blksize * VICounterFactors[CounterFactor];
@@ -285,7 +284,7 @@ void Add_New_Timer_Event(uint64 newtimer, int type)
 	}
 
 step2:
-	/* Manupolate the timer event list */
+	/* Manipulate the timer event list */
 	tempnode = Timer_Event_List_Header;
 
 	/* Step 1: search the whole list, delete the same type event if exists */
@@ -413,7 +412,7 @@ int Get_1st_Timer_Event_Type(void)
 void Set_PIDMA_Timer_Event(uint32 len)
 {
 	/*
-	 * Thanks for Zilmer £
+	 * Thanks to zilmar £
 	 * ChangeTimer(PiTimer,(int)(PI_WR_LEN_REG * 8.9) + 50);
 	 */
 	NEW_COUNTER_TRACE_MACRO(DEBUG_PI_DMA_TRACE1("PI DMA Delays %d cycles", (int) ((float) len * 8.9 + 50)));
@@ -492,9 +491,9 @@ void Set_SP_DLIST_Timer_Event(uint32 len)
 
 	/*
 	 * Trigger_RSPBreak(); //Trigger directly without delay £
-	 * This value affect Taz Express, this game does not work if I use timer=2 for SP
+	 * This value affects Taz Express, this game does not work if I use timer=2 for SP
 	 * DLIST £
-	 * but this will make Snow Kids flicks
+	 * but this will make Snow Kids flicker
 	 */
 	if(len * 3 > 700)
 		Add_New_Timer_Event(700, SP_DLIST_COUNTER_TYPE);
@@ -671,17 +670,8 @@ uint32 Get_VIcounter(void)
 		}
 	}
 
-	DisplayError("Can not find a VI timer event in the event list, should never happens");
+	DisplayError("Cannot find a VI timer event in the event list, should never happen");
 	return(uint32) (current_counter % max_vi_count);
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void Count_Down_All(void)
-{
-	countdown_counter = 0;
 }
 
 /*
@@ -707,7 +697,7 @@ void Check_VI_and_COMPARE_Interrupt(void)
 	}
 
 	if(next_count_counter <= current_counter + counter_leap - countdown_counter)
-	{						/* ok, should trigger an COMPARE interrupt */
+	{						/* ok, should trigger a COMPARE interrupt */
 		OPCODE_DEBUGGER_EPILOGUE(Trigger_CompareInterrupt(););
 		next_count_counter += 0x100000000;
 	}

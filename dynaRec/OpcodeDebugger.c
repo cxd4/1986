@@ -69,12 +69,9 @@ uint8					*sDWORD_R__Debug[0x10000];
 uint8					*sDWORD_R_2__Debug[0x10000];
 #endif
 
-/* uint8* TLB_sDWord__Debug[0x100000]; */
 uint8					**TLB_sDWord_ptr;
-
 uint8					**sDWord_ptr;
 uint8					**sDWord2_ptr;
-
 uint32					PcBeforeBranch;
 uint32					BlockStartPC;
 
@@ -184,8 +181,8 @@ void CompareStates(uint32 Instruction)
 				(
 					generalmessage,
 					"%s\n%08X: Dynarec and Interpretive GPR do not match.\n \
-			InterGPR[%s(%d)] = %016I64X\n \
-			DynaGPR[%s(%d)] = %016I64X\n\n",
+					InterGPR[%s(%d)] = %016I64X\n \
+					DynaGPR[%s(%d)] = %016I64X\n\n",
 					DebugPrintInstr(Instruction),
 					gHardwareState.pc,
 					r4300i_RegNames[reg],
@@ -383,7 +380,7 @@ void CompareStates(uint32 Instruction)
 				sprintf
 				(
 					generalmessage,
-					"%s\n%08X: Dynarec and Interpretive RemeberFprHi do not match.\n \
+					"%s\n%08X: Dynarec and Interpretive RememberFprHi do not match.\n \
 			Inter_RememberFprHi[%d] = %08X\n \
 			Dyna_RememberFprHi[%d] = %08X\n\n",
 					DebugPrintInstr(Instruction),
@@ -488,7 +485,7 @@ void COMPARE_Run(uint32 Inter_Opcode_Address, uint32 code)
 	PUSHAD();			/* bugfix: don't use PushMap in the Opcode Debugger because */
 
 	/*
-	 * PushMap can change the x86reg map! Ten when we restore the £
+	 * PushMap can change the x86reg map! Then when we restore the £
 	 * map for the compare, it bombs.
 	 */
 	MOV_ImmToReg(1, Reg_EAX, (_u32) & COMPARE_SwitchToInterpretive);
@@ -832,7 +829,7 @@ void COMPARE_SomeErrorMessage(uint32 pc, uint32 code)
 	strcat(op_Str, generalmessage);
 	TRACE0(op_Str);
 	strcat(op_Str, "\nYes-Copy Dyna to Interpreter,  No->Do nothing");
-	val = MessageBox(NULL, op_Str, "Error", MB_YESNO | MB_ICONINFORMATION | MB_SYSTEMMODAL);
+	val = MessageBox(NULL, op_Str, "woops", MB_YESNO | MB_ICONINFORMATION);
 
 	memset(op_Str, 0, sizeof(op_Str));
 

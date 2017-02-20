@@ -1,11 +1,13 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
+// Microsoft Visual C++ generated include file.
 // Used by wingui.rc
 //
 #define IDS_WARRANTY_SEC11              1
 #define IDOK2                           2
 #define IDS_WARRANTY_SEC12              2
 #define ID_CLEAR_MESSAGE                2
+#define IDS_SELF_MOD                    3
+#define IDM_SELF_MOD                    3
 #define IDS_MAINDISCLAIMER              4
 #define IDM_NEW                         100
 #define IDM_OPENROM                     101
@@ -26,16 +28,13 @@
 #define ID_ROM_STOP                     115
 #define ID_OPENROM                      116
 #define ID_DEBUGGER_SHOWCODELIST        117
-#define IDI_ICON1                       117
 #define ID_DEBUGGER_OPEN                118
 #define ID_DEBUGGER_CLOSE               119
 #define ID_ABOUT_WARRANTY               121
 #define ID_REDISTRIBUTE                 122
 #define ID_RUNTO                        123
 #define ID_OPTIONS_VIDMODE              124
-#define ID_ROM_RESET                    125
 #define IDM_VIDEO_MODE                  126
-#define IDB_BITMAP1                     126
 #define ID_CONFIGURE_VIDEO              127
 #define ID_HELP_FINDER                  128
 #define IDM_320_240                     129
@@ -69,8 +68,10 @@
 #define ID_DEBUGAUDIOTASK               157
 #define ID_DEBUGSPTASK                  158
 #define ID_DEBUGCOMPAREINTERRUPTS       159
+#define IDR_TOOLBAR1                    159
 #define ID_DEBUGIOSI                    160
 #define ID_DEBUGIOSP                    161
+#define IDB_BACKGROUND                  161
 #define ID_DEBUGIOVI                    162
 #define ID_DEBUGIOAI                    163
 #define ID_DEBUGIORI                    164
@@ -85,11 +86,14 @@
 #define ID_DEBUG_CONTROLLER             173
 #define ID_DEBUGIOMI                    174
 #define ID_DEBUGTRAP                    175
+#define ID_EDIT_D                       175
 #define ID_DEBUGSIDMA                   176
 #define ID_DEBUGSPDMA                   177
 #define ID_DEBUGIO                      178
 #define ID_INTERRUPTDEBUGGING           180
 #define ID_DEBUGVIINTERRUPTS            181
+#define IDB_BITMAP1                     181
+#define IDB_1964                        181
 #define ID_DEBUGPIINTERRUPTS            182
 #define ID_DEBUGAIINTERRUPTS            183
 #define ID_DEBUGSIINTERRUPTS            184
@@ -158,7 +162,7 @@
 #define ID_OPCODEDEBUGGER               263
 #define ID_OPCODEDEBUGGER_BLOCK_ONLY    264
 #define ID_DIRTYONLY                    265
-#define ID_PERFERENCE_OPTIONS           266
+#define ID_PREFERENCE_OPTIONS           266
 #define ID_FILE_ROMDIRECTORY1           268
 #define ID_FILE_RECENTGAMES_GAME1       269
 #define ID_FILE_RECENTGAMES_GAME2       270
@@ -219,6 +223,18 @@
 #define ID_CPU_VIDEOFRAMESKIPPING_SKIP1PER4FRAMES 327
 #define ID_CPU_VIDEOFRAMESKIPPING_SKIP1PER3FRAMES 328
 #define ID_CPU_VIDEOFRAMESKIPPING_SKIP1PER2FRAMES 329
+#define ID_BUTTON330                    330
+#define ID_BUTTON_FULL_SCREEN           331
+#define ID_BUTTON_HOME_PAGE             332
+#define ID_BUTTON_ROM_PROPERTIES        333
+#define ID_BUTTON_OPEN_ROM              334
+#define ID_BUTTON_PLAY                  335
+#define ID_BUTTON_PAUSE                 336
+#define ID_BUTTON_STOP                  337
+#define ID_BUTTON_SETUP_PLUGINS         338
+#define ID_BUTTON_RESET                 339
+#define ID_BUTTON_HELP                  340
+#define ID_BUTTON341                    341
 #define IDC_EDIT                        401
 #define IDC_CPUR0                       1000
 #define IDC_GPR1                        1001
@@ -688,7 +704,6 @@
 #define IDC_OPCODE_COMPARE2             1476
 #define IDC_OPCODE_DYNA_COMPARE         1476
 #define IDC_DEFAULTOPTIONS_EXPANSIONPAK 1476
-#define IDC_DISABLE_STATS               1476
 #define IDC_VEC277                      1477
 #define IDC_MANUAL_DP                   1477
 #define IDC_VEC278                      1478
@@ -725,11 +740,19 @@
 #define IDC_ROM_FILENAME                1502
 #define IDC_VEC303                      1503
 #define IDC_VEC304                      1504
+#define IDC_TREE1                       1504
 #define IDC_VEC305                      1505
 #define IDC_VEC306                      1506
+#define IDC_STATIC_NEWCODEFRAME         1506
 #define IDC_VEC307                      1507
+#define IDC_STATIC_CODEFRAME            1507
 #define IDC_VEC308                      1508
+#define IDC_STATIC_CodeName             1508
+#define IDC_STATIC_CODENAME             1508
+#define IDC_STATIC_CHEAT_COUNTRY        1509
+#define IDC_STATIC_CHEAT_NOTE1          1510
 #define IDC_VEC311                      1511
+#define IDC_STATIC_NOTE3                1511
 #define IDC_VEC312                      1512
 #define IDC_VEC313                      1513
 #define IDC_VEC314                      1514
@@ -757,9 +780,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        164
-#define _APS_NEXT_COMMAND_VALUE         330
-#define _APS_NEXT_CONTROL_VALUE         1509
+#define _APS_NEXT_RESOURCE_VALUE        182
+#define _APS_NEXT_COMMAND_VALUE         343
+#define _APS_NEXT_CONTROL_VALUE         1512
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

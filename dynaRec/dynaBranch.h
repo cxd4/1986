@@ -44,7 +44,6 @@
 #endif
 extern uint32	*g_LookupPtr;
 extern uint32	g_pc_is_rdram;
-static uint8	*tempblock;
 
 enum { JUMP_TYPE_INDIRECT, JUMP_TYPE_DIRECT, JUMP_TYPE_BREAKOUT };
 
@@ -85,7 +84,6 @@ enum { JUMP_TYPE_INDIRECT, JUMP_TYPE_DIRECT, JUMP_TYPE_BREAKOUT };
 		} \
 	}
 
-/* define J_SPEED_HACK */
 #define J_SPEED_HACK	if((reg->pc == aValue) && compilerstatus.pcptr[1] == 0) \
 	{ \
 		/* MOV_ImmToMemory(1, ModRM_disp32, (_u32)&gHWS_COP0Reg[COUNT], max_vi_count); */ \
@@ -302,11 +300,12 @@ void Interrupts(uint32 JumpType, uint32 targetpc, uint32 DoLink, uint32 LinkVal)
 			{
 				SUB_ImmToMemory((_u32) & countdown_counter, viCounter);
 				CMP_MemoryWithImm(1, (uint32) & countdown_counter, 0);
-				Jcc_auto(CC_LE, 31);	/* jmp true */
 
+				Jcc_auto(CC_LE, 31);	/* jmp true */
 				JMP_Long((uint32) 0);	/* here we link to target 2's block ptr */
 				current_block_entry->jmp_to_target_2_code_addr = compilerstatus.lCodePosition - 4;
 				SetTarget(31);
+
 				MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &gHWS_pc, targetpc);
 				TLB_TRANSLATE_PC(targetpc);
 				RET();
@@ -458,6 +457,7 @@ void dyna4300i_beq(OP_PARAMS)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	_OPCODE_DEBUG_BRANCH_(r4300i_beq);
+
     compilerstatus.cp0Counter += 1;
 
 	aValue = (reg->pc + 4 + (__I << 2));
@@ -533,7 +533,8 @@ void dyna4300i_beq(OP_PARAMS)
 	}
 
 	/* true */
-	SPEED_HACK reg->pc += 4;
+	SPEED_HACK
+	reg->pc += 4;
 	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
 
 	/* false */
@@ -758,18 +759,6 @@ _Redo:
 	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 }
 
-#define BLEZ_MACRO	BRANCH_MACRO(CC_G, CC_L, CC_A)
-#define BLTZ_MACRO	BRANCH_MACRO(CC_G, CC_L, CC_AE)
-#define BGEZ_MACRO	BRANCH_MACRO(CC_L, CC_G, CC_B)
-#define BGTZ_MACRO	BRANCH_MACRO(CC_L, CC_G, CC_BE)
-#define BRANCH_MACRO(JMP1, JMP2, JMP3) \
-	aValue = (reg->pc + 4 + (__I << 2)); \
-	MapRS; \
-	CMP_RegWithShort(1, xRS->HiWordLoc, 0); \
-	Jcc_Near_auto(JMP1, 91);					/* jmp false */ \
-	Jcc_auto(JMP2, 90);			/* jmp true */ \
-	CMP_RegWithShort(1, xRS->x86reg, 0); \
-	Jcc_Near_auto(JMP3, 93);	/* jmp false2 */
 
 /*
  =======================================================================================================================
@@ -2125,26 +2114,27 @@ void dyna4300i_cop0_eret(OP_PARAMS)
 	compilerstatus.cp0Counter += 1;
 	_OPCODE_DEBUG_BRANCH_(r4300i_COP0_eret) /* questionable. */
 
-	PUSH_RegIfMapped(Reg_EAX);
+	FlushAllRegisters();
+
+//	PUSH_RegIfMapped(Reg_EAX);
 	MOV_MemoryToReg(1, Reg_EAX, ModRM_disp32, (_u32) & reg->COP0Reg[STATUS]);
 	AND_ImmToReg(1, Reg_EAX, 0x0004);
 	CMP_RegWithShort(1, Reg_EAX, 0);
-	Jcc_auto(CC_E, 0);
+	Jcc_auto(CC_E, 26);
 	MOV_MemoryToReg(1, Reg_EAX, ModRM_disp32, (_u32) & reg->COP0Reg[ERROREPC]);
 	AND_ImmToMemory((unsigned long) &reg->COP0Reg[STATUS], 0xFFFFFFFB);
-	JMP_Short_auto(1);
-	SetTarget(0);
+	JMP_Short_auto(27);
+	SetTarget(26);
 	MOV_MemoryToReg(1, Reg_EAX, ModRM_disp32, (_u32) & reg->COP0Reg[EPC]);
 	AND_ImmToMemory((unsigned long) &reg->COP0Reg[STATUS], 0xFFFFFFFD);
-	SetTarget(1);
+	SetTarget(27);
 
 	MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &reg->LLbit, 0);
 	MOV_RegToMemory(1, Reg_EAX, ModRM_disp32, (unsigned long) &reg->pc);
-	POP_RegIfMapped(Reg_EAX);
+//	POP_RegIfMapped(Reg_EAX);
 
 	/* end of compiled block */
 	compilerstatus.KEEP_RECOMPILING = FALSE;
-	FlushAllRegisters();
 
 	Interrupts(JUMP_TYPE_INDIRECT, 0, LINK_NO, 0);
 }

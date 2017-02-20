@@ -31,7 +31,7 @@
 AUDIO_INFO	Audio_Info;
 
 HINSTANCE	hinstLibAudio = NULL;
-BOOL	CoreDoingAIUpdate = TRUE;;
+BOOL	CoreDoingAIUpdate = TRUE;
 
 void (__cdecl *_AUDIO_RomClosed) (void) = NULL;
 void (__cdecl *_AUDIO_DllClose) () = NULL;
@@ -105,7 +105,7 @@ BOOL LoadAudioPlugin(char *libname)
 						if( emuoptions.UsingRspPlugin == FALSE )
 						{
 							DisplayError("Warning, Jabo DirectSound Plugin is selected and loaded, but RSP Plugin is not "\
-										"selected, Jabo DirectSound Plugin does not roduce sound without RSP plugin. You can activate "\
+										"selected, Jabo DirectSound Plugin does not produce sound without RSP plugin. You can activate "\
 										"RSP Plugin in plugin setting, or you can change to other audio plugins");
 						}
 					}

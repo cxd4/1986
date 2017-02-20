@@ -18,9 +18,9 @@
  * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
+
 #include <windows.h>
 #include <process.h>
-#include <stdio.h>
 #include "globals.h"
 #include "debug_option.h"
 #include "emulator.h"
@@ -39,12 +39,10 @@
 #include "win32/DLL_Rsp.h"
 #include "win32/windebug.h"
 #include "win32/wingui.h"
-#include "dynarec/regcache.h"
-#include "dynarec/x86.h"
 #include "dynarec/dynaLog.h"
-#include "dynarec/dynacpu.h"
 #include "dynarec/dynarec.h"
 #include "netplay.h"
+#include "romlist.h"
 
 #ifdef DEBUG_COMMON
 #include "win32/windebug.h"
@@ -63,7 +61,6 @@ void				RunTheRegCacheNoCheck(void);
 HANDLE				CPUThreadHandle = NULL;
 
 LONG				Audio_Thread_Keep_Running = FALSE;
-HANDLE				AudioThreadHandle = NULL;
 struct EmuStatus	emustatus;
 struct EmuOptions	emuoptions;
 uint32				CPUdelayPC;		/* the saved Program Counter at CPU load/branch delay mode */
@@ -74,84 +71,29 @@ uint32				*g_LookupPtr;	/* This global will be set at returning from a block */
 uint32				g_pc_is_rdram;	/* This global will be set at returning from a block */
 BOOL				IsBooting = FALSE;
 BOOL				NeedToApplyRomWriteHack = FALSE;
-extern HINSTANCE	AudioThreadSemaphore;
-extern HINSTANCE	AudioThreadDataMutex;
-
-void StopAudio(void);
 
 void (__cdecl StartCPUThread) (void *pVoid);
-void (__cdecl AudioThread) (void *pVoid)
-{
-	//SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL);
-	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
-	
-	ReleaseSemaphore(AudioThreadSemaphore, 1, NULL);	//Tell that this thread is running
 
-	while(Audio_Thread_Keep_Running == TRUE)
+//This only mutes when paused.
+void __cdecl MuteTest(void* dummy)
+{
+	int k;
+
+	//This is enough times to cleanup the azi audio
+	//and enough times to keep jabo directsound 1.5
+	//from crashing. This is a shortcoming of the spec.
+	for (k=0;k<10;k++)
 	{
 		AUDIO_AiUpdate(TRUE);
-		Sleep(1);
 	}
-	ExitThread(0);
+	AUDIO_AiUpdate(FALSE);
+	_endthread();
 }
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void StartAudio(void)
+void Mute()
 {
-	Audio_Thread_Keep_Running = TRUE;
-	AudioThreadHandle = (HANDLE) _beginthread(AudioThread, 0, NULL);
-	WaitForSingleObject(AudioThreadSemaphore, INFINITE);
-}
-
-void PauseAudio(void)
-{
-}
-
-void ResumeAudio(void)
-{
-}
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void StopAudio(void)
-{
-	if( AudioThreadHandle != NULL )
-	{
-		TerminateThread(AudioThreadHandle,0);
-		AudioThreadHandle = NULL;
-		return;
-
-		if( emuoptions.UsingRspPlugin )	//We are using Jabo DirectSound Plugin
-		{
-			//For some reason, if using Jabo DirectSound plugin, the audio thread
-			//can not be terminated correctly as other audio plugins
-			//Only way to stop it is to terminate the thread
-			TerminateThread(AudioThreadHandle,0);
-		}
-		else
-		{
-			DWORD retval = WAIT_TIMEOUT;
-			MSG msg;
-
-			do {
-				if(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
-				{
-					if(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
-					{
-						if(GetMessage(&msg, NULL, 0, 0)) DispatchMessage(&msg);
-					}
-				}
-
-				Audio_Thread_Keep_Running = FALSE;
-				GetExitCodeThread(AudioThreadHandle, &retval);
-			} while( retval == STILL_ACTIVE );
-		}
-		AudioThreadHandle = NULL;
-	}
+	AUDIO_AiUpdate(FALSE);
+	_beginthread(MuteTest, 0, NULL);
 }
 
 /*
@@ -191,7 +133,8 @@ void RunEmulator(uint32 core)
  */
 BOOL PauseEmulator(void)
 {
-	if(emustatus.Emu_Is_Paused) return TRUE;
+	//if(emustatus.Emu_Is_Paused) return TRUE;
+
 	if(emustatus.exception_entry_count)			/* || ITLB_Error || (gHWS_COP0Reg[STATUS] & EXL) ) */
 	{
 		/*~~*/
@@ -235,19 +178,19 @@ step2:
 		Sleep(50);
 	}
 
-	PauseAudio();;
-	sprintf(generalmessage, "%s - paused", gui.szWindowTitle);
+	sprintf(generalmessage, "%s - Paused", gui.szWindowTitle);
 	SetStatusBarText(0, generalmessage);
 	SetWindowText(gui.hwnd1964main, generalmessage);
+	Mute();
 	return TRUE;
 }
 
 /*
  =======================================================================================================================
     Called by GUI thread to resume emulating from pausing £
-    the global variabl "needinit" is to pass information to the CPU thread £
-    to do InitEmu() in CPU thread. Reason behind this is that OpenGL is multi-thread £
-    save, initialization must be done in the CPU thread £
+    the global variable "needinit" is to pass information to the CPU thread £
+    to do InitEmu() in CPU thread. Reason behind this is that OpenGL is thread-safe, £
+	initialization must be done in the CPU thread £
  =======================================================================================================================
  */
 void ResumeEmulator(int action_after_pause)
@@ -255,9 +198,6 @@ void ResumeEmulator(int action_after_pause)
 	if(!emustatus.Emu_Is_Paused) return;
 
 	emustatus.action_after_resume = action_after_pause;
-
-	ResumeAudio();
-	Sleep(50);
 
 	/* Apply the hack codes */
 	if(emuoptions.auto_apply_cheat_code)
@@ -269,10 +209,11 @@ void ResumeEmulator(int action_after_pause)
 	}
 
 	emustatus.Emu_Keep_Running = TRUE;
-
 	sprintf(generalmessage, "%s - Running", gui.szWindowTitle);
 	SetStatusBarText(0, generalmessage);
 	SetWindowText(gui.hwnd1964main, generalmessage);
+	CheckButton(ID_BUTTON_PLAY, TRUE);
+	CheckButton(ID_BUTTON_PAUSE, FALSE);
 }
 
 /*
@@ -306,16 +247,17 @@ void StopEmulator(void)
 		Sleep(50);
 	}
 
-	StopAudio();
-	Sleep(50);
-
-	AUDIO_RomClosed();
-	CONTROLLER_RomClosed();
-	if( emuoptions.UsingRspPlugin )
+	if (!emustatus.Emu_Is_Resetting)
 	{
-		RSPRomClosed();
+		VIDEO_RomClosed();
+		AUDIO_RomClosed();
+		CONTROLLER_RomClosed();
+		if( emuoptions.UsingRspPlugin )
+		{
+			RSPRomClosed();
+		}
+		netplay_rom_closed();
 	}
-	netplay_rom_closed();
 }
 
 /*
@@ -373,7 +315,6 @@ void CloseEmulator(void)
 	}
 
 	emustatus.Emu_Is_Running = FALSE;
-	VIDEO_RomClosed();
 	Free_Dynarec();
 
 	*(uint32 *) &gMS_RDRAM[rominfo.RDRam_Size_Hack] = RDRamSizeHackSavedDWord1;
@@ -399,7 +340,6 @@ extern BOOL write_to_rom_flag;
 
 void InitEmu(void)
 {
-	StartAudio();
 	if(GetVersion() < 0x80000000)	/* Windows NT */
 		SetThreadPriority(CPUThreadHandle, THREAD_PRIORITY_NORMAL);
 	else
@@ -429,9 +369,15 @@ void InitEmu(void)
 	Init_Count_Down_Counters();
 
 	memcpy(&HeaderDllPass[0], &gMS_ROM_Image[0], 0x40);
-	VIDEO_RomOpen();
-	CONTROLLER_RomOpen();
-	netplay_rom_open();
+	
+	if (!emustatus.Emu_Is_Resetting)
+	{
+		VIDEO_RomOpen();
+		CONTROLLER_RomOpen();
+		netplay_rom_open();
+	}
+	else
+		emustatus.Emu_Is_Resetting = 0;
 
 	RefreshDynaDuringGamePlay();
 }
@@ -504,15 +450,6 @@ void N64_Boot(void)
 		}
 	}
 
-	/*
-	 * bug life hack from Azimer £
-	 * does not work for me £
-	 * if( strncmp(currentromoptions.Game_Name, "A Bug's Life", 12) == 0 ) { uint32
-	 * val = LOAD_UWORD_PARAM(0xB08C454C); TRACE1("Bug's Life Hack, val=%08X at
-	 * 0xB08C454C", val); if(LOAD_UWORD_PARAM(0xB08C454C) == 0x65732000) {
-	 * LOAD_UWORD_PARAM(0xB08C454C) = 0x1; TRACE0("A Bug's Life Hack Enabled");
-	 * DisplayError("A Bug's Life Hack Enabled"); } }
-	 */
 	if(emuoptions.auto_apply_cheat_code)
 	{
 		CodeList_ApplyAllCode(BOOTUPONCE);
@@ -654,6 +591,7 @@ void RunTheInterpreter(void)
 _DoOtherTask:
 	Instruction = FetchInstruction();	/* Fetch instruction at PC */
 	CPU_instruction[_OPCODE_](Instruction);
+	gHWS_GPR[0] = 0;
 	INTERPRETER_DEBUG_INSTRUCTION(Instruction);
 
 	if(CPUNeedToCheckException)
@@ -701,7 +639,7 @@ void RunTheRegCacheWithoutOpcodeDebugger(void)
 	 * __asm pushad // nono. This causes stack overflow in Minimize size compiler
 	 * option.
 	 */
-	__asm push ebp
+
 	__asm mov ebp, HardwareStart
 	while(emustatus.Emu_Keep_Running)
 	{
@@ -712,9 +650,7 @@ _DoOtherTask:
 
 		if(Block == NULL)
 		{
-			__asm push ebp;
 			Dyna_Compile_Block();
-			__asm push ebp;
 		}
 
 		/* Run the compiled code in the Block */
@@ -724,15 +660,11 @@ _DoOtherTask:
 		if(countdown_counter > 0)
 			goto _DoOtherTask;
 
-		__asm push ebp;
 		Trigger_Timer_Event();
-		__asm push ebp;
 	}
 
 	if( emustatus.reason_to_stop != EMUSTOP && Is_CPU_Doing_Other_Tasks() ) 
 		goto _DoOtherTask;
-
-	__asm pop ebp
 
 	/* __asm popad //nono. */
 }
@@ -747,7 +679,7 @@ void RunTheRegCacheWithOpcodeDebugger(void)
 	 * __asm pushad // nono. This causes stack overflow in Minimize size compiler
 	 * option.
 	 */
-	__asm push ebp
+
 	__asm mov ebp, HardwareStart
 	while(emustatus.Emu_Keep_Running)
 	{
@@ -766,9 +698,7 @@ _NextBlock:
 			mov eax, Block
 			cmp eax, 0
 			jnz l3
-			l2 : push ebp
-			call Dyna_Compile_Block
-			pop ebp
+			l2 : call Dyna_Compile_Block
 			l3 :
 		}
 
@@ -817,15 +747,11 @@ _NextBlock:
 		if(countdown_counter > 0)
 			goto _NextBlock;
 
-		__asm push ebp;
 		Trigger_Timer_Event();
-		__asm pop ebp;
 	}
 
 	if( emustatus.reason_to_stop != EMUSTOP && Is_CPU_Doing_Other_Tasks() ) 
 		goto _NextBlock;
-
-	__asm pop ebp
 
 	/* __asm popad //nono. */
 }
@@ -836,41 +762,33 @@ _NextBlock:
  */
 void RunTheRegCacheNoCheck(void)
 {
-	__asm push ebp
 	__asm mov ebp, HardwareStart
+
 	while(emustatus.Emu_Keep_Running)
 	{
 _NextBlock:
 		__asm
 		{
-l1:
-			mov eax, g_LookupPtr
+l1:			mov eax, g_LookupPtr
 			mov eax, [eax]
 			test eax, eax
 			je l2
 			call eax
-			mov eax, countdown_counter
-			test eax, eax
+			cmp countdown_counter, 0
 			jg l1
 			jmp l3
-l2 :		push ebp	/* start e */
-			 call Dyna_Compile_Block
-			 pop ebp
-			 call eax
-			 cmp countdown_counter, 0
-			 jg l1
+l2 :		call Dyna_Compile_Block
+			call eax
+			cmp countdown_counter, 0
+			jg l1
 l3 :
 		}
 
-		__asm push ebp;
 		Trigger_Timer_Event();
-		__asm pop ebp;
 	}
 
 	if( emustatus.reason_to_stop != EMUSTOP && Is_CPU_Doing_Other_Tasks() ) 
 		goto _NextBlock;
-
-	__asm pop ebp
 }
 
 /*
@@ -881,7 +799,7 @@ l3 :
  */
 void CPU_Check_Interrupts(void)
 {
-	CPUNeedToCheckInterrupt = FALSE;		/* We will not check the second time, only one time */
+//	CPUNeedToCheckInterrupt = FALSE;		/* We will not check the second time, only one time */
 	if(emustatus.cpucore == INTERPRETER)	/* intepreter mode */
 	{
 		if
@@ -1040,6 +958,7 @@ void InterpreterStepCPU(void)
 		default:	gHWS_pc = CPUdelayPC; CPUdelay = 0; break;
 		}
 	}
+	gHWS_GPR[0] = 0;
 
 	countdown_counter -= VICounterFactors[CounterFactor];
 	if(countdown_counter <= 0) Trigger_Timer_Event();
@@ -1122,12 +1041,11 @@ void RunDynaBlock(void)
 
 		Block = (uint8 *) *g_LookupPtr;
 		if(Block != NULL && g_pc_is_rdram) Dyna_Check_Codes();
-		if(Block == NULL) Dyna_Compile_Block();
-		DEBUG_PRINT_DYNA_EXECUTION_INFO __asm pushad
-		__asm push ebp
+		if(Block == NULL) { Dyna_Compile_Block(); }
+		DEBUG_PRINT_DYNA_EXECUTION_INFO 
+		__asm pushad
 		__asm mov ebp, HardwareStart
 		__asm call Block
-		__asm pop ebp
 		__asm popad
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY7
 		if(debug_opcode!=0)
@@ -1165,7 +1083,10 @@ void RunDynaBlock(void)
 			gHardwareState_Interpreter_Compare.pc = gHardwareState.pc;
 		}
 #endif
-		if(countdown_counter <= 0) Trigger_Timer_Event();
+		if(countdown_counter <= 0) 
+		{
+			Trigger_Timer_Event();
+		}
 #ifndef CRASHABLE
 	}
 
@@ -1179,6 +1100,7 @@ void RunDynaBlock(void)
 
 #define EXCEPTION_MAX_ENTRY 10
 
+extern void __cdecl error(char *Message, ...);
 /*
  =======================================================================================================================
     This routine serves exceptions in dynarec £
@@ -1187,11 +1109,6 @@ void RunDynaBlock(void)
  */
 void Dyna_Exception_Service_Routine(uint32 vector)
 {
-	__asm
-	{
-		push ebp
-	}
-
 	emustatus.exception_entry_count++;
 
 	if(emustatus.exception_entry_count < EXCEPTION_MAX_ENTRY)
@@ -1200,10 +1117,11 @@ void Dyna_Exception_Service_Routine(uint32 vector)
 		uint8	*SavedBlock = Block;
 		uint32	temppc = gHWS_pc;
 		/*~~~~~~~~~~~~~~~~~~~~~~~~*/
+		int k=0;
 
 		if(emustatus.exception_entry_count == 1) SetStatusBarText(4, "E");
 
-		if((gHWS_COP0Reg[STATUS] & EXL) == 0)	/* Exception not in exception */
+		if((gHWS_COP0Reg[STATUS] & EXL) == 0)	/* Exception not in exception code */
 		{
 			gHWS_COP0Reg[EPC] = gHWS_pc;
 			gHWS_COP0Reg[STATUS] |= EXL;		/* set EXL = 1 */
@@ -1226,7 +1144,8 @@ void Dyna_Exception_Service_Routine(uint32 vector)
 
 		/* How about branch delay ?? */
 		gHWS_pc = vector;
-		Set_Translate_PC();
+
+        Set_Translate_PC(); //Rice, that can cause nested TLB errors ?
 
 		gHWS_COP0Reg[CAUSE] &= NOT_BD;			/* clear BD */
 
@@ -1240,9 +1159,12 @@ void Dyna_Exception_Service_Routine(uint32 vector)
 				)
 		);
 
-		while(temppc != gHWS_pc && (emustatus.Emu_Keep_Running || emustatus.reason_to_stop == EMUPAUSE))
-		/* while( temppc != gHWS_pc ) */
+		while((temppc != gHWS_pc) && (emustatus.Emu_Keep_Running || emustatus.reason_to_stop == EMUPAUSE))
 		{
+			int k=0;
+//			error("%08X %08X", temppc, gHWS_pc);
+				/* to disable further interrupts */
+
 #ifdef ENABLE_OPCODE_DEBUGGER
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY8
 			if(debug_opcode != 0 && emustatus.cpucore == DYNACOMPILER)
@@ -1255,10 +1177,15 @@ void Dyna_Exception_Service_Routine(uint32 vector)
 			else
 #endif
 #endif
-				if(emustatus.cpucore == INTERPRETER || compilerstatus.Is_Compiling > 0)
+
+				if((emustatus.cpucore == INTERPRETER) || (compilerstatus.Is_Compiling > 0))
+				{
 					InterpreterStepCPU();
+				}
 				else
+				{
 					RunDynaBlock();
+				}
 		}
 
 		if(!emustatus.Emu_Keep_Running && emustatus.reason_to_stop != EMUPAUSE) /* User has stopped emulating, will
@@ -1270,29 +1197,24 @@ void Dyna_Exception_Service_Routine(uint32 vector)
 
 			emustatus.Emu_Is_Running = FALSE;
 			CloseEmulator();
-			_endthreadex(0);
 		}
 
 		Block = SavedBlock;
 
 		DEBUG_EXCEPTION_TRACE(TRACE0("Finish Exception Service in Dyna"));
-		if(emustatus.exception_entry_count == 1) SetStatusBarText(4, emustatus.cpucore == DYNACOMPILER ? "D" : "I");
 	}
 	else
 	{
 		if(emustatus.exception_entry_count >= EXCEPTION_MAX_ENTRY)
 		{
-			DisplayError("Exception service routine re-enter exceed maxmium 10 times, skipped");
+			DisplayError("Exception service routine reentry exceeds 10 times, skipped");
 		}
 
 		/* We will not worry about this new exception */
 	}
 
 	emustatus.exception_entry_count--;
-	__asm
-	{
-		pop ebp
-	}
+	if(emustatus.exception_entry_count == 0) SetStatusBarText(4, emustatus.cpucore == DYNACOMPILER ? "D" : "I");
 }
 
 void DoOthersBeforeSaveState()

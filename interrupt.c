@@ -23,7 +23,6 @@
  */
 #include <windows.h>
 #include "interrupt.h"
-#include "globals.h"
 #include "r4300i.h"
 #include "n64rcp.h"
 #include "timer.h"
@@ -50,6 +49,18 @@ LARGE_INTEGER	Elapsed;
 double			sleeptime;
 double			tempvips;
 
+
+void rdp_fullsync()
+//Hack..gets rsp working for basic video plugin+rsp+starfox.
+{
+	MI_INTR_REG_R |= MI_INTR_DP;
+
+	if((MI_INTR_MASK_REG_R) & MI_INTR_MASK_DP)
+	{
+		SET_EXCEPTION(EXC_INT) gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
+		HandleInterrupts(0x80000180);
+	}
+}
 /*
  =======================================================================================================================
     This function is called when an Exception Interrupt happens. It sets Coprocessor0 registers EPC and CAUSE, then
@@ -184,21 +195,11 @@ void WriteMI_ModeReg(uint32 value)
  */
 void Handle_SP(uint32 value)
 {
-	if(value & SP_SET_HALT) 
-		(SP_STATUS_REG) |= SP_STATUS_HALT;
-
-	if(value & SP_CLR_BROKE) 
-		(SP_STATUS_REG) &= ~SP_STATUS_BROKE;
-
-	if(value & SP_CLR_INTR)
-	{
-		Clear_MIInterrupt(NOT_MI_INTR_SP);
-	}
-
-	if(value & SP_SET_INTR)
-	{
-		(MI_INTR_REG_R) |= MI_INTR_SP;
-		if((MI_INTR_REG_R & MI_INTR_MASK_REG_R) != 0)
+	if(value & SP_SET_HALT) (SP_STATUS_REG) |= SP_STATUS_HALT;
+	if(value & SP_CLR_BROKE) (SP_STATUS_REG) &= ~SP_STATUS_BROKE;
+	if(value & SP_CLR_INTR){Clear_MIInterrupt(NOT_MI_INTR_SP);}
+	if(value & SP_SET_INTR){(MI_INTR_REG_R) |= MI_INTR_SP;
+	if((MI_INTR_REG_R & MI_INTR_MASK_REG_R) != 0)
 		{
 			SET_EXCEPTION(EXC_INT) gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
 			HandleInterrupts(0x80000180);
@@ -274,16 +275,19 @@ void RunSPTask(void)
 	switch(sp_hle_task)
 	{
 	case GFX_TASK:
+#ifndef CRASHABLE
 		__try
+#endif
 		{
 			DO_PROFILIER_VIDEO;
 			if( rsp_plugin_is_loaded == TRUE && emuoptions.UsingRspPlugin == TRUE )
 			{
 				DoRspCycles(100);
-				//VIDEO_ProcessDList();
+				//RunRSP(100);
 			}
 			else
 			{
+				//RunRSP(100);
 				VIDEO_ProcessDList();
 			}
 
@@ -291,7 +295,7 @@ void RunSPTask(void)
 			DPC_STATUS_REG = 0x801; /* Makes Banjo Kazooie work - Azimer */
 			if((MI_INTR_REG_R & MI_INTR_DP) != 0) Trigger_DPInterrupt();
 		}
-
+#ifndef CRASHABLE
 		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
 		{
 			strcpy(generalmessage, "Video Plugin exception.\nDo you want to continue emulation?");
@@ -306,20 +310,22 @@ void RunSPTask(void)
 				countdown_counter = 0;
 			}
 		}
-
+#endif
 		DEBUG_SP_TASK_MACRO(TRACE0("SP GRX Task finished"));
 		break;
 	case SND_TASK:
 		__try
 		{
 			DO_PROFILIER_AUDIO;
+
 			if( rsp_plugin_is_loaded == TRUE && emuoptions.UsingRspPlugin == TRUE )
 			{
-				//AUDIO_ProcessAList();
+				//RunRSP(100);
 				DoRspCycles(100);
 			}
 			else
 			{
+				//RunRSP(100);
 				AUDIO_ProcessAList();
 			}
 
@@ -341,11 +347,13 @@ void RunSPTask(void)
 			DO_PROFILIER_RDP;
 			if( rsp_plugin_is_loaded == TRUE && emuoptions.UsingRspPlugin == TRUE )
 			{
+				//RunRSP(100);
 				DoRspCycles(100);
 				//VIDEO_ProcessRDPList();
 			}
 			else
 			{
+				//RunRSP(100);
 				VIDEO_ProcessRDPList();
 			}
 
@@ -435,6 +443,7 @@ void Trigger_DPInterrupt(void)
  */
 void Trigger_VIInterrupt(void)
 {
+
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY9
 	if((debug_opcode != 1) || ((debug_opcode) && (p_gHardwareState == &gHardwareState)))
 #endif
@@ -445,6 +454,7 @@ void Trigger_VIInterrupt(void)
 
 		/* DEBUG_VI_INTERRUPT_TRACE(TRACE1("VI counter = %08X", Get_VIcounter()); */
 		DO_PROFILIER_VIDEO;
+
 		VIDEO_UpdateScreen();
 
 		DO_PROFILIER_R4300I;
@@ -487,7 +497,9 @@ void Trigger_VIInterrupt(void)
 				if(sleeptime > 0)
 				{
 					if(sleeptime > 1.5)
+					{
 						Sleep(1);
+					}
 					else
 					{
 						/*~~~~~~*/
@@ -509,6 +521,7 @@ void Trigger_VIInterrupt(void)
 				(float) Freq.QuadPart *
 				1000.00;
 			} while(sleeptime > 0.1);
+
 			DO_PROFILIER_R4300I
 		}
 
@@ -650,12 +663,12 @@ void Trigger_Address_Error_Exception(uint32 addr, char *opcode, int exception)
     Call this function to clear AI/VI/SI/SP/DP interrupts
  =======================================================================================================================
  */
-extern uint32 fpu_exception_count;
+
 void TriggerFPUUnusableException(void)
 {
-	SET_EXCEPTION(EXC_CPU) gHWS_COP0Reg[CAUSE] &= 0xCFFFFFFF;
+	SET_EXCEPTION(EXC_CPU) 
+	gHWS_COP0Reg[CAUSE] &= 0xCFFFFFFF;
 	gHWS_COP0Reg[CAUSE] |= CAUSE_CE1;
-	fpu_exception_count++;
 
 	/*
 	 * Should test the CPU Delay slot bit £
@@ -773,7 +786,9 @@ void HandleExceptions(uint32 evt)
 	}
 
 	if(emustatus.cpucore == DYNACOMPILER)
+	{
 		Dyna_Exception_Service_Routine(evt);
+	}
 	else
 	{
 		CPUNeedToDoOtherTask = TRUE;

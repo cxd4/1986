@@ -41,7 +41,7 @@
 #define SI_DMA_SEGMENT		0x02					/* Bytes to transfer per CPU instruction cycle */
 
 /* SI DMA Segment must be less than 4, otherwise Cruise USA will not work */
-#define SI_IO_DELAY 400								/* This value can not be too large, Perfect Dark stop working if */
+#define SI_IO_DELAY 400								/* This value cannot be too large, Perfect Dark stop working if */
 
 /*
  * this value is larger than 800, Conker's stops working if value £
@@ -93,10 +93,8 @@ extern int				CounterFactors[9];
 extern int				CounterFactor;
 
 void					Count_Down(unsigned __int32 count);
-void					Count_Down_All(void);
 unsigned __int32		Get_COUNT_Register(void);
 unsigned __int32		Get_VIcounter(void);
-void					Count_Down_All(void);
 void					Count_Down(unsigned __int32 count);
 void					Check_VI_and_COMPARE_Interrupt(void);
 void					Set_COMPARE_Timer_Event(void);

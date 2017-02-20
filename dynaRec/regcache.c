@@ -689,14 +689,14 @@ void MapOneConstantToRegister(x86regtyp *Conditions, int The2ndOneNotToFlush, in
 
 		if(ConstMap[Conditions->mips_reg].value == 0)
 		{
-			XOR_Reg1ToReg2(1, xRJ->x86reg, xRJ->x86reg);
-			if(x86reg[xRJ->x86reg].Is32bit == 0) XOR_Reg1ToReg2(1, xRJ->HiWordLoc, xRJ->HiWordLoc);
+			XOR_Reg2ToReg1(1, xRJ->x86reg, xRJ->x86reg);
+			if(x86reg[xRJ->x86reg].Is32bit == 0) XOR_Reg2ToReg1(1, xRJ->HiWordLoc, xRJ->HiWordLoc);
 		}
 		else if((_u32) ConstMap[Conditions->mips_reg].value < 32)
 		{
 			MOV_ImmToReg(1, xRJ->x86reg, (_u8) ConstMap[Conditions->mips_reg].value);
 
-			if(x86reg[xRJ->x86reg].Is32bit == 0) XOR_Reg1ToReg2(1, xRJ->HiWordLoc, xRJ->HiWordLoc);
+			if(x86reg[xRJ->x86reg].Is32bit == 0) XOR_Reg2ToReg1(1, xRJ->HiWordLoc, xRJ->HiWordLoc);
 		}
 		else
 		{
@@ -712,7 +712,7 @@ void MapOneConstantToRegister(x86regtyp *Conditions, int The2ndOneNotToFlush, in
 					sar k, 31
 				}
 
-				XOR_Reg1ToReg2(1, xRJ->HiWordLoc, xRJ->HiWordLoc);
+				XOR_Reg2ToReg1(1, xRJ->HiWordLoc, xRJ->HiWordLoc);
 				if(k != 0) DEC_Reg(1, xRJ->HiWordLoc);
 			}
 		}

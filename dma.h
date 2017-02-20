@@ -23,16 +23,9 @@
 #ifndef _DMA_H__1964_
 #define _DMA_H__1964_
 
-#include "windows.h"
-#include "globals.h"
-
 enum DMATYPE { NO_DMA_IN_PROGRESS, DMA_PI_READ, DMA_PI_WRITE, DMA_SP_READ, DMA_SP_WRITE, DMA_SI_READ, DMA_SI_WRITE, DMA_AI_WRITE };
 
 extern BOOL DMAInProgress;
-extern uint32 DMASourceAddress;
-extern uint32 DMATargetAddress;
-extern uint32 DMACurrentPosition;
-extern uint32 DMALength;
 extern uint32 DMA_SP_Transfer_Source_Begin_Address;
 extern uint32 DMA_SP_Transfer_Target_Begin_Address;
 extern int DMA_SP_Transfer_Count;
@@ -42,20 +35,20 @@ extern enum DMATYPE PIDMAInProgress;
 extern enum DMATYPE SIDMAInProgress;
 extern enum DMATYPE SPDMAInProgress;
 
-void DoDMASegment(void);
-void DynDoDMASegment(void);
-void DoPIDMASegment(void);
-void DoSPDMASegment(void);
-void DoSIDMASegment(void);
-void DMA_AI(void);
+extern void DoDMASegment(void);
+extern void DynDoDMASegment(void);
+extern void DoPIDMASegment(void);
+extern void DoSPDMASegment(void);
+extern void DoSIDMASegment(void);
+extern void DMA_AI(void);
+extern void InitDMA(void);
 
 /* DMA external functions */
 extern void DMA_PI_MemCopy_From_Cart_To_DRAM(void);
 extern void DMA_PI_MemCopy_From_DRAM_To_Cart(void);
-extern void DMA_MemCopy_SP_to_DRAM(void);
-extern void DMA_MemCopy_DRAM_To_SP(void);
+extern void DMA_MemCopy_SP_to_DRAM(int WasCalledByRSP);
+extern void DMA_MemCopy_DRAM_To_SP(int WasCalledByRSP);
 extern void DMA_MemCopy_DRAM_to_SI(void);
 extern void DMA_MemCopy_SI_To_DRAM(void);
 
-void InitDMA(void);
 #endif

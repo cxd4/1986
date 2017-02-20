@@ -51,7 +51,7 @@ void				SaveStateByDialog(int format);
 void				LoadStateByDialog(int format);
 void				EnableStateMenu(void);
 void				DisableStateMenu(void);
-void				PrepareBeforePlay(void);
+void				PrepareBeforePlay(int IsFullScreen);
 void				KillCPUThread(void);
 void				SetCounterFactor(int);
 void				SetCodeCheckMethod(int);
@@ -91,6 +91,7 @@ struct EMU1964GUI
 	HWND		hwndRomList;			/* Handle to the rom list child window */
 	HWND		hStatusBar;				/* Window Handle of the status bar */
 	HWND		hToolBar;				/* Window Handle of the toolbar */
+	HWND		hReBar;					/* Window Handle of the rebar */
 	HWND		hClientWindow;			/* Window handle of the client child window */
 	HWND		hCriticalMsgWnd;		/* handle to critical message window */
 	HMENU		hMenu1964main;

@@ -23,7 +23,6 @@
 #ifndef _1964INI_H__1964_
 #define _1964INI_H__1964_
 
-#include <windows.h>
 #include "globals.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -151,16 +150,16 @@ void				DeleteIniEntry(const int index);
 void				DeleteAllIniEntries(void);
 int					FindIniEntry(const char *gamename, const uint32 crc1, const uint32 crc2, const uint8 country);
 int					FindIniEntry2(const INI_ENTRY *);
-BOOL				ReadIniEntry(FILE *, INI_ENTRY *);
-BOOL				WriteIniEntry(FILE *, const INI_ENTRY *);
-BOOL				ReadAllIniEntries(FILE *);
-BOOL				WriteAllIniEntries(FILE *);
+int					ReadIniEntry(FILE *, INI_ENTRY *);
+int					WriteIniEntry(FILE *, const INI_ENTRY *);
+int					ReadAllIniEntries(FILE *);
+int					WriteAllIniEntries(FILE *);
 void				CopyIniEntry(INI_ENTRY *, const INI_ENTRY *);
 void				DeleteIniEntryByEntry(INI_ENTRY *pentry);
 void				SetDefaultOptions(void);
 void				GenerateCurrentRomOptions(void);
-BOOL				Write1964DefaultOptionsEntry(FILE *pstream);
-BOOL				Read1964DefaultOptionsEntry(FILE *pstream);
+int					Write1964DefaultOptionsEntry(FILE *pstream);
+int					Read1964DefaultOptionsEntry(FILE *pstream);
 void				chopm(char *str);
 uint32				ConvertHexStringToInt(const char *str, int nchars);
 

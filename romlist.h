@@ -98,6 +98,13 @@ BOOL InternalNameIsValid(char *name);
 long OnNotifyRomList(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 long OnNotifyRomListHeader(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 extern int romListHeaderClickedColumn;
+extern void CheckButton(int nID, BOOL bCheck);
+extern void EnableButton(int nID, BOOL bEnable);
+extern void EnableRadioButtons(BOOL bEnable);
+extern void SetupToolBar();
+extern BYTE ChangeButtonState(int nID);
+extern void CheckButton(int nID, BOOL bCheck);
+
 
 typedef enum {
 	ROMLIST_COL_GAMENAME=0,

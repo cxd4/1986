@@ -22,18 +22,15 @@
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
 #include <windows.h>
+#include <stdio.h>
 #include <float.h>
 #include <math.h>
-#include <stdio.h>
-#include "globals.h"
 #include "r4300i.h"
 #include "hardware.h"
 #include "memory.h"
-#include "interrupt.h"
 #include "win32/windebug.h"
 #include "timer.h"
-#include "emulator.h"
-#include "1964ini.h"
+#include "interrupt.h"
 
 /* Rounding control of FPU */
 #define FPCSR_RM_MASK	0x00000003	/* rounding mode mask */
@@ -631,8 +628,6 @@ void r4300i_COP1_cfc1(uint32 Instruction)
 	uint32	rd_fs = RD_FS;
 	/*~~~~~~~~~~~~~~~~~~*/
 
-	CHECK_R0_EQUAL_0(rt_ft, "cfc1");
-
 	if(rd_fs == 0 || rd_fs == 31)
 	{
 		gHWS_GPR[rt_ft] = (__int64) (__int32) cCONFS;
@@ -912,9 +907,8 @@ void r4300i_COP1_mtc1(uint32 Instruction)
 void r4300i_COP1_mfc1(uint32 Instruction)
 {
 	CHK_64BITMODE("mfc1")
-	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	CHECK_R0_EQUAL_0 (RT_FT, "mfc1" ) (*(_int64 *) &gRT) = (__int64) (*((_int32 *) &cFS));
-	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+	(*(_int64 *) &gRT) = (__int64) (*((_int32 *) &cFS));
 
 	SAVE_OP_COUNTER_INCREASE_INTERPRETER(2);
 }
@@ -934,7 +928,9 @@ void r4300i_COP1_dmtc1(uint32 Instruction)
  */
 void r4300i_COP1_dmfc1(uint32 Instruction)
 {
-	CHK_64BITMODE("dmfc1") CHECK_R0_EQUAL_0(RT_FT, "dmfc1") gRT = read_64bit_fpu_reg(RD_FS);
+	CHK_64BITMODE("dmfc1") 
+	
+	gRT = read_64bit_fpu_reg(RD_FS);
 	SAVE_OP_COUNTER_INCREASE_INTERPRETER(2);
 }
 
@@ -966,7 +962,9 @@ void r4300i_COP1_mov_s(uint32 Instruction)
  */
 void r4300i_lwc1(uint32 Instruction)
 {
-	LOAD_TLB_FUN CHECKING_ADDR_ALIGNMENT(QuerAddr, 0x3, "LWC1", EXC_RADE) * (uint32 *) &cFT = MEM_READ_UWORD(QuerAddr);
+	LOAD_TLB_FUN
+	CHECKING_ADDR_ALIGNMENT(QuerAddr, 0x3, "LWC1", EXC_RADE) * (uint32 *) 
+	&cFT = MEM_READ_UWORD(QuerAddr);
 }
 
 /*

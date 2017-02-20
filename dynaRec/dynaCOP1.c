@@ -22,8 +22,7 @@
  * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
-#include <math.h>
-#include <float.h>
+#include <windows.h>
 #include "../hardware.h"
 #include "../r4300i.h"
 #include "../1964ini.h"
@@ -40,12 +39,13 @@
 	return;
 
 extern void COMPARE_Run(uint32 Inter_Opcode_Address, uint32 code);
+
 #define _SAFTY_COP1_(x) \
 	if(debug_opcode!=0) \
 	{ \
 		SetRdRsRt64bit(PASS_PARAMS); \
 		COMPARE_Run((uint32) & x, reg->code); \
-	}
+	}\
 
 /*
  =======================================================================================================================
@@ -546,7 +546,7 @@ void dyna4300i_cop1_dmfc1(OP_PARAMS)
 	INTERPRET_FLUSH1(r4300i_COP1_dmfc1, __RT);
 
 	if(currentromoptions.Assume_32bit == ASSUME_32BIT_YES)
-		DisplayError("Might need to compile dmfc1 for 32bit. Please use 64bit for now.");
+		MessageBox(0, "Need to compile dmfc1 for 32bit? Please use 64bit for now.", "", 0);
 	if(xRT->mips_reg != 0)	/* mandatory */
 	{
 		ConstMap[xRT->mips_reg].IsMapped = 0;
@@ -679,7 +679,9 @@ void dyna4300i_cop1_L_instr(OP_PARAMS)
 void dyna4300i_cop1_add_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_add_s) FLD_Memory(FORMAT_SINGLE, (unsigned long) &reg->fpr32[__FS]);
+	_SAFTY_COP1_(r4300i_COP1_add_s) 
+
+	FLD_Memory(FORMAT_SINGLE, (unsigned long) &reg->fpr32[__FS]);
 	FADD_Memory(FORMAT_SINGLE, (unsigned long) &reg->fpr32[__FT]);
 	FSTP_Memory(FORMAT_SINGLE, (unsigned long) &reg->fpr32[__FD]);
 }
@@ -691,7 +693,9 @@ void dyna4300i_cop1_add_s(OP_PARAMS)
 void dyna4300i_cop1_sub_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_sub_s) FLD_Memory(FORMAT_SINGLE, (unsigned long) &reg->fpr32[__FS]);
+	_SAFTY_COP1_(r4300i_COP1_sub_s) 
+	
+	FLD_Memory(FORMAT_SINGLE, (unsigned long) &reg->fpr32[__FS]);
 	FSUB_Memory(FORMAT_SINGLE, (unsigned long) &reg->fpr32[__FT]);
 	FSTP_Memory(FORMAT_SINGLE, (unsigned long) &reg->fpr32[__FD]);
 }
@@ -703,7 +707,9 @@ void dyna4300i_cop1_sub_s(OP_PARAMS)
 void dyna4300i_cop1_mul_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 4;
-	_SAFTY_COP1_(r4300i_COP1_mul_s) FLD_Memory(FORMAT_SINGLE, (unsigned long) &reg->fpr32[__FS]);
+	_SAFTY_COP1_(r4300i_COP1_mul_s)
+	
+	FLD_Memory(FORMAT_SINGLE, (unsigned long) &reg->fpr32[__FS]);
 	FMUL_Memory(FORMAT_SINGLE, (unsigned long) &reg->fpr32[__FT]);
 	FSTP_Memory(FORMAT_SINGLE, (unsigned long) &reg->fpr32[__FD]);
 }
@@ -727,7 +733,9 @@ void dyna4300i_cop1_div_s(OP_PARAMS)
 void dyna4300i_cop1_sqrt_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_sqrt_s) FLD_Memory(FORMAT_SINGLE, (unsigned long) &reg->fpr32[__FS]);
+	_SAFTY_COP1_(r4300i_COP1_sqrt_s)
+	
+	FLD_Memory(FORMAT_SINGLE, (unsigned long) &reg->fpr32[__FS]);
 	FSQRT();
 	FSTP_Memory(FORMAT_SINGLE, (unsigned long) &reg->fpr32[__FD]);
 }
@@ -739,7 +747,9 @@ void dyna4300i_cop1_sqrt_s(OP_PARAMS)
 void dyna4300i_cop1_abs_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_abs_s) FLD_Memory(FORMAT_SINGLE, (unsigned long) &reg->fpr32[__FS]);
+	_SAFTY_COP1_(r4300i_COP1_abs_s)
+	
+	FLD_Memory(FORMAT_SINGLE, (unsigned long) &reg->fpr32[__FS]);
 	FABS();
 	FSTP_Memory(FORMAT_SINGLE, (unsigned long) &reg->fpr32[__FD]);
 }
@@ -751,7 +761,11 @@ void dyna4300i_cop1_abs_s(OP_PARAMS)
 void dyna4300i_cop1_mov_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_mov_s) PUSH_RegIfMapped(Reg_EAX);
+	
+	if (__FD == __FS) return;
+	_SAFTY_COP1_(r4300i_COP1_mov_s)
+		
+	PUSH_RegIfMapped(Reg_EAX);
 	MOV_MemoryToReg(1, Reg_EAX, ModRM_disp32, (unsigned long) &reg->fpr32[__FS]);
 	MOV_RegToMemory(1, Reg_EAX, ModRM_disp32, (unsigned long) &reg->fpr32[__FD]);
 	POP_RegIfMapped(Reg_EAX);
@@ -765,7 +779,7 @@ void dyna4300i_cop1_neg_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
 	_SAFTY_COP1_(r4300i_COP1_neg_s)
-	/* DisplayError("Fneg"); */
+		
 	FLD_Memory(FORMAT_SINGLE, (unsigned long) &reg->fpr32[__FS]);
 	FNEG();
 	FSTP_Memory(FORMAT_SINGLE, (unsigned long) &reg->fpr32[__FD]);
@@ -778,7 +792,9 @@ void dyna4300i_cop1_neg_s(OP_PARAMS)
 void dyna4300i_cop1_roundl_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_roundl_s) INTERPRET_NOFLUSH(r4300i_COP1_roundl_s);
+	_SAFTY_COP1_(r4300i_COP1_roundl_s)
+		
+	INTERPRET_NOFLUSH(r4300i_COP1_roundl_s);
 }
 
 /*
@@ -788,7 +804,9 @@ void dyna4300i_cop1_roundl_s(OP_PARAMS)
 void dyna4300i_cop1_truncl_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_truncl_s) INTERPRET_NOFLUSH(r4300i_COP1_truncl_s);
+	_SAFTY_COP1_(r4300i_COP1_truncl_s)
+		
+	INTERPRET_NOFLUSH(r4300i_COP1_truncl_s);
 }
 
 /*
@@ -798,7 +816,9 @@ void dyna4300i_cop1_truncl_s(OP_PARAMS)
 void dyna4300i_cop1_ceill_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_ceill_s) INTERPRET_NOFLUSH(r4300i_COP1_ceill_s);
+	_SAFTY_COP1_(r4300i_COP1_ceill_s)
+		
+	INTERPRET_NOFLUSH(r4300i_COP1_ceill_s);
 }
 
 /*
@@ -808,7 +828,9 @@ void dyna4300i_cop1_ceill_s(OP_PARAMS)
 void dyna4300i_cop1_floorl_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_floorl_s) INTERPRET_NOFLUSH(r4300i_COP1_floorl_s);
+	_SAFTY_COP1_(r4300i_COP1_floorl_s)
+		
+	INTERPRET_NOFLUSH(r4300i_COP1_floorl_s);
 }
 
 /*
@@ -818,7 +840,9 @@ void dyna4300i_cop1_floorl_s(OP_PARAMS)
 void dyna4300i_cop1_roundw_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_roundw_s) INTERPRET_NOFLUSH(r4300i_COP1_roundw_s);
+	_SAFTY_COP1_(r4300i_COP1_roundw_s)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_roundw_s);
 }
 
 /*
@@ -828,7 +852,9 @@ void dyna4300i_cop1_roundw_s(OP_PARAMS)
 void dyna4300i_cop1_truncw_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_truncw_s) INTERPRET_NOFLUSH(r4300i_COP1_truncw_s);
+	_SAFTY_COP1_(r4300i_COP1_truncw_s)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_truncw_s);
 }
 
 /*
@@ -838,7 +864,9 @@ void dyna4300i_cop1_truncw_s(OP_PARAMS)
 void dyna4300i_cop1_ceilw_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_ceilw_s) INTERPRET_NOFLUSH(r4300i_COP1_ceilw_s);
+	_SAFTY_COP1_(r4300i_COP1_ceilw_s)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_ceilw_s);
 }
 
 /*
@@ -848,7 +876,9 @@ void dyna4300i_cop1_ceilw_s(OP_PARAMS)
 void dyna4300i_cop1_floorw_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_floorw_s) INTERPRET_NOFLUSH(r4300i_COP1_floorw_s);
+	_SAFTY_COP1_(r4300i_COP1_floorw_s)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_floorw_s);
 }
 
 /*
@@ -858,7 +888,9 @@ void dyna4300i_cop1_floorw_s(OP_PARAMS)
 void dyna4300i_cop1_cvtd_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_cvtd_s) INTERPRET_64BIT(r4300i_COP1_cvtd_s);
+	_SAFTY_COP1_(r4300i_COP1_cvtd_s) 
+		
+	INTERPRET_64BIT(r4300i_COP1_cvtd_s);
 
 	FLD_Memory(FORMAT_SINGLE, (_u32) & reg->fpr32[__FS]);
 	FSTP_Memory(FORMAT_QUAD, (_u32) & reg->fpr32[__FD]);
@@ -871,7 +903,9 @@ void dyna4300i_cop1_cvtd_s(OP_PARAMS)
 void dyna4300i_cop1_cvtw_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_cvtw_s) INTERPRET_NOFLUSH(r4300i_COP1_cvtw_s);
+	_SAFTY_COP1_(r4300i_COP1_cvtw_s)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_cvtw_s);
 }
 
 /*
@@ -881,7 +915,9 @@ void dyna4300i_cop1_cvtw_s(OP_PARAMS)
 void dyna4300i_cop1_cvtl_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_cvtl_s) INTERPRET_NOFLUSH(r4300i_COP1_cvtl_s);
+	_SAFTY_COP1_(r4300i_COP1_cvtl_s)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_cvtl_s);
 }
 
 /*
@@ -891,7 +927,9 @@ void dyna4300i_cop1_cvtl_s(OP_PARAMS)
 void dyna4300i_c_f_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_F_S) INTERPRET_NOFLUSH(r4300i_C_F_S);
+	_SAFTY_COP1_(r4300i_C_F_S)
+
+	INTERPRET_NOFLUSH(r4300i_C_F_S);
 }
 
 /*
@@ -901,7 +939,9 @@ void dyna4300i_c_f_s(OP_PARAMS)
 void dyna4300i_c_un_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_UN_S) INTERPRET_NOFLUSH(r4300i_C_UN_S);
+	_SAFTY_COP1_(r4300i_C_UN_S)
+
+	INTERPRET_NOFLUSH(r4300i_C_UN_S);
 }
 
 /*
@@ -911,7 +951,9 @@ void dyna4300i_c_un_s(OP_PARAMS)
 void dyna4300i_c_ueq_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_UEQ_S) INTERPRET_NOFLUSH(r4300i_C_UEQ_S);
+	_SAFTY_COP1_(r4300i_C_UEQ_S)
+
+	INTERPRET_NOFLUSH(r4300i_C_UEQ_S);
 }
 
 /*
@@ -921,7 +963,9 @@ void dyna4300i_c_ueq_s(OP_PARAMS)
 void dyna4300i_c_olt_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_OLT_S) INTERPRET_NOFLUSH(r4300i_C_OLT_S);
+	_SAFTY_COP1_(r4300i_C_OLT_S)
+
+	INTERPRET_NOFLUSH(r4300i_C_OLT_S);
 }
 
 /*
@@ -931,7 +975,9 @@ void dyna4300i_c_olt_s(OP_PARAMS)
 void dyna4300i_c_ult_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_ULT_S) INTERPRET_NOFLUSH(r4300i_C_ULT_S);
+	_SAFTY_COP1_(r4300i_C_ULT_S)
+
+	INTERPRET_NOFLUSH(r4300i_C_ULT_S);
 }
 
 /*
@@ -941,7 +987,9 @@ void dyna4300i_c_ult_s(OP_PARAMS)
 void dyna4300i_c_ole_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_OLE_S) INTERPRET_NOFLUSH(r4300i_C_OLE_S);
+	_SAFTY_COP1_(r4300i_C_OLE_S)
+
+	INTERPRET_NOFLUSH(r4300i_C_OLE_S);
 }
 
 /*
@@ -951,7 +999,9 @@ void dyna4300i_c_ole_s(OP_PARAMS)
 void dyna4300i_c_ule_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_ULE_S) INTERPRET_NOFLUSH(r4300i_C_ULE_S);
+	_SAFTY_COP1_(r4300i_C_ULE_S)
+
+	INTERPRET_NOFLUSH(r4300i_C_ULE_S);
 }
 
 /*
@@ -961,7 +1011,9 @@ void dyna4300i_c_ule_s(OP_PARAMS)
 void dyna4300i_c_sf_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_SF_S) INTERPRET_NOFLUSH(r4300i_C_SF_S);
+	_SAFTY_COP1_(r4300i_C_SF_S)
+
+	INTERPRET_NOFLUSH(r4300i_C_SF_S);
 }
 
 /*
@@ -971,7 +1023,9 @@ void dyna4300i_c_sf_s(OP_PARAMS)
 void dyna4300i_c_ngle_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_NGLE_S) INTERPRET_NOFLUSH(r4300i_C_NGLE_S);
+	_SAFTY_COP1_(r4300i_C_NGLE_S)
+
+	INTERPRET_NOFLUSH(r4300i_C_NGLE_S);
 }
 
 /*
@@ -981,7 +1035,9 @@ void dyna4300i_c_ngle_s(OP_PARAMS)
 void dyna4300i_c_seq_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_SEQ_S) INTERPRET_NOFLUSH(r4300i_C_SEQ_S);
+	_SAFTY_COP1_(r4300i_C_SEQ_S)
+
+	INTERPRET_NOFLUSH(r4300i_C_SEQ_S);
 }
 
 /*
@@ -991,7 +1047,9 @@ void dyna4300i_c_seq_s(OP_PARAMS)
 void dyna4300i_c_ngl_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_NGL_S) INTERPRET_NOFLUSH(r4300i_C_NGL_S);
+	_SAFTY_COP1_(r4300i_C_NGL_S)
+
+	INTERPRET_NOFLUSH(r4300i_C_NGL_S);
 }
 
 /*
@@ -1004,28 +1062,27 @@ void _do_c_(HardwareState *reg, _u8 format, _u8 testval)
 	FLD_Memory(format, (unsigned long) &reg->fpr32[__FS]);
 	FCOMP(format, (unsigned long) &reg->fpr32[__FT]);
 
-	/*
-	 * 00431CA5 DF E0 fnstsw ax £
-	 * 00431CA7 F6 C4 01 test ah,1
-	 */
+	// * 00431CA5 DF E0 fnstsw ax £
+	// * 00431CA7 F6 C4 01 test ah,1
+	
 	FNSTSW();
 	WC16(0xC4F6);
 	WC8(testval);
 	LOGGING_DYNA(LogDyna("	TEST AH, 0x%x\n", testval););
 
-	Jcc_auto(CC_E, 0);
+	Jcc_auto(CC_E, 13);
 
 	MOV_MemoryToReg(1, Reg_EAX, ModRM_disp32, (_u32) & reg->COP1Con[31]);
 	OR_ImmToReg(1, Reg_EAX, COP1_CONDITION_BIT);
 
-	JMP_Short_auto(1);
+	JMP_Short_auto(14);
 
-	SetTarget(0);
+	SetTarget(13);
 
 	MOV_MemoryToReg(1, Reg_EAX, ModRM_disp32, (_u32) & reg->COP1Con[31]);
 	AND_ImmToReg(1, Reg_EAX, ~COP1_CONDITION_BIT);
 
-	SetTarget(1);
+	SetTarget(14);
 	MOV_RegToMemory(1, Reg_EAX, ModRM_disp32, (_u32) & reg->COP1Con[31]);
 	POP_RegIfMapped(Reg_EAX);
 }
@@ -1037,7 +1094,9 @@ void _do_c_(HardwareState *reg, _u8 format, _u8 testval)
 void dyna4300i_c_lt_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_LT_S) _do_c_(reg, FORMAT_SINGLE, 0x01);
+	_SAFTY_COP1_(r4300i_C_LT_S)
+
+	_do_c_(reg, FORMAT_SINGLE, 0x01);
 }
 
 /*
@@ -1047,7 +1106,9 @@ void dyna4300i_c_lt_s(OP_PARAMS)
 void dyna4300i_c_nge_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_NGE_S) _do_c_(reg, FORMAT_SINGLE, 0x01);
+	_SAFTY_COP1_(r4300i_C_NGE_S)
+
+	_do_c_(reg, FORMAT_SINGLE, 0x01);
 }
 
 /*
@@ -1057,7 +1118,9 @@ void dyna4300i_c_nge_s(OP_PARAMS)
 void dyna4300i_c_eq_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_EQ_S) _do_c_(reg, FORMAT_SINGLE, 0x40);
+	_SAFTY_COP1_(r4300i_C_EQ_S)
+
+	_do_c_(reg, FORMAT_SINGLE, 0x40);
 }
 
 /*
@@ -1067,7 +1130,9 @@ void dyna4300i_c_eq_s(OP_PARAMS)
 void dyna4300i_c_le_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_LE_S) _do_c_(reg, FORMAT_SINGLE, 0x41);
+	_SAFTY_COP1_(r4300i_C_LE_S)
+
+	_do_c_(reg, FORMAT_SINGLE, 0x41);
 }
 
 /*
@@ -1077,7 +1142,9 @@ void dyna4300i_c_le_s(OP_PARAMS)
 void dyna4300i_c_ngt_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_NGT_S) _do_c_(reg, FORMAT_SINGLE, 0x41);
+	_SAFTY_COP1_(r4300i_C_NGT_S) 
+
+	_do_c_(reg, FORMAT_SINGLE, 0x41);
 }
 
 /*
@@ -1087,7 +1154,9 @@ void dyna4300i_c_ngt_s(OP_PARAMS)
 void dyna4300i_c_lt_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_LT_D) INTERPRET_64BIT(r4300i_C_LT_D);
+	_SAFTY_COP1_(r4300i_C_LT_D) 
+		
+	INTERPRET_64BIT(r4300i_C_LT_D);
 	_do_c_(reg, FORMAT_QUAD, 0x01);
 }
 
@@ -1098,7 +1167,9 @@ void dyna4300i_c_lt_d(OP_PARAMS)
 void dyna4300i_c_nge_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_NGE_D) INTERPRET_64BIT(r4300i_C_NGE_D);
+	_SAFTY_COP1_(r4300i_C_NGE_D)
+
+	INTERPRET_64BIT(r4300i_C_NGE_D);
 	_do_c_(reg, FORMAT_QUAD, 0x01);
 }
 
@@ -1109,7 +1180,9 @@ void dyna4300i_c_nge_d(OP_PARAMS)
 void dyna4300i_c_eq_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_EQ_D) INTERPRET_64BIT(r4300i_C_EQ_D);
+	_SAFTY_COP1_(r4300i_C_EQ_D)
+	
+	INTERPRET_64BIT(r4300i_C_EQ_D);
 	_do_c_(reg, FORMAT_QUAD, 0x40);
 }
 
@@ -1120,7 +1193,9 @@ void dyna4300i_c_eq_d(OP_PARAMS)
 void dyna4300i_c_le_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_LE_D) INTERPRET_64BIT(r4300i_C_LE_D);
+	_SAFTY_COP1_(r4300i_C_LE_D)
+	
+	INTERPRET_64BIT(r4300i_C_LE_D);
 	_do_c_(reg, FORMAT_QUAD, 0x41);
 }
 
@@ -1131,7 +1206,9 @@ void dyna4300i_c_le_d(OP_PARAMS)
 void dyna4300i_c_ngt_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_NGT_D) INTERPRET_64BIT(r4300i_C_NGT_D);
+	_SAFTY_COP1_(r4300i_C_NGT_D)
+	
+	INTERPRET_64BIT(r4300i_C_NGT_D);
 	_do_c_(reg, FORMAT_QUAD, 0x41);
 }
 
@@ -1153,7 +1230,9 @@ void dyna4300i_c_ngt_d(OP_PARAMS)
 void dyna4300i_cop1_add_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_add_d) INTERPRET_64BIT(r4300i_COP1_add_d);
+	_SAFTY_COP1_(r4300i_COP1_add_d)
+
+	INTERPRET_64BIT(r4300i_COP1_add_d);
 	fdoubleLOGICAL(0x05DC)
 }
 
@@ -1164,7 +1243,9 @@ void dyna4300i_cop1_add_d(OP_PARAMS)
 void dyna4300i_cop1_sub_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_sub_d) INTERPRET_64BIT(r4300i_COP1_sub_d);
+	_SAFTY_COP1_(r4300i_COP1_sub_d)
+	
+	INTERPRET_64BIT(r4300i_COP1_sub_d);
 	fdoubleLOGICAL(0x25DC)
 }
 
@@ -1175,7 +1256,9 @@ void dyna4300i_cop1_sub_d(OP_PARAMS)
 void dyna4300i_cop1_mul_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 4;
-	_SAFTY_COP1_(r4300i_COP1_mul_d) INTERPRET_64BIT(r4300i_COP1_mul_d);
+	_SAFTY_COP1_(r4300i_COP1_mul_d)
+
+	INTERPRET_64BIT(r4300i_COP1_mul_d);
 	fdoubleLOGICAL(0x0DDC)
 }
 
@@ -1186,7 +1269,9 @@ void dyna4300i_cop1_mul_d(OP_PARAMS)
 void dyna4300i_cop1_div_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_div_d) INTERPRET_64BIT(r4300i_COP1_div_d);
+	_SAFTY_COP1_(r4300i_COP1_div_d)
+
+	INTERPRET_64BIT(r4300i_COP1_div_d);
 	fdoubleLOGICAL(0x35DC)
 }
 
@@ -1197,7 +1282,9 @@ void dyna4300i_cop1_div_d(OP_PARAMS)
 void dyna4300i_cop1_sqrt_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_sqrt_d) INTERPRET_NOFLUSH(r4300i_COP1_sqrt_d);
+	_SAFTY_COP1_(r4300i_COP1_sqrt_d)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_sqrt_d);
 }
 
 /*
@@ -1207,7 +1294,9 @@ void dyna4300i_cop1_sqrt_d(OP_PARAMS)
 void dyna4300i_cop1_abs_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_abs_d) INTERPRET_NOFLUSH(r4300i_COP1_abs_d);
+	_SAFTY_COP1_(r4300i_COP1_abs_d)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_abs_d);
 }
 
 /*
@@ -1217,7 +1306,9 @@ void dyna4300i_cop1_abs_d(OP_PARAMS)
 void dyna4300i_cop1_mov_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_mov_d) INTERPRET_NOFLUSH(r4300i_COP1_mov_d);
+	_SAFTY_COP1_(r4300i_COP1_mov_d)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_mov_d);
 }
 
 /*
@@ -1227,7 +1318,9 @@ void dyna4300i_cop1_mov_d(OP_PARAMS)
 void dyna4300i_cop1_neg_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_neg_d) INTERPRET_NOFLUSH(r4300i_COP1_neg_d);
+	_SAFTY_COP1_(r4300i_COP1_neg_d)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_neg_d);
 }
 
 /*
@@ -1237,7 +1330,9 @@ void dyna4300i_cop1_neg_d(OP_PARAMS)
 void dyna4300i_cop1_roundl_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_roundl_d) INTERPRET_NOFLUSH(r4300i_COP1_roundl_d);
+	_SAFTY_COP1_(r4300i_COP1_roundl_d)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_roundl_d);
 }
 
 /*
@@ -1247,7 +1342,9 @@ void dyna4300i_cop1_roundl_d(OP_PARAMS)
 void dyna4300i_cop1_truncl_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_truncl_d) INTERPRET_NOFLUSH(r4300i_COP1_truncl_d);
+	_SAFTY_COP1_(r4300i_COP1_truncl_d)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_truncl_d);
 }
 
 /*
@@ -1257,7 +1354,9 @@ void dyna4300i_cop1_truncl_d(OP_PARAMS)
 void dyna4300i_cop1_ceill_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_ceill_d) INTERPRET_NOFLUSH(r4300i_COP1_ceill_d);
+	_SAFTY_COP1_(r4300i_COP1_ceill_d)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_ceill_d);
 }
 
 /*
@@ -1267,7 +1366,9 @@ void dyna4300i_cop1_ceill_d(OP_PARAMS)
 void dyna4300i_cop1_floorl_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_floorl_d) INTERPRET_NOFLUSH(r4300i_COP1_floorl_d);
+	_SAFTY_COP1_(r4300i_COP1_floorl_d)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_floorl_d);
 }
 
 /*
@@ -1277,7 +1378,9 @@ void dyna4300i_cop1_floorl_d(OP_PARAMS)
 void dyna4300i_cop1_roundw_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_roundw_d) INTERPRET_NOFLUSH(r4300i_COP1_roundw_d);
+	_SAFTY_COP1_(r4300i_COP1_roundw_d)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_roundw_d);
 }
 
 /*
@@ -1287,7 +1390,9 @@ void dyna4300i_cop1_roundw_d(OP_PARAMS)
 void dyna4300i_cop1_truncw_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_truncw_d) INTERPRET_NOFLUSH(r4300i_COP1_truncw_d);
+	_SAFTY_COP1_(r4300i_COP1_truncw_d)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_truncw_d);
 }
 
 /*
@@ -1297,7 +1402,9 @@ void dyna4300i_cop1_truncw_d(OP_PARAMS)
 void dyna4300i_cop1_ceilw_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_ceilw_d) INTERPRET_NOFLUSH(r4300i_COP1_ceilw_d);
+	_SAFTY_COP1_(r4300i_COP1_ceilw_d)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_ceilw_d);
 }
 
 /*
@@ -1307,7 +1414,9 @@ void dyna4300i_cop1_ceilw_d(OP_PARAMS)
 void dyna4300i_cop1_floorw_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_floorw_d) INTERPRET_NOFLUSH(r4300i_COP1_floorw_d);
+	_SAFTY_COP1_(r4300i_COP1_floorw_d)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_floorw_d);
 }
 
 /*
@@ -1339,7 +1448,9 @@ void dyna4300i_cop1_cvts_d(OP_PARAMS)
 void dyna4300i_cop1_cvtw_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_cvtw_d) INTERPRET_NOFLUSH(r4300i_COP1_cvtw_d);
+	_SAFTY_COP1_(r4300i_COP1_cvtw_d)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_cvtw_d);
 }
 
 /*
@@ -1349,7 +1460,9 @@ void dyna4300i_cop1_cvtw_d(OP_PARAMS)
 void dyna4300i_cop1_cvtl_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_cvtl_d) INTERPRET_NOFLUSH(r4300i_COP1_cvtl_d);
+	_SAFTY_COP1_(r4300i_COP1_cvtl_d)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_cvtl_d);
 }
 
 /*
@@ -1359,7 +1472,9 @@ void dyna4300i_cop1_cvtl_d(OP_PARAMS)
 void dyna4300i_c_f_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_F_D) INTERPRET_NOFLUSH(r4300i_C_F_D);
+	_SAFTY_COP1_(r4300i_C_F_D)
+
+	INTERPRET_NOFLUSH(r4300i_C_F_D);
 }
 
 /*
@@ -1369,7 +1484,9 @@ void dyna4300i_c_f_d(OP_PARAMS)
 void dyna4300i_c_un_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_UN_D) INTERPRET_NOFLUSH(r4300i_C_UN_D);
+	_SAFTY_COP1_(r4300i_C_UN_D)
+
+	INTERPRET_NOFLUSH(r4300i_C_UN_D);
 }
 
 /*
@@ -1379,7 +1496,9 @@ void dyna4300i_c_un_d(OP_PARAMS)
 void dyna4300i_c_ueq_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_UEQ_D) INTERPRET_NOFLUSH(r4300i_C_UEQ_D);
+	_SAFTY_COP1_(r4300i_C_UEQ_D)
+
+	INTERPRET_NOFLUSH(r4300i_C_UEQ_D);
 }
 
 /*
@@ -1389,7 +1508,9 @@ void dyna4300i_c_ueq_d(OP_PARAMS)
 void dyna4300i_c_olt_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_OLT_D) INTERPRET_NOFLUSH(r4300i_C_OLT_D);
+	_SAFTY_COP1_(r4300i_C_OLT_D)
+
+	INTERPRET_NOFLUSH(r4300i_C_OLT_D);
 }
 
 /*
@@ -1399,7 +1520,9 @@ void dyna4300i_c_olt_d(OP_PARAMS)
 void dyna4300i_c_ult_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_ULT_D) INTERPRET_NOFLUSH(r4300i_C_ULT_D);
+	_SAFTY_COP1_(r4300i_C_ULT_D)
+
+	INTERPRET_NOFLUSH(r4300i_C_ULT_D);
 }
 
 /*
@@ -1409,7 +1532,9 @@ void dyna4300i_c_ult_d(OP_PARAMS)
 void dyna4300i_c_ole_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_OLE_D) INTERPRET_NOFLUSH(r4300i_C_OLE_D);
+	_SAFTY_COP1_(r4300i_C_OLE_D)
+
+	INTERPRET_NOFLUSH(r4300i_C_OLE_D);
 }
 
 /*
@@ -1419,7 +1544,9 @@ void dyna4300i_c_ole_d(OP_PARAMS)
 void dyna4300i_c_ule_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_ULE_D) INTERPRET_NOFLUSH(r4300i_C_ULE_D);
+	_SAFTY_COP1_(r4300i_C_ULE_D)
+
+	INTERPRET_NOFLUSH(r4300i_C_ULE_D);
 }
 
 /*
@@ -1429,7 +1556,9 @@ void dyna4300i_c_ule_d(OP_PARAMS)
 void dyna4300i_c_sf_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_SF_D) INTERPRET_NOFLUSH(r4300i_C_SF_D);
+	_SAFTY_COP1_(r4300i_C_SF_D)
+
+	INTERPRET_NOFLUSH(r4300i_C_SF_D);
 }
 
 /*
@@ -1439,7 +1568,9 @@ void dyna4300i_c_sf_d(OP_PARAMS)
 void dyna4300i_c_ngle_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_NGLE_D) INTERPRET_NOFLUSH(r4300i_C_NGLE_D);
+	_SAFTY_COP1_(r4300i_C_NGLE_D)
+
+	INTERPRET_NOFLUSH(r4300i_C_NGLE_D);
 }
 
 /*
@@ -1449,7 +1580,9 @@ void dyna4300i_c_ngle_d(OP_PARAMS)
 void dyna4300i_c_seq_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_SEQ_D) INTERPRET_NOFLUSH(r4300i_C_SEQ_D);
+	_SAFTY_COP1_(r4300i_C_SEQ_D)
+
+	INTERPRET_NOFLUSH(r4300i_C_SEQ_D);
 }
 
 /*
@@ -1459,7 +1592,9 @@ void dyna4300i_c_seq_d(OP_PARAMS)
 void dyna4300i_c_ngl_d(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_C_NGL_D) INTERPRET_NOFLUSH(r4300i_C_NGL_D);
+	_SAFTY_COP1_(r4300i_C_NGL_D)
+
+	INTERPRET_NOFLUSH(r4300i_C_NGL_D);
 }
 
 /*
@@ -1469,13 +1604,10 @@ void dyna4300i_c_ngl_d(OP_PARAMS)
  */
 void dyna4300i_cop1_cvts_w(OP_PARAMS)
 {
-	/*
-	 * INTERPRET_NOFLUSH(r4300i_COP1_cvts_w); return; £
-	 * 00417A89 DB 05 C8 78 4A 00 fild dword ptr [_fpr32+8 (004a78c8)] £
-	 * 00417A8F D9 1D C0 78 4A 00 fstp dword ptr [_fpr32 (004a78c0)]
-	 */
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_cvts_w) FILD_Memory(FORMAT_SINGLE, (_u32) & reg->fpr32[__FS]);
+	_SAFTY_COP1_(r4300i_COP1_cvts_w)
+
+	FILD_Memory(FORMAT_SINGLE, (_u32) & reg->fpr32[__FS]);
 	FSTP_Memory(FORMAT_SINGLE, (_u32) & reg->fpr32[__FD]);
 }
 
@@ -1486,8 +1618,9 @@ void dyna4300i_cop1_cvts_w(OP_PARAMS)
 void dyna4300i_cop1_cvtd_w(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_cvtd_w) INTERPRET_64BIT(r4300i_COP1_cvtd_w);
-
+	_SAFTY_COP1_(r4300i_COP1_cvtd_w)
+	
+	INTERPRET_64BIT(r4300i_COP1_cvtd_w);
 	FILD_Memory(FORMAT_SINGLE, (_u32) & reg->fpr32[__FS]);
 	FSTP_Memory(FORMAT_QUAD, (_u32) & reg->fpr32[__FD]);
 }
@@ -1500,7 +1633,9 @@ void dyna4300i_cop1_cvtd_w(OP_PARAMS)
 void dyna4300i_cop1_cvts_l(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_cvts_l) INTERPRET_NOFLUSH(r4300i_COP1_cvts_l);
+	_SAFTY_COP1_(r4300i_COP1_cvts_l)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_cvts_l);
 }
 
 /*
@@ -1510,7 +1645,9 @@ void dyna4300i_cop1_cvts_l(OP_PARAMS)
 void dyna4300i_cop1_cvtd_l(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
-	_SAFTY_COP1_(r4300i_COP1_cvtd_l) INTERPRET_NOFLUSH(r4300i_COP1_cvtd_l);
+	_SAFTY_COP1_(r4300i_COP1_cvtd_l)
+
+	INTERPRET_NOFLUSH(r4300i_COP1_cvtd_l);
 }
 
 /* Load From / Store To CPR[Reg] // */

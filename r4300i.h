@@ -28,12 +28,14 @@
 #include "debug_option.h"
 #include "hardware.h"
 
+
+#define CPU_CORE_CHECK_R0
+
 /*
  * CPU Core Options £
  * Check and make sure register R0=0
  */
 #ifdef DEBUG_COMMON
-#define CPU_CORE_CHECK_R0
 
 /* Check address alignment for store/load instructions */
 #define ADDR_ALIGN_CHECKING
@@ -157,29 +159,6 @@
 #define CAUSE_IPSHIFT	8
 #define CAUSE_EXCMASK	0x0000007C			/* Cause code bits */
 #define CAUSE_EXCSHIFT	2
-
-/*
- * Cause register exception codes £
- * Hardware exception codes
- */
-#define EXC_INT				EXC_CODE(0)		/* interrupt */
-#define EXC_MOD				EXC_CODE(1)		/* TLB mod */
-#define EXC_RMISS			EXC_CODE(2)		/* Read TLB Miss */
-#define EXC_WMISS			EXC_CODE(3)		/* Write TLB Miss */
-#define EXC_RADE			EXC_CODE(4)		/* Read Address Error */
-#define EXC_WADE			EXC_CODE(5)		/* Write Address Error */
-#define EXC_IBE				EXC_CODE(6)		/* Instruction Bus Error */
-#define EXC_DBE				EXC_CODE(7)		/* Data Bus Error */
-#define EXC_SYSCALL			EXC_CODE(8)		/* SYSCALL */
-#define EXC_BREAK			EXC_CODE(9)		/* BREAKpoint */
-#define EXC_II				EXC_CODE(10)	/* Illegal Instruction */
-#define EXC_CPU				EXC_CODE(11)	/* CoProcessor Unusable */
-#define EXC_OV				EXC_CODE(12)	/* OVerflow */
-#define EXC_TRAP			EXC_CODE(13)	/* Trap exception */
-#define EXC_VCEI			EXC_CODE(14)	/* Virt. Coherency on Inst. fetch */
-#define EXC_FPE				EXC_CODE(15)	/* Floating Point Exception */
-#define EXC_WATCH			EXC_CODE(23)	/* Watchpoint reference */
-#define EXC_VCED			EXC_CODE(31)	/* Virt. Coherency on data read */
 
 #define COP1_CONDITION_BIT	0x00800000
 
@@ -335,10 +314,10 @@ extern uint32	FR_reg_offset;
 #else
 #define CHECK_RS_EQUAL_RA(X, op)
 #endif
-#define sLOGIC(Sum, Operand1, OPERATOR, Operand2)	Sum = (_int64) ((_int32) Operand1 OPERATOR(_int32) Operand2)
-#define uLOGIC(Sum, Operand1, OPERATOR, Operand2)	Sum = (_int64) (_int32) ((uint32) Operand1 OPERATOR(uint32) Operand2)
-#define sDLOGIC(Sum, Operand1, OPERATOR, Operand2)	Sum = (_int64) Operand1 OPERATOR(_int64) Operand2
-#define uDLOGIC(Sum, Operand1, OPERATOR, Operand2)	Sum = (uint64) Operand1 OPERATOR(uint64) Operand2
+#define sLOGIC(Sum, Operand1, OPERATOR, Operand2)	Sum = (_int64) ((_int32) Operand1 OPERATOR(_int32)Operand2)
+#define uLOGIC(Sum, Operand1, OPERATOR, Operand2)	Sum = (_int64) (_int32) ((uint32) Operand1 OPERATOR (uint32)Operand2)
+#define sDLOGIC(Sum, Operand1, OPERATOR, Operand2)	Sum = (_int64) Operand1 OPERATOR (_int64)Operand2
+#define uDLOGIC(Sum, Operand1, OPERATOR, Operand2)	Sum = (uint64) Operand1 OPERATOR (uint64)Operand2
 #define sLOGICAL(OPERATOR)							sLOGIC(gRD, gRS, OPERATOR, gRT)
 #define uLOGICAL(OPERATOR)							uLOGIC(gRD, gRS, OPERATOR, gRT)
 #define sDLOGICAL(OPERATOR)							sDLOGIC(gRD, gRS, OPERATOR, gRT)
@@ -664,21 +643,6 @@ HandleExceptions(0x80000180);
 #else
 #define TRIGGER_ADDR_ERROR_EXCEPTION(exception, address)
 #endif
-#ifdef CPU_CORE_CHECK_R0
-#ifdef DEBUG_COMMON
-#define CHECK_R0_EQUAL_0(reg, op) \
-	{ \
-		if(reg == 0) \
-		{ \
-			DisplayError("%08X: %s Load reg R0", gHardwareState.pc, op);	/* return; */ \
-		} \
-	}
-#else
-#define CHECK_R0_EQUAL_0(reg, op)	{ if(reg == 0) return; }
-#endif
-#else
-#define CHECK_R0_EQUAL_0(reg, op)
-#endif
 #ifdef ADDR_ALIGN_CHECKING
 
 /*
@@ -701,6 +665,7 @@ extern uint32	TLB_Error_Vector;
 
 extern void (*CPU_instruction[64]) (uint32 Instruction);
 extern void COP1_instr(uint32 Instruction);
+extern void ClearCPUTasks(void);
 void		COP1_NotAvailable_instr(uint32 Instruction);
 
 #define DUMMYOPCODE 0xEEEEEEEE	/* this is an invalid opcode */

@@ -20,16 +20,11 @@
  * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
-#include <windows.h>
-#include "globals.h"
-#include "r4300i.h"
-#include "hardware.h"
 #include "1964ini.h"
-#include "plugins.h"
 
-char			*CURRENT1964VERSION = "1964_074";
+char			*CURRENT1964VERSION = "1964_085";
 uint32			gAllocationLength;
 uint8			HeaderDllPass[0x40];
-volatile BOOL	Rom_Loaded = FALSE;
+volatile int	Rom_Loaded = 0;
 t_rominfo		rominfo;				/* Rom information */
 char			generalmessage[256];	/* general purpose buffer to display messages */

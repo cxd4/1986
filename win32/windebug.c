@@ -214,7 +214,7 @@ LRESULT CALLBACK DEBUGGER(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 extern char op_str[0xff];
-extern void AUDIO_AiUpdate(BOOL update);
+extern void (__cdecl *_AUDIO_AiUpdate) (BOOL)
 
 /*
  =======================================================================================================================
@@ -618,7 +618,7 @@ LRESULT APIENTRY CODELISTPROC(HWND hDlg, unsigned message, WORD wParam, LONG lPa
 			Pause();
 			break;
 		case IDC_RUN_CODELIST:
-			Play(emuoptions.auto_full_screen);
+			Play(emuoptions.auto_full_screen, 0);
 			break;
 		case IDC_PRINT_TLB:
 			PrintTLB(FALSE);

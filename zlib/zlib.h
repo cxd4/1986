@@ -1,7 +1,7 @@
 /* zlib.h -- interface of the 'zlib' general purpose compression library
-  version 1.1.3, July 9th, 1998
+  version 1.1.4, March 11th, 2002
 
-  Copyright (C) 1995-1998 Jean-loup Gailly and Mark Adler
+  Copyright (C) 1995-2002 Jean-loup Gailly and Mark Adler
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -37,7 +37,7 @@
 extern "C" {
 #endif
 
-#define ZLIB_VERSION "1.1.3"
+#define ZLIB_VERSION "1.1.4"
 
 /* 
      The 'zlib' compression library provides in-memory compression and
@@ -709,7 +709,7 @@ ZEXTERN int ZEXPORT    gzwrite OF((gzFile file,
    (0 in case of error).
 */
 
-ZEXTERN int __cdecl ZEXPORTVA   gzprintf OF((gzFile file, const char *format, ...));
+ZEXTERN int ZEXPORTVA   gzprintf OF((gzFile file, const char *format, ...));
 /*
      Converts, formats, and writes the args to the compressed file under
    control of the format string, as in fprintf. gzprintf returns the number of

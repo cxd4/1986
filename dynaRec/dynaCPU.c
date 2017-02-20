@@ -23,8 +23,6 @@
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
 #include <windows.h>
-#include <stdio.h>
-#include <malloc.h>
 #include "../hardware.h"
 #include "../r4300i.h"
 #include "../n64rcp.h"
@@ -582,6 +580,23 @@ void rc_Intr_Common(void)
 	gHWS_COP0Reg[CAUSE] &= NOT_BD;	/* clear BD */
 }
 
+
+void InitRdRsRt(OP_PARAMS)
+{
+	memset(xRD, 0, sizeof(xRD));
+	memset(xRS, 0, sizeof(xRS));
+	memset(xRT, 0, sizeof(xRT));
+	xRD->mips_reg = __RD;
+	xRT->mips_reg = __RT;
+	xRS->mips_reg = __RS;
+
+	if(xRS->mips_reg == 0)
+		MapConst(xRS, 0);
+	else if(xRT->mips_reg == 0)
+		MapConst(xRT, 0);
+	else if(xRD->mips_reg == 0)
+		MapConst(xRD, 0);
+}
 /*
  =======================================================================================================================
  =======================================================================================================================
@@ -604,6 +619,13 @@ void SetRdRsRt32bit(OP_PARAMS)
 		MapConst(xRT, 0);
 	else if(xRD->mips_reg == 0)
 		MapConst(xRD, 0);
+}
+
+void Set32bit(OP_PARAMS)
+{
+	xRD->Is32bit = 1;
+	xRS->Is32bit = 1;
+	xRT->Is32bit = 1;
 }
 
 /*
@@ -1768,7 +1790,7 @@ void dyna4300i_special_slt(OP_PARAMS)
 
 		SetTarget(5);
 
-		XOR_Reg1ToReg2(1, xRD->x86reg, xRD->x86reg);
+		XOR_Reg2ToReg1(1, xRD->x86reg, xRD->x86reg);
 
 		SetTarget(6);
 	}
@@ -1803,7 +1825,7 @@ void dyna4300i_special_slt(OP_PARAMS)
 		SetTarget(2);
 		SetTarget(3);
 
-		XOR_Reg1ToReg2(1, xRD->x86reg, xRD->x86reg);
+		XOR_Reg2ToReg1(1, xRD->x86reg, xRD->x86reg);
 
 		SetTarget(4);
 
@@ -1821,8 +1843,13 @@ void dyna4300i_special_slt(OP_PARAMS)
  */
 void dyna4300i_special_sltu(OP_PARAMS)
 {
+	int Use32bit = 0;
+
 	compilerstatus.cp0Counter += 1;
-	SetRdRsRt64bit(PASS_PARAMS);
+
+	InitRdRsRt(PASS_PARAMS);
+	Use32bit = ( (CheckIs32Bit(xRS->mips_reg) && CheckIs32Bit(xRT->mips_reg)) | (currentromoptions.Assume_32bit == ASSUME_32BIT_YES));
+	if (Use32bit)Set32bit(PASS_PARAMS);
 
 	_SAFTY_CPU_(r4300i_sltu) if(xRD->mips_reg == 0)
 		return;
@@ -1836,16 +1863,9 @@ void dyna4300i_special_sltu(OP_PARAMS)
 	}
 
 	/* 32bit */
-	else if
-		(
-			(CheckIs32Bit(xRS->mips_reg) && CheckIs32Bit(xRT->mips_reg))
-		||	(currentromoptions.Assume_32bit == ASSUME_32BIT_YES)
-		)
+	else if	(Use32bit)
 	{
 		xRD->IsDirty = 1;
-		xRD->Is32bit = 1;
-		xRS->Is32bit = 1;
-		xRT->Is32bit = 1;
 		if((xRD->mips_reg != xRS->mips_reg) && (xRD->mips_reg != xRT->mips_reg))
 		{
 			xRD->NoNeedToLoadTheLo = 1;
@@ -1863,7 +1883,7 @@ void dyna4300i_special_sltu(OP_PARAMS)
 
 		SetTarget(5);
 
-		XOR_Reg1ToReg2(1, xRD->x86reg, xRD->x86reg);
+		XOR_Reg2ToReg1(1, xRD->x86reg, xRD->x86reg);
 
 		SetTarget(6);
 	}
@@ -1897,7 +1917,7 @@ void dyna4300i_special_sltu(OP_PARAMS)
 		SetTarget(2);
 		SetTarget(3);
 
-		XOR_Reg1ToReg2(1, xRD->x86reg, xRD->x86reg);
+		XOR_Reg2ToReg1(1, xRD->x86reg, xRD->x86reg);
 
 		SetTarget(4);
 
@@ -1921,7 +1941,10 @@ void dyna4300i_slti(OP_PARAMS)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	compilerstatus.cp0Counter += 1;
-	SetRdRsRt64bit(PASS_PARAMS);
+
+	InitRdRsRt(PASS_PARAMS);
+	Is32bit = ( CheckIs32Bit(xRS->mips_reg) | (currentromoptions.Assume_32bit == ASSUME_32BIT_YES));
+	if (Is32bit)Set32bit(PASS_PARAMS);
 
 	_SAFTY_CPU_(r4300i_slti) if(xRT->mips_reg == 0)
 		return;
@@ -1929,7 +1952,6 @@ void dyna4300i_slti(OP_PARAMS)
 	INTERPRET(r4300i_slti);
 	return;
 #endif
-	Is32bit = ((CheckIs32Bit(xRS->mips_reg)) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES));
 	if(Is32bit)
 	{
 		xRT->Is32bit = 1;
@@ -1982,12 +2004,12 @@ void dyna4300i_slti(OP_PARAMS)
 
 		SetTarget(3);
 
-		XOR_Reg1ToReg2(1, xRT->x86reg, xRT->x86reg);
+		XOR_Reg2ToReg1(1, xRT->x86reg, xRT->x86reg);
 
 		SetTarget(4);
 		if(!Is32bit)
 		{
-			XOR_Reg1ToReg2(1, xRT->HiWordLoc, xRT->HiWordLoc);
+			XOR_Reg2ToReg1(1, xRT->HiWordLoc, xRT->HiWordLoc);
 		}
 	}
 	else	/* rt != rs */
@@ -1998,7 +2020,7 @@ void dyna4300i_slti(OP_PARAMS)
 		MapRT;
 		MapRS;
 
-		XOR_Reg1ToReg2(1, xRT->x86reg, xRT->x86reg);
+		XOR_Reg2ToReg1(1, xRT->x86reg, xRT->x86reg);
 		if(!Is32bit)
 		{
 			CMP_RegWithImm(1, xRS->HiWordLoc, (uint32) ((_int32) ConstInt >> 31));
@@ -2045,19 +2067,17 @@ void dyna4300i_sltiu(OP_PARAMS)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	compilerstatus.cp0Counter += 1;
-	SetRdRsRt64bit(PASS_PARAMS);
+
+	InitRdRsRt(PASS_PARAMS);
+	Is32bit = ( CheckIs32Bit(xRS->mips_reg) | (currentromoptions.Assume_32bit == ASSUME_32BIT_YES));
+	if (Is32bit)Set32bit(PASS_PARAMS);
+
 	_SAFTY_CPU_(r4300i_sltiu) if(xRT->mips_reg == 0)
 		return;
 #ifdef SAFE_SLT
 	INTERPRET(r4300i_sltiu);
 	return;
 #endif
-	Is32bit = ((CheckIs32Bit(xRS->mips_reg)) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES));
-	if(Is32bit)
-	{
-		xRT->Is32bit = 1;
-		xRS->Is32bit = 1;
-	}
 
 	if(ConstMap[xRS->mips_reg].IsMapped)
 	{
@@ -2097,12 +2117,12 @@ void dyna4300i_sltiu(OP_PARAMS)
 
 		SetTarget(3);
 
-		XOR_Reg1ToReg2(1, xRT->x86reg, xRT->x86reg);
+		XOR_Reg2ToReg1(1, xRT->x86reg, xRT->x86reg);
 
 		SetTarget(4);
 		if(!Is32bit)
 		{
-			XOR_Reg1ToReg2(1, xRT->HiWordLoc, xRT->HiWordLoc);
+			XOR_Reg2ToReg1(1, xRT->HiWordLoc, xRT->HiWordLoc);
 		}
 	}
 	else	/* rt != rs :) */
@@ -2113,7 +2133,7 @@ void dyna4300i_sltiu(OP_PARAMS)
 		MapRT;
 		MapRS;
 
-		XOR_Reg1ToReg2(1, xRT->x86reg, xRT->x86reg);
+		XOR_Reg2ToReg1(1, xRT->x86reg, xRT->x86reg);
 		if(!Is32bit)
 		{
 			CMP_RegWithImm(1, xRS->HiWordLoc, (_u32) (ConstInt >> 32));
@@ -2148,7 +2168,9 @@ void dyna4300i_andi(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
 	SetRdRsRt32bit(PASS_PARAMS);
-	_SAFTY_CPU_(r4300i_andi) if(xRT->mips_reg == 0)
+	_SAFTY_CPU_(r4300i_andi) 
+		
+	if(xRT->mips_reg == 0)
 		return;
 #ifdef SAFE_IMM
 	INTERPRET(r4300i_andi);
@@ -2717,7 +2739,7 @@ void dyna4300i_sw(OP_PARAMS)
 			else
 			{
 				PUSH_RegIfMapped(Reg_EAX);
-				XOR_Reg1ToReg2(1, Reg_EAX, Reg_EAX);
+				XOR_Reg2ToReg1(1, Reg_EAX, Reg_EAX);
 				MOV_RegToMemory(1, Reg_EAX, ModRM_disp32, (_u32) pLOAD_SWORD_PARAM(QuerAddr));
 				POP_RegIfMapped(Reg_EAX);
 			}
@@ -2766,14 +2788,6 @@ _Default:
 				POP_RegIfMapped(Reg_ECX);
 				POP_RegIfMapped(Reg_EAX);
 			}
-
-			/*
-			 * else if (__RS==_sp) { MapRS; MapRT; //MOV_Reg2ToReg1(1, Reg_EAX, Reg_EDI);
-			 * //SHR_RegByImm(1, Reg_EAX, SHIFTER2_WRITE); //WC16(0x14FF); WC8(0x85);
-			 * WC32((uint32)&memory_write_functions); //LOGGING_DYNA(LogDyna(" CALL
-			 * memory_write_functions[]\n");); MOV_RegToMemory(1, xRT->x86reg,
-			 * ModRM_disp32_EAX+xRS->x86reg, (_int32)0xA0000000+__I); }
-			 */
 			else
 			{
 				if(ConstMap[rt].IsMapped) FlushOneConstant(rt);
@@ -3241,7 +3255,6 @@ _Default:
 				else if(xRT->x86reg == Reg_EAX)
 					XOR_Reg2ToReg1(1, xRT->x86reg, xRT->x86reg);
 
-
 				if(xRT->x86reg != Reg_ECX) POP_RegIfMapped(Reg_ECX);
 				if(xRT->x86reg != Reg_EAX) POP_RegIfMapped(Reg_EAX);
 			}
@@ -3267,7 +3280,7 @@ void dyna4300i_lbu(OP_PARAMS)
 	if(xRT->mips_reg == 0) return;
 
 #ifdef SAFE_LOADSTORE
-	goto _Default;
+	INTERPRET_LOADSTORE(r4300i_lbu); return;
 #endif
 	if(ConstMap[xRS->mips_reg].IsMapped == 1)
 	{
@@ -4125,8 +4138,6 @@ void dyna4300i_shift_var(OP_PARAMS)
 	x86reg[1].mips_reg = -1;
 }
 
-uint32	fpu_exception_count = 0;
-
 /*
  =======================================================================================================================
  =======================================================================================================================
@@ -4143,7 +4154,6 @@ void prepare_run_exception(uint32 exception_code)
 	{
 		gHWS_COP0Reg[CAUSE] &= 0xCFFFFFFF;
 		gHWS_COP0Reg[CAUSE] |= CAUSE_CE1;
-		fpu_exception_count++;
 	}
 
 	TRACE0("Exception in Dyna");
@@ -4197,6 +4207,13 @@ void dyna4300i_special_break(OP_PARAMS)
 
 	MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &reg->pc, reg->pc);
 	INTERPRET(r4300i_break);
+	MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &reg->pc, reg->pc);
+
+	/* end of compiled block */
+	compilerstatus.KEEP_RECOMPILING = FALSE;
+	FlushAllRegisters();
+	Interrupts(JUMP_TYPE_INDIRECT, reg->pc, LINK_NO, 0);
+
 
 	/*
 	 * dyna_set_exception(reg, EXC_BREAK, 0x80000180); £
@@ -4254,7 +4271,6 @@ void dyna4300i_cop1_with_exception(OP_PARAMS)
 #endif
 #endif
 	if( currentromoptions.FPU_Hack == USEFPUHACK_YES)
-	//if( currentromoptions.FPU_Hack == USEFPUHACK_YES && fpu_exception_count == 0)
 	{
 		/*~~~~~~~~~~~~~~~*/
 		int temp = reg->pc;
@@ -4421,6 +4437,7 @@ void dyna4300i_special_mul(OP_PARAMS)
 	xRD->Is32bit = 0;
 	xRD->NoNeedToLoadTheLo = 1;
 	xRD->NoNeedToLoadTheHi = 1;
+
 	MapRD;
 	MapRS;
 	MapRT;
@@ -4537,7 +4554,7 @@ void dyna4300i_special_div(OP_PARAMS)
 	LoadLowMipsCpuRegister(__RT, Reg_ECX);
 	TEST_Reg2WithReg1(1, Reg_ECX, Reg_ECX);
 
-	Jcc_auto(CC_E, 0);
+	Jcc_auto(CC_E, 12);
 	LoadLowMipsCpuRegister(__RS, Reg_EAX);
 	MOV_Reg2ToReg1(1, Reg_EDX, Reg_EAX);
 	SAR_RegByImm(1, Reg_EDX, 0x1F);
@@ -4556,7 +4573,7 @@ void dyna4300i_special_div(OP_PARAMS)
 	x86reg[2].BirthDate = ThisYear;
 	x86reg[2].HiWordLoc = 2;
 
-	SetTarget(0);
+	SetTarget(12);
 	POP_RegIfMapped(Reg_ECX);
 
 	SAVE_OP_COUNTER_INCREASE(PCLOCKDIV * 2 * VICounterFactors[CounterFactor]);
@@ -4630,7 +4647,7 @@ void dyna4300i_special_divu(OP_PARAMS)
 
 	Jcc_auto(CC_E, 0);
 	LoadLowMipsCpuRegister(__RS, Reg_EAX);
-	XOR_Reg1ToReg2(1, Reg_EDX, Reg_EDX);
+	XOR_Reg2ToReg1(1, Reg_EDX, Reg_EDX);
 	DIV_EAXWithReg(1, Reg_ECX);
 
 	x86reg[0].IsDirty = 1;
@@ -4936,7 +4953,10 @@ void dyna4300i_special_and(OP_PARAMS)
 	/*~~~~~~~~~~~~~*/
 
 	compilerstatus.cp0Counter += 1;
-	SetRdRsRt64bit(PASS_PARAMS);
+
+	InitRdRsRt(PASS_PARAMS);
+	Use32bit = ( (CheckIs32Bit(xRS->mips_reg) && CheckIs32Bit(xRT->mips_reg)) | (currentromoptions.Assume_32bit == ASSUME_32BIT_YES));
+	if (Use32bit)Set32bit(PASS_PARAMS);
 
 	if(xRD->mips_reg == 0) return;
 
@@ -4945,17 +4965,6 @@ void dyna4300i_special_and(OP_PARAMS)
 	INTERPRET(r4300i_and);
 	return;
 #endif
-	if
-	(
-		((CheckIs32Bit(xRS->mips_reg)) && (CheckIs32Bit(xRT->mips_reg)))
-	||	(currentromoptions.Assume_32bit == ASSUME_32BIT_YES)
-	)
-	{
-		Use32bit = 1;
-		xRD->Is32bit = 1;
-		xRS->Is32bit = 1;
-		xRT->Is32bit = 1;
-	}
 
 	if((ConstMap[xRS->mips_reg].IsMapped == 1) && (ConstMap[xRT->mips_reg].IsMapped == 1))
 		MapConst(xRD, (ConstMap[xRS->mips_reg].value & ConstMap[xRT->mips_reg].value));
@@ -5039,8 +5048,11 @@ void dyna4300i_special_or(OP_PARAMS)
 	int Use32bit = 0;
 	/*~~~~~~~~~~~~~*/
 
+	InitRdRsRt(PASS_PARAMS);
+	Use32bit = ( (CheckIs32Bit(xRS->mips_reg) && CheckIs32Bit(xRT->mips_reg)) | (currentromoptions.Assume_32bit == ASSUME_32BIT_YES));
+	if (Use32bit)Set32bit(PASS_PARAMS);
+
 	compilerstatus.cp0Counter += 1;
-	SetRdRsRt64bit(PASS_PARAMS);
 	if(xRD->mips_reg == 0) return;
 
 	_SAFTY_CPU_(r4300i_or)
@@ -5054,18 +5066,6 @@ void dyna4300i_special_or(OP_PARAMS)
 	{
 		MapConst(xRD, (ConstMap[xRS->mips_reg].value | ConstMap[xRT->mips_reg].value));
 		return;
-	}
-
-	if
-	(
-		(CheckIs32Bit(xRS->mips_reg) && CheckIs32Bit(xRT->mips_reg))
-	||	(currentromoptions.Assume_32bit == ASSUME_32BIT_YES)
-	)
-	{
-		Use32bit = 1;
-		xRD->Is32bit = 1;
-		xRS->Is32bit = 1;
-		xRT->Is32bit = 1;
 	}
 
 	if(xRD->mips_reg == xRT->mips_reg)
@@ -5390,8 +5390,8 @@ void dyna4300i_special_nor(OP_PARAMS)
 				MapRS;
 
 				OR_Reg2ToReg1(1, xRD->x86reg, xRS->x86reg);
-				XOR_ImmToReg(1, xRD->x86reg, 0xffffffff);
 				if(!Use32bit) OR_Reg2ToReg1(1, xRD->HiWordLoc, xRS->HiWordLoc);
+				XOR_ImmToReg(1, xRD->x86reg, 0xffffffff);
 				if(!Use32bit) XOR_ImmToReg(1, xRD->HiWordLoc, 0xffffffff);
 			}
 		}
@@ -5404,8 +5404,8 @@ void dyna4300i_special_nor(OP_PARAMS)
 				MapRT;
 
 				OR_Reg2ToReg1(1, xRD->x86reg, xRT->x86reg);
-				XOR_ImmToReg(1, xRD->x86reg, 0xffffffff);
 				if(!Use32bit) OR_Reg2ToReg1(1, xRD->HiWordLoc, xRT->HiWordLoc);
+				XOR_ImmToReg(1, xRD->x86reg, 0xffffffff);
 				if(!Use32bit) XOR_ImmToReg(1, xRD->HiWordLoc, 0xffffffff);
 			}
 			else	/* rd!=rt, rd!=rs */
@@ -5433,8 +5433,8 @@ void dyna4300i_special_nor(OP_PARAMS)
 				else	/* rd!=rt, rd!=rs, rs=rt */
 				{
 					MOV_Reg2ToReg1(1, xRD->x86reg, xRS->x86reg);						/* mov rd,rs (lo) */
-					XOR_ImmToReg(1, xRD->x86reg, 0xffffffff);
 					if(!Use32bit) MOV_Reg2ToReg1(1, xRD->HiWordLoc, xRS->HiWordLoc);	/* mov rd,rs (hi) */
+					XOR_ImmToReg(1, xRD->x86reg, 0xffffffff);
 					if(!Use32bit) XOR_ImmToReg(1, xRD->HiWordLoc, 0xffffffff);
 				}
 			}
@@ -5460,7 +5460,9 @@ void dyna4300i_special_dsll32(OP_PARAMS)
 
 	/* Do not assume 32bit for double shift left logical. */
 	SetRdRsRt64bit(PASS_PARAMS);
-	_SAFTY_CPU_(r4300i_dsll32) if(xRD->mips_reg == 0)
+	_SAFTY_CPU_(r4300i_dsll32) 
+		
+	if(xRD->mips_reg == 0)
 		return;
 
 	if(xRT->mips_reg == xRD->mips_reg)
@@ -5469,8 +5471,8 @@ void dyna4300i_special_dsll32(OP_PARAMS)
 		if(!Use32bit) xRD->IsDirty = 1;
 		MapRD;
 		if(!Use32bit) MOV_Reg2ToReg1(1, xRD->HiWordLoc, xRD->x86reg);
+		XOR_Reg2ToReg1(1, xRD->x86reg, xRD->x86reg);
 		if(!Use32bit) SHL_RegByImm(1, xRD->HiWordLoc, (_s8) __SA);
-		XOR_Reg1ToReg2(1, xRD->x86reg, xRD->x86reg);
 	}
 	else
 	{
@@ -5483,8 +5485,8 @@ void dyna4300i_special_dsll32(OP_PARAMS)
 		MapRT;
 
 		if(!Use32bit) MOV_Reg2ToReg1(1, xRD->HiWordLoc, xRT->x86reg);
+		XOR_Reg2ToReg1(1, xRD->x86reg, xRD->x86reg);
 		if(!Use32bit) SHL_RegByImm(1, xRD->HiWordLoc, (_s8) __SA);
-		XOR_Reg1ToReg2(1, xRD->x86reg, xRD->x86reg);
 	}
 }
 
@@ -5534,23 +5536,29 @@ void dyna4300i_special_dsra32(OP_PARAMS)
 #endif
 	compilerstatus.cp0Counter += 1;
 	SetRdRsRt64bit(PASS_PARAMS);
+
 	_SAFTY_CPU_(r4300i_dsra32) if(xRD->mips_reg == 0)
 		return;
 
 	if(xRD->mips_reg == xRT->mips_reg)
 	{
 		/* Ths can be done more efficiently since we only need to load the HiWord. */
-		xRD->IsDirty = 1;
-		MapRD;
 
 		if(!Use32bit)
 		{
+			xRD->NoNeedToLoadTheLo = 1;
+			xRD->IsDirty = 1;
+			MapRD;
 			MOV_Reg2ToReg1(1, xRD->x86reg, xRD->HiWordLoc);
 			SAR_RegByImm(1, xRD->x86reg, (unsigned char) __SA);
 			SAR_RegByImm(1, xRD->HiWordLoc, 31);
 		}
 		else
+		{
+			xRD->IsDirty = 1;
+			MapRD;
 			SAR_RegByImm(1, xRD->x86reg, 31);
+		}
 
 		xRD->IsDirty = 1;
 		xRD->Is32bit = 1;
@@ -5558,8 +5566,10 @@ void dyna4300i_special_dsra32(OP_PARAMS)
 	}
 	else
 	{
-		xRD->IsDirty = 1;
+		if (!Use32bit) 
+			xRD->NoNeedToLoadTheLo = 1;
 		xRD->Is32bit = 1;
+		xRD->IsDirty = 1;
 		MapRD;
 		MapRT;
 
@@ -5569,6 +5579,9 @@ void dyna4300i_special_dsra32(OP_PARAMS)
 			SAR_RegByImm(1, xRD->x86reg, (unsigned char) __SA);
 		}
 		else
+		{
+			MOV_Reg2ToReg1(1, xRD->x86reg, xRT->x86reg);
 			SAR_RegByImm(1, xRD->x86reg, 31);
+		}
 	}
 }

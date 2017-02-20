@@ -24,7 +24,7 @@
 #define __DYNA_LOG__
 
 /* Debugging tools (Disable these for public releases) */
-#define ENABLE_DISPLAY_ERROR
+//#define ENABLE_DISPLAY_ERROR
 #ifdef DEBUG_COMMON
 #define LOG_DYNA	/* mandatory. do not comment. */
 #else

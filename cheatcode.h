@@ -23,16 +23,11 @@
 #ifndef _CHEATCODE_H__1964_
 #define _CHEATCODE_H__1964_
 
-#include <windows.h>
-#include "globals.h"
-#include <stdio.h>
-#include <stdlib.h>
-
 #define MAX_CHEATCODE_PER_GROUP		100
-#define MAX_CHEATCODE_GROUP_PER_ROM 254	//Can not exceed 254 groups, must be represented by using 1 byte
+#define MAX_CHEATCODE_GROUP_PER_ROM 254	//Cannot exceed 254 groups, must be represented by using 1 byte
 
 //Option to apply cheat code and lock memory
-//#define CHEATCODE_LOCK_MEMORY
+#define CHEATCODE_LOCK_MEMORY
 
 enum APPLYCHEATMODE { INGAME, BOOTUPONCE, GSBUTTON, ONLYIN1964 };
 

@@ -290,16 +290,6 @@ uint32 *read_mem_flashram_eax_only(void)
 uint32 *read_mem_sram(uint32 addr)
 {
 	__asm push edx
-	if(!gamesave.Sram_used)
-	{
-		if(gamesave.firstusedsavemedia == 0)
-		{
-			gamesave.firstusedsavemedia = SRAM_SAVETYPE;
-		}
-		
-		gamesave.Sram_used = TRUE;
-		FileIO_ReadSRAM();
-	}
 
 	addr &= 0x00007FFF;
 	__asm pop edx
@@ -572,13 +562,6 @@ uint32 *write_mem_flashram(uint32 addr)
 uint32 *write_mem_sram(uint32 addr)
 {
 	__asm push edx
-	if(!gamesave.Sram_used)
-	{
-		if(gamesave.firstusedsavemedia == 0) gamesave.firstusedsavemedia = SRAM_SAVETYPE;
-		gamesave.Sram_used = TRUE;
-		FileIO_ReadSRAM();
-		gamesave.Sram_written = TRUE;
-	}
 
 	addr &= 0x00007FFF;
 	__asm pop edx

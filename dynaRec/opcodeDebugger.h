@@ -31,10 +31,11 @@ extern unsigned _int8	**sDWord_ptr;
 extern unsigned _int8	**sDWord_ptr2;
 extern unsigned _int8	**TLB_sDWord_ptr;
 
+
+#ifdef ENABLE_OPCODE_DEBUGGER
 #define sDWORD_R		(sDWord_ptr)
 #define sDWORD_R_2		(sDWord2_ptr)
 #define TLB_sDWORD_R	(TLB_sDWord_ptr)
-#ifdef ENABLE_OPCODE_DEBUGGER
 #define gHWS_GPR			p_gHardwareState->GPR
 #define gHWS_COP0Reg		p_gHardwareState->COP0Reg
 #define gHWS_fpr32			p_gHardwareState->fpr32
@@ -72,7 +73,21 @@ extern unsigned _int8	**TLB_sDWord_ptr;
 #define gMS_dummyReadWrite	p_gMemoryState->dummyReadWrite
 #define gMS_dummyAllZero	p_gMemoryState->dummyAllZero
 #define gMS_TLB				p_gMemoryState->TLB
+#define OPCODE_DEBUGGER_EPILOGUE(x) \
+	{ \
+		int k; \
+		for(k = 0; k <= 1; k++) \
+		{ \
+			if(k == 0 && debug_opcode != 0) COMPARE_SwitchToInterpretive(); \
+			if(k == 1) COMPARE_SwitchToDynarec(); \
+			x; \
+			if(debug_opcode != 1) break; \
+		} \
+	}
 #else
+#define sDWORD_R			sDWord
+#define sDWORD_R_2			sDWord2
+#define TLB_sDWORD_R		TLB_sDWord
 #define gHWS_GPR			gHardwareState.GPR
 #define gHWS_COP0Reg		gHardwareState.COP0Reg
 #define gHWS_fpr32			gHardwareState.fpr32
@@ -110,20 +125,10 @@ extern unsigned _int8	**TLB_sDWord_ptr;
 #define gMS_dummyReadWrite	gMemoryState.dummyReadWrite
 #define gMS_dummyAllZero	gMemoryState.dummyAllZero
 #define gMS_TLB				gMemoryState.TLB
+#define OPCODE_DEBUGGER_EPILOGUE(x) x
 #endif
 void					COMPARE_SwitchToInterpretive(void);
 void					COMPARE_SwitchToDynarec(void);
-#define OPCODE_DEBUGGER_EPILOGUE(x) \
-	{ \
-		int k; \
-		for(k = 0; k <= 1; k++) \
-		{ \
-			if(k == 0 && debug_opcode != 0) COMPARE_SwitchToInterpretive(); \
-			if(k == 1) COMPARE_SwitchToDynarec(); \
-			x; \
-			if(debug_opcode != 1) break; \
-		} \
-	}
 
 #ifdef ENABLE_OPCODE_DEBUGGER
 extern uint8			*sDWORD_R__Debug[0x10000];

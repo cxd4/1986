@@ -22,7 +22,6 @@
  * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
-#include <windows.h>
 #include "globals.h"
 #include "hardware.h"
 #include "dynarec/opcodedebugger.h"

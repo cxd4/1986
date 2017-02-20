@@ -22,16 +22,12 @@
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
 #include <stdio.h>
-#include <stdlib.h>
 #include "zlib/unzip.h"
 
 /* include <zlib.h> */
 #include <direct.h>
-#include "globals.h"
 #include "n64rcp.h"
 #include "fileio.h"
-#include "memory.h"
-#include "hardware.h"
 #include "r4300i.h"
 #include "1964ini.h"
 #include "win32/wingui.h"
@@ -272,7 +268,7 @@ long ReadRomHeader(char *rompath, INI_ENTRY *ini_entry)
 	}
 	else
 	{
-		/* Can not open this file, skipped it */
+		/* Cannot open this file, skipped it */
 		return 0;
 	}
 }
@@ -295,7 +291,7 @@ long ReadZippedRomHeader(char *rompath, INI_ENTRY *ini_entry)
 	fp = unzOpen(rompath);
 	if(fp == NULL)
 	{
-		return FALSE;	/* Can not open this ZIP file */
+		return FALSE;	/* Cannot open this ZIP file */
 	}
 
 	if(unzGoToFirstFile(fp) == UNZ_OK)
@@ -845,18 +841,20 @@ BOOL FileIO_CreateFile(char *filename, int size)
 {
 	/*~~~~~~~~~~~~*/
 	FILE	*stream;
-	_u8		tmp = 0;
+	_u8		tmp[0x1000] = {0}; //bugfix: A single character will cause fwrite to crash in NULL stream, careful! :)
 	/*~~~~~~~~~~~~*/
 
 	stream = fopen(filename, "wb");
 	if(stream != NULL)
 	{
-		fwrite(&tmp, 1, size, stream);
+		fwrite(tmp, 1, size, stream);
 		fclose(stream);
 		return TRUE;
 	}
 	else
+	{
 		return FALSE;
+	}
 }
 
 /*
@@ -918,7 +916,7 @@ void FileIO_WriteMemPak(int pak_no)
 	stream = fopen(temp, "wb");
 	if(stream == NULL)
 	{
-		DisplayError("Can not Write MEMPAK to file %s", temp);
+		DisplayError("Cannot Write MEMPAK to file %s", temp);
 	}
 	else
 	{
@@ -953,14 +951,14 @@ void FileIO_LoadMemPak(int pak_no)
 	{
 		if(!FileIO_CreateMempakFile(temp))
 		{
-			DisplayError("Can not create an empty MEMPAK file: ", temp);
+			DisplayError("Cannot create an empty MEMPAK file: ", temp);
 		}
 		else
 		{
 			stream = fopen(temp, "rb");
 			if(stream == NULL)
 			{
-				DisplayError("Can not Load MEMPAK from file %s", temp);
+				DisplayError("Cannot Load MEMPAK from file %s", temp);
 			}
 		}
 	}
@@ -1000,7 +998,7 @@ void FileIO_WriteEEprom(void)
 	}
 	else
 	{
-		TRACE0("Can not write EEPROM to file");
+		TRACE0("Cannot write EEPROM to file");
 	}
 }
 
@@ -1023,7 +1021,7 @@ void FileIO_LoadEEprom(void)
 	{
 		if(!FileIO_CreateFile(temp, currentromoptions.Eeprom_size == EEPROMSIZE_4KB ? 0x800 : 0x1000))
 		{
-			DisplayError("Can not Load EEPROM from file %s", temp);
+			DisplayError("Cannot Load EEPROM from file %s", temp);
 			return;
 		}
 		else
@@ -1031,7 +1029,7 @@ void FileIO_LoadEEprom(void)
 			stream = fopen(temp, "rb");
 			if(stream == NULL)
 			{
-				DisplayError("Can not Load EEPROM from file %s", temp);
+				DisplayError("Cannot Load EEPROM from file %s", temp);
 				return;
 			}
 		}
@@ -1045,104 +1043,50 @@ void FileIO_LoadEEprom(void)
 	}
 }
 
-/*
- =======================================================================================================================
-    Write SRam Data to File //
- =======================================================================================================================
- */
-void FileIO_WriteSRAM(void)
+HANDLE hFlashRam;
+
+void Close_Save()
 {
-	/*~~~~~~~~~~~~~~~*/
-	char	temp[1024];
-	FILE	*stream;
-	/*~~~~~~~~~~~~~~~*/
-
-	GetFileName(temp, "sra");
-	stream = fopen(temp, "wb");
-
-	if(stream != NULL)
-	{
-		TRACE1("Write SRAM into file: %s", temp);
-		fwrite(gamesave.SRam, SRAM_SIZE, 1, stream);
-		fclose(stream);
-	}
-	else
-	{
-		DisplayError("Can not create file to save SRAM");
-	}
-}
-
-/*
- =======================================================================================================================
-    Load SRam Data from File //
- =======================================================================================================================
- */
-void FileIO_ReadSRAM(void)
-{
-	/*~~~~~~~~~~~~~~~*/
-	char	temp[1024];
-	FILE	*stream;
-	/*~~~~~~~~~~~~~~~*/
-
-	GetFileName(temp, "sra");
-	stream = fopen(temp, "rb");
-
-	if(stream != NULL)
-	{
-		TRACE1("Load SRAM from file: %s", temp);
-		fread(gamesave.SRam, SRAM_SIZE, 1, stream);
-		fclose(stream);
-	}
-	else
-	{
-		memset(gamesave.SRam, 0x00, SRAM_SIZE);
-		DisplayError("Can not load SRAM from file: ",temp);
-	}
+	if (hFlashRam != NULL)
+		CloseHandle(hFlashRam);
+	hFlashRam = NULL;
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void FileIO_CreateFLASHRAM(char *filename)
-{
-	/*~~~~~~~~~~~~*/
-	FILE	*stream;
-	/*~~~~~~~~~~~~*/
-
-	memset(gamesave.FlashRAM, 0, 128 * 1024);
-
-	stream = fopen(filename, "wb");
-	if(stream == NULL)
-	{
-		DisplayError("Error to create a new flashram file: %s, please check your directory setting", filename);
-	}
-	else
-	{
-		fwrite(gamesave.FlashRAM, 128 * 1024, 1, stream);
-		fclose(stream);
-	}
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void FileIO_WriteFLASHRAM(void)
+void FileIO_WriteFLASHRAM(int FileOffset, int MemOffset, int len)
 {
 	/*~~~~~~~~~~~~~~*/
 	char	temp[256];
-	FILE	*stream;
 	/*~~~~~~~~~~~~~~*/
+ 
+	if ((currentromoptions.Save_Type == ANYUSED_SAVETYPE) ||
+		(currentromoptions.Save_Type == SRAM_SAVETYPE))
+		GetFileName(temp, "sra");
+	else
+		GetFileName(temp, "fla");
 
-	GetFileName(temp, "fla");
-	stream = fopen(temp, "wb");
-	if( stream != NULL )
+	if( hFlashRam == NULL )
+		hFlashRam = CreateFile(temp,GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ,NULL,OPEN_ALWAYS,
+		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS, NULL);
+
+	TRACE1("Save Flashram to file: %s", temp);
+	
+	if ((currentromoptions.Save_Type == ANYUSED_SAVETYPE) ||
+		(currentromoptions.Save_Type == SRAM_SAVETYPE))
+	{		
+		DWORD dwWritten;
+		SetFilePointer(hFlashRam,FileOffset&(SRAM_SIZE-1),NULL,FILE_BEGIN);
+		WriteFile(hFlashRam, gMS_RDRAM+(MemOffset&0x007FFFFF), len, &dwWritten, 0);
+	}
+	else
 	{
-		TRACE1("Save Flashram to file: %s", temp);
-		memcpy(gamesave.FlashRAM, pLOAD_UBYTE_PARAM_2(0xA8000000), 1024 * 128);
-		fwrite(gamesave.FlashRAM, 1024 * 128, 1, stream);
-		fclose(stream);
+		DWORD dwWritten;
+
+		SetFilePointer(hFlashRam,0,NULL,FILE_BEGIN);
+		WriteFile(hFlashRam, pLOAD_UBYTE_PARAM_2(0xA8000000), 1024 * 128, &dwWritten, 0);
 	}
 }
 
@@ -1150,28 +1094,43 @@ void FileIO_WriteFLASHRAM(void)
  =======================================================================================================================
  =======================================================================================================================
  */
-void FileIO_ReadFLASHRAM(void)
+void FileIO_ReadFLASHRAM(int FileOffset, int MemOffset, int len)
 {
 	/*~~~~~~~~~~~~~~*/
 	char	temp[256];
-	FILE	*stream;
 	/*~~~~~~~~~~~~~~*/
 
-	GetFileName(temp, "fla");
-	stream = fopen(temp, "rb");
-
-	if(stream == NULL)
-	{
-		FileIO_CreateFLASHRAM(temp);
+	if ((currentromoptions.Save_Type == ANYUSED_SAVETYPE) ||
+		(currentromoptions.Save_Type == SRAM_SAVETYPE))
+	{	
+		GetFileName(temp, "sra");
 	}
 	else
 	{
-		TRACE1("Load Flashram from file: %s", temp);
+		GetFileName(temp, "fla");
+	}
 
-		fread(gamesave.FlashRAM, 1024 * 128, 1, stream);
-		memcpy(pLOAD_UBYTE_PARAM_2(0xA8000000), gamesave.FlashRAM, 1024 * 128);
+	if(hFlashRam == NULL)
+	{
+		hFlashRam = CreateFile(temp,GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ,NULL,OPEN_ALWAYS,
+		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS, NULL);
+	}
+	TRACE1("Load Flashram from file: %s", temp);
 
-		fclose(stream);
+	if ((currentromoptions.Save_Type == ANYUSED_SAVETYPE) ||
+		(currentromoptions.Save_Type == SRAM_SAVETYPE))
+	{
+		DWORD dwWritten;
+	
+		SetFilePointer(hFlashRam,FileOffset&(SRAM_SIZE-1),NULL,FILE_BEGIN);
+		ReadFile(hFlashRam, gMS_RDRAM+(MemOffset&0x007FFFFF), len, &dwWritten, 0);
+	}
+	else
+	{
+		DWORD dwWritten;
+		
+		SetFilePointer(hFlashRam,0,NULL,FILE_BEGIN);
+		ReadFile(hFlashRam, pLOAD_UBYTE_PARAM_2(0xA8000000), 1024 * 128, &dwWritten, 0);
 	}
 }
 
@@ -1261,7 +1220,7 @@ void FileIO_gzSaveStateFile(const char *filename)
 	stream = gzopen(filename, "wb");
 	if(stream == NULL)
 	{
-		DisplayError("Can not create/open gzip file to save state");
+		DisplayError("Cannot create/open gzip file to save state");
 		return;
 	}
 
@@ -1338,7 +1297,7 @@ void FileIO_gzLoadStateFile(const char *filename)
 	stream = gzopen(filename, "rb");
 	if(stream == NULL)
 	{
-		DisplayError("Can not open gzip file to load state");
+		DisplayError("Cannot open gzip file to load state");
 		return;
 	}
 
@@ -1454,7 +1413,7 @@ BOOL FileIO_Write1964Ini(void)
 	stream2 = fopen(bakfilepath, "wt");
 	if(stream2 == NULL)
 	{
-		DisplayError("Can not open 1964.ini file to write.");
+		DisplayError("Cannot open 1964.ini file to write.");
 		return FALSE;
 	}
 
@@ -1509,7 +1468,7 @@ void FileIO_ImportPJ64State(const char *filename)
 	stream = fopen(filename, "rb");
 	if(stream == NULL)
 	{
-		DisplayError("Can not create/open PJ64 state file to save state");
+		DisplayError("Cannot create/open PJ64 state file to save state");
 		return;
 	}
 
@@ -1597,7 +1556,7 @@ void FileIO_ExportPJ64State(const char *filename)
 	stream = fopen(filename, "wb");
 	if(stream == NULL)
 	{
-		DisplayError("Can not create/open PJ64 state file to save state");
+		DisplayError("Cannot create/open PJ64 state file to save state");
 		return;
 	}
 

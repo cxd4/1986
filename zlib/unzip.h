@@ -1,7 +1,7 @@
 /* unzip.h -- IO for uncompress .zip files using zlib 
-   Version 0.15 beta, Mar 19th, 1998,
+   Version 0.18 beta, Feb 26th, 2002
 
-   Copyright (C) 1998 Gilles Vollant
+   Copyright (C) 1998-2002 Gilles Vollant
 
    This unzip package allow extract file from .ZIP file, compatible with PKZip 2.04g
      WinZip, InfoZip tools and compatible.
@@ -33,10 +33,13 @@
 
 
 */
+
 /* for more info about .ZIP format, see 
-      ftp://ftp.cdrom.com/pub/infozip/doc/appnote-970311-iz.zip
+      http://www.info-zip.org/pub/infozip/doc/appnote-981119-iz.zip
+      http://www.info-zip.org/pub/infozip/doc/
    PkWare has also a specification at :
-      ftp://ftp.pkware.com/probdesc.zip */
+      ftp://ftp.pkware.com/probdesc.zip
+*/
 
 #ifndef _unz_H
 #define _unz_H
@@ -47,6 +50,10 @@ extern "C" {
 
 #ifndef _ZLIB_H
 #include "zlib.h"
+#endif
+
+#ifndef _ZLIBIOAPI_H
+#include "ioapi.h"
 #endif
 
 #if defined(STRICTUNZIP) || defined(STRICTZIPUNZIP)
@@ -127,12 +134,19 @@ extern int ZEXPORT unzStringFileNameCompare OF ((const char* fileName1,
 extern unzFile ZEXPORT unzOpen OF((const char *path));
 /*
   Open a Zip file. path contain the full pathname (by example,
-     on a Windows NT computer "c:\\zlib\\zlib111.zip" or on an Unix computer
-	 "zlib/zlib111.zip".
+     on a Windows XP computer "c:\\zlib\\zlib113.zip" or on an Unix computer
+	 "zlib/zlib113.zip".
 	 If the zipfile cannot be opened (file don't exist or in not valid), the
 	   return value is NULL.
      Else, the return value is a unzFile Handle, usable with other function
 	   of this unzip package.
+*/
+
+extern unzFile ZEXPORT unzOpen2 OF((const char *path,
+                                    zlib_filefunc_def* pzlib_filefunc_def));
+/*
+   Open a Zip file, like unzOpen, but provide a set of file low level API 
+      for read/write the zip file (see ioapi.h)
 */
 
 extern int ZEXPORT unzClose OF((unzFile file));
@@ -221,13 +235,24 @@ extern int ZEXPORT unzOpenCurrentFile OF((unzFile file));
   If there is no error, the return value is UNZ_OK.
 */
 
+extern int ZEXPORT unzOpenCurrentFile2 OF((unzFile file,
+                                           int* method,
+                                           int* level,
+                                           int raw));
+/*
+  Same than unzOpenCurrentFile, but open for read raw the file (not uncompress)
+  *method will receive method of compression, *level will receive level of 
+     compression
+  note : you can set level parameter as NULL (if you did not want known level,
+         but you CANNOT set method parameter as NULL
+*/
+
 extern int ZEXPORT unzCloseCurrentFile OF((unzFile file));
 /*
   Close the file in zip opened with unzOpenCurrentFile
   Return UNZ_CRCERROR if all the file was read but the CRC is not good
 */
-
-												
+										
 extern int ZEXPORT unzReadCurrentFile OF((unzFile file, 
 					  voidp buf,
 					  unsigned len));

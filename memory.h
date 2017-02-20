@@ -49,10 +49,6 @@ void			ROM_CheckSumZelda(void);
 void			ROM_CheckSumMario(void);
 
 extern uint32	current_rdram_size;
-extern uint32	RDRAM_End_Address;
-extern uint32	RDRAM_Begin_Address;
-extern uint32	ROM_End_Address;
-extern uint32	ROM_Begin_Address;
 
 /* Memory segment size definition */
 #define MEMORY_SIZE_RDRAM				0x400000

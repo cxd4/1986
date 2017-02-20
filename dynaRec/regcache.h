@@ -25,31 +25,22 @@
 
 /* The following are macros that help us debug the dynarec */
 
-/*$ CRASHABLE 1 //so i can go to MSVC disassembler at crash. Disable for release. */
+#ifdef _DEBUG
+#define CRASHABLE 1 //so i can go to MSVC disassembler at crash. Disable for release. */
+#endif
 
-/*$ NO_CONSTS 1 */
-
-/*$ #define SAFE_SLT 1 */
-
-/*$ #define SAFE_GATES 1 */
-
-/*$ #define SAFE_MATH 1 */
-
-/*$ #define SAFE_IMM 1 */
-
-/*$ #define SAFE_LOADSTORE 1 */
-
-/*$ #define SAFE_LOADSTORE_FPU 1 */
-
-/*$ #define SAFE_SHIFTS 1 */
-
-/*$ #define SAFE_PUSHPOP 1 */
-
-/*$ #define SAFE_DOUBLE_SHIFTS 1 */
-
-/*$ #define SAFE_DOUBLE_MATH 1 */
-
-/*$ #define SAFE_DOUBLE_IMM 1 */
+//#define NO_CONSTS 1
+//#define SAFE_SLT 1
+//#define SAFE_GATES 1
+//#define SAFE_MATH 1
+//#define SAFE_IMM 1
+//#define SAFE_LOADSTORE 1
+//#define SAFE_LOADSTORE_FPU 1
+//#define SAFE_SHIFTS 1
+//#define SAFE_PUSHPOP 1
+//#define SAFE_DOUBLE_SHIFTS 1
+//#define SAFE_DOUBLE_MATH 1
+//#define SAFE_DOUBLE_IMM 1
 
 /*
  * This is probably ugly as sin, but a very easy way to debug £
@@ -189,6 +180,30 @@ extern unsigned char	*RecompCode;
 		{ \
 			MOV_ImmToMemory(1, ModRM_disp32_EBP, 4 + ((k - 16) << 3), i); \
 		} \
+	}
+
+#define LoadFPR_LO(k) \
+	{ \
+		if(k < 16) \
+		{ \
+			FLD(0, ModRM_disp8_EBP, (-64 + (k << 2))); \
+		} \
+		else if(k < 32) \
+		{ \
+			FLD(0, ModRM_disp8_EBP, ((k - 16) << 2)); \
+		} \
+	}
+
+#define StoreFPR_LO(k) \
+	{ \
+		if(k < 16) \
+		{ \
+			FSTP(0, ModRM_disp8_EBP, (-64 + (k << 2))); \
+		} \
+		else if(k < 32) \
+		{ \
+			FSTP(0, ModRM_disp8_EBP, ((k - 16) << 2)); \
+		}\
 	}
 
 typedef struct	x86regtyp
