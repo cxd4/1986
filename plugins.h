@@ -60,6 +60,15 @@ typedef struct
 }
 GFX_INFO;
 
+typedef struct
+{
+	uint32	addr;
+	uint32	size;
+	uint32	width;
+	uint32	height;
+} FrameBufferInfo;
+
+
 /* Note: BOOL, BYTE, WORD, DWORD, TRUE, FALSE are defined in windows.h */
 #define PLUGIN_TYPE_AUDIO	3
 
@@ -132,6 +141,13 @@ typedef union
 		signed		X_AXIS : 8;
 	};
 } BUTTONS;
+
+typedef struct
+{
+	DWORD addr;
+	DWORD val;
+	DWORD size;				// 1 = BYTE, 2 = WORD, 4=DWORD
+} FrameBufferModifyEntry;
 
 extern GFX_INFO		Gfx_Info;
 extern AUDIO_INFO	Audio_Info;

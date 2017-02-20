@@ -8,7 +8,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -26,8 +26,11 @@
 #define MAX_CHEATCODE_PER_GROUP		100
 #define MAX_CHEATCODE_GROUP_PER_ROM 254	//Cannot exceed 254 groups, must be represented by using 1 byte
 
+extern char *cheatfilename;
+
+
 //Option to apply cheat code and lock memory
-#define CHEATCODE_LOCK_MEMORY
+//#define CHEATCODE_LOCK_MEMORY
 
 enum APPLYCHEATMODE { INGAME, BOOTUPONCE, GSBUTTON, ONLYIN1964 };
 
@@ -54,11 +57,11 @@ extern int						codegroupcount;
 extern CODEGROUP				*codegrouplist;
 extern char						current_cheatcode_rom_internal_name[30];
 
-extern void						InitCodeListForCurrentGame(void);
-extern void						CodeList_Clear(void);
-extern void						CodeList_GotoBeginning(void);
+extern void 		InitCodeListForCurrentGame(void);
+extern void 		CodeList_Clear(void);
+extern void 		CodeList_GotoBeginning(void);
 extern BOOL						CodeList_ApplyAllCode(enum APPLYCHEATMODE mode);
-extern BOOL						CodeList_ReadCode(char *intername_rom_name);
+extern BOOL _cdecl				CodeList_ReadCode(char *intername_rom_name, char* filename);
 BOOL							IsCodeMatchRomCountryCode(int cheat_country_code, int rom_country_code);
 
 #ifdef CHEATCODE_LOCK_MEMORY

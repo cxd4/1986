@@ -9,7 +9,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -46,7 +46,7 @@ void		DebugPrintPC(uint32 thePC);
 		gHWS_pc, \
 		_op_name, \
 		r4300i_RegNames[RT_FT], \
-		(uint32) gHWS_GPR[RT_FT], \
+		(uint32) gHWS_GPR(RT_FT), \
 		OFFSET_IMMEDIATE \
 	);
 
@@ -58,7 +58,7 @@ void		DebugPrintPC(uint32 thePC);
 		gHWS_pc, \
 		_op_name, \
 		r4300i_RegNames[RT_FT], \
-		(uint32) gHWS_GPR[RT_FT], \
+		(uint32) gHWS_GPR(RT_FT), \
 		r4300i_COP0_RegNames[RD_FS] \
 	);
 
@@ -70,7 +70,7 @@ void		DebugPrintPC(uint32 thePC);
 		gHWS_pc, \
 		_op_name, \
 		r4300i_RegNames[RT_FT], \
-		(uint32) gHWS_GPR[RT_FT], \
+		(uint32) gHWS_GPR(RT_FT), \
 		r4300i_COP1_RegNames[RD_FS] \
 	);
 
@@ -82,10 +82,10 @@ void		DebugPrintPC(uint32 thePC);
 		gHWS_pc, \
 		_op_name, \
 		r4300i_RegNames[RT_FT], \
-		(uint32) gHWS_GPR[RT_FT], \
+		(uint32) gHWS_GPR(RT_FT), \
 		OFFSET_IMMEDIATE, \
 		r4300i_RegNames[RS_BASE_FMT], \
-		(uint32) gHWS_GPR[RS_BASE_FMT] \
+		(uint32) gHWS_GPR(RS_BASE_FMT) \
 	);
 
 #define DBGPRINT_BASE_RT64BIT_OFFSET(_op_name) \
@@ -96,10 +96,10 @@ void		DebugPrintPC(uint32 thePC);
 		gHWS_pc, \
 		_op_name, \
 		r4300i_RegNames[RT_FT], \
-		(uint32) gHWS_GPR[RT_FT], \
+		(uint32) gHWS_GPR(RT_FT), \
 		OFFSET_IMMEDIATE, \
 		r4300i_RegNames[RS_BASE_FMT], \
-		(uint32) gHWS_GPR[RS_BASE_FMT] \
+		(uint32) gHWS_GPR(RS_BASE_FMT) \
 	);
 
 #define DBGPRINT_RS_RT_IMM(_op_name) \
@@ -110,9 +110,9 @@ void		DebugPrintPC(uint32 thePC);
 		gHWS_pc, \
 		_op_name, \
 		r4300i_RegNames[RT_FT], \
-		(uint32) gHWS_GPR[RT_FT], \
+		(uint32) gHWS_GPR(RT_FT), \
 		r4300i_RegNames[RS_BASE_FMT], \
-		(uint32) gHWS_GPR[RS_BASE_FMT], \
+		(uint32) gHWS_GPR(RS_BASE_FMT), \
 		(signed) (OFFSET_IMMEDIATE) \
 	);
 
@@ -124,9 +124,9 @@ void		DebugPrintPC(uint32 thePC);
 		gHWS_pc, \
 		_op_name, \
 		r4300i_RegNames[RT_FT], \
-		((uint32) gHWS_GPR[RT_FT]), \
+		((uint32) gHWS_GPR(RT_FT)), \
 		r4300i_RegNames[RS_BASE_FMT], \
-		((uint32) gHWS_GPR[RS_BASE_FMT]), \
+		((uint32) gHWS_GPR(RS_BASE_FMT)), \
 		(uint16) OFFSET_IMMEDIATE \
 	);
 
@@ -138,7 +138,7 @@ void		DebugPrintPC(uint32 thePC);
 		gHWS_pc, \
 		_op_name, \
 		r4300i_RegNames[RS_BASE_FMT], \
-		(uint32) gHWS_GPR[RS_BASE_FMT], \
+		(uint32) gHWS_GPR(RS_BASE_FMT), \
 		OFFSET_IMMEDIATE \
 	);
 
@@ -150,7 +150,7 @@ void		DebugPrintPC(uint32 thePC);
 		gHWS_pc, \
 		(uint32) _op_name, \
 		r4300i_RegNames[RS_BASE_FMT], \
-		(uint32) gHWS_GPR[RS_BASE_FMT], \
+		(uint32) gHWS_GPR(RS_BASE_FMT), \
 		OFFSET_IMMEDIATE \
 	);
 
@@ -162,9 +162,9 @@ void		DebugPrintPC(uint32 thePC);
 		gHWS_pc, \
 		(uint32) _op_name, \
 		r4300i_RegNames[RS_BASE_FMT], \
-		(uint32) gHWS_GPR[RS_BASE_FMT], \
+		(uint32) gHWS_GPR(RS_BASE_FMT), \
 		r4300i_RegNames[RD_FS], \
-		(uint32) gHWS_GPR[RD_FS] \
+		(uint32) gHWS_GPR(RD_FS) \
 	);
 
 #define DBGPRINT_RS_RT_RD(_op_name) \
@@ -175,11 +175,11 @@ void		DebugPrintPC(uint32 thePC);
 		gHWS_pc, \
 		(uint32) _op_name, \
 		r4300i_RegNames[RD_FS], \
-		(uint32) gHWS_GPR[RD_FS], \
+		(uint32) gHWS_GPR(RD_FS), \
 		r4300i_RegNames[RS_BASE_FMT], \
-		(uint32) gHWS_GPR[RS_BASE_FMT], \
+		(uint32) gHWS_GPR(RS_BASE_FMT), \
 		r4300i_RegNames[RT_FT], \
-		(uint32) gHWS_GPR[RT_FT] \
+		(uint32) gHWS_GPR(RT_FT) \
 	);
 
 #define DBGPRINT_RT_RD_SA(_op_name) \
@@ -207,9 +207,9 @@ void		DebugPrintPC(uint32 thePC);
 		gHWS_pc, \
 		(uint32) _op_name, \
 		r4300i_RegNames[RS_BASE_FMT], \
-		(uint32) gHWS_GPR[RS_BASE_FMT], \
+		(uint32) gHWS_GPR(RS_BASE_FMT), \
 		r4300i_RegNames[RT_FT], \
-		(uint32) gHWS_GPR[RT_FT] \
+		(uint32) gHWS_GPR(RT_FT) \
 	);
 
 #define DBGPRINT_RD(_op_name) \
@@ -220,7 +220,7 @@ void		DebugPrintPC(uint32 thePC);
 		gHWS_pc, \
 		(uint32) _op_name, \
 		r4300i_RegNames[RD_FS], \
-		(uint32) gHWS_GPR[RD_FS] \
+		(uint32) gHWS_GPR(RD_FS) \
 	);
 
 #define DBGPRINT_RS(_op_name) \
@@ -231,7 +231,7 @@ void		DebugPrintPC(uint32 thePC);
 		gHWS_pc, \
 		(uint32) _op_name, \
 		r4300i_RegNames[RS_BASE_FMT], \
-		(uint32) gHWS_GPR[RS_BASE_FMT] \
+		(uint32) gHWS_GPR(RS_BASE_FMT) \
 	);
 
 #define DBGPRINT_RS_RT_OFF(_op_name)	DBGPRINT_RS(_op_name)
@@ -243,9 +243,9 @@ void		DebugPrintPC(uint32 thePC);
 		gHWS_pc, \
 		(uint32) _op_name, \
 		r4300i_RegNames[RS_BASE_FMT], \
-		(uint32) gHWS_GPR[RS_BASE_FMT], \
+		(uint32) gHWS_GPR(RS_BASE_FMT), \
 		r4300i_RegNames[RT_FT], \
-		(uint32) gHWS_GPR[RT_FT], \
+		(uint32) gHWS_GPR(RT_FT), \
 		((OFFSET_IMMEDIATE * 4) + gHWS_pc + 4) \
 	);
 
@@ -257,7 +257,7 @@ void		DebugPrintPC(uint32 thePC);
 		gHWS_pc, \
 		(uint32) _op_name, \
 		r4300i_RegNames[RS_BASE_FMT], \
-		(uint32) gHWS_GPR[RS_BASE_FMT], \
+		(uint32) gHWS_GPR(RS_BASE_FMT), \
 		((OFFSET_IMMEDIATE * 4) + gHWS_pc + 4) \
 	);
 
@@ -281,11 +281,11 @@ void		DebugPrintPC(uint32 thePC);
 		gHWS_pc, \
 		(uint32) _op_name, \
 		r4300i_RegNames[RD_FS], \
-		(uint32) gHWS_GPR[RD_FS], \
+		(uint32) gHWS_GPR(RD_FS), \
 		r4300i_RegNames[RT_FT], \
-		(uint32) gHWS_GPR[RT_FT], \
+		(uint32) gHWS_GPR(RT_FT), \
 		r4300i_RegNames[RS_BASE_FMT], \
-		(uint32) gHWS_GPR[RS_BASE_FMT] \
+		(uint32) gHWS_GPR(RS_BASE_FMT) \
 	);
 
 #define DBGPRINT_OPCODE(_op_name)	sprintf(op_str, "%08X: %s", gHWS_pc, (uint32) _op_name);
@@ -311,9 +311,9 @@ void		DebugPrintPC(uint32 thePC);
 		r4300i_RegNames[SA_FD], \
 		(uint32) gHWS_GPR[SA_FD], \
 		r4300i_RegNames[RD_FS], \
-		(uint32) gHWS_GPR[RD_FS], \
+		(uint32) gHWS_GPR(RD_FS), \
 		r4300i_RegNames[RT_FT], \
-		(uint32) gHWS_GPR[RT_FT] \
+		(uint32) gHWS_GPR(RT_FT) \
 	);
 
 #define DBGPRINT_BASE_FPR_OFFSET(_op_name) \
@@ -324,10 +324,10 @@ void		DebugPrintPC(uint32 thePC);
 		gHWS_pc, \
 		_op_name, \
 		r4300i_COP1_RegNames[RT_FT], \
-		(uint32) gHWS_fpr32[RT_FT], \
+		(uint32) cFT, \
 		OFFSET_IMMEDIATE, \
 		r4300i_RegNames[RS_BASE_FMT], \
-		(uint32) gHWS_GPR[RS_BASE_FMT] \
+		(uint32) gHWS_GPR(RS_BASE_FMT) \
 	);
 
 #define DBGPRINT_BASE_FPR64BIT_OFFSET(_op_name) \
@@ -340,7 +340,7 @@ void		DebugPrintPC(uint32 thePC);
 		r4300i_COP1_RegNames[RT_FT], \
 		OFFSET_IMMEDIATE, \
 		r4300i_RegNames[RS_BASE_FMT], \
-		(uint32) gHWS_GPR[RS_BASE_FMT] \
+		(uint32) gHWS_GPR(RS_BASE_FMT) \
 	);
 
 #define DBGPRINT_FPR_FT_FS(_op_name) \

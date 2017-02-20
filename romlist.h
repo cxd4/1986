@@ -8,7 +8,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -28,23 +28,34 @@
 #include "globals.h"
 #include "1964ini.h"
 
-struct ROMLIST_ENTRY_STRUCT
+typedef struct ROMLIST_ENTRY_STRUCT
 {
 	INI_ENTRY	*pinientry;
 	char		romfilename[_MAX_FNAME];
 	long		size;
-};
+}ROMLIST_ENTRY ;
 
+#define NUM_SORT_METHODS 9 //this should be the same as the number of columns
 enum
 {
 	ROMLIST_GAMENAME,
 	ROMLIST_COUNTRY,
 	ROMLIST_SIZE,
 	ROMLIST_COMMENT,
+    ROMLIST_SAVETYPE,
+    ROMLIST_CICCHIP,
+    ROMLIST_CRC1,
+    ROMLIST_CRC2,
+	ROMLIST_PLAYERS,
 	ROMLIST_GAMENAME_INVERT,
 	ROMLIST_COUNTRY_INVERT,
 	ROMLIST_SIZE_INVERT,
-	ROMLIST_COMMENT_INVERT
+	ROMLIST_COMMENT_INVERT,
+    ROMLIST_SAVETYPE_INVERT,
+    ROMLIST_CICCHIP_INVERT,
+    ROMLIST_CRC1_INVERT,
+    ROMLIST_CRC2_INVERT,
+	ROMLIST_PLAYERS_INVERT,
 };
 
 enum
@@ -54,58 +65,6 @@ enum
 	ROMLIST_DISPLAY_FILENAME,
 };
 
-typedef struct ROMLIST_ENTRY_STRUCT ROMLIST_ENTRY;
-
-/* Global variabls */
-#define MAX_ROMLIST			2000
-
-extern ROMLIST_ENTRY *romlist[MAX_ROMLIST];
-extern int romlist_count;
-extern int romlist_sort_method;
-extern int romlistNameToDisplay;
-
-/* Functions */
-BOOL RomListReadDirectory(const char *path);
-void ClearRomList(void);
-void InitRomList(void);
-int RomListAddEntry(INI_ENTRY *newentry, char *romfilename, long int filesize);
-void RomListOpenRom(int index, BOOL RunThisRom);
-void RomListSelectRom(int index);
-void RomListRomOptions(int index);
-void RomListSaveCurrentPos(void);
-void RomListUseSavedPos(void);
-int  RomListGetSelectedIndex(void);
-
-HWND NewRomList_CreateListViewControl(HWND hwndParent);
-void NewRomList_ListViewHideHeader(HWND hwnd);
-void NewRomList_ListViewShowHeader(HWND hwnd);
-void NewRomList_ListViewFreshRomList(void);
-void NewRomList_ListViewChangeWindowRect(void);
-void NewRomList_Sort(void);
-void RomListRememberColumnWidth(void);
-ROMLIST_ENTRY *RomListGet_Selected_Entry(void);
-void RomListSelectLoadedRomEntry(void);
-
-LRESULT APIENTRY RomListDialog(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
-LRESULT APIENTRY ColumnSelectDialog(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
-
-void ReadRomHeaderInMemory(INI_ENTRY *ini_entry);
-ROMLIST_ENTRY *RomListSelectedEntry(void);
-
-void ConvertInvalidInternalName(char *oldname, char *newname);
-BOOL InternalNameIsValid(char *name);
-
-long OnNotifyRomList(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-long OnNotifyRomListHeader(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-extern int romListHeaderClickedColumn;
-extern void CheckButton(int nID, BOOL bCheck);
-extern void EnableButton(int nID, BOOL bEnable);
-extern void EnableRadioButtons(BOOL bEnable);
-extern void SetupToolBar();
-extern BYTE ChangeButtonState(int nID);
-extern void CheckButton(int nID, BOOL bCheck);
-
-
 typedef enum {
 	ROMLIST_COL_GAMENAME=0,
 	ROMLIST_COL_COUNTRY,
@@ -114,7 +73,8 @@ typedef enum {
 	ROMLIST_COL_GAMESAVE,
 	ROMLIST_COL_CICCHIP,
 	ROMLIST_COL_CRC1,
-	ROMLIST_COL_CRC2
+	ROMLIST_COL_CRC2,
+	ROMLIST_COL_PLAYERS
 } ColumnID;
 
 typedef struct{
@@ -126,7 +86,101 @@ typedef struct{
 	HTREEITEM	treeViewID;
 } ColumnType;
 
-extern ColumnType romListColumns[];
-extern const int numberOfRomListColumns;
+#define MAX_ROMLIST			2000
+
+extern ROMLIST_ENTRY *		romlist[MAX_ROMLIST];
+extern ColumnType			romListColumns[];
+extern const int			numberOfRomListColumns;
+
+typedef struct {
+	int			iconWidth;
+	int			iconHeight;
+	int			iconXSpacing;
+	int			iconYSpacing;
+	HIMAGELIST	hLargeBitmaps;
+	HIMAGELIST	hSmallIcons;
+	int			romlist_count;
+	int			romlist_sort_method;
+	int			romlistNameToDisplay;
+	int			romListHeaderClickedColumn;
+	int			selected_rom_index;
+} ROMLIST_STATUS;
+
+extern ROMLIST_STATUS rlstatus;
+
+
+BOOL __cdecl RomListReadDirectory(const char *path, BOOL usecached);
+void __cdecl ClearRomList(void);
+void __cdecl InitRomList(void);
+int	__cdecl RomListAddEntry(INI_ENTRY *newentry, char *romfilename, long int filesize);
+void __cdecl RomListOpenRom(int index, BOOL RunThisRom);
+void __cdecl RomListSelectRom(int index);
+void __cdecl RomListRomOptions(int index);
+void __cdecl RomListSaveCurrentPos(void);
+void __cdecl RomListUseSavedPos(void);
+
+int
+__cdecl
+RomListGetSelectedIndex(void);
+
+HWND 
+__cdecl 
+NewRomList_CreateListViewControl(HWND hwndParent);
+
+void __cdecl NewRomList_ListViewHideHeader(HWND hwnd);
+void __cdecl NewRomList_ListViewShowHeader(HWND hwnd);
+void __cdecl NewRomList_ListViewFreshRomList(void);
+void __cdecl NewRomList_ListViewChangeWindowRect(void);
+void __cdecl NewRomList_Sort(void);
+void __cdecl RomListRememberColumnWidth(void);
+
+ROMLIST_ENTRY *
+__cdecl
+RomListGet_Selected_Entry(void);
+
+void
+__cdecl
+RomListSelectLoadedRomEntry(void);
+
+LRESULT 
+APIENTRY 
+RomListDialog(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
+
+LRESULT 
+APIENTRY 
+ColumnSelectDialog(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
+
+void
+__cdecl
+ReadRomHeaderInMemory(INI_ENTRY *ini_entry);
+
+ROMLIST_ENTRY *
+__cdecl
+RomListSelectedEntry(void);
+
+void
+__cdecl
+ConvertInvalidInternalName(char *oldname, char *newname);
+
+BOOL
+__cdecl
+InternalNameIsValid(char *name);
+
+long
+__cdecl
+OnNotifyRomList(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+
+extern long
+__cdecl
+OnNotifyRomListHeader(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+
+extern void
+__cdecl
+CheckButton(int nID, BOOL bCheck);
+
+extern void __cdecl EnableButton(int nID, BOOL bEnable);
+extern void __cdecl EnableRadioButtons(BOOL bEnable);
+extern void __cdecl SetupToolBar();
+extern BYTE __cdecl ChangeButtonState(int nID);
 
 #endif /* ROMLIST_H */

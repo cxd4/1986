@@ -9,7 +9,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -117,6 +117,14 @@
 #define DPC_STATUS_XBUS_DMEM_DMA	0x0000001
 #define DPC_STATUS_FREEZE			0x0000002
 #define DPC_STATUS_FLUSH			0x0000004
+#define DPC_STATUS_START_GCLK		0x008	/* Bit  3: start gclk */
+#define DPC_STATUS_TMEM_BUSY		0x010	/* Bit  4: tmem busy */
+#define DPC_STATUS_PIPE_BUSY		0x020	/* Bit  5: pipe busy */
+#define DPC_STATUS_CMD_BUSY			0x040	/* Bit  6: cmd busy */
+#define DPC_STATUS_CBUF_READY		0x080	/* Bit  7: cbuf ready */
+#define DPC_STATUS_DMA_BUSY			0x100	/* Bit  8: dma busy */
+#define DPC_STATUS_END_VALID		0x200	/* Bit  9: end valid */
+#define DPC_STATUS_START_VALID		0x400	/* Bit 10: start valid */
 
 /* DPC_STATUS_REG write bits */
 #define DPC_CLR_XBUS_DMEM_DMA	0x0000001
@@ -138,34 +146,27 @@
 #define NOT_BD		0x7FFFFFFF
 #define BEV			0x00400000
 
-/*
- =======================================================================================================================
-    Cause register exception codes
- =======================================================================================================================
- */
-#define EXC_CODE(x) ((x) << 2)
-
-/* Hardware exception codes */
-#define EXC_INT						EXC_CODE(0)		/* interrupt */
-#define EXC_MOD						EXC_CODE(1)		/* TLB mod */
-#define EXC_RMISS					EXC_CODE(2)		/* Read TLB Miss */
-#define TLBL_Miss					EXC_RMISS
-#define EXC_WMISS					EXC_CODE(3)		/* Write TLB Miss */
-#define TLBS_Miss					EXC_WMISS
-#define EXC_RADE					EXC_CODE(4)		/* Read Address Error */
-#define EXC_WADE					EXC_CODE(5)		/* Write Address Error */
-#define EXC_IBE						EXC_CODE(6)		/* Instruction Bus Error */
-#define EXC_DBE						EXC_CODE(7)		/* Data Bus Error */
-#define EXC_SYSCALL					EXC_CODE(8)		/* SYSCALL */
-#define EXC_BREAK					EXC_CODE(9)		/* BREAKpoint */
-#define EXC_II						EXC_CODE(10)	/* Illegal Instruction */
-#define EXC_CPU						EXC_CODE(11)	/* CoProcessor Unusable */
-#define EXC_OV						EXC_CODE(12)	/* OVerflow */
-#define EXC_TRAP					EXC_CODE(13)	/* Trap exception */
-#define EXC_VCEI					EXC_CODE(14)	/* Virt. Coherency on Inst. fetch */
-#define EXC_FPE						EXC_CODE(15)	/* Floating Point Exception */
-#define EXC_WATCH					EXC_CODE(23)	/* Watchpoint reference */
-#define EXC_VCED					EXC_CODE(31)	/* Virt. Coherency on data read */
+//    Cause register exception codes
+#define EXC_INT 0
+#define EXC_MOD 4
+#define EXC_RMISS 8
+#define TLBL_Miss 8
+#define EXC_WMISS 12
+#define TLBS_Miss 12
+#define EXC_RADE 16
+#define EXC_WADE 20
+#define EXC_IBE 24
+#define EXC_DBE 28
+#define EXC_SYSCALL 32
+#define EXC_BREAK 36
+#define EXC_II 40
+#define EXC_CPU 44
+#define EXC_OV 48
+#define EXC_TRAP 52
+#define EXC_VCEI 56
+#define EXC_FPE 60
+#define EXC_WATCH 92
+#define EXC_VCED 124
 
 #define EXCCODE						0x7C
 #define NOT_EXCCODE					0xFFFFFF83
@@ -173,6 +174,7 @@
 #define SET_EXCEPTION(exception)	{ gHWS_COP0Reg[CAUSE] &= NOT_EXCCODE; gHWS_COP0Reg[CAUSE] |= exception; }
 
 void			CheckInterrupts(void);
+void			DummyCheckInterrupts(void);
 void __cdecl	printlist(char *Message, ...);
 void			Dbg_Handle_SP(unsigned __int32 value);
 void			WriteMI_ModeReg(unsigned __int32 value);
@@ -197,4 +199,31 @@ void			TriggerFPUUnusableException(void);
 void			Clear_MIInterrupt(uint32);
 void			HandleInterrupts(unsigned __int32 vt);
 void			HandleExceptions(unsigned __int32 evt);
+
+typedef struct {
+	DWORD	type;
+	DWORD	flags;
+
+	DWORD   m_ucode_boot;
+	DWORD	ucode_boot_size;
+
+	DWORD   m_ucode;
+	DWORD	ucode_size;
+
+	DWORD   m_ucode_data;
+	DWORD	ucode_data_size;
+
+	DWORD   m_dram_stack;
+	DWORD	dram_stack_size;
+
+	DWORD   m_output_buff;
+	DWORD   m_output_buff_size;
+
+	DWORD   m_data_ptr;
+	DWORD	data_size;
+
+	DWORD   m_yield_data_ptr;
+	DWORD	yield_data_size;
+} OSTask_t;
+
 #endif

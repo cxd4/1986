@@ -8,7 +8,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -24,7 +24,7 @@
 #define _DEBUG_OPTION_H__1964_
 
 /* TRACE macros */
-#ifdef DEBUG_COMMON
+#ifdef _DEBUG
 extern char tracemessage[256];
 #define TRACE0(str)						{ RefreshOpList(str); }
 #define TRACE1(str, arg1)				{ sprintf(tracemessage, str, arg1); RefreshOpList(tracemessage); }
@@ -42,7 +42,7 @@ extern char tracemessage[256];
 #define TRACE3(str, arg1, arg2, arg3)
 #define TRACE4(str, arg1, arg2, arg3, arg4)
 #endif
-#ifdef DEBUG_COMMON
+#ifdef _DEBUG
 #define DEBUG_RANGE_ERROR
 #define DEBUG_IO_READ
 #define DEBUG_IO_WRITE
@@ -54,6 +54,7 @@ extern char tracemessage[256];
 #define DEBUG_SI_DMA
 #define DEBUG_SP_DMA
 #define DEBUG_PI_DMA
+#define DEBUG_PI_NETPLAY
 #define DEBUG_SP_TASK
 #define DEBUG_SI_TASK
 
@@ -150,6 +151,7 @@ struct DEBUGOPTIONS
 	int debug_sp_dma;
 	int debug_si_dma;
 	int debug_pi_dma;
+	int debug_netplay;
 	int debug_si_mempak;
 	int debug_si_controller;
 	int debug_dump_mempak;
@@ -166,6 +168,7 @@ struct DEBUGOPTIONS
 	int debug_dyna_mod_code;
 	int debug_protect_memory;
 	int debug_exception_services;
+	int debug_framebuffer_rw;
 };
 extern struct DEBUGOPTIONS	debugoptions;
 
@@ -238,6 +241,29 @@ extern struct DEBUGOPTIONS	debugoptions;
 #define DEBUG_PI_DMA_TRACE0(str)
 #define DEBUG_PI_DMA_TRACE1(str, arg1)
 #endif
+
+#ifdef DEBUG_PI_NETPLAY
+#define DEBUG_NETPLAY_MACRO(macro) \
+	if(debugoptions.debug_netplay) \
+{ \
+	macro \
+}
+#define DEBUG_NETPLAY_TRACE0(str) \
+	if(debugoptions.debug_netplay) \
+{ \
+	TRACE0(str); \
+}
+#define DEBUG_NETPLAY_TRACE1(str, arg1) \
+	if(debugoptions.debug_netplay) \
+{ \
+	TRACE1(str, arg1); \
+}
+#else
+#define DEBUG_NETPLAY_MACRO(macro)
+#define DEBUG_NETPLAY_TRACE0(str)
+#define DEBUG_NETPLAY_TRACE1(str, arg1)
+#endif
+
 #ifdef DEBUG_SP_DMA
 #define DEBUG_SP_DMA_MACRO(macro) \
 	if(debugoptions.debug_sp_dma) \
@@ -301,7 +327,7 @@ extern struct DEBUGOPTIONS	debugoptions;
 #define DEBUG_SI_TASK_TRACE0(str)
 #define DEBUG_SI_TASK_TRACE1(str, arg1)
 #endif
-#ifdef DEBUG_COMMON
+#ifdef _DEBUG
 #define DEBUG_INTERRUPT_TRACE(othermacro) \
 	if(debugoptions.debug_interrupt) \
 	{ \
@@ -366,6 +392,11 @@ extern struct DEBUGOPTIONS	debugoptions;
 	{ \
 		othermacro \
 	};
+#define DEBUG_FRAMEBUFFER_TRACE(othermacro) \
+	if(debugoptions.debug_framebuffer_rw) \
+	{ \
+	othermacro \
+	};
 #define DEBUG_CONTROLLER_TRACE(othermacro) \
 	if(debugoptions.debug_si_controller) \
 	{ \
@@ -385,6 +416,7 @@ extern struct DEBUGOPTIONS	debugoptions;
 #define DEBUG_FLASHRAM_TRACE(othermacro)
 #define DEBUG_EXCEPTION_TRACE(othermacro)
 #define DEBUG_CONTROLLER_TRACE(othermacro)
+#define DEBUG_FRAMEBUFFER_TRACE(othermacro)
 #endif
 #ifdef DEBUG_TLB
 #define TLB_TRACE(macro)	{ if(debugoptions.debug_tlb) { macro } }
@@ -398,6 +430,13 @@ extern struct DEBUGOPTIONS	debugoptions;
 #define TLB_DETAIL_TRACE(macro) { }
 #define TLB_EXTRA_TRACE(macro)	{ }
 #endif
+
+#ifdef DEBUG_SI_EEPROM
+#define EEPROM_TRACE(macro)	{if( debugoptions.debug_si_eeprom) {macro}}
+#else
+#define EEPROM_TRACE(macro)	{}
+#endif
+
 #ifdef DEBUG_DYNA_CODE_DETECT
 #define CODE_DETECT_TRACE(macro)	{ if(debugoptions.debug_dyna_mod_code) { macro } }
 #else
@@ -412,4 +451,6 @@ extern int					debug_opcode;
 extern int					debug_opcode_block;
 extern int					debug_dirty_only;
 extern int					debug_annoying_messages;
+
+
 #endif

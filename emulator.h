@@ -8,7 +8,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -28,9 +28,12 @@
 
 enum { WORDTYPE, HWORDTYPE, BYTETYPE, DWORDTYPE, NOCHECKTYPE };
 enum { INIT_EMU_AFTER_PAUSE, REFRESH_DYNA_AFTER_PAUSE, DO_NOTHING_AFTER_PAUSE };
+/* 1964 exception types */
+enum { EXCEPTION_NONE=0, EXCEPTION_INTERRUPT, EXCEPTION_CP1_UNUSABLE };
 enum GAME_STOP_REASON { EMURUNNING, EMUSTOP, EMUPAUSE, EMUSWITCHCORE, EMURESUME, VIDEOCRASH, CPUCRASH };
 
 extern HANDLE CPUThreadHandle;
+extern HANDLE AIThreadHandle;
 extern int Audio_Is_Initialized;
 
 struct EmuStatus
@@ -44,10 +47,21 @@ struct EmuStatus
 	BOOL					Emu_Is_Resetting;	/* means the emu is still in running state, but just paused */
 	int						CodeCheckMethod;
 	int						exception_entry_count;
+	int						schiboException;
+	BOOL					processing_exception;
 	int						cpucore;
 	enum GAME_STOP_REASON	reason_to_stop;
 	int						action_after_resume;
 	volatile BOOL			Emu_Keep_Running;
+	BOOL					VideoPluginSupportingFrameBuffer;
+	BOOL					FrameBufferProtectionNeedToBeUpdate;
+	BOOL					VideoPluginProvideFrameBufferInfo;
+	BOOL					viframeskip;
+
+	char					lastVideoPluginLoaded[256];
+	char					lastAudioPluginLoaded[256];
+	char					lastInputPluginLoaded[256];
+	char					lastRSPPluginLoaded[256];
 };
 extern struct EmuStatus emustatus;
 
@@ -58,14 +72,16 @@ struct EmuOptions
 	BOOL	auto_full_screen;
 	BOOL	dma_in_segments;
 	BOOL	SyncVI;
+	BOOL	AutoFrameSkip;
+    BOOL	AutoCF; //Automatic Counter Factor Timing, If TRUE, CF constantly changes automatically during gameplay.
 	BOOL	UsingRspPlugin;
+	BOOL	UsingInternalRSP;
 };
 extern struct EmuOptions	emuoptions;
 
 extern uint8				*RDRAM_Copy;
 extern uint8				HeaderDllPass[0x40];
 
-void						RunEmulator(unsigned _int32 WhichCore);
 void						ClearCPUTasks(void);
 void						InterpreterStepCPU(void);
 uint32						FetchInstruction(void);
@@ -75,15 +91,16 @@ BOOL						PauseEmulator(void);
 void						ResumeEmulator(int action_after_pause);
 void						StopEmulator(void);
 void						EmulatorSetCore(int core);
-void (*Dyna_Code_Check[]) ();
-void (*Dyna_Check_Codes) ();
+extern void (*Dyna_Code_Check[]) ();
+extern void (*Dyna_Check_Codes) ();
 void	Dyna_Code_Check_None_Boot(void);
 void	Dyna_Code_Check_QWORD(void);
 void	Dyna_Exception_Service_Routine(uint32 vector);
 void	Invalidate4KBlock(uint32 addr, char *opcodename, int type, uint64 newvalue);
 void	CPU_Task_To_String(char *str);
+void    RefreshDynaDuringGamePlay(void);
 
-#ifdef DEBUG_COMMON
+#ifdef _DEBUG
 #define INTERPRETER_DEBUG_INSTRUCTION(inst) \
 	if(DebuggerActive) \
 	{ \
@@ -97,7 +114,7 @@ void	CPU_Task_To_String(char *str);
 #else
 #define INTERPRETER_DEBUG_INSTRUCTION(inst)
 #endif
-#ifdef DEBUG_COMMON
+#ifdef _DEBUG
 #define DYNA_DEBUG_INSTRUCTION(inst) \
 	/* FlushAllRegisters(); */ \
 	if(DebuggerActive && (DebuggerOpcodeTraceEnabled || DebuggerBreakPointActive)) \
@@ -107,7 +124,7 @@ void	CPU_Task_To_String(char *str);
 #else
 #define DYNA_DEBUG_INSTRUCTION(inst)
 #endif
-#ifdef DEBUG_COMMON
+#ifdef _DEBUG
 #ifdef LOG_DYNA
 #define DYNA_LOG_INSTRUCTION	if(debugoptions.debug_dyna_log) \
 		LogDyna("\n%s\n", DebugPrintInstructionWithOutRefresh(gHWS_code));
@@ -116,8 +133,7 @@ void	CPU_Task_To_String(char *str);
 #endif
 #else /* release */
 #ifdef LOG_DYNA
-#define DYNA_LOG_INSTRUCTION	if((gMultiPass.WhichPass != COMPILE_MAP_ONLY) || (gMultiPass.UseOnePassOnly == 1)) \
-		LogDyna("\n%s\n", DebugPrintInstructionWithOutRefresh(gHWS_code));
+#define DYNA_LOG_INSTRUCTION LogDyna("\n%s\n", DebugPrintInstructionWithOutRefresh(gHWS_code));
 #else
 #define DYNA_LOG_INSTRUCTION
 #endif
@@ -141,17 +157,17 @@ void	CPU_Task_To_String(char *str);
 #define DEBUG_PRINT_DYNA_COMPILE_INFO
 #endif
 #define C_CALL( /* address */ OPCODE) \
-	MOV_ImmToReg(1, Reg_EAX, (uint32) /* & */ OPCODE); \
+	MOV_ImmToReg(Reg_EAX, (uint32) /* & */ OPCODE); \
 	CALL_Reg(Reg_EAX);
 
-#ifdef WINDEBUG_1964
+#ifdef _DEBUG
 #define rc_DYNDEBUG_UPDATE(Inst) \
 	/* FlushAllRegisters(); */ \
 	MOV_ImmToMemory(1, ModRM_disp32, (_u32) & gHWS_pc, gHWS_pc); \
-	MOV_ImmToReg(1, Reg_ECX, Inst); \
+	MOV_ImmToReg(Reg_ECX, Inst); \
 	C_CALL((uint32) & WinDynDebugPrintInstruction)
 #define DEBUG_BPT(inst) \
-	MOV_ImmToReg(1, Reg_ECX, inst); \
+	MOV_ImmToReg(Reg_ECX, inst); \
 	C_CALL((uint32) & HandleBreakpoint);
 
 #else

@@ -9,7 +9,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -32,10 +32,9 @@
 #define CPU_CORE_CHECK_R0
 
 /*
- * CPU Core Options £
- * Check and make sure register R0=0
+ * CPU Core Options ? * Check and make sure register R0=0
  */
-#ifdef DEBUG_COMMON
+#ifdef _DEBUG
 
 /* Check address alignment for store/load instructions */
 #define ADDR_ALIGN_CHECKING
@@ -162,6 +161,39 @@
 
 #define COP1_CONDITION_BIT	0x00800000
 
+
+
+#define MemWrite(QuerAddr, temp, size)                                              \
+        __asm mov         eax,QuerAddr                                              \
+        __asm mov         ecx,QuerAddr                                                    \
+        __asm shr         ecx,SHIFTER2_WRITE                                              \
+        __asm call        dword ptr [ecx*4+gHardwareState.memory_write_fun_eax_only]      \
+        __asm mov         edx, temp                                                       \
+        __asm mov         size ptr [eax],edx
+
+#define MemWrite8(QuerAddr, temp)                                                         \
+        __asm mov         eax,QuerAddr                                                    \
+        __asm mov         ecx,QuerAddr                                                    \
+        __asm xor         eax, 3                                                          \
+        __asm shr         ecx,SHIFTER2_WRITE                                              \
+        __asm call        dword ptr [ecx*4+gHardwareState.memory_write_fun_eax_only]      \
+        __asm mov         dl, temp                                                        \
+        __asm mov         byte ptr [eax],dl
+
+
+#define MemWrite16(QuerAddr, temp)                                                         \
+        __asm mov         eax,QuerAddr                                                    \
+        __asm mov         ecx,QuerAddr                                                    \
+        __asm xor         eax, 2                                                          \
+        __asm shr         ecx,SHIFTER2_WRITE                                              \
+        __asm call        dword ptr [ecx*4+gHardwareState.memory_write_fun_eax_only]      \
+        __asm mov         dx, temp                                                       \
+        __asm mov         word ptr [eax],dx
+
+
+
+
+
 /* little-endian memory operations */
 #define QUER_ADDR					QuerAddr = (uint32) ((_int32) gBASE + (_int32) OFFSET_IMMEDIATE)
 #define LOAD_SBYTE_PARAM(param)		*((_int8 *) TLB_sDWORD_R[(((param) >> 12))] + (((param) & 0x00000FFF) ^ 3))
@@ -176,19 +208,11 @@
 #define pLOAD_UHALF_PARAM(param)	(uint16 *) ((uint8 *) TLB_sDWORD_R[(((param) >> 12))] + (((param) & 0x00000FFF) ^ 2))
 #define pLOAD_SWORD_PARAM(param)	(_int32 *) ((uint8 *) TLB_sDWORD_R[(((param) >> 12))] + (((param) & 0x00000FFF)))
 #define pLOAD_UWORD_PARAM(param)	(uint32 *) ((uint8 *) TLB_sDWORD_R[(((param) >> 12))] + (((param) & 0x00000FFF)))
-#define LOAD_SBYTE_PARAM_2(param)	*((_int8 *) sDWORD_R_2[((uint16) ((param) >> 16))] + ((uint16) (param) ^ 3))
-#define LOAD_UBYTE_PARAM_2(param)	*((uint8 *) sDWORD_R_2[((uint16) ((param) >> 16))] + ((uint16) (param) ^ 3))
-#define LOAD_SHALF_PARAM_2(param) \
-	*(_int16 *) ((uint8 *) sDWORD_R_2[((uint16) ((param) >> 16))] + ((uint16) (param) ^ 2))
-#define LOAD_UHALF_PARAM_2(param) \
-	*(uint16 *) ((uint8 *) sDWORD_R_2[((uint16) ((param) >> 16))] + ((uint16) (param) ^ 2))
-#define LOAD_SWORD_PARAM_2(param)	*(_int32 *) ((uint8 *) sDWORD_R_2[((uint16) ((param) >> 16))] + ((uint16) (param)))
-#define LOAD_UWORD_PARAM_2(param)	*(uint32 *) ((uint8 *) sDWORD_R_2[((uint16) ((param) >> 16))] + ((uint16) (param)))
-#define LOAD_DOUBLE_PARAM_2(param)	*(uint64 *) ((uint8 *) sDWORD_R_2[((uint16) ((param) >> 16))] + ((uint16) (param)))
-#define pLOAD_UBYTE_PARAM_2(param)	((uint8 *) sDWORD_R_2[((uint16) ((param) >> 16))] + ((uint16) (param) ^ 3))
+
 #define BAD_TASK					0
 #define GFX_TASK					1
 #define SND_TASK					2
+#define JPG_TASK					4
 
 #define _GET_RSP_INSTRUCTION_		Instruction = *RSP_InstructionPointer;
 #define _OPCODE_					((unsigned) (Instruction >> 26))
@@ -216,16 +240,15 @@ extern uint32	CPUdelayPC;
 extern uint32	CPUdelay;
 extern uint32	FR_reg_offset;
 
-#define cFD				gHWS_fpr32[SA_FD]
-#define cFS				gHWS_fpr32[RD_FS]
-#define cFT				gHWS_fpr32[RT_FT]
-#define FPU_Reg(reg)	gHWS_fpr32[reg]
+#define cFD				gHWS_fpr32[(SA_FD)<<Experiment]
+#define cFS				gHWS_fpr32[(RD_FS)<<Experiment]
+#define cFT				gHWS_fpr32[(RT_FT)<<Experiment]
 #define cCON31			gHWS_COP1Con[31]
 #define cCONFS			gHWS_COP1Con[RD_FS]
-#define gRS				gHWS_GPR[RS_BASE_FMT]
-#define gBASE			gHWS_GPR[RS_BASE_FMT]
-#define gRD				gHWS_GPR[RD_FS]
-#define gRT				gHWS_GPR[RT_FT]
+#define gRS				gHWS_GPR(RS_BASE_FMT)
+#define gBASE			gHWS_GPR(RS_BASE_FMT)
+#define gRD				gHWS_GPR(RD_FS)
+#define gRT				gHWS_GPR(RT_FT)
 #define c0FD			gHWS_COP0Reg[SA_FD]
 #define c0FS			gHWS_COP0Reg[RD_FS]
 #define c0FT			gHWS_COP0Reg[RT_FT]
@@ -307,9 +330,9 @@ extern uint32	FR_reg_offset;
 	{ \
 		gHWS_pc += 4; \
 	}
-#define INTERPRETIVE_LINK(X)	{ gHWS_GPR[X] = (_int32) (gHWS_pc + 8); }
+#define INTERPRETIVE_LINK(X)	{ gHWS_GPR(X) = (_int32) (gHWS_pc + 8); }
 
-#ifdef DEBUG_COMMON
+#ifdef _DEBUG
 #define CHECK_RS_EQUAL_RA(X, op)	{ if(X == 31) DisplayError("Opcode %s: rs=31 (rs=ra)", op); }
 #else
 #define CHECK_RS_EQUAL_RA(X, op)
@@ -333,8 +356,6 @@ extern uint32	FR_reg_offset;
 
 enum { TLB_LOAD, TLB_STORE, TLB_INST };
 
-/* define DUMMYDIRECTTLBVALUE 0xFFFFFFFF */
-#define DUMMYDIRECTTLBVALUE			0x00000000
 #define VALIDDIRECTTLBVALUE			0x80000000
 #define INVALIDDIRECTTLBVALUE		0x10000000
 #define ISVALIDDIRECTTLBVALUE(val)	(val >= VALIDDIRECTTLBVALUE)
@@ -594,6 +615,8 @@ uint32			TranslateITLBAddress(uint32 address);
 uint32			TranslateTLBAddress(uint32 address, int operation);
 uint32			TranslateTLBAddressForLoad(uint32 address);
 uint32			TranslateTLBAddressForStore(uint32 address);
+
+extern void     RestoreOldRoundingMode(int ctrl);
 
 #define PCLOCKMULT				1
 #define PCLOCKMULTU				1

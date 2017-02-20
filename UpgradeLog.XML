@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="1964.exe">
+</Property><Property Name="Solution File" Value="C:\Documents and Settings\Joel.JOELY\Desktop\1964src [2006-02-06] - C++\src\core\1964.exe.sln">
+</Property><Property Name="Date" Value="Saturday, February 11, 2006">
+</Property><Property Name="Time" Value="15:29 PM">
+</Property></Properties><Event ErrorLevel="0" Project="1964.exe" Source="1964.exe.vcproj" Description="Project upgraded successfully.">
+</Event><Event ErrorLevel="3" Project="1964.exe" Source="1964.exe.vcproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="" Source="1964.exe.sln" Description="Solution converted successfully">
+</Event><Event ErrorLevel="3" Project="" Source="1964.exe.sln" Description="Converted">
+</Event></UpgradeLog>

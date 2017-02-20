@@ -523,7 +523,7 @@ ZEXTERN int ZEXPORT deflateParams OF((z_streamp strm,
    be compressed and flushed. In particular, strm->avail_out must be non-zero.
 
      deflateParams returns Z_OK if success, Z_STREAM_ERROR if the source
-   stream state was inconsistent or if a parameter was invalid, Z_BUF_ERROR
+   stream state was inconsistent or if a parameter was invld, Z_BUF_ERROR
    if strm->avail_out was zero.
 */
 

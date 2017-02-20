@@ -8,7 +8,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -35,7 +35,7 @@ typedef struct
 
 void	Init_iPIF(void);
 void	Close_iPIF(void);
-void	iPifCheck(void);
+void	__cdecl iPifCheck(void);
 
 void	ReadControllerPak(int device, char *cmd);
 void	WriteControllerPak(int device, char *cmd);
@@ -43,7 +43,7 @@ int		ControllerCommand(unsigned __int8 *cmd, int device);
 
 void	ReadEEprom(char *dest, long offset);
 void	WriteEEprom(char *src, long offset);
-int		EEpromCommand(unsigned __int8 *cmd, int device);
+int		EEpromCommand(unsigned __int8 *cmd);
 
 void	LogPIFData(char *data, int input);
 #endif

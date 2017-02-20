@@ -9,7 +9,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -28,28 +28,44 @@ typedef		int			BOOL;
 
 #include "globals.h"	/* loads the rom and handle endian stuff */
 
+#define SHIFTER1_READ	2				/* Shifts off insignificant bits from memory_read_functions array size. The
+										 * significant bits are 0xFFFC0000 (14 significant bits) because Check_LW needs
+										 * to check SPREG_1, which is at 0xA4040000. So we only need 14bit instead of
+										 * 16bit. */
+#define SHIFTER1_WRITE	0				/* Shifts off insignificant bits from memory write functions array size. Set to
+										 * zero because of protected memory in 0x1000 blocks. = All bits are
+										 * significant. */
+
+#define SHIFTER2_READ	(16 + SHIFTER1_READ)
+#define SHIFTER2_WRITE	(12 + SHIFTER1_WRITE)
+
 /*
  -----------------------------------------------------------------------------------------------------------------------
     includes for all Hardware parts
  -----------------------------------------------------------------------------------------------------------------------
  */
+
+#define __pc		  32
+#define __g_Lookup_HI 32
+#define __LO		35
+#define __HI		36
+//if u change this, change NUM_CONSTS.
+
 typedef struct	sHardwareState
 {
-	_int64	GPR[34];				/* General Purpose Registers GPR[32] = lo, GPR[33] = hi */
 	uint32	COP0Reg[32];			/* Coprocessor0 Registers */
 	uint32	fpr32[64];				/* 32bit 64 items needed! */
 	uint32	LLbit;					/* LoadLinked Bit */
-	uint32	pc;						/* program counter */
 	uint32	COP1Con[32];			/* FPControl Registers, only 0 and 31 is used */
-	uint32	COP0Con[64];			/* FPControl Registers */
-	uint32	RememberFprHi[32];
-	uint32	code;					/* The instruction */
+	uint32	COP0Con[64];			
+	uint32 *(*memory_read_functions[0x10000>>SHIFTER1_READ])();
+    uint32 *(*memory_write_fun_eax_only[0x100000>>SHIFTER1_WRITE])();
+	uint8  *sDYN_PC_LOOKUP[0x10000];
 } HardwareState;
 
-extern HardwareState	gHardwareState;
-extern HardwareState	*p_gHardwareState;
 
-#define HARDWARESTATE_SIZE	(sizeof(HardwareState))
+extern HardwareState	gHardwareState;
+
 #define MAXTLB				32
 
 typedef struct
@@ -95,12 +111,8 @@ typedef struct	sMemorySTATE
 } MemoryState;
 
 extern MemoryState	gMemoryState;
-extern MemoryState	*p_gMemoryState;
 #define OP_PARAMS	HardwareState * reg
 #define PASS_PARAMS reg
-
-#define __LO		32
-#define __HI		33
 
 #define _r0			0
 #define _at			1
