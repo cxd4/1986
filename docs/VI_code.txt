@@ -1,0 +1,48 @@
+VI doc by Steb (steb@bigfoot.com) 0.1 - coders edition
+1964 website : http://www.emuhq.com/1964/
+
+-- Registers --
+
+0x4400000          ; VI_STATUS_REG
+0x4400004          ; VI_ORIGIN
+0x4400008          ; VI_WIDTH_REG
+0x440000C          ; VI_INTR_REG
+0x4400010          ; VI_CURRENT_REG
+0x4400014          ; VI_TIMING_REG
+0x4400018          ; VI_V_SYNC_REG
+0x440001C          ; VI_H_SYNC_REG
+0x4400020          ; VI_LEAP_REG
+0x4400024          ; VI_H_START_REG
+0x4400028          ; VI_V_START_REG
+0x440002C          ; VI_V_BURST_REG
+0x4400030          ; VI_X_SCALE_REG
+0x4400034          ; VI_Y_SCALE_REG
+
+-- initialisation --
+
+To initialise a video mode, all you have to do is write a series of values into the VI registers.
+
+i.e : 16 bit 320*240 non antialiased mode (thanks to Anarko here)
+
+VI_CURRENT_REG = 0
+VI_ORIGIN =  0x00100288 (physical address in RDRAM of buffer)
+VI_WIDTH_REG = 320
+VI_TIMING_REG = 0x0404233A
+VI_V_SYNC_REG = 0x00000270
+VI_H_SYNC_REG = 0x00150C69
+VI_LEAP_REG = 0x0C6F0C6E
+VI_H_START_REG = 0x00800300
+VI_V_START_REG = 0x005D0237
+VI_V_BURST_REG = 0x0009026B
+VI_INTR_REG = 0x00000002
+VI_X_SCALE_REG = 0x00000200
+VI_Y_SCALE_REG = 0x01000400
+VI_STATUS_REG = 0x0001324E
+
+other video modes can be either hacked out from existing roms by disassembly, or by using a debugger / emulator to view which values are going in which registers
+
+-- writing pixels --
+
+see VI_emu.txt for more details on pixel decoding
+
+The screen buffer starts from VI_ORIGIN, and ends at VI_ORIGIN + (WIDTH * (WIDTH*0.75)). Any writes within this range will be automatically updated on screen

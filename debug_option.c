@@ -1,0 +1,37 @@
+#include "debug_option.h"
+
+int debug_io=0;
+int debug_io_vi=0;
+int debug_io_sp=0;
+int debug_io_pi=0;
+int debug_io_ai=0;
+int	debug_io_mi=0;
+int debug_io_si=0;
+int debug_io_ri=0;
+int debug_io_dp=0;
+int debug_io_dps=0;
+int debug_io_rdram=0;
+int debug_audio=0;
+int debug_trap=0;
+int debug_si_controller=1;
+int debug_compare_interrupt=0;
+int debug_cpu_counter=0;
+int debug_sp_task=1;
+int debug_si_task=0;
+int debug_sp_dma=0;
+int	debug_si_dma=0;
+int debug_pi_dma=1;
+int debug_si_mempak=1;
+int debug_dump_mempak=0;
+int debug_tlb=1;
+int debug_tlb_detail=0;
+int debug_si_eeprom=1;
+int debug_vi_interrupt=0;
+int debug_ai_interrupt=0;
+int	debug_si_interrupt=0;
+int	debug_pi_interrupt=0;
+int debug_interrupt=0;
+int debug_sram=1;
+int debug_dyna_compiler=0;
+int debug_dyna_execution=0;
+

@@ -3,18 +3,22 @@
 
 typedef struct 
 {
-	int WindowXPos;
-	int WindowYPos;
-	int Maximized;
-	int ClientWidth;
-	int ThreadPriority;
-	char ROMPath[MAX_PATH];
-	char AudioPlugin[80];
-	char InputPlugin[80];
-	char VideoPlugin[80];
+    int WindowXPos;
+    int WindowYPos;
+    int Maximized;
+    int ClientWidth;
+    int ThreadPriority;
+    char ROMPath[MAX_PATH];
+    char AudioPlugin[80];
+    char InputPlugin[80];
+    char VideoPlugin[80];
 }  RegSettingsTyp; 
 
 RegSettingsTyp gRegSettings;
+
+
+extern void ReadConfiguration(void);
+extern void WriteConfiguration(void);
 
 
 #endif

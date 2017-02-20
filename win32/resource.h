@@ -44,6 +44,53 @@
 #define IDM_1280_1024                   133
 #define IDM_PLUGINS                     134
 #define ID_CHECKWEB                     135
+#define ID_AUD_CONFIG                   140
+#define ID_DI_CONFIG                    141
+#define ID_VIDEO_CONFIG                 142
+#define ID_ROM_PAUSE                    143
+#define ID_OPTIONS_DISABLESOUND         145
+#define ID_DISABLESOUND                 145
+#define ID_INTERPRETER                  147
+#define ID_STATICCOMPILER               148
+#define ID_DYNAMICCOMPILER              149
+#define ID_CLOSEROM                     150
+#define IDM_1600_1200                   153
+#define IDM_FULLSCREEN                  154
+#define IDM_1920_1440                   155
+#define ID_DEBUGTLB                     156
+#define ID_DEBUGAUDIOTASK               157
+#define ID_DEBUGSPTASK                  158
+#define ID_DEBUGCOMPAREINTERRUPTS       159
+#define ID_DEBUGIOSI                    160
+#define ID_DEBUGIOSP                    161
+#define ID_DEBUGIOVI                    162
+#define ID_DEBUGIOAI                    163
+#define ID_DEBUGIORI                    164
+#define ID_DEBUGIOPI                    165
+#define ID_DEBUGIODP                    166
+#define ID_DEBUGIODPS                   167
+#define ID_DEBUGIORDRAM                 168
+#define ID_DEBUGSITASK                  169
+#define ID_DEBUGPIDMA                   170
+#define ID_DEBUGMEMPAK                  171
+#define ID_DEBUGEEPROM                  172
+#define ID_DEBUG_CONTROLLER             173
+#define ID_DEBUGIOMI                    174
+#define ID_DEBUGTRAP                    175
+#define ID_DEBUGSIDMA                   176
+#define ID_DEBUGSPDMA                   177
+#define ID_DEBUGIO                      178
+#define ID_INTERRUPTDEBUGGING           180
+#define ID_DEBUGVIINTERRUPTS            181
+#define ID_DEBUGPIINTERRUPTS            182
+#define ID_DEBUGAIINTERRUPTS            183
+#define ID_DEBUGSIINTERRUPTS            184
+#define ID_DEBUGTLBINDETAIL             185
+#define ID_DEBUGCPUCOUNTER              186
+#define ID_DEBUG_SRAM                   187
+#define ID_DEBUGDYNA                    194
+#define ID_DEBUGDYNAEXECUTION           196
+#define ID_4KEEPROM                     197
 #define IDM_UNDO                        200
 #define IDM_CUT                         201
 #define IDM_COPY                        202
@@ -326,6 +373,7 @@
 #define IDC_UPDATE                      1379
 #define IDC_CHECK1                      1380
 #define IDC_VEC181                      1381
+#define IDC_CHECK_LOGGING               1381
 #define IDC_VEC182                      1382
 #define IDC_VEC183                      1383
 #define IDC_VIEWINTEL                   1383
@@ -375,11 +423,19 @@
 #define IDC_VEC213                      1413
 #define IDC_VEC214                      1414
 #define IDC_VEC215                      1415
+#define IDC_CLEAR_CODELIST              1415
 #define IDC_VEC216                      1416
+#define IDC_DEASSEMBLE                  1416
 #define IDC_VEC217                      1417
+#define IDC_DASM_NEXTPAGE               1417
 #define IDC_VEC218                      1418
+#define IDC_DASM_PREVPAGE               1418
+#define IDC_REGS_FLUSH                  1419
+#define IDC_PAUSE_CODELIST              1420
 #define IDC_VEC221                      1421
+#define IDC_RUN_CODELIST                1421
 #define IDC_VEC222                      1422
+#define IDC_PRINT_TLB                   1422
 #define IDC_VEC223                      1423
 #define IDC_VEC224                      1424
 #define IDC_VEC225                      1425
@@ -478,9 +534,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        136
-#define _APS_NEXT_COMMAND_VALUE         136
-#define _APS_NEXT_CONTROL_VALUE         1413
+#define _APS_NEXT_RESOURCE_VALUE        139
+#define _APS_NEXT_COMMAND_VALUE         198
+#define _APS_NEXT_CONTROL_VALUE         1423
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

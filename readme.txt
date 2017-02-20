@@ -1,7 +1,7 @@
  ____________________________________________________________
 |                                                            |
 | 1964: N64 Emulator Project with GNU General Public License |
-| Copyright (c) 1999  Joel Middendorf - <schibo@emuhq.com>   |
+| Copyright (c) 2001  Joel Middendorf - <schibo@emuhq.com>   |
 |                                                            |
 | This project is a direct documentation-to-code translation |
 | of the n64toolkit by my friend anarko and RSP info has     |
@@ -29,6 +29,34 @@ I: 1964 Version History
 
  ___________________________
 |                           |
+| v0.6.1 (May 22, 2001)     |
+|___________________________|
+ -- Mempack, Eeprom support for save games. Default is 2K eeprom (Rice)
+ -- Basic self-mod code detection - improves compatibility in the dynarec (Rice)
+ -- 1964 OpenGL Full-screen support. Change the resolution from your Windows Display Properties 
+    control panel for higher full-screen resolutions in 1964. Full-screen resolution will be 
+    the same as your Windows resolution.
+ -- Improved support for Azimer's audio plugin.
+
+ ___________________________
+|                           |
+| v0.6.0 (April 28, 2001)   |
+|___________________________|
+ -- Rice joins 1964.
+ -- Compatibility and speed are much improved.
+ -- Gerrit's latest OpenGL graphics ported to windows (1964ogl.dll).
+ -- Choose which core to run under the CPU Menu item.
+
+ ___________________________
+|                           |
+| v0.5.1 (October 15, 2000) |
+|___________________________|
+ -- Started register caching for more speed. Still much more to do.
+ -- Some more axes settings repairs for jostick controllers.
+ -- Repairs to various user interface problems. 
+
+ ___________________________
+|                           |
 | v0.5.0 (July 04, 2000)    |
 |___________________________|
   -- Plugins are now fully configurable from the GUI.
@@ -50,9 +78,6 @@ I: 1964 Version History
 
   -- A bonus game! CoinSweeperGL by Emul8or included. See coinsweep.txt in bonus subfolder 
      for more info.
-
-     
-
 
  ___________________________
 |                           |
@@ -783,8 +808,8 @@ _____________________________________________________________________________
      | Core Dev  |     |  DirectX  |
      |___________|     |___________|
          schibo            NooTe
-         steb
-
+         Rice
+	 steb
       __________      
      |          |     
      |  OpenGL  |     

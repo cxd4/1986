@@ -1,7 +1,7 @@
 /*______________________________________________________________________________
  |                                                                              |
  |  1964 - Emulator for Nintendo 64 console system                              |
- |  Copyright (C) 2000  Joel Middendorf  schibo@emuhq.com                       |
+ |  Copyright (C) 2001  Joel Middendorf  schibo@emuhq.com                       |
  |                                                                              |
  |  This program is free software; you can redistribute it and/or               |
  |  modify it under the terms of the GNU General Public License                 |
@@ -25,41 +25,44 @@
 
 /*
 The project is a direct documentation-to-code translation of the n64toolkit 
-by my friend anarko and RSP info has been provided by zilmar :). Most source
+by my friend anarko and RSP info has been provided by zilmar. Most source
 code comments are taken directly from anarko's n64toolkit with consent and are 
 the property of anarko.
 */
 
 #include "resource.h"
 
+/* Functions in the wingui.c */
 int APIENTRY WinMain( HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lpszCmdLine, int nCmdShow);
-
 HWND InitWin98UI(HANDLE hInstance, int nCmdShow);
-
 LRESULT APIENTRY MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT APIENTRY About(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
+void __cdecl DisplayError (char * Message, ...);
+BOOL WinLoadRom();
+void Pause();
+void Kill();
+void Play();
+void Stop();
+void OpenROM();
+void CloseROM();
+void GetPluginDir(char* Directory);
+extern int LoadGNUDistConditions(char* ConditionsBuf);
+LRESULT APIENTRY ConditionsDialog(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
 
-#define MAXFILENAME 256 	     /* maximum length of file pathname      */
+#define MAXFILENAME 256          /* maximum length of file pathname      */
+
+extern BOOL Rom_Loaded;
 
 char szWindowTitle[80];
-
-void r4300i_Init();
-void ReadRomData(char* RomPath);
-void __cdecl DisplayError (char * Message, ...);
-
-BOOL Rom_Loaded;
-BOOL WinLoadRom();
 
 /* the legal stuff */
 unsigned char MainDisclaimer[320];
 unsigned char WarrantyPart1[700];
 unsigned char WarrantyPart2[700];
 unsigned char DistConditions[800]; /* GNU Redistribution Conditions */
-extern int LoadGNUDistConditions(char* ConditionsBuf);
-LRESULT APIENTRY ConditionsDialog(HWND hDlg, unsigned message, WORD wParam, LONG lParam);
 
 
 HINSTANCE hInst;
-HANDLE hAccTable;								/* handle to accelerator table		*/
-HWND hwnd;                                      /* handle to main window			*/
+HANDLE hAccTable;                               /* handle to accelerator table      */
+HWND hwnd;                                      /* handle to main window            */
 HMENU hMenu;

@@ -1,7 +1,7 @@
 /*______________________________________________________________________________
  |                                                                              |
- |  1964 - Macintosh Global Variables                                           |
- |  Copyright (C) 2000 Gerrit Goossen, <gerrit@aol.com>                         |
+ |  1964 - Globals                                                              |
+ |  Copyright (C) 2001 Joel Middendorf, <schibo@emuhq.com>                      |
  |                                                                              |
  |  This program is free software; you can redistribute it and/or               |
  |  modify it under the terms of the GNU General Public License                 |
@@ -18,70 +18,64 @@
  |  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
  |                                                                              |
  |  To contact the author:                                                      |
- |  email      : gerrit@aol.com                                                 |
+ |  email      : schibo@emuhq.com                                               |
  |  paper mail :                                                                |
  |______________________________________________________________________________|
 */
 
 #include <windows.h>
 #include "globals.h"
+#include "r4300i.h"
 #include "plugins.h"
+#include "hardware.h"
+
+char* CURRENT1964VERSION = "1964_052";
+
+CONTROL Controls[4];
+
+
+HardwareState gHardwareState;
+HardwareState gHardwareState2;
 
 uint8* sDWORD_R[0xFFFF];
-uint8* sDYN_PC_LOOKUP[0xFFFF];
-
-uint32 RESET_CPU;
-
-
-
-int DebuggerEnabled; /* Flag to toggle debug printing on/off */
-uint32 pc;               /* program counter. (Keeps addresses.) */
-
+uint8* sDYN_PC_LOOKUP[0xFFFF];		// This array is the Dynamic Compile Lookup table
 
 uint32* LocationJumpedFrom;
-uint32* InstructionPointer;
+uint32* pcptr;
 uint32 KEEP_RECOMPILING;
 uint8* Block;
 
+uint32  CPUdelayPC;			// the saved Program Counter at CPU load/branch delay mode
+uint32  CPUdelay;			// Describer if the CPU is in load/branch delay mode
 
-uint32	CPUdelayPC;
-uint32	CPUdelay;
+int		whichcore;			// Which compiler to use in emulator
 
-
-char AppPath[PATH_LEN]; //used for storing application path
-
-_int64 GPR[32];
-uint32 COP0Reg[32];
-uint32 COP1Reg[64]; /* FPU General Registers */
-uint32 COP1Con[64]; /* FPU Control Registers */
-_int64 HI;         /* MultHI reg */
-_int64 LO;         /* MultLO reg */
-uint32 LLbit;      /* LLbit for load link instructions */
+tlb_struct      TLB[MAXTLB];
+tlb_struct		ITLB[MAXITLB];
+tlb_struct		DTLB[MAXDTLB];
 
 
-tlb_struct		TLB[MAXTLB];
-
-uint32 DPC[8];
-uint32 DPS[4];
-uint32 MI[4];
-uint32 VI[14];
-uint32 AI[6];
-uint32 PI[13];
-uint32 RI[8];
-uint32 SI[7];
-uint32 RDREG[262144];
-uint32 SP_REG[131074];
-uint32 DynaSP_REG[131074];
-uint32 C2A1[512];
-uint32 C1A1[512];
-uint32 C2A2[512];
-uint32 GIO_REG[513];
-uint8 DynaRDRAM[0x00400000];
-uint8 RDRAM[0x00400000];
-uint8  PIF[2048];
 uint8* ROM_Image;
 
-
 uint32 gAllocationLength;
+uint8 HeaderDllPass[0x40];
+
+t_EmuData EmuData;
+
+_u8 EEprom[EEPROM_SIZE_4KB];		// 4KB
+//_u8 EEprom[EEPROM_SIZE];		// 2KB
+int eepromsize= EEPROM_SIZE;
+
+_u8 SRam[SRAM_SIZE];			//0x8000 Bytes
+_u8 FlashRAM[FLASHRAM_SIZE];	//0x20000 Bytes
+
 
 GFX_INFO Gfx_Info;
+AUDIO_INFO Audio_Info;
+int DebuggerEnabled;			// Flag to toggle debug printing on/off
+BOOL Rom_Loaded;
+
+t_rominfo rominfo;				// Rom information
+uint8 *dyna_CodeTable;
+
+char  generalmessage[256];				// general purpose buffer to display messages

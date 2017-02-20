@@ -33,42 +33,103 @@ BEGIN
     POPUP "&File"
     BEGIN
         MENUITEM "&Load ROM...\tCtrl + O",      ID_OPENROM
-        MENUITEM SEPARATOR
-        MENUITEM "Check Web Site for Updates...", ID_CHECKWEB
+        MENUITEM "Close Rom",                   ID_CLOSEROM
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_EXIT
     END
-    POPUP "&D'buggin"
+    POPUP "CPU"
     BEGIN
-        MENUITEM "&Open Debugger",              ID_DEBUGGER_OPEN
-        MENUITEM "&Close Debugger",             ID_DEBUGGER_CLOSE
+        MENUITEM "Pla&y\tF2",                   ID_ROM_START
+        MENUITEM "&Pause\tF3",                  ID_ROM_PAUSE
+        MENUITEM "&Stop\tF4",                   ID_ROM_STOP
         MENUITEM SEPARATOR
-        MENUITEM "Insert Breakpoint",           ID_RUNTO
+        POPUP "Select Compiler"
+        BEGIN
+            MENUITEM "Interpreter",                 ID_INTERPRETER
+            MENUITEM "Dynamic Compiler",            ID_DYNAMICCOMPILER
+            , CHECKED
+        END
     END
-    POPUP "&Rom"
+    POPUP "&Plugins"
     BEGIN
-        MENUITEM "&Play",                       ID_ROM_START
-        MENUITEM "&Pause/Stop",                 ID_ROM_STOP
+        MENUITEM "Swit&ch Plugins...",          IDM_PLUGINS
         MENUITEM SEPARATOR
-        MENUITEM "&Reset",                      ID_ROM_RESET, GRAYED
+        MENUITEM "&Video Options...",           ID_VIDEO_CONFIG
+        MENUITEM "&Audio Options...",           ID_AUD_CONFIG
+        MENUITEM "&Input Options...",           ID_DI_CONFIG
+        MENUITEM SEPARATOR
+        MENUITEM "Disable Sound",               ID_DISABLESOUND, GRAYED
+        MENUITEM "4K EEPROM (Default is 2K)",   ID_4KEEPROM
     END
-    POPUP "&Options"
+    POPUP "Debug"
     BEGIN
-        MENUITEM "Plugins...",                  IDM_PLUGINS
-        POPUP "&Resolution"
+        MENUITEM "Close Debug Windows",         ID_DEBUGGER_CLOSE
+        MENUITEM "Open Debug Windows",          ID_DEBUGGER_OPEN
+        MENUITEM SEPARATOR
+        MENUITEM "Debug Audio Task",            ID_DEBUGAUDIOTASK
+        MENUITEM "Debug SP Task",               ID_DEBUGSPTASK, CHECKED
+        MENUITEM "Debug SI Task",               ID_DEBUGSITASK
+        MENUITEM SEPARATOR
+        MENUITEM "Debug PI DMA",                ID_DEBUGPIDMA, CHECKED
+        MENUITEM "Debug SI DMA",                ID_DEBUGSIDMA
+        MENUITEM "Debug SP DMA",                ID_DEBUGSPDMA
+        MENUITEM SEPARATOR
+        MENUITEM "Debug Mempak",                ID_DEBUGMEMPAK, CHECKED
+        MENUITEM "Debug EEPROM",                ID_DEBUGEEPROM, CHECKED
+        MENUITEM "Debug Controller",            ID_DEBUG_CONTROLLER, CHECKED
+        MENUITEM "Debug SRAM",                  ID_DEBUG_SRAM, CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "Debug TLB",                   ID_DEBUGTLB, CHECKED
+        MENUITEM "Debug TLB in detail",         ID_DEBUGTLBINDETAIL
+        MENUITEM "Debug CPU Counter",           ID_DEBUGCPUCOUNTER
+        MENUITEM "Debug Dyna Compiler",         ID_DEBUGDYNA
+        MENUITEM "Debug Dyna Execution",        ID_DEBUGDYNAEXECUTION
+        MENUITEM SEPARATOR
+        MENUITEM "Debug IO Operation",          ID_DEBUGIO
+        POPUP "Debug IO operations"
+        BEGIN
+            MENUITEM "Debug MI IO",                 ID_DEBUGIOMI
+            MENUITEM "Debug SP IO",                 ID_DEBUGIOSP
+            MENUITEM "Debug VI IO",                 ID_DEBUGIOVI
+            MENUITEM "Debug AI IO",                 ID_DEBUGIOAI
+            MENUITEM "Debug RI IO",                 ID_DEBUGIORI
+            MENUITEM "Debug SI IO",                 ID_DEBUGIOSI
+            MENUITEM "Debug PI IO",                 ID_DEBUGIOPI
+            MENUITEM "Debug DP IO",                 ID_DEBUGIODP
+            MENUITEM "Debug DPS IO",                ID_DEBUGIODPS
+            MENUITEM "Debug RDRAM IO",              ID_DEBUGIORDRAM
+        END
+        POPUP "Debug Interrupts"
+        BEGIN
+            MENUITEM "Interrupt Debugging",         ID_INTERRUPTDEBUGGING
+            MENUITEM "Debug Compare Interrupts",    ID_DEBUGCOMPAREINTERRUPTS
+
+            MENUITEM "Debug AI Interrupts",         ID_DEBUGAIINTERRUPTS
+            MENUITEM "Debug VI Interrupts",         ID_DEBUGVIINTERRUPTS
+            MENUITEM "Debug PI Interrupts",         ID_DEBUGPIINTERRUPTS
+            MENUITEM "Debug SI Interrupts",         ID_DEBUGSIINTERRUPTS
+        END
+    END
+    POPUP "Window"
+    BEGIN
+        POPUP "1964 Open&GL Resolution"
         BEGIN
             MENUITEM "320 x 240",                   IDM_320_240
             MENUITEM "640 x 480",                   IDM_640_480
             MENUITEM "800 x 600",                   IDM_800_600
             MENUITEM "1024 x 768",                  IDM_1024_768
             MENUITEM "1280 x 1024",                 IDM_1280_1024
+            MENUITEM "1600 x 1200",                 IDM_1600_1200
+            MENUITEM "1920 x 1440",                 IDM_1920_1440
         END
+        MENUITEM "Full Screen!\tAlt+Enter",     IDM_FULLSCREEN
     END
     POPUP "&Help"
     BEGIN
         MENUITEM "About Warranty...",           ID_ABOUT_WARRANTY
         MENUITEM "Redistribution Conditions...", ID_REDISTRIBUTE
         MENUITEM SEPARATOR
+        MENUITEM "Check &Web Site for Updates...", ID_CHECKWEB
         MENUITEM "&About 1964...",              ID_ABOUT
     END
 END
@@ -120,18 +181,18 @@ END
 ABOUTBOX DIALOGEX 0, 0, 262, 226
 STYLE WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 EXSTYLE WS_EX_ACCEPTFILES | WS_EX_TOOLWINDOW
-CAPTION "About Dat Messed 1964"
-FONT 8, "Verdana"
+CAPTION "About 1964"
+FONT 8, "Verdana", 0, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "Yee!",IDOK,93,206,75,14
-    LTEXT           "Greets!: anarko, Angelo, Azimer, ContraSF, Cricket, _Demo_, duddie, Emul8or, epsilon, F|RES, FlyingNR6, hartec, Houe, hWnd, icepir8, LaC, Lemmy, Lionel, Niki Waibel, Phrodide, rcp, RealityMan, Scav, slacka, SpectRe, Spikez, subice, TNSe, zilmar",
+    DEFPUSHBUTTON   "Okie",IDOK,93,206,75,14
+    LTEXT           "Greets!: anarko, Angelo, Azimer, ContraSF, Cricket, _Demo_, duddie, Emul8or, epsilon, F|RES, FlyingNR6, hartec, Houe, hWnd, icepir8, LaC, Lemmy, Lionel, Niki Waibel, Phrodide, rcp, RealityMan, Scav, slacka, SpectRe, Spikez, subice, StrmnNrmn, TNSe, zilmar",
                     IDC_STATIC,8,26,246,43,SS_SUNKEN,WS_EX_CLIENTEDGE | 
                     WS_EX_STATICEDGE
     CTEXT           "http://www.emuhq.com/1964\nHosted by emuhq.com",
                     IDC_STATIC,7,183,247,18
-    CTEXT           "1964 Version 0.5.0 \nCopyright (c) 2000 Joel Middendorf <schibo@emuhq.com>",
+    CTEXT           "1964 Version 0.6.1 \nCopyright (c) 2001 Joel Middendorf <schibo@emuhq.com>",
                     IDC_STATIC,7,4,246,16,0,WS_EX_TRANSPARENT
-    LTEXT           "1964 is not affiliated and does not claim affiliation with any company in any way. Any named company, or its logo/trademarks are the property of the respective company or companies.",
+    LTEXT           "1964 is not affiliated and does not claim affiliation with any company in any way. All logos/trademarks are the property of their respective owner(s).",
                     IDC_STATIC,9,148,244,32,SS_SUNKEN
     CONTROL         "Project Team:\nschibo - emulator core (dynarec, interpreter)\nsteb - audio, DI keyboard support, and so much more\ngerrit - OpenGL plugin (http://www.sixtyforce.com)\nNooTe - Direct3D plugin, DI Joystick/Adaptoid support, zip support",
                     IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,8,73,
@@ -507,12 +568,17 @@ BEGIN
     EDITTEXT        IDC_FPR31,363,187,89,12,ES_AUTOHSCROLL | ES_READONLY | 
                     WS_DISABLED
     CONTROL         "Enable Debugger (slower)",IDC_CHECK1,"Button",
-                    BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,381,238,72,
-                    24
+                    BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,382,233,72,
+                    16
     PUSHBUTTON      "Trigger SP Interrupt",IDC_TRIGGER_SP_INTERRUPT,237,210,
                     68,15
     PUSHBUTTON      "Process Dlist",IDC_PROCESS_DLIST,311,210,69,15
     PUSHBUTTON      "Flush GL",IDC_GLFLUSH,388,210,65,14
+    PUSHBUTTON      "BreakPoint...",ID_RUNTO,393,273,55,17
+    CONTROL         "Enable Logging",IDC_CHECK_LOGGING,"Button",
+                    BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,382,256,72,
+                    12
+    PUSHBUTTON      "Flush",IDC_REGS_FLUSH,195,210,37,15
 END
 #endif
 
@@ -545,17 +611,21 @@ END
 
 #if defined(APSTUDIO_INVOKED) || defined(_DEBUG)
 #if defined(APSTUDIO_INVOKED)
-CODELIST$(_DEBUG) DIALOGEX 0, 0, 304, 409
+CODELIST$(_DEBUG) DIALOGEX 0, 0, 368, 411
 #else
-CODELIST DIALOGEX 0, 0, 304, 409
+CODELIST DIALOGEX 0, 0, 368, 411
 #endif
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
 EXSTYLE WS_EX_TOOLWINDOW
 CAPTION "CodeList"
 FONT 8, "Courier", 0, 0, 0x1
 BEGIN
-    LISTBOX         IDC_CODELIST,44,7,212,389,NOT LBS_NOTIFY | 
+    LISTBOX         IDC_CODELIST,15,7,290,389,NOT LBS_NOTIFY | 
                     LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Clear",IDC_CLEAR_CODELIST,306,355,25,14
+    PUSHBUTTON      "Pause",IDC_PAUSE_CODELIST,306,337,25,14
+    PUSHBUTTON      "Run",IDC_RUN_CODELIST,306,316,17,14
+    PUSHBUTTON      "TLB",IDC_PRINT_TLB,306,294,17,14
 END
 #endif
 
@@ -955,9 +1025,9 @@ END
 
 #if defined(APSTUDIO_INVOKED) || defined(_DEBUG)
 #if defined(APSTUDIO_INVOKED)
-MEMORY$(_DEBUG) DIALOGEX 0, 0, 341, 292
+MEMORY$(_DEBUG) DIALOGEX 0, 0, 340, 337
 #else
-MEMORY DIALOGEX 0, 0, 341, 292
+MEMORY DIALOGEX 0, 0, 340, 337
 #endif
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOOLWINDOW
@@ -977,13 +1047,16 @@ BEGIN
                     BS_PUSHLIKE,290,9,40,14,WS_EX_DLGMODALFRAME | 
                     WS_EX_CLIENTEDGE
     GROUPBOX        "Endian Viewer",IDC_STATIC,239,0,97,26
+    PUSHBUTTON      "Disassemble",IDC_DEASSEMBLE,72,308,50,14
+    PUSHBUTTON      "Next Page",IDC_DASM_NEXTPAGE,136,308,50,14
+    PUSHBUTTON      "Previous Page",IDC_DASM_PREVPAGE,195,308,57,14
 END
 #endif
 
 PLUGINS DIALOGEX 0, 0, 214, 268
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Configure Plugins"
-FONT 8, "MS Sans Serif"
+CAPTION "Plugins"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,105,247,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,157,247,50,14
@@ -999,7 +1072,7 @@ BEGIN
                     WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_COMBO_INPUT,15,102,183,50,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COMBO_AUDIO,15,177,183,12,CBS_DROPDOWNLIST | 
+    COMBOBOX        IDC_COMBO_AUDIO,15,177,183,50,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Configure",IDC_AUD_CONFIG,103,201,46,18,0,
                     WS_EX_STATICEDGE
@@ -1029,8 +1102,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,5,0,0
- PRODUCTVERSION 0,5,0,0
+ FILEVERSION 0,5,2,0
+ PRODUCTVERSION 0,5,2,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -1048,14 +1121,14 @@ BEGIN
             VALUE "Comments", "Emulator for the N64 Console System\0"
             VALUE "CompanyName", " \0"
             VALUE "FileDescription", "1964\0"
-            VALUE "FileVersion", "0, 5, 0, 0\0"
+            VALUE "FileVersion", "0, 6, 1, 0\0"
             VALUE "InternalName", "1964\0"
-            VALUE "LegalCopyright", "Copyright © 2000 Joel Middendorf\0"
+            VALUE "LegalCopyright", "Copyright © 2001 Joel Middendorf\0"
             VALUE "LegalTrademarks", "All Trademarks are the rights and property of their respective owners.\0"
             VALUE "OriginalFilename", "1964.exe\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "  1964\0"
-            VALUE "ProductVersion", "0, 5, 0, 0\0"
+            VALUE "ProductVersion", "0, 6, 1, 0\0"
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -1091,9 +1164,14 @@ BEGIN
         BOTTOMMARGIN, 220
     END
 
+    "CODELIST$(_DEBUG)", DIALOG
+    BEGIN
+        RIGHTMARGIN, 357
+    END
+
     "MEMORY$(_DEBUG)", DIALOG
     BEGIN
-        BOTTOMMARGIN, 113
+        BOTTOMMARGIN, 286
     END
 
     "PLUGINS", DIALOG
@@ -1116,7 +1194,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     1                       "11. Because the program is licensed free of charge, there is no warranty\nfor the program, to the extent permitted by applicable law.  Except when\notherwise stated in writing the copyright holders and/or other parties\nprovide the program ""as is"" without warranty of any kind, either expressed\nor implied, including, but not limited to, the implied warranties of\nmerchantability and fitness for a particular purpose.The entire risk as\nto the quality and performance of the program is with you.  Should the\nprogram prove defective, you assume the cost of all necessary servicing,\nrepair or correction."
     2                       "12. In no event unless required by applicable law or agreed to in writing\nwill any copyright holder, or any other party who may modify and/or\nredistribute the program as permitted above, be liable to you for damages,\nincluding any general, special, incidental or consequential damages arising\nout of the use or inability to use the program (including but not limited\nto loss of data or data being rendered inaccurate or losses sustained by\nyou or third parties or a failure of the program to operate with any other\nprograms), even if such holder or other party has been advised of the\npossibility of such damages."
-    4                       "1964 version 0.5.0, Copyright (C) 2000 Joel Middendorf  schibo@emuhq.com\n\n1964 comes with ABSOLUTELY NO WARRANTY; for details refer to 'Help...About Warranty'.  This is free software, and you are welcome to redistribute it under certain conditions; refer to 'Help...Redistribution Conditions' for details."
+    4                       "1964 version 0.6.1, Copyright (C) 2001 Joel Middendorf  schibo@emuhq.com\n\n1964 comes with ABSOLUTELY NO WARRANTY; for details refer to 'Help...About Warranty'.  This is free software, and you are welcome to redistribute it under certain conditions; refer to 'Help...Redistribution Conditions' for details."
 END
 
 STRINGTABLE DISCARDABLE 

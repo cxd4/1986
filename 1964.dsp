@@ -23,8 +23,8 @@ CFG=1964 - Win32 Debug
 
 # Begin Project
 # PROP AllowPerConfigDependencies 0
-# PROP Scc_ProjName ""
-# PROP Scc_LocalPath ""
+# PROP Scc_ProjName ""$/1964", RDAAAAAA"
+# PROP Scc_LocalPath "."
 CPP=cl.exe
 MTL=midl.exe
 RSC=rc.exe
@@ -39,12 +39,13 @@ RSC=rc.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
-# PROP Output_Dir "../make/obj/dbg_1964"
-# PROP Intermediate_Dir "../make/obj/dbg_1964"
+# PROP Output_Dir "obj/Debug"
+# PROP Intermediate_Dir "obj/Debug"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /GX /ZI /I ".." /D "WIN32" /D "WINDEBUG_1964" /D "_WINDOWS" /D "_MBCS" /D "DEBUG_COMMON" /D "_DEBUG" /D "VIDEO" /Fr /YX /FD /c
-# ADD CPP /nologo /Gr /MTd /ZI /I ".." /D "DYNAREC" /D "DYN_DEBUG" /D "DEBUG_COMMON" /D "WIN32" /D "WINDEBUG_1964" /D "_WINDOWS" /D "_MBCS" /D "_DEBUG" /D "VIDEO" /D "ZIP_SUPPORT" /D "HLE" /D "GRAPHICS_TRACER" /Fr /YX /FD /c
+# ADD CPP /nologo /Gr /MTd /W3 /ZI /I ".." /D "DYNAREC" /D "DYN_DEBUG" /D "DEBUG_COMMON" /D "WIN32" /D "WINDEBUG_1964" /D "_WINDOWS" /D "_MBCS" /D "_DEBUG" /D "VIDEO" /D "ZIP_SUPPORT" /D "HLE" /D "GRAPHICS_TRACER" /D "ZLIB_DLL" /Fr /YX /FD /c
+# SUBTRACT CPP /WX
 # ADD BASE MTL /nologo /D "NDEBUG" /win32
 # SUBTRACT BASE MTL /mktyplib203
 # ADD MTL /nologo /D "NDEBUG" /win32
@@ -57,7 +58,7 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 dxguid.lib dinput.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib /nologo /subsystem:windows /incremental:yes /debug /machine:I386 /out:"../Debug/dbg_1964.exe"
 # SUBTRACT BASE LINK32 /pdb:none
-# ADD LINK32 dxguid.lib dinput.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib opengl32.lib /nologo /subsystem:windows /incremental:yes /debug /machine:I386 /out:"../make/Debug/1964dbug.exe"
+# ADD LINK32 dxguid.lib dinput.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib opengl32.lib zlib/zlib.lib /nologo /subsystem:windows /incremental:yes /debug /machine:I386 /out:"../Release/1964dbug.exe"
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "1964 - Win32 Release"
@@ -70,13 +71,13 @@ LINK32=link.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
-# PROP Output_Dir "../make/obj/obj_1964"
-# PROP Intermediate_Dir "../make/obj/obj_1964"
+# PROP Output_Dir "obj/Release"
+# PROP Intermediate_Dir "obj/Release"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /G6 /Gr /W3 /Zi /O2 /Ob2 /I ".." /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /FAs /Fr /FD /c
 # SUBTRACT BASE CPP /YX
-# ADD CPP /nologo /G6 /Gr /MT /W3 /Zi /O1 /Ob0 /I ".." /D "DYNAREC" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "WIN32_LEAN_AND_MEAN" /D "NOSOUND" /FAs /Fr /FD /c
+# ADD CPP /nologo /G6 /Gr /MT /W3 /Zi /O2 /Ob0 /I ".." /D "DYNAREC" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "ZLIB_DLL" /D "WIN32_LEAN_AND_MEAN" /FAs /Fr /FD /c
 # SUBTRACT CPP /YX
 # ADD BASE MTL /nologo /D "NDEBUG" /win32
 # SUBTRACT BASE MTL /mktyplib203
@@ -90,8 +91,8 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 dxguid.lib dinput.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib oleaut32.lib ole32.lib uuid.lib /nologo /subsystem:windows /pdb:none /machine:I386 /out:"../Release/1964.exe"
 # SUBTRACT BASE LINK32 /profile /debug /nodefaultlib
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib comdlg32.lib shell32.lib advapi32.lib /nologo /subsystem:windows /map /machine:I386 /out:"../make/Release/1964.exe"
-# SUBTRACT LINK32 /profile /debug /nodefaultlib
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib comdlg32.lib shell32.lib advapi32.lib zlib\zlib.lib /nologo /subsystem:windows /debug /machine:I386 /out:"../Release/1964.exe"
+# SUBTRACT LINK32 /profile /map /nodefaultlib
 
 !ENDIF 
 
@@ -102,411 +103,310 @@ LINK32=link.exe
 # Begin Group "1964"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
-# Begin Group "Interpreter"
-
-# PROP Default_Filter ""
-# Begin Group "Header Files Interpreter"
+# Begin Group "r4300i"
 
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=..\r4300i.h
-# End Source File
-# End Group
-# Begin Source File
-
-SOURCE=..\FPU.c
-
-!IF  "$(CFG)" == "1964 - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "1964 - Win32 Release"
-
-# SUBTRACT CPP /D "DYNAREC"
-
-!ENDIF 
-
+SOURCE=.\DebugR4300i.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\i_chips.c
-
-!IF  "$(CFG)" == "1964 - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "1964 - Win32 Release"
-
-# SUBTRACT CPP /D "DYNAREC"
-
-!ENDIF 
-
+SOURCE=.\dma.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\r4300i.c
-
-!IF  "$(CFG)" == "1964 - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "1964 - Win32 Release"
-
-# SUBTRACT CPP /D "DYNAREC"
-
-!ENDIF 
-
+SOURCE=.\dma.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\tlb.c
-
-!IF  "$(CFG)" == "1964 - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "1964 - Win32 Release"
-
-# SUBTRACT CPP /D "DYNAREC"
-
-!ENDIF 
-
-# End Source File
-# End Group
-# Begin Group "Dynarec"
-
-# PROP Default_Filter ""
-# Begin Group "Header Files Dynarec"
-
-# PROP Default_Filter ""
-# Begin Source File
-
-SOURCE=..\dynarec\dynarec.h
-# End Source File
-# End Group
-# Begin Source File
-
-SOURCE=..\dynarec\dynarec.c
-
-!IF  "$(CFG)" == "1964 - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "1964 - Win32 Release"
-
-# SUBTRACT CPP /D "DYNAREC"
-
-!ENDIF 
-
+SOURCE=.\FPU.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\dynarec\dynarec_chips.c
+SOURCE=.\i_chips.c
+# End Source File
+# Begin Source File
 
-!IF  "$(CFG)" == "1964 - Win32 Debug"
+SOURCE=.\interrupt.c
+# End Source File
+# Begin Source File
 
-!ELSEIF  "$(CFG)" == "1964 - Win32 Release"
+SOURCE=.\interrupt.h
+# End Source File
+# Begin Source File
 
-# ADD CPP /D "SAFE_DYNAREC"
-# SUBTRACT CPP /D "DYNAREC"
+SOURCE=.\R4300i.c
+# End Source File
+# Begin Source File
 
-!ENDIF 
+SOURCE=.\r4300i.h
+# End Source File
+# Begin Source File
 
+SOURCE=.\Tlb.c
 # End Source File
 # End Group
 # Begin Group "win32"
 
 # PROP Default_Filter ""
-# Begin Group "Header Files win32"
+# Begin Source File
+
+SOURCE=.\win32\registry.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\win32\registry.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\win32\resource.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\win32\windebug.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\win32\windebug.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\win32\wingui.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\win32\wingui.h
+# End Source File
+# End Group
+# Begin Group "N64 Core"
 
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=..\win32\Dll_Audio.h
+SOURCE=.\debug_option.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\win32\Dll_Input.h
+SOURCE=.\debug_option.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\win32\Dll_Video.h
+SOURCE=.\emulator.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\plugins.h
+SOURCE=.\emulators.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\win32\registry.h
+SOURCE=.\globals.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\win32\windebug.h
+SOURCE=.\Globals.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\win32\wingui.h
+SOURCE=.\hardware.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\memory.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\memory.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\options.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\timer.h
 # End Source File
 # End Group
-# Begin Source File
-
-SOURCE=..\win32\Dll_Audio.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\win32\Dll_Input.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\win32\Dll_Video.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\win32\registry.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\win32\windebug.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\win32\wingui.c
-# End Source File
-# End Group
-# Begin Group "Header Files"
-
-# PROP Default_Filter "h;hpp;hxx;hm;inl"
-# Begin Source File
-
-SOURCE=..\controller.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\DbgPrint.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\globals.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\interrupt.h
-# End Source File
-# End Group
-# Begin Source File
-
-SOURCE=..\controller.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\DebugR4300i.c
-
-!IF  "$(CFG)" == "1964 - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "1964 - Win32 Release"
-
-# SUBTRACT CPP /D "DYNAREC"
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
-SOURCE=..\dma.c
-
-!IF  "$(CFG)" == "1964 - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "1964 - Win32 Release"
-
-# SUBTRACT CPP /D "DYNAREC"
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
-SOURCE=..\emulators.c
-
-!IF  "$(CFG)" == "1964 - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "1964 - Win32 Release"
-
-# SUBTRACT CPP /D "DYNAREC"
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
-SOURCE=..\fileio.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\globals.c
-
-!IF  "$(CFG)" == "1964 - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "1964 - Win32 Release"
-
-# SUBTRACT CPP /D "DYNAREC"
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
-SOURCE=..\interrupt.c
-
-!IF  "$(CFG)" == "1964 - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "1964 - Win32 Release"
-
-# SUBTRACT CPP /D "DYNAREC"
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
-SOURCE=..\memory.c
-
-!IF  "$(CFG)" == "1964 - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "1964 - Win32 Release"
-
-# SUBTRACT CPP /D "DYNAREC"
-
-!ENDIF 
-
-# End Source File
-# End Group
-# Begin Group "zlib"
+# Begin Group "rcp"
 
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=..\zlib\adler32.c
+SOURCE=.\n64rcp.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\compress.c
+SOURCE=.\n64rcp.h
+# End Source File
+# End Group
+# Begin Group "Plugins"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\win32\Dll_Audio.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\crc32.c
+SOURCE=.\win32\Dll_Audio.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\deflate.c
+SOURCE=.\win32\Dll_Input.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\deflate.h
+SOURCE=.\win32\Dll_Input.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\gzio.c
+SOURCE=.\win32\Dll_Video.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\infblock.c
+SOURCE=.\win32\Dll_Video.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\infblock.h
+SOURCE=.\plugins.h
+# End Source File
+# End Group
+# Begin Group "Controller"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\controller.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\infcodes.c
+SOURCE=.\controller.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\infcodes.h
+SOURCE=.\eeprom.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\inffast.c
+SOURCE=.\iPIF.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\inffast.h
+SOURCE=.\iPIF.h
+# End Source File
+# End Group
+# Begin Group "Utilities"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\DbgPrint.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\inffixed.h
+SOURCE=.\fileio.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\inflate.c
+SOURCE=.\fileio.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\inftrees.c
+SOURCE=.\zlib\unzip.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\inftrees.h
+SOURCE=.\zlib\zconf.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\infutil.c
+SOURCE=.\zlib\zlib.h
+# End Source File
+# End Group
+# Begin Group "Dynarec"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\dynaRec\dynaBranch.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\infutil.h
+SOURCE=.\dynaRec\dynaCOP1.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\maketree.c
+SOURCE=.\dynaRec\dynaCOP1.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\trees.c
+SOURCE=.\dynaRec\dynaCPU.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\trees.h
+SOURCE=.\dynaRec\dynaCPU.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\uncompr.c
+SOURCE=.\dynaRec\dynaCPU_defines.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\unzip.c
+SOURCE=.\dynaRec\dynaHelper.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\unzip.h
+SOURCE=.\dynaRec\dynaLog.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\zconf.h
+SOURCE=.\dynaRec\dynaLog.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\zlib.h
+SOURCE=.\dynaRec\dynaRec.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\zutil.c
+SOURCE=.\dynaRec\regcache.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\zlib\zutil.h
+SOURCE=.\dynaRec\regcache.h
 # End Source File
+# Begin Source File
+
+SOURCE=.\dynaRec\x86.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\dynaRec\x86.h
+# End Source File
+# End Group
 # End Group
 # Begin Group "Resource Files"
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # Begin Source File
 
-SOURCE=..\win32\icon2.ico
+SOURCE=.\win32\icon2.ico
 # End Source File
 # Begin Source File
 
-SOURCE=..\win32\logo.bmp
+SOURCE=.\win32\logo.bmp
 # End Source File
 # Begin Source File
 
-SOURCE=..\win32\wingui.rc
+SOURCE=.\win32\wingui.rc
 # End Source File
 # End Group
 # Begin Source File
 
-SOURCE=..\COPYRIGHT.txt
+SOURCE=.\COPYRIGHT.txt
+# End Source File
+# Begin Source File
+
+SOURCE=.\todo.txt
 # End Source File
 # End Target
 # End Project
