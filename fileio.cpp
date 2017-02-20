@@ -9,7 +9,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -21,22 +21,20 @@
  * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
-#include <stdio.h>
-#include "zlib/unzip.h"
-
-/* include <zlib.h> */
-#include <direct.h>
-#include "n64rcp.h"
-#include "fileio.h"
-#include "r4300i.h"
-#include "1964ini.h"
-#include "win32/wingui.h"
-#include "win32/windebug.h"
-#include "gamesave.h"
-#include "emulator.h"
+#include "stdafx.h"
 
 BOOL	Is_Reading_Rom_File = FALSE;;
 BOOL	To_Stop_Reading_Rom_File = FALSE;
+
+#define CURRENT_SAVE_STATE_VERSION		(0x19640099)
+#define SAVE_STATE_VERSION_085		(0x19640064)
+
+uint32 SaveStateVersionList[] = {
+    0x19640064,
+    0x19640099,
+	CURRENT_SAVE_STATE_VERSION
+};
+
 
 BYTE	gzipped_defaultm0[] =
 {
@@ -155,19 +153,14 @@ BYTE	gzipped_defaultm0[] =
 	0x00
 };
 
-#define STATE_SAVE_FORMAT_VERSION	(0x02)
-#define VERSION_MAGIC_NUMBER		(0x19640064)
-
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
 void SwapRomName(uint8 *name)
 {
-	/*~~~~~~*/
 	int		i;
 	uint8	c;
-	/*~~~~~~*/
 
 	for(i = 0; i < 20; i += 4)
 	{
@@ -182,18 +175,13 @@ void SwapRomName(uint8 *name)
 
 	for(i = 19; i >= 0; i--)
 	{
-		if(name[i] != ' ') break;
+		if(name[i] == ' ') 
+			name[i] = 0;
+		else
+			break;
 	}
 
 	name[i + 1] = '\0';
-
-	/*
-	 * for( ; i>=0; i-- ) £
-	 * { £
-	 * if( name[i] == ':' ) £
-	 * name[i] = '-'; £
-	 * }
-	 */
 }
 
 /*
@@ -224,7 +212,7 @@ void SwapRomHeader(uint8 *romheader)
     Read ROM Header information into the int_entry, return ROM size
  =======================================================================================================================
  */
-long ReadRomHeader(char *rompath, INI_ENTRY *ini_entry)
+long __cdecl ReadRomHeader(	char		*rompath, INI_ENTRY	*ini_entry)
 {
 	/*~~~~~~~~~~~~~~~~~~~~~~*/
 	uint8		buffer[0x100];
@@ -232,7 +220,6 @@ long ReadRomHeader(char *rompath, INI_ENTRY *ini_entry)
 	FILE		*fp;
 	/*~~~~~~~~~~~~~~~~~~~~~~*/
 
-	/* DisplayError("Read Rom Header: %s",rompath); */
 	fp = fopen(rompath, "rb");
 	if(fp != NULL)
 	{
@@ -247,8 +234,8 @@ long ReadRomHeader(char *rompath, INI_ENTRY *ini_entry)
 		fread(buffer, sizeof(uint8), 0x40, fp);
 		if(ByteSwap(0x40, buffer) == TRUE)
 		{
-			strncpy(ini_entry->Game_Name, buffer + 0x20, 0x14);
-			SwapRomName(ini_entry->Game_Name);
+			strncpy((char*)ini_entry->Game_Name, (const char*)(buffer + 0x20), 0x14);
+			SwapRomName((unsigned char*)ini_entry->Game_Name);
 
 			/* SwapRomHeader(buffer); */
 			ini_entry->crc1 = *((uint32 *) (buffer + 0x10));
@@ -277,15 +264,15 @@ long ReadRomHeader(char *rompath, INI_ENTRY *ini_entry)
  =======================================================================================================================
  =======================================================================================================================
  */
-long ReadZippedRomHeader(char *rompath, INI_ENTRY *ini_entry)
+long
+__cdecl
+ReadZippedRomHeader(char *rompath, INI_ENTRY *ini_entry)
 {
-	/*~~~~~~~~~~~~~~~~~~~~~~~~*/
 	long int	filesize;
 	unzFile		fp;
 	char		szFileName[256];
 	char		ext[_MAX_EXT];
 	uint8		buffer[0x100];
-	/*~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	/* DisplayError("Read Zipped Rom Header: %s",rompath); */
 	fp = unzOpen(rompath);
@@ -326,8 +313,8 @@ long ReadZippedRomHeader(char *rompath, INI_ENTRY *ini_entry)
 						{
 							if(ByteSwap(0x40, buffer))
 							{
-								strncpy(ini_entry->Game_Name, buffer + 0x20, 0x14);
-								SwapRomName(ini_entry->Game_Name);
+								strncpy((char*)ini_entry->Game_Name, (const char*)(buffer + 0x20), 0x14);
+								SwapRomName((unsigned char*)ini_entry->Game_Name);
 
 								/* SwapRomHeader(buffer); */
 								ini_entry->crc1 = *((uint32 *) (buffer + 0x10));
@@ -356,6 +343,7 @@ long ReadZippedRomHeader(char *rompath, INI_ENTRY *ini_entry)
  =======================================================================================================================
  =======================================================================================================================
  */
+BOOL WindowMsgLoop(void);
 BOOL ReadRomData(char *rompath)
 {
 	/*~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -374,8 +362,8 @@ BOOL ReadRomData(char *rompath)
 		MessageBox
 		(
 			gui.hwnd1964main,
-			"Error opening this file. Please refresh the ROM list.",
-			"Error",
+			TranslateStringByString("Error opening this file. Please refresh the ROM list."),
+			TranslateStringByString("Error"),
 			MB_ICONINFORMATION
 		);
 		return FALSE;
@@ -394,10 +382,7 @@ BOOL ReadRomData(char *rompath)
 	fseek(fp, 0, SEEK_SET);		/* set pointer to beginning of file */
 	if(fp != NULL)
 	{
-		/*~~~~~~~~*/
 		uint64	i;
-		MSG		msg;
-		/*~~~~~~~~*/
 
 		InitVirtualRomMemory(gAllocationLength);
 		InitMemoryLookupTables();
@@ -408,13 +393,8 @@ BOOL ReadRomData(char *rompath)
 
 		for(i = 0; i < gROMLength && To_Stop_Reading_Rom_File == FALSE; i += 65536)
 		{
-			if(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
-			{
-				if(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
-				{
-					if(GetMessage(&msg, NULL, 0, 0)) DispatchMessage(&msg);
-				}
-			}
+			WindowMsgLoop();
+
 
 			if(To_Stop_Reading_Rom_File == TRUE)
 			{
@@ -435,7 +415,7 @@ BOOL ReadRomData(char *rompath)
 
 				_splitpath(rompath, drive, dir, fname, ext);
 				strcat(fname, ext);
-				sprintf(generalmessage, "Loading [%s] %d%%", fname, i * 100 / gROMLength);
+				sprintf(generalmessage, "%s [%s] %d%%", TranslateStringByString("Loading"), fname, i * 100 / gROMLength);
 			}
 
 			SetStatusBarText(0, generalmessage);
@@ -456,8 +436,8 @@ BOOL ReadRomData(char *rompath)
 	}
 	else
 	{
-		DisplayError("File could not be opened.");
-		exit(0);
+		MessageBox(0, TranslateStringByString("File could not be opened."), TranslateStringByString("Error"), 0);
+		return FALSE;
 	}
 
 	fclose(fp);
@@ -514,10 +494,7 @@ BOOL ReadZippedRomData(char *rompath)
 
 						if(unzOpenCurrentFile(fp) == UNZ_OK)
 						{
-							/*~~~~~~~~*/
 							uint64	i;
-							MSG		msg;
-							/*~~~~~~~~*/
 
 							InitVirtualRomMemory(gAllocationLength);
 							InitMemoryLookupTables();
@@ -526,19 +503,13 @@ BOOL ReadZippedRomData(char *rompath)
 							Is_Reading_Rom_File = TRUE;;
 							To_Stop_Reading_Rom_File = FALSE;
 
-							sprintf(generalmessage, "Loading [%s] ", szFileName);
+							sprintf(generalmessage, "%s [%s] ", TranslateStringByString("Loading"), szFileName);
 							SetStatusBarText(0, generalmessage);
 
 							for(i = 0; i < gROMLength && To_Stop_Reading_Rom_File == FALSE; i += 65536)
 							/* for( i=0; i<gROMLength; i+=65536) */
 							{
-								if(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
-								{
-									if(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
-									{
-										if(GetMessage(&msg, NULL, 0, 0)) DispatchMessage(&msg);
-									}
-								}
+								WindowMsgLoop();
 
 								if(To_Stop_Reading_Rom_File == TRUE)
 								{
@@ -553,12 +524,12 @@ BOOL ReadZippedRomData(char *rompath)
 								/* fread(gMS_ROM_Image+i, sizeof(uint8), 65536, fp); */
 								if(unzReadCurrentFile(fp, gMS_ROM_Image + i, sizeof(uint8) * 65536) == 65536)
 								{
-									sprintf(generalmessage, "Loading [%s] %d%%", szFileName, i * 100 / gROMLength);
+									sprintf(generalmessage, "%s [%s] %d%%",  TranslateStringByString("Loading"), szFileName, i * 100 / gROMLength);
 									SetStatusBarText(0, generalmessage);
 								}
 								else if(unzReadCurrentFile(fp, gMS_ROM_Image + i, 1) == 0)
 								{
-									sprintf(generalmessage, "Loading [%s] %d%%", szFileName, i * 100 / gROMLength);
+									sprintf(generalmessage, "%s [%s] %d%%",  TranslateStringByString("Loading"), szFileName, i * 100 / gROMLength);
 									SetStatusBarText(0, generalmessage);
 								}
 								else
@@ -653,7 +624,7 @@ _LABEL2:
 		_asm
 		{
 			sub ebx, 8
-			test ebx, ebx
+			and ebx, ebx
 			jz _LABELEXIT
 		}
 
@@ -745,48 +716,14 @@ int LoadGNUDistConditions(char *ConditionsBuf)
  */
 void AnalyzeString(char *temp)
 {
-	/*~~~~~~~*/
-	int i = -1;
-	/*~~~~~~~*/
-
-	while(1)
+	while(*temp!=0)
 	{
-		i++;
-		if(temp[i] == 0) break;
+		if(*temp == '*' || *temp == '?' || *temp == '<' || *temp == '>' ) 
+		{
+			*temp = '_';
+		}
 
-		/* A-Z */
-		if((temp[i] >= 0x41) && (temp[i] <= 0x5a)) continue;
-
-		/* a-z */
-		if((temp[i] >= 0x61) && (temp[i] <= 0x7a)) continue;
-
-		/* 0-9 */
-		if((temp[i] >= 0x30) && (temp[i] <= 0x39)) continue;
-
-		/* "." */
-		if(temp[i] == 0x2E) continue;
-
-		/* "_" */
-		if(temp[i] == 0x5F) continue;
-
-		/* " " */
-		if(temp[i] == 0x20) continue;
-
-		/* "(" */
-		if(temp[i] == 0x28) continue;
-
-		/* ")" */
-		if(temp[i] == 0x29) continue;
-
-		/* "-" */
-		if(temp[i] == 0x2D) continue;
-
-		/* "'" */
-		if(temp[i] == 0x27) continue;
-		if(temp[i] == '\\' || temp[i] == ':' || temp[i] == '/') continue;
-
-		/* unknown character ... print a "_" */
-		temp[i] = 0x5F;
+		temp++;
 	}
 }
 
@@ -814,7 +751,7 @@ BOOL FileIO_CreateMempakFile(char *filename)
 		return FALSE;
 	}
 
-	gztempfile = gzopen(filename, "rb");
+	gztempfile = (gzFile*)gzopen(filename, "rb");
 	gzread(gztempfile, temp, 1024 * 32);
 	gzclose(gztempfile);
 
@@ -859,24 +796,31 @@ BOOL FileIO_CreateFile(char *filename, int size)
 
 /*
  =======================================================================================================================
-    Get Directory // £
-    To create a complete filename to load/save mempak/sram/eeprom //
+    Get Directory // ?    To create a complete filename to load/save mempak/sram/eeprom //
  =======================================================================================================================
  */
-void GetFileName(char *Directory, char *Ext)
+void GetFileName(char *filenameToReturn, char *Ext)
 {
-	/*~~~~~~~~~~~~~~~~~*/
 	char	CRC[8];
 	char	romname[260];
 	int		i;
-	/*~~~~~~~~~~~~~~~~~*/
+
+	if( Kaillera_Is_Running && kailleraLocalPlayerNumber != 0 )	// special handling for player 0 hasn't been implemented yet
+	//if( Kaillera_Is_Running )
+	{
+		// See comments for function KailleraResetSaveFiles in Kaillera.c
+		strcpy(filenameToReturn, directories.save_directory_to_use);
+		strcat(filenameToReturn, "kaillera.");
+		strcat(filenameToReturn, Ext);
+		return;
+	}
 
 	for(i = 0; i < 8; i++)
 	{
 		CRC[i] = ((char *) &rominfo.crc1)[i ^ 3];
 	}
 
-	strcpy(romname, rominfo.name);
+	strcpy(romname, (const char*)rominfo.name);
 	for(i = 0; i < (int) strlen(romname); i++)
 	{
 		if(romname[i] == ':' || romname[i] == '/' )
@@ -887,7 +831,7 @@ void GetFileName(char *Directory, char *Ext)
 
 	sprintf
 	(
-		Directory,
+		filenameToReturn,
 		"%s%s-%X%X.%s",
 		directories.save_directory_to_use,
 		romname,
@@ -895,7 +839,7 @@ void GetFileName(char *Directory, char *Ext)
 		((_u32 *) &CRC)[1],
 		Ext
 	);
-	AnalyzeString(Directory);
+	AnalyzeString(filenameToReturn);
 }
 
 /*
@@ -920,13 +864,15 @@ void FileIO_WriteMemPak(int pak_no)
 	}
 	else
 	{
-#ifdef DEBUG_COMMON
+#ifdef _DEBUG
 		if( debugoptions.debug_si_mempak )
 		{
 			TRACE1("Write MEMPAK to file: %s", temp);
 		}
 #endif
-		fwrite(gamesave.mempak[0], 1024 * 32, 1, stream);
+
+	fseek(stream, (1024 * 32 * pak_no), SEEK_SET);
+    fwrite(gamesave.mempak[pak_no], (1024 * 32), 1, stream);
 		fclose(stream);
 	}
 }
@@ -952,6 +898,7 @@ void FileIO_LoadMemPak(int pak_no)
 		if(!FileIO_CreateMempakFile(temp))
 		{
 			DisplayError("Cannot create an empty MEMPAK file: ", temp);
+			return;
 		}
 		else
 		{
@@ -959,20 +906,20 @@ void FileIO_LoadMemPak(int pak_no)
 			if(stream == NULL)
 			{
 				DisplayError("Cannot Load MEMPAK from file %s", temp);
+				return;
 			}
 		}
 	}
-	else
+
+#ifdef _DEBUG
+	if( debugoptions.debug_si_mempak )
 	{
-#ifdef DEBUG_COMMON
-		if( debugoptions.debug_si_mempak )
-		{
-			TRACE1("Load MEMPAK from file: %s", temp);
-		}
-#endif
-		fread(gamesave.mempak[0], 1024 * 32, 1, stream);
-		fclose(stream);
+		TRACE1("Load MEMPAK from file: %s", temp);
 	}
+#endif
+	fseek(stream, (1024 * 32 * pak_no), SEEK_SET);
+    fread(gamesave.mempak[pak_no], (1024 * 32), 1, stream);
+	fclose(stream);
 }
 
 /*
@@ -992,13 +939,13 @@ void FileIO_WriteEEprom(void)
 
 	if(stream != NULL)
 	{
-		TRACE1("Write EEPROM to file: %s", temp);
+		EEPROM_TRACE(TRACE1("Write EEPROM to file: %s", temp));
 		fwrite(gamesave.EEprom, currentromoptions.Eeprom_size == EEPROMSIZE_4KB ? 0x800 : 0x1000, 1, stream);
 		fclose(stream);
 	}
 	else
 	{
-		TRACE0("Cannot write EEPROM to file");
+		EEPROM_TRACE(TRACE0("Cannot write EEPROM to file"));
 	}
 }
 
@@ -1017,7 +964,8 @@ void FileIO_LoadEEprom(void)
 	GetFileName(temp, "eep");
 	stream = fopen(temp, "rb");
 
-	if(stream == NULL)
+
+    if(stream == NULL)
 	{
 		if(!FileIO_CreateFile(temp, currentromoptions.Eeprom_size == EEPROMSIZE_4KB ? 0x800 : 0x1000))
 		{
@@ -1038,8 +986,8 @@ void FileIO_LoadEEprom(void)
 	{
 		TRACE1("Load EEPROM from file: %s", temp);
 
-		fread(gamesave.EEprom, currentromoptions.Eeprom_size == EEPROMSIZE_4KB ? 0x800 : 0x1000, 1, stream);
-		fclose(stream);
+        fread(gamesave.EEprom, currentromoptions.Eeprom_size == EEPROMSIZE_4KB ? 0x800 : 0x1000, 1, stream);
+        fclose(stream);
 	}
 }
 
@@ -1072,7 +1020,7 @@ void FileIO_WriteFLASHRAM(int FileOffset, int MemOffset, int len)
 		hFlashRam = CreateFile(temp,GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ,NULL,OPEN_ALWAYS,
 		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS, NULL);
 
-	TRACE1("Save Flashram to file: %s", temp);
+	DEBUG_SRAM_TRACE(TRACE1("Save Flashram to file: %s", temp));
 	
 	if ((currentromoptions.Save_Type == ANYUSED_SAVETYPE) ||
 		(currentromoptions.Save_Type == SRAM_SAVETYPE))
@@ -1086,7 +1034,7 @@ void FileIO_WriteFLASHRAM(int FileOffset, int MemOffset, int len)
 		DWORD dwWritten;
 
 		SetFilePointer(hFlashRam,0,NULL,FILE_BEGIN);
-		WriteFile(hFlashRam, pLOAD_UBYTE_PARAM_2(0xA8000000), 1024 * 128, &dwWritten, 0);
+		WriteFile(hFlashRam, pLOAD_UBYTE_PARAM(0xA8000000), 1024 * 128, &dwWritten, 0);
 	}
 }
 
@@ -1115,7 +1063,7 @@ void FileIO_ReadFLASHRAM(int FileOffset, int MemOffset, int len)
 		hFlashRam = CreateFile(temp,GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ,NULL,OPEN_ALWAYS,
 		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS, NULL);
 	}
-	TRACE1("Load Flashram from file: %s", temp);
+	DEBUG_SRAM_TRACE(TRACE1("Load Flashram from file: %s", temp));
 
 	if ((currentromoptions.Save_Type == ANYUSED_SAVETYPE) ||
 		(currentromoptions.Save_Type == SRAM_SAVETYPE))
@@ -1130,7 +1078,7 @@ void FileIO_ReadFLASHRAM(int FileOffset, int MemOffset, int len)
 		DWORD dwWritten;
 		
 		SetFilePointer(hFlashRam,0,NULL,FILE_BEGIN);
-		ReadFile(hFlashRam, pLOAD_UBYTE_PARAM_2(0xA8000000), 1024 * 128, &dwWritten, 0);
+		ReadFile(hFlashRam, pLOAD_UBYTE_PARAM(0xA8000000), 1024 * 128, &dwWritten, 0);
 	}
 }
 
@@ -1150,26 +1098,133 @@ void FileIO_gzSaveState(void)
 
 	sprintf(ext, "sav%d", StateFileNumber);
 	GetFileName(temp, ext);
-	FileIO_gzSaveStateFile(temp);
+	FileIO_gzSaveStateFile_099(temp);
 }
+
+/* SaveState layout */
+typedef struct	sHardwareSaveState
+{
+	__int64	GPR[32];				/* General Purpose Registers */
+    __int64  grlo;
+    __int64  grhi;
+	uint32	COP0Reg[32];			/* Coprocessor0 Registers */
+	uint32	fpr32[64];				/* 32bit 64 items needed! */
+	uint32	LLbit;					/* LoadLinked Bit */
+	uint32	pc;						/* program counter */
+	uint32	COP1Con[32];			/* FPControl Registers, only 0 and 31 is used */
+    uint32	COP0Con[64];			/* Unused? */
+} HardwareSaveState;
+HardwareSaveState gHardwareSaveState;
+
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void FileIO_gzReadHardwareState(gzFile *stream)
+void FileIO_gzReadHardwareState(gzFile *stream, uint32 magic1964)
 {
-	memset((uint8 *) (&gHardwareState), 0, sizeof(HardwareState));
-	gzread
-	(
-		stream,
-		(uint8 *) (&gHardwareState),
+    gzread(stream, &r.r_.gpr,     sizeof(r.r_.gpr));
+    gzread(stream, &r.r_.grlo,    sizeof(r.r_.grlo));
+    gzread(stream, &r.r_.grhi,    sizeof(r.r_.grhi));
+    gzread(stream, &gHardwareState.COP0Reg, sizeof(gHardwareState.COP0Reg));
+    gzread(stream, &gHardwareState.fpr32,   sizeof(gHardwareState.fpr32));
+    gzread(stream, &gHardwareState.LLbit,   sizeof(gHardwareState.LLbit));
+    gzread(stream, &r.r_.pc,      sizeof(r.r_.pc));
+    gzread(stream, &gHardwareState.COP1Con, sizeof(gHardwareState.COP1Con));
+    
+
+    //new in version 0.9.9
+    if (magic1964 >= 0x19640099)
+        gzread(stream, &gHardwareState.COP0Con, sizeof(gHardwareState.COP0Con));
+}
+
+/*
+=======================================================================================================================
+=======================================================================================================================
+*/
+/*
+The old sHardwareState struct in version 0.85
+*/
+typedef struct	sHardwareState_085
+{
+_int64	GPR[34];				// General Purpose Registers GPR[32] = lo, GPR[33] = hi
+uint32	COP0Reg[32];			// Coprocessor0 Registers
+uint32	fpr32[64];				// 32bit 64 items needed!
+uint32	LLbit;					// LoadLinked Bit
+uint32	pc;						// program counter
+uint32	COP1Con[32];			// FPControl Registers, only 0 and 31 is used
+
+
+
+uint32	COP0Con[64];			// FPControl Registers
+uint32	RememberFprHi[32];
+uint32	code;					// The instruction
+} HardwareSaveState_085;
+HardwareSaveState_085 gHardwareSaveState_085;
+
+
+void FileIO_gzReadHardwareState_085(gzFile *stream)
+{
+	memset((uint8 *) (&gHardwareSaveState_085), 0, sizeof(gHardwareSaveState_085));
+	gzread(
+		stream,	(uint8 *) (&gHardwareSaveState_085),
 		(
-			sizeof(HardwareState) - sizeof(gHardwareState.COP0Con) - sizeof(gHardwareState.RememberFprHi) - sizeof
-				(gHardwareState.code)
+		sizeof(gHardwareSaveState_085) - sizeof(gHardwareSaveState_085.COP0Con) - sizeof(gHardwareSaveState_085.RememberFprHi) - sizeof
+		(gHardwareSaveState_085.code)
 		)
 	);
+
+	memcpy(&r.r_.gpr, &gHardwareSaveState_085.GPR, sizeof(r.r_.gpr));
+	r.r_.grlo=gHardwareSaveState_085.GPR[32];
+	r.r_.grhi=gHardwareSaveState_085.GPR[33];
+	memcpy(&gHardwareState.COP0Reg, &gHardwareSaveState_085.COP0Reg, sizeof(gHardwareState.COP0Reg));
+	memcpy(&gHardwareState.fpr32, &gHardwareSaveState_085.fpr32,   sizeof(gHardwareState.fpr32));
+	gHardwareState.LLbit=gHardwareSaveState_085.LLbit;
+	r.r_.pc=gHardwareSaveState_085.pc;
+	memcpy(&gHardwareState.COP1Con, &gHardwareSaveState_085.COP1Con, sizeof(gHardwareState.COP1Con));
+
+	/*
+	*/
 }
+
+
+void FileIO_gzWriteHardwareState_085(gzFile *stream)
+{
+	gHWS_COP0Reg[COUNT] = Get_COUNT_Register();	//Refresh the COUNT register
+
+#ifndef _DEBUG
+	if(currentromoptions.Assume_32bit == ASSUME_32BIT_YES)
+	{
+		int k;
+        for(k = 0; k < 32; k++)
+            if (k != _t1) /* The weird return value */
+			    gHardwareSaveState.GPR[k] = (_int64) (_int32) gHardwareSaveState.GPR[k];
+
+		gHardwareSaveState.grlo = (_int64) (_int32)gHardwareSaveState.grlo;
+		gHardwareSaveState.grhi = (_int64) (_int32)gHardwareSaveState.grhi;
+	}
+#endif
+
+	memcpy(&gHardwareSaveState_085.GPR, &r.r_.gpr, sizeof(gHardwareSaveState_085.GPR));
+	gHardwareSaveState_085.GPR[32]=r.r_.grlo;
+	gHardwareSaveState_085.GPR[33]=r.r_.grhi;
+	memcpy(&gHardwareSaveState_085.COP0Reg, &gHardwareState.COP0Reg, sizeof(gHardwareSaveState_085.COP0Reg));
+	memcpy(&gHardwareSaveState_085.fpr32, &gHardwareState.fpr32,   sizeof(gHardwareSaveState_085.fpr32));
+	gHardwareSaveState_085.LLbit=gHardwareState.LLbit;
+	gHardwareSaveState_085.pc=r.r_.pc;
+	memcpy(&gHardwareSaveState_085.COP1Con, &gHardwareState.COP1Con, sizeof(gHardwareSaveState_085.COP1Con));
+
+	gzwrite
+		(
+		stream,
+		(uint8 *) (&gHardwareSaveState_085),
+		(
+		sizeof(gHardwareSaveState_085) - sizeof(gHardwareSaveState_085.COP0Con) - sizeof(gHardwareSaveState_085.RememberFprHi) - sizeof
+		(gHardwareSaveState_085.code)
+		)
+		);
+}
+
 
 /*
  =======================================================================================================================
@@ -1181,46 +1236,52 @@ void DoOthersAfterLoadState();
 
 void FileIO_gzWriteHardwareState(gzFile *stream)
 {
-	/*~~*/
-	int k;
-	/*~~*/
 
-	gHWS_COP0Reg[COUNT] = Get_COUNT_Register();	//Refresh the COUNT register
+    gHWS_COP0Reg[COUNT] = Get_COUNT_Register();	//Refresh the COUNT register
 
-	if(currentromoptions.Assume_32bit == ASSUME_32BIT_YES)
-	{
-		for(k = 0; k < 34; k++)
-		{
-			gHardwareState.GPR[k] = (_int64) (_int32) gHardwareState.GPR[k];
-		}
-	}
+    memcpy(&gHardwareSaveState.GPR, &r.r_.gpr, sizeof(r.r_.gpr));
+    memcpy(&gHardwareSaveState.grlo, &r.r_.grlo, sizeof(r.r_.grlo));
+    memcpy(&gHardwareSaveState.grhi, &r.r_.grhi, sizeof(r.r_.grhi));
+    memcpy(&gHardwareSaveState.COP0Reg, &gHardwareState.COP0Reg, sizeof(gHardwareState.COP0Reg));
+    memcpy(&gHardwareSaveState.fpr32, &gHardwareState.fpr32, sizeof(gHardwareState.fpr32));
+    memcpy(&gHardwareSaveState.LLbit, &gHardwareState.LLbit, sizeof(gHardwareState.LLbit));
+    memcpy(&gHardwareSaveState.pc, &r.r_.pc, sizeof(r.r_.pc));
+    memcpy(&gHardwareSaveState.COP1Con, &gHardwareState.COP1Con, sizeof(gHardwareState.COP1Con));
+    
+    //new in version 0.9.9
+    memcpy(&gHardwareSaveState.COP0Con, &gHardwareState.COP0Con, sizeof(gHardwareState.COP0Con));
 
-	gzwrite
-	(
-		stream,
-		(uint8 *) (&gHardwareState),
-		(
-			sizeof(HardwareState) - sizeof(gHardwareState.COP0Con) - sizeof(gHardwareState.RememberFprHi) - sizeof
-				(gHardwareState.code)
-		)
-	);
+#ifndef _DEBUG
+    if(currentromoptions.Assume_32bit == ASSUME_32BIT_YES)
+    {
+		int k;
+		/* convert to 32bit sign-extended to 64bit */
+        for(k = 0; k < 32; k++)
+            if (k != _t1) /* The weird return value */
+			    gHardwareSaveState.GPR[k] = (_int64) (_int32) gHardwareSaveState.GPR[k];
+
+        gHardwareSaveState.grlo = (_int64) (_int32)gHardwareSaveState.grlo;
+        gHardwareSaveState.grhi = (_int64) (_int32)gHardwareSaveState.grhi;
+    }
+#endif
+
+    gzwrite(stream, (uint8 *)(&gHardwareSaveState), (sizeof(gHardwareSaveState)));
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void FileIO_gzSaveStateFile(const char *filename)
+void FileIO_gzSaveStateFile(const char *filename, DWORD	magic1964)
 {
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	gzFile	*stream;
-	DWORD	magic1964 = VERSION_MAGIC_NUMBER;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	stream = gzopen(filename, "wb");
+	stream = (gzFile*)gzopen(filename, "wb");
 	if(stream == NULL)
 	{
-		DisplayError("Cannot create/open gzip file to save state");
+		DisplayError("Cannot create/open gzip file to save state, please check the save directory setting and make sure the directory is created.");
 		return;
 	}
 
@@ -1232,7 +1293,10 @@ void FileIO_gzSaveStateFile(const char *filename)
 	gzwrite(stream, (uint8 *) (&current_rdram_size), sizeof(uint32));
 
 	/* All CPU registers */
-	FileIO_gzWriteHardwareState(stream);
+	if( magic1964 == 0x19640064 )
+		FileIO_gzWriteHardwareState_085(stream);
+	else
+		FileIO_gzWriteHardwareState(stream);
 
 	/* All IO registers should be saved */
 	gzwrite(stream, (uint8 *) gMS_ramRegs0, 0x30);	/* ramRegs0 */
@@ -1264,21 +1328,27 @@ void FileIO_gzSaveStateFile(const char *filename)
 	gzclose(stream);
 }
 
+void FileIO_gzSaveStateFile_099(const char *filename)
+{
+	FileIO_gzSaveStateFile(filename, CURRENT_SAVE_STATE_VERSION);
+}
+void FileIO_gzSaveStateFile_085(const char *filename)
+{
+	FileIO_gzSaveStateFile(filename, SAVE_STATE_VERSION_085);
+}
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
 void FileIO_gzLoadState(void)
 {
-	/*~~~~~~~~~~~~~~~*/
 	/* Open File to write, file should be named as rom name */
 	char	temp[1024];
 	char	ext[10];
-	/*~~~~~~~~~~~~~~~*/
 
 	sprintf(ext, "sav%d", StateFileNumber);
 
-	GetFileName(temp, ext);
+    GetFileName(temp, ext);
 	FileIO_gzLoadStateFile(temp);
 }
 
@@ -1286,15 +1356,21 @@ void FileIO_gzLoadState(void)
  =======================================================================================================================
  =======================================================================================================================
  */
+
 void FileIO_gzLoadStateFile(const char *filename)
 {
-	/*~~~~~~~~~~~~~~~*/
-	gzFile	*stream;
-	DWORD	magic1964;
+    int k, isCompatible;
+    
+    gzFile	*stream;
+	uint32	magic1964;
 	uint32	rdram_size;
-	/*~~~~~~~~~~~~~~~*/
 
-	stream = gzopen(filename, "rb");
+	Init_Dynarec();
+	
+	AUDIO_RomClosed(); //Fixes losing audio on a loadstate.
+
+    
+    stream = (gzFile*)gzopen(filename, "rb");
 	if(stream == NULL)
 	{
 		DisplayError("Cannot open gzip file to load state");
@@ -1303,23 +1379,43 @@ void FileIO_gzLoadStateFile(const char *filename)
 
 	TRACE1("Load state from file: %s", filename);
 
-	gzread(stream, (uint8 *) (&magic1964), sizeof(DWORD));
-	if(magic1964 != VERSION_MAGIC_NUMBER)
-	{
-		DisplayError("This state file is at different version or it is not a 1964 state save format, it may not work");
-	}
+	
+    gzread(stream, (uint8 *) (&magic1964), sizeof(DWORD));
+	
+    isCompatible = 0;
+    for (k=0; k< sizeof(SaveStateVersionList)/4; k++)
+        if(magic1964 == SaveStateVersionList[k])
+	    {
+            isCompatible = 1;
+        }
 
-	gzread(stream, (uint8 *) (&rdram_size), sizeof(uint32));
+    if (!isCompatible)
+    {
+        MessageBox(0, TranslateStringByString("This savestate is incompatible with this version of 1964."), TranslateStringByString("Version Conflict"), MB_ICONINFORMATION);
+        return;
+    }
+
+    gzread(stream, (uint8 *) (&rdram_size), sizeof(uint32));
 	ResetRdramSize(rdram_size == 0x400000 ? RDRAMSIZE_4MB : RDRAMSIZE_8MB);
 
-	FileIO_gzReadHardwareState(stream);
+	if( magic1964 == 0x19640064 )
+		FileIO_gzReadHardwareState_085(stream);
+	else
+		FileIO_gzReadHardwareState(stream, magic1964);
 
 	/* All IO registers should be saved */
 	gzread(stream, (uint8 *) gMS_ramRegs0, 0x30);					/* ramRegs0 */
 	gzread(stream, (uint8 *) gMS_ramRegs4, 0x30);					/* ramRegs4 */
 	gzread(stream, (uint8 *) gMS_ramRegs8, 0x30);					/* ramRegs8 */
 	gzread(stream, (uint8 *) gMS_SP_MEM, MEMORY_SIZE_SPMEM);		/* SPMEM and SP_REG, size?? */
-	gzread(stream, (uint8 *) gMS_SP_REG_1, MEMORY_SIZE_SPREG_1);	/* SPMEM and SP_REG, size?? */
+
+//    memcpy(tmpROMName, (uint8*)&SP_DMEM + 0x20, 1);
+  //  SwapRomName(tmpROMName);
+    //strcat(tmpROMName, '\0');
+   // DisplayError("%s", tmpROMName);
+    
+    
+    gzread(stream, (uint8 *) gMS_SP_REG_1, MEMORY_SIZE_SPREG_1);	/* SPMEM and SP_REG, size?? */
 	gzread(stream, (uint8 *) gMS_SP_REG_2, MEMORY_SIZE_SPREG_2);	/* SPMEM and SP_REG, size?? */
 	gzread(stream, (uint8 *) gMS_DPC, 0x20);						/* DPC */
 	gzread(stream, (uint8 *) gMS_DPS, 0x10);						/* DPS */
@@ -1333,14 +1429,12 @@ void FileIO_gzLoadStateFile(const char *filename)
 	if(currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY)
 	{
 		UnprotectAllBlocks();
-		memset(RDRAM_Copy, 0xEE, 0x00800000);
 	}
 
 	gzread(stream, (uint8 *) gMS_RDRAM, rdram_size);		/* RDRAM */
 	gzread(stream, (uint8 *) gMS_GIO_REG, 0x804);			/* GIO_REG */
 	gzread(stream, (uint8 *) gMS_PIF, 0x800);				/* PIF */
 
-	InitTLB();
 	gzread(stream, (uint8 *) gMS_TLB, sizeof(tlb_struct) * MAXTLB);
 	Build_Whole_Direct_TLB_Lookup_Table();
 
@@ -1351,13 +1445,9 @@ void FileIO_gzLoadStateFile(const char *filename)
 
 	gzclose(stream);
 
-	if(debug_opcode!=0)
-	{
-		Debugger_Copy_Memory(&gMemoryState_Interpreter_Compare, &gMemoryState);
-		memcpy(&gHardwareState_Interpreter_Compare, &gHardwareState, sizeof(HardwareState));
-	}
-
 	DoOthersAfterLoadState();
+	AUDIO_AiLenChanged(); //to fix losing audio on a zelda load state
+	Trigger_AIInterrupt(); //to fix losing audio on a zelda (and Hydro Thunder) load state
 }
 
 /*
@@ -1372,18 +1462,18 @@ BOOL FileIO_Load1964Ini(void)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	strcpy(inifilepath, directories.main_directory);
-	strcat(inifilepath, "1964.ini");
+	strcat(inifilepath, "ROM_Properties.ini");
 
 	stream = fopen(inifilepath, "rt");
 	if(stream == NULL)
 	{
-		DisplayError("Cannot find 1964.ini file.");
+		DisplayError("Cannot find ROM_Properties.ini file.");
 		return FALSE;
 	}
 
 	if(ReadAllIniEntries(stream) == FALSE)
 	{
-		DisplayError("Error reading information from 1964.ini");
+		DisplayError("Error reading information from ROM_Properties.ini");
 		fclose(stream);
 		return FALSE;
 	}
@@ -1405,15 +1495,15 @@ BOOL FileIO_Write1964Ini(void)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	strcpy(inifilepath, directories.main_directory);
-	strcat(inifilepath, "1964.ini");
+	strcat(inifilepath, "ROM_Properties.ini");
 
 	strcpy(bakfilepath, directories.main_directory);
-	strcat(bakfilepath, "1964.ini.bak");
+	strcat(bakfilepath, "ROM_Properties.ini.bak");
 
 	stream2 = fopen(bakfilepath, "wt");
 	if(stream2 == NULL)
 	{
-		DisplayError("Cannot open 1964.ini file to write.");
+		DisplayError("Cannot open ROM_Properties.ini file to write.");
 		return FALSE;
 	}
 
@@ -1431,12 +1521,12 @@ BOOL FileIO_Write1964Ini(void)
 	}
 	else
 	{
-		DisplayError("1964.ini does not exist, create a new one");
+		DisplayError("ROM_Properties.ini does not exist, create a new one");
 	}
 
 	if(WriteAllIniEntries(stream2) == FALSE)
 	{
-		DisplayError("Error to write information from 1964.ini");
+		DisplayError("Error to write information from ROM_Properties.ini");
 		fclose(stream2);
 		return FALSE;
 	}
@@ -1490,12 +1580,12 @@ void FileIO_ImportPJ64State(const char *filename)
 
 	fread(&gHWS_COP0Reg[COUNT], sizeof(DWORD), 1, stream);
 	fread(&gHWS_pc, sizeof(DWORD), 1, stream);
-	fread(&gHWS_GPR, 256, 1, stream);
+	fread(&gHWS_GPR(0), 256, 1, stream);
 	fread(&gHWS_fpr32, 256, 1, stream);
 	fread(&gHWS_COP0Reg, 128, 1, stream);
 	fread(&gHWS_COP1Con, 128, 1, stream);
-	fread(&gHWS_GPR[33], 2 * sizeof(DWORD), 1, stream); /* HI */
-	fread(&gHWS_GPR[32], 2 * sizeof(DWORD), 1, stream); /* LO */
+	fread(&gHWS_GPR(__HI), 2 * sizeof(DWORD), 1, stream); /* HI */
+	fread(&gHWS_GPR(__LO), 2 * sizeof(DWORD), 1, stream); /* LO */
 
 	fread(gMS_ramRegs0, 0x28, 1, stream);
 	fread(gMS_SP_REG_1, 0x28, 1, stream);
@@ -1533,12 +1623,21 @@ void FileIO_ImportPJ64State(const char *filename)
 			gMS_TLB[i].EntryLo0 &= 0xFFFFFFFE;
 		}
 	}
+	Build_Whole_Direct_TLB_Lookup_Table();
+
 
 	fread(gMS_PIF, 0x40, 1, stream);
 	fread(gMS_RDRAM, rdram_size, 1, stream);
 	fread(gMS_SP_MEM, MEMORY_SIZE_SPMEM, 1, stream);
 
 	fclose(stream);
+
+	if(currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY)
+	{
+		UnprotectAllBlocks();
+	}
+
+	DoOthersAfterLoadState();
 }
 
 /*
@@ -1568,14 +1667,15 @@ void FileIO_ExportPJ64State(const char *filename)
 	memcpy(header, gMS_ROM_Image, 0x40);
 	fwrite(header, 64, 1, stream);
 
+	gHWS_COP0Reg[COUNT] = Get_COUNT_Register();	//Refresh the COUNT register
 	fwrite(&gHWS_COP0Reg[COUNT], sizeof(DWORD), 1, stream);
 	fwrite(&gHWS_pc, sizeof(DWORD), 1, stream);
-	fwrite(&gHWS_GPR, 256, 1, stream);
+	fwrite(&gHWS_GPR(0), 256, 1, stream);
 	fwrite(&gHWS_fpr32, 256, 1, stream);
 	fwrite(&gHWS_COP0Reg, 128, 1, stream);
 	fwrite(&gHWS_COP1Con, 128, 1, stream);
-	fwrite(&gHWS_GPR[33], 2 * sizeof(DWORD), 1, stream);	/* HI */
-	fwrite(&gHWS_GPR[32], 2 * sizeof(DWORD), 1, stream);	/* LO */
+	fwrite(&gHWS_GPR(__HI), 2 * sizeof(DWORD), 1, stream);	/* HI */
+	fwrite(&gHWS_GPR(__LO), 2 * sizeof(DWORD), 1, stream);	/* LO */
 
 	fwrite(gMS_ramRegs0, 0x28, 1, stream);
 	fwrite(gMS_SP_REG_1, 0x28, 1, stream);
@@ -1609,4 +1709,50 @@ void FileIO_ExportPJ64State(const char *filename)
 	fwrite(gMS_SP_MEM, MEMORY_SIZE_SPMEM, 1, stream);
 
 	fclose(stream);
+}
+
+BOOL FileIO_CheckAndCreateFolder(const char* pathname)
+{
+	if( !PathFileExists(pathname) )
+	{
+		if( !CreateDirectory(pathname, NULL) )
+		{
+			DisplayError("Can not create new folder: %s", pathname);
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+
+char *myfgets(char *line, int maxlen, FILE *file)
+{
+	int i=0;
+	int c;
+	char *ptr=line;
+
+	for( i=0; i<maxlen-1; i++ )
+	{
+		c=fgetc(file);
+		if( c == EOF )
+		{
+			*ptr=0;
+
+			if( line == ptr )
+				return NULL;
+			else
+				return line;
+		}
+
+		*ptr++ = c;
+		if( c == '\n' )
+		{
+			*ptr=0;
+			return line;
+		}
+	}
+
+	*ptr=0;
+	return line;
 }

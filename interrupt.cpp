@@ -9,7 +9,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -21,24 +21,12 @@
  * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
-#include <windows.h>
-#include "interrupt.h"
-#include "r4300i.h"
-#include "n64rcp.h"
-#include "timer.h"
-#include "debug_option.h"
-#include "emulator.h"
-#include "1964ini.h"
-#include "win32/DLL_Video.h"
-#include "win32/DLL_Audio.h"
-#include "win32/DLL_RSP.h"
-#include "win32/wingui.h"
-#include "win32/windebug.h"
-#include "cheatcode.h"
-#include "dynarec/dynacpu.h"
+#include "stdafx.h"
+#include <float.h>
 
 extern void		Init_Timer_Event_List(void);
 extern uint32	TLB_Error_Vector;
+extern void		zlist_uncompress(OSTask_t *task);
 
 uint32			sp_hle_task = 0;
 LARGE_INTEGER	LastVITime = { 0, 0 };
@@ -46,7 +34,6 @@ LARGE_INTEGER	LastSecondTime = { 0, 0 };
 LARGE_INTEGER	Freq;
 LARGE_INTEGER	CurrentTime;
 LARGE_INTEGER	Elapsed;
-double			sleeptime;
 double			tempvips;
 
 
@@ -55,11 +42,11 @@ void rdp_fullsync()
 {
 	MI_INTR_REG_R |= MI_INTR_DP;
 
-	if((MI_INTR_MASK_REG_R) & MI_INTR_MASK_DP)
-	{
-		SET_EXCEPTION(EXC_INT) gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
-		HandleInterrupts(0x80000180);
-	}
+//	if((MI_INTR_MASK_REG_R) & MI_INTR_MASK_DP)
+//	{
+//		SET_EXCEPTION(EXC_INT) gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
+//		HandleInterrupts(0x80000180);
+//	}
 }
 /*
  =======================================================================================================================
@@ -98,6 +85,7 @@ uint32 SetException_Interrupt(uint32 pc)
 	return newpc;
 }
 
+extern uint32 HydroThunder;
 /*
  =======================================================================================================================
     Plugins will call this function to trigger an Audio Interface Interrupt, Display Processor Interrupt, or Signal
@@ -111,6 +99,7 @@ void CheckInterrupts(void)
 		OPCODE_DEBUGGER_EPILOGUE(Trigger_RSPBreak();)
 	}
 
+    
 	if((MI_INTR_REG_R & MI_INTR_DP) != 0)
 	{
 		OPCODE_DEBUGGER_EPILOGUE(Trigger_DPInterrupt();)
@@ -122,8 +111,11 @@ void CheckInterrupts(void)
 	 */
 	if((MI_INTR_REG_R & MI_INTR_AI) != 0)
 	{
-		if(currentromoptions.DMA_Segmentation == USEDMASEG_YES)
-			Set_Delay_AI_Interrupt_Timer_Event();
+		if(currentromoptions.timing_Control != NO_DELAY )
+		{
+			MI_INTR_REG_R &= ~MI_INTR_AI;
+			Set_Delay_AI_Interrupt_Timer_Event(200);
+		}
 		else
 		{
 			OPCODE_DEBUGGER_EPILOGUE(Trigger_AIInterrupt();)
@@ -131,26 +123,47 @@ void CheckInterrupts(void)
 	}
 }
 
+void DummyCheckInterrupts()
+{
+	if( currentromoptions.timing_Control == DELAY_DMA_AI || currentromoptions.timing_Control == DELAY_DMA_SI_AI )
+	{
+		// CPU core will handle AI interrupts, don't accept AI interrupts from audio plugin
+		if((MI_INTR_REG_R & MI_INTR_AI) != 0)
+		{
+			MI_INTR_REG_R &= ~MI_INTR_AI;
+		}
+	}
+	else
+	{
+		CheckInterrupts();
+	}
+}
+
 /*
  =======================================================================================================================
-    A write to the MIPS® Interface Interrupt Mask Register will set or clear an interrupt bitmask flag(s) in this
+    A write to the MIPS?Interface Interrupt Mask Register will set or clear an interrupt bitmask flag(s) in this
     register.
  =======================================================================================================================
  */
 void Handle_MI(uint32 value)
 {
-	if((value & MI_INTR_MASK_SP_CLR)) MI_INTR_MASK_REG_R &= ~MI_INTR_SP;
-	if((value & MI_INTR_MASK_SI_CLR)) MI_INTR_MASK_REG_R &= ~MI_INTR_SI;
-	if((value & MI_INTR_MASK_AI_CLR)) MI_INTR_MASK_REG_R &= ~MI_INTR_AI;
-	if((value & MI_INTR_MASK_VI_CLR)) MI_INTR_MASK_REG_R &= ~MI_INTR_VI;
-	if((value & MI_INTR_MASK_PI_CLR)) MI_INTR_MASK_REG_R &= ~MI_INTR_PI;
-	if((value & MI_INTR_MASK_DP_CLR)) MI_INTR_MASK_REG_R &= ~MI_INTR_DP;
-	if((value & MI_INTR_MASK_SI_SET)) MI_INTR_MASK_REG_R |= MI_INTR_SI;
-	if((value & MI_INTR_MASK_VI_SET)) MI_INTR_MASK_REG_R |= MI_INTR_VI;
-	if((value & MI_INTR_MASK_AI_SET)) MI_INTR_MASK_REG_R |= MI_INTR_AI;
-	if((value & MI_INTR_MASK_PI_SET)) MI_INTR_MASK_REG_R |= MI_INTR_PI;
-	if((value & MI_INTR_MASK_DP_SET)) MI_INTR_MASK_REG_R |= MI_INTR_DP;
 	if((value & MI_INTR_MASK_SP_SET)) MI_INTR_MASK_REG_R |= MI_INTR_SP;
+	else if((value & MI_INTR_MASK_SP_CLR)) MI_INTR_MASK_REG_R &= ~MI_INTR_SP;
+
+    if((value & MI_INTR_MASK_SI_SET)) MI_INTR_MASK_REG_R |= MI_INTR_SI;
+	else if((value & MI_INTR_MASK_SI_CLR)) MI_INTR_MASK_REG_R &= ~MI_INTR_SI;
+
+	if((value & MI_INTR_MASK_AI_SET)) MI_INTR_MASK_REG_R |= MI_INTR_AI;
+    else if((value & MI_INTR_MASK_AI_CLR)) MI_INTR_MASK_REG_R &= ~MI_INTR_AI;
+
+	if((value & MI_INTR_MASK_VI_SET)) MI_INTR_MASK_REG_R |= MI_INTR_VI;
+    else if((value & MI_INTR_MASK_VI_CLR)) MI_INTR_MASK_REG_R &= ~MI_INTR_VI;
+
+	if((value & MI_INTR_MASK_PI_SET)) MI_INTR_MASK_REG_R |= MI_INTR_PI;
+    else if((value & MI_INTR_MASK_PI_CLR)) MI_INTR_MASK_REG_R &= ~MI_INTR_PI;
+
+	if((value & MI_INTR_MASK_DP_SET)) MI_INTR_MASK_REG_R |= MI_INTR_DP;
+    else if((value & MI_INTR_MASK_DP_CLR)) MI_INTR_MASK_REG_R &= ~MI_INTR_DP;
 
 	/* Check MI interrupt again. This is important, otherwise we will lose interrupts. */
 	if(MI_INTR_MASK_REG_R & 0x0000003F & MI_INTR_REG_R)
@@ -163,28 +176,23 @@ void Handle_MI(uint32 value)
 
 /*
  =======================================================================================================================
-    A write to the MIPS® Interface Mode Register will set or clear an interrupt bitmask flag(s) in this register.
+    A write to the MIPS?Interface Mode Register will set or clear an interrupt bitmask flag(s) in this register.
  =======================================================================================================================
  */
 void WriteMI_ModeReg(uint32 value)
 {
-	if(value & MI_CLR_RDRAM) MI_INIT_MODE_REG_R &= ~MI_MODE_RDRAM;
-	if(value & MI_CLR_INIT) MI_INIT_MODE_REG_R &= ~MI_MODE_INIT;
-	if(value & MI_CLR_EBUS) MI_INIT_MODE_REG_R &= ~MI_MODE_EBUS;
+	if(value & MI_SET_RDRAM) MI_INIT_MODE_REG_R |= MI_MODE_RDRAM;
+	else if(value & MI_CLR_RDRAM) MI_INIT_MODE_REG_R &= ~MI_MODE_RDRAM;
+
+	if(value & MI_SET_INIT) MI_INIT_MODE_REG_R |= MI_MODE_INIT;
+    else if(value & MI_CLR_INIT) MI_INIT_MODE_REG_R &= ~MI_MODE_INIT;
+
+	if(value & MI_SET_EBUS) MI_INIT_MODE_REG_R |= MI_MODE_EBUS;
+    else if(value & MI_CLR_EBUS) MI_INIT_MODE_REG_R &= ~MI_MODE_EBUS;
+
 	if(value & MI_CLR_DP_INTR)
 	{
 		Clear_MIInterrupt(NOT_MI_INTR_DP);
-	}
-
-	if(value & MI_SET_INIT) MI_INIT_MODE_REG_R |= MI_MODE_INIT;
-	if(value & MI_SET_EBUS) MI_INIT_MODE_REG_R |= MI_MODE_EBUS;
-	if(value & MI_SET_RDRAM) MI_INIT_MODE_REG_R |= MI_MODE_RDRAM;
-
-	if((MI_INTR_REG_R & MI_INTR_MASK_REG_R) == 0)
-	{
-		gHWS_COP0Reg[CAUSE] &= NOT_CAUSE_IP3;
-
-		/* CPUNeedToCheckInterrupt = FALSE; */
 	}
 }
 
@@ -195,51 +203,69 @@ void WriteMI_ModeReg(uint32 value)
  */
 void Handle_SP(uint32 value)
 {
-	if(value & SP_SET_HALT) (SP_STATUS_REG) |= SP_STATUS_HALT;
-	if(value & SP_CLR_BROKE) (SP_STATUS_REG) &= ~SP_STATUS_BROKE;
-	if(value & SP_CLR_INTR){Clear_MIInterrupt(NOT_MI_INTR_SP);}
-	if(value & SP_SET_INTR){(MI_INTR_REG_R) |= MI_INTR_SP;
-	if((MI_INTR_REG_R & MI_INTR_MASK_REG_R) != 0)
+    if(value & SP_CLR_BROKE) {
+        (SP_STATUS_REG) &= ~SP_STATUS_BROKE;
+    }
+
+    if(value & SP_SET_INTR)
+    {
+        (MI_INTR_REG_R) |= MI_INTR_SP;
+	    if((MI_INTR_REG_R & MI_INTR_MASK_REG_R) != 0)
 		{
 			SET_EXCEPTION(EXC_INT) gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
 			HandleInterrupts(0x80000180);
 		}
 	}
+    //to use else if here is a possible bux fix
+    else if(value & SP_CLR_INTR)
+    {
+        Clear_MIInterrupt(NOT_MI_INTR_SP);
+    }
 
-	if(value & SP_CLR_SSTEP) (SP_STATUS_REG) &= ~SP_STATUS_SSTEP;
-	if(value & SP_SET_SSTEP) (SP_STATUS_REG) |= SP_STATUS_SSTEP;
-	if(value & SP_CLR_INTR_BREAK) (SP_STATUS_REG) &= ~SP_STATUS_INTR_BREAK;
+    if(value & SP_SET_SSTEP) (SP_STATUS_REG) |= SP_STATUS_SSTEP;
+    else if(value & SP_CLR_SSTEP) (SP_STATUS_REG) &= ~SP_STATUS_SSTEP;
+
 	if(value & SP_SET_INTR_BREAK) (SP_STATUS_REG) |= SP_STATUS_INTR_BREAK;
-	if(value & SP_CLR_YIELD) (SP_STATUS_REG) &= ~SP_STATUS_YIELD;
-	if(value & SP_SET_YIELD) (SP_STATUS_REG) |= SP_STATUS_YIELD;
-	if(value & SP_CLR_YIELDED) (SP_STATUS_REG) &= ~SP_STATUS_YIELDED;
-	if(value & SP_SET_YIELDED) (SP_STATUS_REG) |= SP_STATUS_YIELDED;
-	if(value & SP_CLR_TASKDONE) (SP_STATUS_REG) &= ~SP_STATUS_TASKDONE;
-	if(value & SP_SET_TASKDONE) (SP_STATUS_REG) |= SP_STATUS_TASKDONE;
-	if(value & SP_CLR_SIG3) (SP_STATUS_REG) &= ~SP_STATUS_SIG3;
-	if(value & SP_SET_SIG3) (SP_STATUS_REG) |= SP_STATUS_SIG3;
-	if(value & SP_CLR_SIG4) (SP_STATUS_REG) &= ~SP_STATUS_SIG4;
-	if(value & SP_SET_SIG4) (SP_STATUS_REG) |= SP_STATUS_SIG4;
-	if(value & SP_CLR_SIG5) (SP_STATUS_REG) &= ~SP_STATUS_SIG5;
-	if(value & SP_SET_SIG5) (SP_STATUS_REG) |= SP_STATUS_SIG5;
-	if(value & SP_CLR_SIG6) (SP_STATUS_REG) &= ~SP_STATUS_SIG6;
-	if(value & SP_SET_SIG6) (SP_STATUS_REG) |= SP_STATUS_SIG6;
-	if(value & SP_CLR_SIG7) (SP_STATUS_REG) &= ~SP_STATUS_SIG7;
-	if(value & SP_SET_SIG7) (SP_STATUS_REG) |= SP_STATUS_SIG7;
+	else if(value & SP_CLR_INTR_BREAK) (SP_STATUS_REG) &= ~SP_STATUS_INTR_BREAK;
 
-	if(value & SP_CLR_HALT)
+	if(value & SP_SET_YIELD) (SP_STATUS_REG) |= SP_STATUS_YIELD;
+    else if(value & SP_CLR_YIELD) (SP_STATUS_REG) &= ~SP_STATUS_YIELD;
+	
+	if(value & SP_SET_YIELDED) (SP_STATUS_REG) |= SP_STATUS_YIELDED;
+    else if(value & SP_CLR_YIELDED) (SP_STATUS_REG) &= ~SP_STATUS_YIELDED;
+	
+	if(value & SP_SET_TASKDONE) (SP_STATUS_REG) |= SP_STATUS_TASKDONE;
+    else if(value & SP_CLR_YIELDED) (SP_STATUS_REG) &= ~SP_STATUS_YIELDED;
+	
+	if(value & SP_SET_SIG3) (SP_STATUS_REG) |= SP_STATUS_SIG3;
+    else if(value & SP_CLR_SIG3) (SP_STATUS_REG) &= ~SP_STATUS_SIG3;
+	
+	if(value & SP_SET_SIG4) (SP_STATUS_REG) |= SP_STATUS_SIG4;
+    else if(value & SP_CLR_SIG4) (SP_STATUS_REG) &= ~SP_STATUS_SIG4;
+	
+	if(value & SP_SET_SIG5) (SP_STATUS_REG) |= SP_STATUS_SIG5;
+    else if(value & SP_CLR_SIG5) (SP_STATUS_REG) &= ~SP_STATUS_SIG5;
+	
+	if(value & SP_SET_SIG6) (SP_STATUS_REG) |= SP_STATUS_SIG6;
+    else if(value & SP_CLR_SIG6) (SP_STATUS_REG) &= ~SP_STATUS_SIG6;
+	
+	if(value & SP_SET_SIG7) (SP_STATUS_REG) |= SP_STATUS_SIG7;
+    else if(value & SP_CLR_SIG7) (SP_STATUS_REG) &= ~SP_STATUS_SIG7;
+
+	if(value & SP_SET_HALT) (SP_STATUS_REG) |= SP_STATUS_HALT;
+    else if(value & SP_CLR_HALT)
 	{
-		if ( ( value & SP_STATUS_BROKE ) == 0 )
+		if ( ( SP_STATUS_REG & SP_STATUS_BROKE ) == 0 ) //bugfix.
 		{
 			(SP_STATUS_REG) &= ~SP_STATUS_HALT;
 			DEBUG_SP_TASK_MACRO(TRACE0("SP Task is triggered"));
 			sp_hle_task = HLE_DMEM_TASK;
 			RunSPTask();
 		}
-	}
+ 	}
 
-	/* Add by Rice, 2001.08.10 */
-	SP_STATUS_REG |= SP_STATUS_HALT;
+	///* Add by Rice, 2001.08.10 */
+	//SP_STATUS_REG |= SP_STATUS_HALT;  //why?
 }
 
 /*
@@ -251,66 +277,316 @@ void Handle_DPC(uint32 value)
 {
 	if(value & DPC_CLR_XBUS_DMEM_DMA) (DPC_STATUS_REG) &= ~DPC_STATUS_XBUS_DMEM_DMA;
 	if(value & DPC_SET_XBUS_DMEM_DMA) (DPC_STATUS_REG) |= DPC_STATUS_XBUS_DMEM_DMA;
-	if(value & DPC_CLR_FREEZE) (DPC_STATUS_REG) &= ~DPC_STATUS_FREEZE;
 
-	/*
-	 * Modified by Rice. 2001.08.10 £
-	 * if (value & DPC_SET_FREEZE) (DPC_STATUS_REG) |= DPC_STATUS_FREEZE;
-	 */
+	if(value & DPC_CLR_FREEZE) (DPC_STATUS_REG) &= ~DPC_STATUS_FREEZE;
+	if(value & DPC_SET_FREEZE) (DPC_STATUS_REG) |= DPC_STATUS_FREEZE;
+
 	if(value & DPC_CLR_FLUSH) (DPC_STATUS_REG) &= ~DPC_STATUS_FLUSH;
 	if(value & DPC_SET_FLUSH) (DPC_STATUS_REG) |= DPC_STATUS_FLUSH;
-	if(value & DPC_CLR_TMEM_REG) (DPC_TMEM_REG) = 0;
+	
+	/*
+    if(value & DPC_CLR_TMEM_REG) (DPC_TMEM_REG) = 0;
 	if(value & DPC_CLR_PIPEBUSY_REG) (DPC_PIPEBUSY_REG) = 0;
 	if(value & DPC_CLR_BUFBUSY_REG) (DPC_BUFBUSY_REG) = 0;
 	if(value & DPC_CLR_CLOCK_REG) (DPC_CLOCK_REG) = 0;
+	*/
 }
+
+extern unsigned int cpuIdlePercentages[4];
+extern int cpuIdlePercentageIdx;
+BOOL newSecond = FALSE;
+void Set_AutoCF()
+{
+	BOOL oldViFrameSkip;
+	BOOL oldCounterFactor;
+	int cpuIdlePercentage=0;
+	int i;
+
+	if( newSecond == FALSE )
+		return;
+	else
+		newSecond = FALSE;
+
+	// Only change AutoCF and AutoFrameSkip setting at a second boundary
+
+	for( i=0; i<4; i++ )
+	{
+		cpuIdlePercentage += cpuIdlePercentages[i];
+	}
+	cpuIdlePercentage += cpuIdlePercentages[cpuIdlePercentageIdx];	// extra weight for the last second
+	cpuIdlePercentage /= 5;	// Average the idle percentage over the past 4 seconds
+
+	oldViFrameSkip = emustatus.viframeskip;
+	oldCounterFactor = CounterFactor;
+
+
+	/* Possible combinations:                                               */
+	/*
+	 * 1) AutoCF=On, AutoFrameSkip=On
+	 *     CF=5,  emustatus.viframeskip=1    -----> (1)  ^
+	 *     CF=5,  emustatus.viframeskip=0    -----> (2)  |
+	 *     CF=3,  emustatus.viframeskip=0    -----> (3)  |
+	 *     CF=1,  emustatus.viframeskip=0    -----> (4)  |
+	 *
+	 * 2) AutoCF=On, AutoFrameSkip=Off
+	 *     CF=5     ----> (1)  ^
+	 *     CF=3     ----> (2)  |
+	 *     CF=1     ----> (3)  |
+	 *
+	 * 3) AutoCF=Off,AutoFrameSkip=On
+	 *     emustatus.viframeskip=1     ----> (1)
+	 *     emustatus.viframeskip=0     ----> (2)
+	 *
+	 * 4) Both off, do nothing
+	 *	
+	 */
+
+	if( emuoptions.AutoCF && emuoptions.AutoFrameSkip )
+	{
+		// Case 1, both features are on
+
+		if( oldViFrameSkip == 1 )
+		{
+			if( oldCounterFactor != 5 )
+			{
+				// We will check again frame rate at the next second
+				emustatus.viframeskip = 0;
+				AutoCounterFactor = VICounterFactors[5];
+				CounterFactor = 5;
+			}
+			else if( cpuIdlePercentage > 15 || vips > vips_speed_limits[MAXFPS_AUTO_SYNC]*1.1f )
+			{
+				if( cpuIdlePercentage > 50 )
+				{
+					emustatus.viframeskip = 0;
+					AutoCounterFactor = VICounterFactors[3];
+					CounterFactor = 3;
+				}
+				else
+				{
+					emustatus.viframeskip = 0;
+					AutoCounterFactor = VICounterFactors[5];
+					CounterFactor = 5;
+				}
+			}
+			else
+			{
+				AutoCounterFactor = VICounterFactors[5];
+				CounterFactor = 5;
+			}
+		}
+		else
+		{
+			// oldViFrameSkip = 0
+			if( oldCounterFactor > 4 )
+			{
+				if( vips < vips_speed_limits[MAXFPS_AUTO_SYNC]*0.85f )
+				{
+					emustatus.viframeskip = 1;
+					AutoCounterFactor = VICounterFactors[5];
+					CounterFactor = 5;
+				}
+
+//This one is too slow                
+//				else if (cpuIdlePercentage > 50 )
+//				{
+//					AutoCounterFactor = VICounterFactors[1];
+//					CounterFactor = 1;
+//				}
+				else if (cpuIdlePercentage > 20 )
+				{
+					AutoCounterFactor = VICounterFactors[3];
+					CounterFactor = 3;
+				}
+				else
+				{
+					AutoCounterFactor = VICounterFactors[5];
+					CounterFactor = 5;
+				}
+			}
+			else if( oldCounterFactor >2 )
+			{
+				if( vips < vips_speed_limits[MAXFPS_AUTO_SYNC]*0.6f )
+				{
+					emustatus.viframeskip = 1;
+					AutoCounterFactor = VICounterFactors[5];
+					CounterFactor = 5;
+				}
+				else if( vips < vips_speed_limits[MAXFPS_AUTO_SYNC]*0.9f )
+				{
+					AutoCounterFactor = VICounterFactors[5];
+					CounterFactor = 5;
+				}
+//Too slow
+//				else if ( cpuIdlePercentage > 20 )
+//				{
+//					AutoCounterFactor = VICounterFactors[1];
+//					CounterFactor = 1;
+//				}
+				else
+				{
+					AutoCounterFactor = VICounterFactors[3];
+					CounterFactor = 3;
+				}
+			}
+			else
+			{
+				if( vips < vips_speed_limits[MAXFPS_AUTO_SYNC]*0.4f )
+				{
+					emustatus.viframeskip = 1;
+					AutoCounterFactor = VICounterFactors[5];
+					CounterFactor = 5;
+				}
+				else if( vips < vips_speed_limits[MAXFPS_AUTO_SYNC]*0.6f )
+				{
+					AutoCounterFactor = VICounterFactors[5];
+					CounterFactor = 5;
+				}
+				else if( vips < vips_speed_limits[MAXFPS_AUTO_SYNC]*0.9f )
+				{
+					AutoCounterFactor = VICounterFactors[3];
+					CounterFactor = 3;
+				}
+//Too slow
+//				else
+//				{
+//					AutoCounterFactor = VICounterFactors[1];
+//					CounterFactor = 1;
+//				}
+			}
+		}
+	}
+	else if( emuoptions.AutoCF )
+	{
+		// case 2: AutoCF=on, AutoFrameSkip=Off
+
+		if( oldCounterFactor > 4 )
+		{
+			if( vips < vips_speed_limits[MAXFPS_AUTO_SYNC]*0.9f )
+			{
+				// We cannot do anything else to speed up
+				AutoCounterFactor = VICounterFactors[5];
+				CounterFactor = 5;
+			}
+			else if (cpuIdlePercentage > 20 )
+			{
+				AutoCounterFactor = VICounterFactors[3];
+				CounterFactor = 3;
+			}
+		}
+		else if( oldCounterFactor >2 )
+		{
+			if( vips < vips_speed_limits[MAXFPS_AUTO_SYNC]*0.9f )
+			{
+				AutoCounterFactor = VICounterFactors[5];
+				CounterFactor = 5;
+			}
+//Too slow
+//			else if ( cpuIdlePercentage > 20 )
+//			{
+//				AutoCounterFactor = VICounterFactors[1];
+//				CounterFactor = 1;
+//			}
+			else
+			{
+				AutoCounterFactor = VICounterFactors[3];
+				CounterFactor = 3;
+			}
+		}
+		else
+		{
+			if( vips < vips_speed_limits[MAXFPS_AUTO_SYNC]*0.6f )
+			{
+				AutoCounterFactor = VICounterFactors[5];
+				CounterFactor = 5;
+			}
+			else if( vips < vips_speed_limits[MAXFPS_AUTO_SYNC]*0.9f )
+			{
+				AutoCounterFactor = VICounterFactors[3];
+				CounterFactor = 3;
+			}
+//Too slow
+//			else
+//			{
+//				AutoCounterFactor = VICounterFactors[1];
+//				CounterFactor = 1;
+//			}
+		}
+	}
+	else if( emuoptions.AutoFrameSkip )
+	{
+		// case 3: AutoCF=off, AutoFrameSkip=on
+
+		if( vips < vips_speed_limits[MAXFPS_AUTO_SYNC]*0.85f )
+		{
+			emustatus.viframeskip = 1;
+		}
+		else if( cpuIdlePercentage > 15 || vips > vips_speed_limits[MAXFPS_AUTO_SYNC]*1.1f )
+		{
+			emustatus.viframeskip = 0;
+		}
+	}
+	else
+	{
+		// Both features are off
+	}
+}
+
 
 /*
  =======================================================================================================================
     Process a Signal Processor task. This is where we call audio/video plugin execution routines.
  =======================================================================================================================
  */
+extern int UsingInternalVideo;
+
 void RunSPTask(void)
 {
-	switch(sp_hle_task)
+	DWORD SPcycleUsed = SPTASKPCLOCKS;
+	DWORD DPcycleUsed = 0;
+
+    switch(sp_hle_task)
 	{
+	
+	case BAD_TASK:
+		break;
+	
 	case GFX_TASK:
-#ifndef CRASHABLE
-		__try
-#endif
 		{
+			static int viframecount=0;
+			static DWORD viorg = 0;
+
 			DO_PROFILIER_VIDEO;
-			if( rsp_plugin_is_loaded == TRUE && emuoptions.UsingRspPlugin == TRUE )
+
+			if( viorg != VI_ORIGIN_REG )
 			{
-				DoRspCycles(100);
-				//RunRSP(100);
+				viframecount++;
+				viorg = VI_ORIGIN_REG;
+			}
+
+			if( emuoptions.AutoFrameSkip && emustatus.viframeskip == 1 && viframecount%2 == 0 )
+			{
+				// Skip the frame
+				Trigger_DPInterrupt();
 			}
 			else
 			{
-				//RunRSP(100);
-				VIDEO_ProcessDList();
+				if( rsp_plugin_is_loaded == TRUE && emuoptions.UsingRspPlugin == TRUE )
+				{
+					SPcycleUsed = DoRspCycles(100);
+				}
+				else
+				{
+					DWORD cycleUsed = VIDEO_ProcessDList();
+					SPcycleUsed = cycleUsed&0xFFFF;
+					DPcycleUsed = cycleUsed>>16;
+				}
 			}
 
 			emustatus.DListCount++;
 			DPC_STATUS_REG = 0x801; /* Makes Banjo Kazooie work - Azimer */
-			if((MI_INTR_REG_R & MI_INTR_DP) != 0) Trigger_DPInterrupt();
+	//		if((MI_INTR_REG_R & MI_INTR_DP) != 0) Trigger_DPInterrupt();
 		}
-#ifndef CRASHABLE
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
-			strcpy(generalmessage, "Video Plugin exception.\nDo you want to continue emulation?");
-			if((MessageBox(NULL, generalmessage, "Error", MB_YESNO | MB_ICONERROR)) == IDYES)
-			{
-				/* VIDEO_RomOpen(); */
-			}
-			else
-			{
-				emustatus.Emu_Keep_Running = FALSE;
-				emustatus.reason_to_stop = VIDEOCRASH;
-				countdown_counter = 0;
-			}
-		}
-#endif
 		DEBUG_SP_TASK_MACRO(TRACE0("SP GRX Task finished"));
 		break;
 	case SND_TASK:
@@ -320,16 +596,27 @@ void RunSPTask(void)
 
 			if( rsp_plugin_is_loaded == TRUE && emuoptions.UsingRspPlugin == TRUE )
 			{
-				//RunRSP(100);
-				DoRspCycles(100);
+				//AUDIO_ProcessAList();
+				SPcycleUsed = DoRspCycles(100);
+				SPcycleUsed *=4;
 			}
 			else
 			{
-				//RunRSP(100);
-				AUDIO_ProcessAList();
+				SPcycleUsed = AUDIO_ProcessAList();   // Plugin
 			}
 
 			emustatus.AListCount++;
+
+			if( Kaillera_Thread_Is_Running )
+			{
+				/* set the interrupt to fire */
+				(MI_INTR_REG_R) |= MI_INTR_AI;
+				if((MI_INTR_MASK_REG_R) & MI_INTR_AI)
+				{
+					SET_EXCEPTION(EXC_INT) gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
+					HandleInterrupts(0x80000180);
+				}
+			}
 		}
 
 		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
@@ -338,26 +625,47 @@ void RunSPTask(void)
 			DO_PROFILIER_R4300I
 		}
 
-		if((MI_INTR_REG_R & MI_INTR_DP) != 0) Trigger_DPInterrupt();
+//		if((MI_INTR_REG_R & MI_INTR_DP) != 0) Trigger_DPInterrupt();
 		DEBUG_SP_TASK_MACRO(TRACE0("SP SND Task finished"));
 		break;
+
+    case JPG_TASK:
+		if( rsp_plugin_is_loaded == TRUE && emuoptions.UsingRspPlugin == TRUE )
+		{
+			__try
+			{
+				SPcycleUsed = DoRspCycles(100);
+			}
+
+			__except(NULL, EXCEPTION_EXECUTE_HANDLER)
+			{
+				/* DisplayError("Memory exception fires to process RDP List"); */
+			}
+		}
+		else
+		{
+			TRACE0("Uncompress JPEG");
+			zlist_uncompress((OSTask_t *)&HLE_DMEM_TASK);
+//			SPcycleUsed = AUDIO_ProcessAList();   // Plugin
+		}
+        break;
+
 	default:
-		__try
+		//MessageBox(0, "Default", "", 0);
+        __try
 		{
 			DO_PROFILIER_RDP;
 			if( rsp_plugin_is_loaded == TRUE && emuoptions.UsingRspPlugin == TRUE )
 			{
-				//RunRSP(100);
-				DoRspCycles(100);
+				SPcycleUsed = DoRspCycles(100);
 				//VIDEO_ProcessRDPList();
 			}
 			else
 			{
-				//RunRSP(100);
-				VIDEO_ProcessRDPList();
+				//TODO: HLE JPEG (maybe)
+ //               RunDSP(10000000);
+				SPcycleUsed = 800;
 			}
-
-			/* VIDEO_ProcessDList(); */
 		}
 
 		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
@@ -365,15 +673,50 @@ void RunSPTask(void)
 			/* DisplayError("Memory exception fires to process RDP List"); */
 		}
 
-		if((MI_INTR_REG_R & MI_INTR_DP) != 0) Trigger_DPInterrupt();
+//		if((MI_INTR_REG_R & MI_INTR_DP) != 0) Trigger_DPInterrupt();
 
-		DEBUG_SP_TASK_MACRO(TRACE0("Unknown SP Taks"));
+		DEBUG_SP_TASK_MACRO(TRACE0("Unknown SP Task"));
 		break;
 	}
 
+	//if((MI_INTR_REG_R & MI_INTR_DP) != 0) Trigger_DPInterrupt();
 	DO_PROFILIER_R4300I;
-	if(currentromoptions.DMA_Segmentation == USEDMASEG_YES && emuoptions.UsingRspPlugin == FALSE ) 
-		Set_SP_DLIST_Timer_Event(SPTASKPCLOCKS);
+
+	// Audio hack according to Azimer for Hydro Thunder ...
+	//if( SP_STATUS_REG == 0x100)
+	//{
+	//	Trigger_SPInterrupt();
+	//}
+
+
+	if((MI_INTR_REG_R & MI_INTR_DP) != 0)
+	{
+		if(currentromoptions.timing_Control != NO_DELAY && emuoptions.UsingRspPlugin == FALSE && DPcycleUsed > 0 ) 
+		{
+			MI_INTR_REG_R &= ~MI_INTR_DP;
+			DPC_STATUS_REG |= DPC_STATUS_CMD_BUSY;
+			DPC_STATUS_REG |= DPC_STATUS_DMA_BUSY;
+			DPC_STATUS_REG &= ~DPC_STATUS_CBUF_READY;
+
+			Set_DP_DLIST_Timer_Event(DPcycleUsed);
+		}
+		else
+			Trigger_DPInterrupt();
+	}
+
+	if(currentromoptions.timing_Control != NO_DELAY && emuoptions.UsingRspPlugin == FALSE && SPcycleUsed > 0) 
+	{
+		//if( SPcycleUsed < SPTASKPCLOCKS )
+		//	SPcycleUsed = SPTASKPCLOCKS;
+
+		//(SP_STATUS_REG) &= ~0x00000203;
+		SP_STATUS_REG &= ~SP_STATUS_HALT;
+		SP_STATUS_REG |= SP_STATUS_DMA_BUSY;
+		SP_STATUS_REG |= SP_STATUS_IO_FULL;
+		SP_STATUS_REG |= SP_STATUS_DMA_FULL;
+		MI_INTR_REG_R &= ~MI_INTR_SP;
+		Set_SP_DLIST_Timer_Event(SPcycleUsed);
+	}
 	else
 		Trigger_RSPBreak();
 }
@@ -394,6 +737,8 @@ void Trigger_AIInterrupt(void)
 		SET_EXCEPTION(EXC_INT) gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
 		HandleInterrupts(0x80000180);
 	}
+
+	//KAILLERA_LOG(fprintf(ktracefile, "AI at VI=%d, compare=%08X\n", viTotalCount, Get_COUNT_Register()));
 }
 
 /*
@@ -418,6 +763,7 @@ void Trigger_CompareInterrupt(void)
 	SET_EXCEPTION(EXC_INT) gHWS_COP0Reg[CAUSE] |= CAUSE_IP8;
 
 	HandleInterrupts(0x80000180);
+	//KAILLERA_LOG(fprintf(ktracefile, "CI at VI=%d, compare=%08X\n", viTotalCount, Get_COUNT_Register()));
 }
 
 /*
@@ -434,6 +780,7 @@ void Trigger_DPInterrupt(void)
 		SET_EXCEPTION(EXC_INT) gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
 		HandleInterrupts(0x80000180);
 	}
+	//KAILLERA_LOG(fprintf(ktracefile, "DP at VI=%d, compare=%08X\n", viTotalCount, Get_COUNT_Register()));
 }
 
 /*
@@ -441,86 +788,84 @@ void Trigger_DPInterrupt(void)
     Flags a Video Interface Interrupt for later execution. (color frame buffer (CFB) display)
  =======================================================================================================================
  */
+extern HANDLE		StopEmulatorEvent;
+extern HANDLE		ResumeEmulatorEvent;
+double				tempvips2;
+double				tempvips3;
+extern	BOOL		screenIsUpdated;
+
 void Trigger_VIInterrupt(void)
 {
+	//KAILLERA_LOG(fprintf(ktracefile, "VI at compare=%08X\n", Get_COUNT_Register() ));
 
-#ifndef TEST_OPCODE_DEBUGGER_INTEGRITY9
-	if((debug_opcode != 1) || ((debug_opcode) && (p_gHardwareState == &gHardwareState)))
-#endif
-
-	/* only do the VI updatescreen for dyna, not for interpreter compare */
 	{
-		DEBUG_VI_INTERRUPT_TRACE(TRACE0("VI Interrupt is triggered"););
-
-		/* DEBUG_VI_INTERRUPT_TRACE(TRACE1("VI counter = %08X", Get_VIcounter()); */
-		DO_PROFILIER_VIDEO;
-
-		VIDEO_UpdateScreen();
-
-		DO_PROFILIER_R4300I;
-		viCountePerSecond++;
-		if(Audio_Is_Initialized == 1)
+		if( !screenIsUpdated )	// If screen is not updated by write to VIOrigin register
 		{
-			DO_PROFILIER_AUDIO;
-			if( CoreDoingAIUpdate )
-			{
-				AUDIO_AiUpdate(FALSE);
-			}
 
+			DO_PROFILIER_VIDEO;
+			VIDEO_UpdateScreen();		// For CFB
 			DO_PROFILIER_R4300I;
+		}
+
+		DEBUG_VI_INTERRUPT_TRACE(TRACE0("VI Interrupt is triggered"););
+		viCountPerSecond++;
+		viTotalCount++;
+	}
+
+	// safety check, the value of viCountPerSecond should not be very high, otherwise
+	// the emulator must have been looped
+	if( viCountPerSecond > 400 )
+	{
+		Sleep(2);	// Allow other threads to run
+	}
+
+	{
+		// Check for GUI pause/stop/resume events
+		DWORD tostop = WaitForSingleObject( StopEmulatorEvent, 0 );
+		if( tostop == WAIT_OBJECT_0 )
+		{
+			if( emustatus.reason_to_stop == EMUPAUSE && emustatus.processing_exception == TRUE )
+			{
+				SetEvent(StopEmulatorEvent);
+			}
+			else
+			{
+				// To stop the emulator
+				emustatus.Emu_Keep_Running = FALSE;
+			}
 		}
 	}
 
-	/* Speed Sync */
 	if(currentromoptions.Max_FPS != MAXFPS_NONE && emuoptions.SyncVI)
 	{
+		// Speed Sync
 		QueryPerformanceCounter(&CurrentTime);
 		Elapsed.QuadPart = CurrentTime.QuadPart - LastSecondTime.QuadPart;
-		tempvips = viCountePerSecond / ((double) Elapsed.QuadPart / (double) Freq.QuadPart);
 
-		/* if( tempvips > vips_speed_limits[currentromoptions.Max_FPS]+1.0) */
-		if(tempvips > vips_speed_limits[currentromoptions.Max_FPS])
+        _control87(_RC_UP, _MCW_RC);
+        tempvips2 = (double)(viCountPerSecond * Freq.QuadPart) / (double)Elapsed.QuadPart;
+
+        Elapsed.QuadPart = CurrentTime.QuadPart - LastVITime.QuadPart;
+		tempvips = (double)Freq.QuadPart / (double)Elapsed.QuadPart;
+
+		
+        
+        if( tempvips > (double)vips_speed_limits[currentromoptions.Max_FPS] && tempvips2 > (double)vips_speed_limits[currentromoptions.Max_FPS] )
 		{
-			DO_PROFILIER_CPU_IDLE
+			DO_PROFILIER_CPU_IDLE;
 
-			/* TRACE1("tempvips = %f", (float)tempvips); */
-			Elapsed.QuadPart = CurrentTime.QuadPart -
-			LastVITime.QuadPart;
-
-			sleeptime = 1000.00f /
-			(vips_speed_limits[currentromoptions.Max_FPS]) -
-			(double) Elapsed.QuadPart /
-			(double) Freq.QuadPart *
-			1000.00;
-			do
+			Elapsed.QuadPart = CurrentTime.QuadPart - LastVITime.QuadPart;
+			tempvips3 = (double)Freq.QuadPart / (double)Elapsed.QuadPart;
+            while(tempvips3 > (double)vips_speed_limits[currentromoptions.Max_FPS])
 			{
-				if(sleeptime > 0)
+				if(tempvips3 > vips_speed_limits[currentromoptions.Max_FPS])
 				{
-					if(sleeptime > 1.5)
-					{
-						Sleep(1);
-					}
-					else
-					{
-						/*~~~~~~*/
-						uint32	i;
-						/*~~~~~~*/
-
-						for(i = 0; i < 1000 * sleeptime; i++)
-						{ ;
-						}	/* busy wait */
-					}
+					Sleep(1);
 				}
-
 				QueryPerformanceCounter(&CurrentTime);
-				Elapsed.QuadPart = CurrentTime.QuadPart -
-				LastVITime.QuadPart;
-				sleeptime = 1000.00f /
-				(vips_speed_limits[currentromoptions.Max_FPS]) -
-				(float) Elapsed.QuadPart /
-				(float) Freq.QuadPart *
-				1000.00;
-			} while(sleeptime > 0.1);
+				Elapsed.QuadPart = CurrentTime.QuadPart - LastVITime.QuadPart;
+				tempvips3 = (double)Freq.QuadPart / (double)Elapsed.QuadPart;
+			}
 
 			DO_PROFILIER_R4300I
 		}
@@ -528,7 +873,41 @@ void Trigger_VIInterrupt(void)
 		LastVITime = CurrentTime;
 	}
 
-	
+	if(Audio_Is_Initialized == 1)
+	{
+		// Update AI
+		DO_PROFILIER_AUDIO;
+		if( CoreDoingAIUpdate )
+		{
+			AUDIO_AiUpdate(FALSE);
+			if (HydroThunder)
+				MI_INTR_REG_R |= MI_INTR_SP; //Fixes Hydro Thunder and Tarzan :)
+
+		}
+
+		DO_PROFILIER_R4300I;
+	}
+
+	/*
+	{
+		// Experiment for AI interrupts
+		extern uint64 gAIDMAEndTimer;
+		extern uint64 current_counter;
+
+		DWORD ailen = AUDIO_AiReadLength();
+		AI_STATUS_REG = gMemoryState.AI[3];
+
+		if( ailen == 0 || gAIDMAEndTimer < current_counter )
+		{
+			if( (AI_STATUS_REG&0x80000001) != 0 )
+			{
+				Set_Delay_AI_Interrupt_Timer_Event(100);
+				AI_STATUS_REG = 0;
+			}
+		}
+	}
+	*/
+
 	if ((VI_STATUS_REG & 0x00000010) != 0) // Bit [4]     = divot_enable (normally on if antialiased, unless decal lines)
 	{
 		vi_field_number = 1 - vi_field_number;
@@ -538,14 +917,16 @@ void Trigger_VIInterrupt(void)
 		vi_field_number = 0;
 	}
 
-	/* Apply the hack codes */
-	if(emuoptions.auto_apply_cheat_code)
+	if(emuoptions.auto_apply_cheat_code || kailleraAutoApplyCheat)
 	{
+		// Apply the hack codes
 #ifndef CHEATCODE_LOCK_MEMORY
 		CodeList_ApplyAllCode(INGAME);
 #endif
 	}
 
+	Set_AutoCF();
+    
 	/* set the interrupt to fire */
 	(MI_INTR_REG_R) |= MI_INTR_VI;
 	if((MI_INTR_MASK_REG_R) & MI_INTR_MASK_VI)
@@ -553,6 +934,8 @@ void Trigger_VIInterrupt(void)
 		SET_EXCEPTION(EXC_INT) gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
 		HandleInterrupts(0x80000180);
 	}
+
+	screenIsUpdated = FALSE;
 }
 
 /*
@@ -569,6 +952,7 @@ void Trigger_SIInterrupt(void)
 		SET_EXCEPTION(EXC_INT) gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
 		HandleInterrupts(0x80000180);
 	}
+	//KAILLERA_LOG(fprintf(ktracefile, "SI at VI=%d, compare=%08X\n", viTotalCount, Get_COUNT_Register()));
 }
 
 /*
@@ -585,6 +969,7 @@ void Trigger_PIInterrupt(void)
 		SET_EXCEPTION(EXC_INT) gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
 		HandleInterrupts(0x80000180);
 	}
+	//KAILLERA_LOG(fprintf(ktracefile, "PI at VI=%d, compare=%08X\n", viTotalCount, Get_COUNT_Register()));
 }
 
 /*
@@ -601,6 +986,7 @@ void Trigger_SPInterrupt(void)
 		SET_EXCEPTION(EXC_INT) gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
 		HandleInterrupts(0x80000180);
 	}
+	//KAILLERA_LOG(fprintf(ktracefile, "SP at VI=%d, compare=%08X\n", viTotalCount, Get_COUNT_Register()));
 }
 
 /*
@@ -634,7 +1020,8 @@ void Clear_MIInterrupt(uint32 clear_mask)
 	if((MI_INTR_REG_R & MI_INTR_MASK_REG_R) == 0)
 	{
 		gHWS_COP0Reg[CAUSE] &= NOT_CAUSE_IP3;
-		if((gHWS_COP0Reg[CAUSE] & gHWS_COP0Reg[STATUS] & SR_IMASK) == 0) CPUNeedToCheckInterrupt = FALSE;
+		if((gHWS_COP0Reg[CAUSE] & gHWS_COP0Reg[STATUS] & SR_IMASK) == 0)
+            CPUNeedToCheckInterrupt = FALSE;
 	}
 }
 
@@ -649,10 +1036,10 @@ void Trigger_Address_Error_Exception(uint32 addr, char *opcode, int exception)
 	TRACE3("Memory access not aligned, PC=%08X, opcode=%s, Bad Vaddr=%08X", gHWS_pc, opcode, addr);
 
 	TRACE0("Should fire Address Error Exception, but we skipped here");
-#ifdef DEBUG_COMMON
+#ifdef _DEBUG
 	/*
-	 * SET_EXCEPTION(exception) £
-	 * gHWS_COP0Reg[BADVADDR] = addr; £
+	 * SET_EXCEPTION(exception) ?
+	 * gHWS_COP0Reg[BADVADDR] = addr; ?
 	 * HandleExceptions(0x80000180);
 	 */
 #endif
@@ -664,31 +1051,94 @@ void Trigger_Address_Error_Exception(uint32 addr, char *opcode, int exception)
  =======================================================================================================================
  */
 
-void TriggerFPUUnusableException(void)
+int tempfpr32[64];
+int tempgpr[64]; 
+extern BOOL IsBooting;
+
+void New_Dyna_Exception_Service_Routine (int ReturnPC) ;
+
+void TriggerFPUUnusableExceptionNewer(int ReturnPC, int InDelaySlot)
 {
+	compilerstatus.schiboException = EXCEPTION_CP1_UNUSABLE;
+
+	if (InDelaySlot)
+		gHWS_COP0Reg[CAUSE] |= BD;
+	else
+		gHWS_COP0Reg[CAUSE] &= ~BD;
+
 	SET_EXCEPTION(EXC_CPU) 
 	gHWS_COP0Reg[CAUSE] &= 0xCFFFFFFF;
 	gHWS_COP0Reg[CAUSE] |= CAUSE_CE1;
+    New_Dyna_Exception_Service_Routine(ReturnPC);
+	
+	gHWS_pc = 0x80000180;
 
-	/*
-	 * Should test the CPU Delay slot bit £
-	 * gHWS_COP0Reg[EPC] = gHWS_pc;
-	 */
-	TRACE0("FPU Unusable Exception");
+	//Raise an exception to trigger the exception vector. 
+	RaiseException(1,         // exception code 
+	    0,                    // continuable exception 
+        0, NULL);             // no arguments 
+}
 
-#ifdef ENABLE_OPCODE_DEBUGGER
-	if(emustatus.cpucore == DYNACOMPILER)
+void TriggerCPUInterruptExceptionNewer(int ReturnPC, int InDelaySlot)
+{
+	compilerstatus.schiboException = EXCEPTION_INTERRUPT;
+
+	if (InDelaySlot)
+		gHWS_COP0Reg[CAUSE] |= BD;
+	else
+		gHWS_COP0Reg[CAUSE] &= ~BD;
+
+	SET_EXCEPTION(EXC_INT) 
+    New_Dyna_Exception_Service_Routine(ReturnPC);
+
+	gHWS_pc = 0x80000180;
+
+	//Raise an exception to trigger the exception vector. 
+	RaiseException(1,         // exception code 
+	    0,                    // continuable exception 
+        0, NULL);             // no arguments 
+}
+
+//Only the interpreter uses this function.
+void TriggerFPUUnusableException(void)
+{
+	SET_EXCEPTION(EXC_CPU) 
+
+    gHWS_COP0Reg[CAUSE] &= 0xCFFFFFFF;
+    gHWS_COP0Reg[CAUSE] |= CAUSE_CE1;
+
+
+    //Rice, this is for interpreter, but because it is a delay slot, it might be a little tricky.
+    //I think if CPUdelay == 1 (and it's not 2 or zero) we will be in the delay slot.
+    if (CPUdelay==1)
+        gHWS_COP0Reg[CAUSE] |= BD;
+    else
+        gHWS_COP0Reg[CAUSE] &= ~BD;
+
+
+	DEBUG_EXCEPTION_TRACE(TRACE0("FPU Unusable Exception"));
+
+	
+	if((emustatus.cpucore == DYNACOMPILER) && (compilerstatus.Is_Compiling == 0))
+	{
 		Dyna_Exception_Service_Routine(0x80000180);
+	}
 	else
 	{
 		CPUNeedToDoOtherTask = TRUE;
 		CPUNeedToCheckException = TRUE;
 	}
+//	HandleExceptions(0x80000180);
+//	gHWS_COP0Reg[CAUSE] &=~CAUSE_CE1;
 
-#else
-	HandleExceptions(0x80000180);
-#endif
 }
+
+extern void cop0_with_exception(OP_PARAMS);
+extern void CU1_COP1_instr(uint32 Instruction);
+extern void CU1_r4300i_lwc1(uint32 Instruction);
+extern void CU1_r4300i_ldc1(uint32 Instruction);
+extern void CU1_r4300i_swc1(uint32 Instruction);
+extern void CU1_r4300i_sdc1(uint32 Instruction);
 
 /*
  =======================================================================================================================
@@ -697,20 +1147,11 @@ void TriggerFPUUnusableException(void)
  */
 void EnableFPUUnusableException(void)
 {
-	/* TRACE0("Enable FPU Exception"); */
-#ifndef TEST_OPCODE_DEBUGGER_INTEGRITY10
-	if(debug_opcode != 1)
-#endif
-		dyna_instruction[0x11] = dyna4300i_cop1_with_exception; /* this is for dyna */
-
-#ifndef TEST_OPCODE_DEBUGGER_INTEGRITY11
-	else
-		now_do_dyna_instruction[0x11] = dyna4300i_cop1_with_exception;
-#endif
-#ifndef TEST_OPCODE_DEBUGGER_INTEGRITY12
-	if(debug_opcode != 1 || emustatus.cpucore == INTERPRETER)
-#endif
-		CPU_instruction[0x11] = COP1_NotAvailable_instr;		/* this is for interpreter */
+    CPU_instruction[0x11] = CU1_COP1_instr;		/* this is for interpreter */
+    CPU_instruction[49] = CU1_r4300i_lwc1;
+    CPU_instruction[53] = CU1_r4300i_ldc1;
+    CPU_instruction[57] = CU1_r4300i_swc1;
+    CPU_instruction[61] = CU1_r4300i_sdc1;
 }
 
 /*
@@ -720,44 +1161,12 @@ void EnableFPUUnusableException(void)
  */
 void DisableFPUUnusableException(void)
 {
-	/* TRACE0("Disable FPU Exception"); */
-#ifndef TEST_OPCODE_DEBUGGER_INTEGRITY13
-	if(debug_opcode != 1)
-#endif
-	{
-		dyna_instruction[0x11] = dyna4300i_cop1;	/* this is for dyna */
-	}
-
-#ifndef TEST_OPCODE_DEBUGGER_INTEGRITY14
-	else
-		now_do_dyna_instruction[0x11] = dyna4300i_cop1;
-#endif
-#ifndef TEST_OPCODE_DEBUGGER_INTEGRITY15
-	if(debug_opcode != 1 || emustatus.cpucore == INTERPRETER)
-#endif
-		CPU_instruction[0x11] = COP1_instr;			/* this is for interpreter */
-}
-
-/*
- =======================================================================================================================
-    This exception is triggered when an integer overflow or divide by zero condition happens
- =======================================================================================================================
- */
-void TriggerIntegerOverflowException(void)
-{
-	SET_EXCEPTION(EXC_OV) TRACE0("Integer Overflow Exception is triggered");
-	HandleExceptions(0x80000180);
-}
-
-/*
- =======================================================================================================================
-    This exception is triggered when an fpu exception happens
- =======================================================================================================================
- */
-void TriggerGeneralFPUException(void)
-{
-	SET_EXCEPTION(EXC_FPE) TRACE0("FPU Exception is triggered");
-	HandleExceptions(0x80000180);
+	/* this is for interpreter */	
+    CPU_instruction[0x11] = COP1_instr;			
+    CPU_instruction[49] = r4300i_lwc1;
+    CPU_instruction[53] = r4300i_ldc1;
+    CPU_instruction[57] = r4300i_swc1;
+    CPU_instruction[61] = r4300i_sdc1;
 }
 
 /*
@@ -808,3 +1217,4 @@ void Trigger_Interrupt_Without_Mask(uint32 interrupt)
 	SET_EXCEPTION(EXC_INT) gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
 	HandleInterrupts(0x80000180);
 }
+

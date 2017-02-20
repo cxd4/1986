@@ -9,7 +9,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -21,7 +21,7 @@
  * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
-#include "n64rcp.h"
+#include "stdafx.h"
 
 /*
  =======================================================================================================================

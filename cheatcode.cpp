@@ -1,5 +1,5 @@
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -21,15 +21,9 @@
 // 1.	Only display the cheat codes available for the certain rom, hide codes that
 //		are not for the current rom
 // 2.	Have rom CRC info in the 1964.cht
-#include <windows.h>
-#include "r4300i.h"
-#include "cheatcode.h"
-#include "win32/wingui.h"
-#include "win32/windebug.h"
-#include "romlist.h"
-#include "plugins.h"
-#include "memory.h"
-#include "emulator.h"
+#include "stdafx.h"
+
+extern BOOL IsBooting;
 
 int		codegroupcount = 0;
 int		currentgroupindex = -1;
@@ -50,6 +44,8 @@ char	*cheatcode_countries[8] =
 	"Germany - PAL"
 };
 
+char *cheatfilename = "1964.cht";
+
 enum { CHEAT_ALL_COUNTRY, CHEAT_USA, CHEAT_JAPAN, CHEAT_USA_AND_JAPAN, CHEAT_EUR, CHEAT_AUS, CHEAT_FR, CHEAT_GER };
 BOOL IsCodeMatchRomCountryCode(int cheat_country_code, int rom_country_code);
 
@@ -67,7 +63,7 @@ void RefreshAllCheatCodeMemoryMaps(void);
 
 void FormatCodes(void);
 
-char *cheatcode_std_note = "Enter the game shark code or other hack code above in the game shark code format, for example: 802312340064.\n\nYou can enter multiple lines as a group.  Give each group of codes a name in the name field, then click the [Add/Modify] button to add it into the list in the left. Existing code with the same name will be replaced.";
+char *cheatcode_std_note = "";
 
 CODEGROUP *codegrouplist;
 
@@ -95,25 +91,10 @@ void CodeList_Clear(void)
 
 /*
  =======================================================================================================================
-    According cheat code from file for current loaded rom £
-    Cheat Code file name: 1964.cht £
-    File layout: £
-    File contents entries for different rom £
-    Entry Layout: £
-    [Rom Name] £
-    Name1=b,12345678-xxxx,12345678-xxxx £
-    Name2=b,12345678-xxxx,12345678-xxxx £
-    b=0, 1 £
-    b=0 -> this group is not active £
-    b=1 -> this group is active £
-    Limition: £
-    Support upto 30 games per rom £
-    Support upto 10 code per group £
-    Activation: £
-    Codes in a group will be activated/deactivated together
+    According cheat code from file for current loaded rom ?    Cheat Code file name: 1964.cht ?    File layout: ?    File contents entries for different rom ?    Entry Layout: ?    [Rom Name] ?    Name1=b,12345678-xxxx,12345678-xxxx ?    Name2=b,12345678-xxxx,12345678-xxxx ?    b=0, 1 ?    b=0 -> this group is not active ?    b=1 -> this group is active ?    Limition: ?    Support upto 30 games per rom ?    Support upto 10 code per group ?    Activation: ?    Codes in a group will be activated/deactivated together
  =======================================================================================================================
  */
-BOOL CodeList_ReadCode(char *intername_rom_name)
+BOOL __cdecl CodeList_ReadCode(char *intername_rom_name, char *filename)
 {
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	char			codefilepath[_MAX_PATH];
@@ -127,7 +108,7 @@ BOOL CodeList_ReadCode(char *intername_rom_name)
 	strcpy(current_cheatcode_rom_internal_name, intername_rom_name);
 
 	strcpy(codefilepath, directories.main_directory);
-	strcat(codefilepath, "1964.cht");
+	strcat(codefilepath, filename);
 
 	stream = fopen(codefilepath, "rt");
 	if(stream == NULL)
@@ -168,8 +149,7 @@ BOOL CodeList_ReadCode(char *intername_rom_name)
 		/*~~~~~~~~~~~~~~~*/
 
 		/*
-		 * Read all code for current rom only £
-		 * Step 1, read the number of groups
+		 * Read all code for current rom only ?		 * Step 1, read the number of groups
 		 */
 		if(fgets(line, 256, stream))
 		{
@@ -193,7 +173,7 @@ BOOL CodeList_ReadCode(char *intername_rom_name)
 		}
 
 		/* Allocate memory for groups */
-		codegrouplist = VirtualAlloc(NULL, numberofgroups * sizeof(CODEGROUP), MEM_COMMIT, PAGE_READWRITE);
+		codegrouplist = (CODEGROUP*)VirtualAlloc(NULL, numberofgroups * sizeof(CODEGROUP), MEM_COMMIT, PAGE_READWRITE);
 		if(codegrouplist == NULL)
 		{
 			DisplayError("Cannot allocate memory to load cheat codes");
@@ -202,7 +182,10 @@ BOOL CodeList_ReadCode(char *intername_rom_name)
 
 		codegroupcount = 0;
 		while(codegroupcount < numberofgroups && fgets(line, 32767, stream) && strlen(line) > 8)	//changed by Witten
-		{																							//32767 makes sure the entier line is read
+		{																							//32767 makes sure the entire line is read
+
+			//if( strstr(filename,"kaillera") != 0 )
+				//MessageBox(NULL,"Next","Msg",MB_OK);
 			/* Codes for the group are in the string line[] */
 			for(c1 = 0; line[c1] != '=' && line[c1] != '\0'; c1++) codegrouplist[codegroupcount].name[c1] = line[c1];
 
@@ -314,41 +297,43 @@ BOOL CodeList_SaveCode(void)
 	stream = fopen(codefilepath, "rt");
 	if(stream != NULL)
 	{
-		while(fgets(line, 2048, stream))
-		{
-			chopm(line);
-			if(strcmp(line, romname) == 0 && found == FALSE)
+		char* res;
+
+		do 	{
+			res = fgets(line, 2048, stream);
+			if( res ) chopm(line);
+			if( (strcmp(line, romname) == 0 || !res ) && found == FALSE)
 			{
 				found = TRUE;
-	fprintf(stream2, "[%s]\n", current_cheatcode_rom_internal_name);
-	fprintf(stream2, "NumberOfGroups=%d\n", codegroupcount);
+				fprintf(stream2, "[%s]\n", current_cheatcode_rom_internal_name);
+				fprintf(stream2, "NumberOfGroups=%d\n", codegroupcount);
 				for(c1 = 0; c1 < codegroupcount; c1++) // write cheats to file
-	{
-		if(codegrouplist[c1].country == 0)
-			fprintf(stream2, "%s=", codegrouplist[c1].name);
-		else
-		{
-			fprintf(stream2, "%s,%d=", codegrouplist[c1].name, codegrouplist[c1].country);
-		}
+				{
+					if(codegrouplist[c1].country == 0)
+						fprintf(stream2, "%s=", codegrouplist[c1].name);
+					else
+					{
+						fprintf(stream2, "%s,%d=", codegrouplist[c1].name, codegrouplist[c1].country);
+					}
 
-		if(strlen(codegrouplist[c1].note) > 0)
-		{
-			fprintf(stream2, "\"%s\",%d,", codegrouplist[c1].note, codegrouplist[c1].active);
-		}
-		else
-		{
-			fprintf(stream2, "%d,", codegrouplist[c1].active);
-		}
+					if(strlen(codegrouplist[c1].note) > 0)
+					{
+						fprintf(stream2, "\"%s\",%d,", codegrouplist[c1].note, codegrouplist[c1].active);
+					}
+					else
+					{
+						fprintf(stream2, "%d,", codegrouplist[c1].active);
+					}
 
-		for(c2 = 0; c2 < codegrouplist[c1].codecount; c2++)
-		{
-			fprintf(stream2, "%08X-%04X,", codegrouplist[c1].codelist[c2].addr, codegrouplist[c1].codelist[c2].val);
-		}
+					for(c2 = 0; c2 < codegrouplist[c1].codecount; c2++)
+					{
+						fprintf(stream2, "%08X-%04X,", codegrouplist[c1].codelist[c2].addr, codegrouplist[c1].codelist[c2].val);
+					}
 
-		fprintf(stream2, "\n");
-	}
+					fprintf(stream2, "\n");
+				}
 
-	fprintf(stream2, "\n");
+				fprintf(stream2, "\n");
 
 				while(fgets(line, 2048, stream)) // continue to read original file until next game is found
 				{
@@ -364,7 +349,7 @@ BOOL CodeList_SaveCode(void)
 			{
 				fprintf(stream2, "%s\n", line);
 			}
-		}
+		}while(res);
 
 		fclose(stream);
 	}
@@ -406,12 +391,7 @@ BOOL CodeList_SaveCode(void)
     Description 0-XXXXXXX 00YY 8-Bit Constant ROM Write, to modify the ROM data after loading 1-XXXXXXX YYYY 16-Bit
     Constant ROM Write, to modify the ROM data after loading Not supports N64 game shark code types: Code Type Format
     Code Type Description CC-000000 0000 DD-000000 0000 EE-000000 0000 Disable Expansion Pak FF-XXXXXX 0000 Store
-    Activated Cheat Codes 1964 uses [F9] key as the Game Shark button £
-    This function will apply codes in different modes £
-    mode = INGAME Apply code in game play £
-    mode = BOOTUPONCE Apply code after bootup once only £
-    mode = GSBUTTON Apply code at GS botton pushed £
-    mode = ONLYIN1964 1964 only, Apply code after rom is loaded and before boot
+    Activated Cheat Codes 1964 uses [F9] key as the Game Shark button ?    This function will apply codes in different modes ?    mode = INGAME Apply code in game play ?    mode = BOOTUPONCE Apply code after bootup once only ?    mode = GSBUTTON Apply code at GS botton pushed ?    mode = ONLYIN1964 1964 only, Apply code after rom is loaded and before boot
  =======================================================================================================================
  */
 BOOL CodeList_ApplyCode(int index, int mode)
@@ -541,7 +521,6 @@ BOOL CodeList_ApplyCode(int index, int mode)
 					}
 					break;
 				case ONLYIN1964:	/* Works in 1964 only */
-					switch(codetype)
 					{
 						if((codetype & 0xE0) == 0x00)	/* 1964 only code type */
 						{
@@ -578,7 +557,7 @@ BOOL CodeList_ApplyCode(int index, int mode)
 	}
 	else
 	{
-		DisplayError("Please start the game first before apply the code");
+		DisplayError("Please start the game first before applying the code.");
 		return FALSE;
 	}
 }
@@ -589,17 +568,23 @@ BOOL CodeList_ApplyCode(int index, int mode)
  */
 BOOL CodeList_ApplyAllCode(enum APPLYCHEATMODE mode)
 {
-	/*~~*/
 	int i;
-	/*~~*/
 
-	for(i = 0; i < codegroupcount; i++)
+	//if( IsBooting ) 
+	if( IsBooting && mode != BOOTUPONCE ) 
+		return FALSE;
+
+	if( (emuoptions.auto_apply_cheat_code && Kaillera_Is_Running == FALSE) || (Kaillera_Is_Running && kailleraAutoApplyCheat) )
 	{
-		if(codegrouplist[i].active)
+		for(i = 0; i < codegroupcount; i++)
 		{
-			CodeList_ApplyCode(i, mode);
+			if(codegrouplist[i].active)
+			{
+				CodeList_ApplyCode(i, mode);
+			}
 		}
 	}
+
 
 	return TRUE;
 }
@@ -703,7 +688,9 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 	switch(message)
 	{
 	case WM_INITDIALOG:
-		SendDlgItemMessage
+		TranslateDialag(hDlg, "CHEAT_HACK");
+		CodeList_ReadCode(romlist[rlstatus.selected_rom_index]->pinientry->Game_Name,cheatfilename);
+        SendDlgItemMessage
 		(
 			hDlg,
 			IDC_DEFAULTOPTIONS_AUTOCHEAT,
@@ -754,13 +741,41 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 
 		for(i = 0; i < MAX_CHEATCODE_COUNTRY; i++)
 		{
-			SendDlgItemMessage(hDlg, IDC_CHEATCODE_COUNTRY, CB_INSERTSTRING, i, (LPARAM) cheatcode_countries[i]);
+			SendDlgItemMessage(hDlg, IDC_CHEATCODE_COUNTRY, CB_INSERTSTRING, i, (LPARAM) TranslateStringByString(cheatcode_countries[i]));
 		}
 
 		SendDlgItemMessage(hDlg, IDC_CHEATCODE_COUNTRY, CB_SETCURSEL, 0, 0);
 
+        
+
 		return(TRUE);
 
+	
+    
+    //Propertysheet handling
+	case WM_NOTIFY:
+		{
+		LPNMHDR lpnm = (LPNMHDR) lParam;
+
+        switch (lpnm->code)
+            {
+			case PSN_APPLY:
+				SendMessage(hDlg, WM_COMMAND, IDOK, lParam);
+                EndDialog(lpnm->hwndFrom, TRUE);
+				break;
+
+            case PSN_RESET :
+                //Handle a Cancel button click, if necessary
+                EndDialog(lpnm->hwndFrom, TRUE);
+				break;
+			}
+		}
+        return(TRUE);  
+    
+    
+    
+    
+    
 	case WM_COMMAND:
 		/*
 		 * TRACE3("wParam=%08X, lParam=%08X, Notify=%d", *(DWORD*)&wParam, lParam,
@@ -887,7 +902,7 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 						CODEGROUP	*newgrouplist = NULL;
 						/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-						newgrouplist = VirtualAlloc
+						newgrouplist = (CODEGROUP*)VirtualAlloc
 							(
 								NULL,
 								(codegroupcount + 1) * sizeof(CODEGROUP),
@@ -901,8 +916,11 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 						}
 						else
 						{
-							memcpy(newgrouplist, codegrouplist, codegroupcount * sizeof(CODEGROUP));
-							VirtualFree(codegrouplist, 0, MEM_RELEASE);
+							if( codegrouplist )
+							{
+								memcpy(newgrouplist, codegrouplist, codegroupcount * sizeof(CODEGROUP));
+								VirtualFree(codegrouplist, 0, MEM_RELEASE);
+							}
 							codegrouplist = newgrouplist;
 						}
 					}
@@ -942,11 +960,12 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 				index = SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_GETCARETINDEX, 0, 0);
 				if(index < codegroupcount)
 				{
+					int answer = MessageBox(hDlg,TranslateStringByString("Are you sure to delete this code?"), TranslateStringByString("Warning"), MB_YESNO);
+					if( answer == IDNO ) break;
+
 					if(index < codegroupcount - 1)
 					{
-						/*~~*/
 						int j;
-						/*~~*/
 
 						for(j = index; j < codegroupcount - 1; j++)
 						{
@@ -957,11 +976,6 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 					codegroupcount--;
 					SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_DELETESTRING, index, 0);
 					codemodified = TRUE;	/* Codes are modified, we will save it when quit from the dialog */
-	
-					//SetDlgItemText(hDlg, IDC_GAMESHARK_NAME, "");
-					//SetDlgItemText(hDlg, IDC_GAMESHARK_CODE, "");
-					//SetDlgItemText(hDlg, IDC_CHEAT_NOTE, "");
-					//SetDlgItemText(hDlg, IDC_CHEAT_NOTE2, "");
 				}
 				break;
 			case IDC_GAMESHARK_ACTIVATE:
@@ -1022,6 +1036,7 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 				codemodified = TRUE;		/* Codes are modified, we will save it when quit from the dialog */
 				break;
 			case IDOK:
+				REGISTRY_WriteDWORD( "AutoApplyCheat", emuoptions.auto_apply_cheat_code);
 				CodeList_SaveCode();
 #ifdef CHEATCODE_LOCK_MEMORY
 				RefreshAllCheatCodeMemoryMaps();
@@ -1216,8 +1231,7 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 		lpmis = (LPMEASUREITEMSTRUCT) lParam;
 
 		/*
-		 * Set the height of the list box items. £
-		 * lpmis->itemHeight = 16;
+		 * Set the height of the list box items. ?		 * lpmis->itemHeight = 16;
 		 */
 		return TRUE;
 
@@ -1265,7 +1279,7 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 
 				if(!matchcountrycode)
 				{
-					strcat(generalmessage, " (country code mismatch)");
+					strcat(generalmessage, TranslateStringByString("(country code mismatch)"));
 					textcolor = 0x00888888;
 				}
 
@@ -1738,6 +1752,18 @@ BOOL CodeList_ApplyCode_At_Address(int index, uint32 addr_to_apply)
 	return TRUE;
 }
 
-
-
 #endif
+
+int NumOfActiveCheatGroups(void)
+{
+	int i;
+	int count=0;
+	for( i=0; i<codegroupcount; i++)
+	{
+		if( codegrouplist[i].active )
+			count++;
+	}
+
+	return count;
+}
+

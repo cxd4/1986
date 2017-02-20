@@ -1,5 +1,5 @@
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -92,6 +92,8 @@ typedef struct {
 
 void RSPCloseDLL( void );
 void RSPDllAbout( HWND hWnd );
+extern void (__cdecl *_RSP_Under_Selecting_DllAbout) (HWND _hWnd);
+void RSP_Under_Selecting_DllAbout(HWND _hWnd);
 void RSPDllConfig( HWND hWnd );
 void RSPRomClosed( void );
 DWORD DoRspCycles( DWORD );

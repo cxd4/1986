@@ -1,714 +1,1296 @@
-<?xml version="1.0" encoding = "Windows-1252"?>
+<?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.00"
-	Name="1964"
-	SccProjectName="&quot;$/1964&quot;, RDAAAAAA"
-	SccAuxPath=""
-	SccLocalPath="."
-	SccProvider="MSSCCI:Microsoft Visual SourceSafe">
+	Version="9.00"
+	Name="1964.exe"
+	ProjectGUID="{02CE71AA-51C0-4786-9CB4-076C60D021A8}"
+	TargetFrameworkVersion="131072"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\obj/Release"
-			IntermediateDirectory=".\obj/Release"
+			OutputDirectory="../obj/core/Release/"
+			IntermediateDirectory="../obj/core/Release/"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			WholeProgramOptimization="FALSE">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			ManagedExtensions="0"
+			DeleteExtensionsOnClean="*.*"
+			>
 			<Tool
-				Name="VCCLCompilerTool"
-				AdditionalOptions="/Oa"
-				Optimization="2"
-				GlobalOptimizations="TRUE"
-				InlineFunctionExpansion="1"
-				FavorSizeOrSpeed="1"
-				OmitFramePointers="TRUE"
-				OptimizeForProcessor="0"
-				OptimizeForWindowsApplication="TRUE"
-				AdditionalIncludeDirectories=".."
-				PreprocessorDefinitions="DYNAREC,WIN32,NDEBUG,_WINDOWS,ZLIB_DLL,WIN32_LEAN_AND_MEAN,ENABLE_64BIT_FPU"
-				StringPooling="TRUE"
-				ExceptionHandling="FALSE"
-				BasicRuntimeChecks="0"
-				RuntimeLibrary="0"
-				StructMemberAlignment="5"
-				BufferSecurityCheck="FALSE"
-				EnableFunctionLevelLinking="TRUE"
-				PrecompiledHeaderFile=".\obj/Release/1964.pch"
-				AssemblerOutput="2"
-				AssemblerListingLocation=".\obj/Release/"
-				ObjectFile=".\obj/Release/"
-				ProgramDataBaseFileName=".\obj/Release/"
-				BrowseInformation="1"
-				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="0"
-				CallingConvention="1"
-				CompileAs="1"/>
+				Name="VCPreBuildEventTool"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCCustomBuildTool"
+			/>
 			<Tool
-				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="ddraw.lib zlib\zlib.lib comctl32.lib dsound.lib"
-				OutputFile="../Release/1964.exe"
-				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories=""
-				ProgramDatabaseFile=".\obj/Release/1964.pdb"
-				GenerateMapFile="TRUE"
-				MapFileName=".\obj/Release/1964.map"
-				SubSystem="2"
-				LargeAddressAware="0"
-				TerminalServerAware="0"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				TargetMachine="1"/>
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+				GeneratedProxyLanguage="0"
+			/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="NDEBUG"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\obj/Release/1964.tlb"/>
+				TypeLibraryName=".\obj/Release/1964.tlb"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCCLCompilerTool"
+				AdditionalOptions="/Oa"
+				Optimization="4"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				OmitFramePointers="true"
+				EnableFiberSafeOptimizations="true"
+				AdditionalIncludeDirectories="$(DXSDK_DIR)\include\"
+				PreprocessorDefinitions="WIN32,ZLIB_DLL,WIN32_EXTRA_LEAN;_CRT_SECURE_NO_DEPRECATE"
+				StringPooling="true"
+				ExceptionHandling="0"
+				BasicRuntimeChecks="0"
+				RuntimeLibrary="0"
+				StructMemberAlignment="5"
+				BufferSecurityCheck="false"
+				EnableFunctionLevelLinking="false"
+				EnableEnhancedInstructionSet="0"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderFile="../obj/core/Release/1964.pch"
+				AssemblerOutput="0"
+				AssemblerListingLocation="../obj/core/Release/"
+				ObjectFile="../obj/core/Release/"
+				ProgramDataBaseFileName="../obj/core/Release/"
+				BrowseInformation="1"
+				BrowseInformationFile="../obj/core/Release/"
+				WarningLevel="3"
+				SuppressStartupBanner="true"
+				DebugInformationFormat="0"
+				CallingConvention="1"
+				CompileAs="2"
+				DisableSpecificWarnings="4201"
+				ShowIncludes="false"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
 				Culture="1033"
-				AdditionalIncludeDirectories=""/>
+				AdditionalIncludeDirectories=""
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
+				Name="VCLinkerTool"
+				AdditionalOptions="/MACHINE:I386"
+				AdditionalDependencies="opengl32.lib ddraw.lib zlib\zlib.lib comctl32.lib dsound.lib kernel32.lib shell32.lib shlwapi.lib"
+				OutputFile="..\..\bin\$(ConfigurationName)\1964.exe"
+				LinkIncremental="1"
+				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="$(DXSDK_DIR)\lib\x86\"
+				ProgramDatabaseFile="../obj/core/Release/1964.pdb"
+				GenerateMapFile="true"
+				MapFileName="../obj/core/Release/1964.map"
+				SubSystem="2"
+				SwapRunFromCD="false"
+				SwapRunFromNet="false"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				OptimizeForWindows98="2"
+				SetChecksum="false"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				TargetMachine="1"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Release Opcode Debugger|Win32"
-			OutputDirectory=".\obj/Release_Opcode_Debugger"
-			IntermediateDirectory=".\obj/Release_Opcode_Debugger"
+			OutputDirectory="../obj/core/Release_Opcode_Debugger/"
+			IntermediateDirectory="../obj/core/Release_Opcode_Debugger/"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			DeleteExtensionsOnClean="*.*"
+			>
 			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="1"
-				InlineFunctionExpansion="1"
-				ImproveFloatingPointConsistency="TRUE"
-				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories=".."
-				PreprocessorDefinitions="ENABLE_OPCODE_DEBUGGER,DYNAREC,WIN32,NDEBUG,_WINDOWS,ZLIB_DLL,WIN32_LEAN_AND_MEAN,ENABLE_64BIT_FPU"
-				StringPooling="TRUE"
-				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="TRUE"
-				PrecompiledHeaderFile=".\obj/Release_Opcode_Debugger/1964.pch"
-				AssemblerOutput="2"
-				AssemblerListingLocation=".\obj/Release_Opcode_Debugger/"
-				ObjectFile=".\obj/Release_Opcode_Debugger/"
-				ProgramDataBaseFileName=".\obj/Release_Opcode_Debugger/"
-				BrowseInformation="1"
-				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
-				CallingConvention="1"
-				CompileAs="0"/>
+				Name="VCPreBuildEventTool"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCCustomBuildTool"
+			/>
 			<Tool
-				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="dsound.lib zlib\zlib.lib comctl32.lib"
-				OutputFile="../Release/1964-opcodedebugger.exe"
-				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
-				ProgramDatabaseFile=".\obj/Release_Opcode_Debugger/1964-opcodedebugger.pdb"
-				SubSystem="2"/>
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="NDEBUG"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\obj/Release_Opcode_Debugger/1964.tlb"/>
-			<Tool
-				Name="VCPostBuildEventTool"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1033"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCWebDeploymentTool"/>
-		</Configuration>
-		<Configuration
-			Name="Debug|Win32"
-			OutputDirectory=".\obj/Debug"
-			IntermediateDirectory=".\obj/Debug"
-			ConfigurationType="1"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="2">
+				TypeLibraryName=".\obj/Release_Opcode_Debugger/1964.tlb"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".."
-				PreprocessorDefinitions="DYNAREC,DYN_DEBUG,WIN32,_WINDOWS,VIDEO,ZIP_SUPPORT,HLE,GRAPHICS_TRACER,ZLIB_DLL,ENABLE_64BIT_FPU,DEBUG_COMMON,WINDEBUG_1964,_DEBUG"
-				RuntimeLibrary="1"
-				StructMemberAlignment="5"
-				UsePrecompiledHeader="2"
-				PrecompiledHeaderFile=".\obj/Debug/1964.pch"
-				AssemblerOutput="2"
-				AssemblerListingLocation=".\obj/Debug/"
-				ObjectFile=".\obj/Debug/"
-				ProgramDataBaseFileName=".\obj/Debug/"
-				BrowseInformation="1"
-				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="4"
-				CallingConvention="1"
-				CompileAs="0"/>
-			<Tool
-				Name="VCCustomBuildTool"/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="dsound.lib dxguid.lib dinput.lib odbc32.lib odbccp32.lib comctl32.lib opengl32.lib zlib/zlib.lib"
-				OutputFile="../Release/1964dbug.exe"
-				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
-				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile=".\obj/Debug/1964dbug.pdb"
-				SubSystem="2"/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName=".\obj/Debug/1964.tlb"/>
-			<Tool
-				Name="VCPostBuildEventTool"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG,WINDEBUG_1964"
-				Culture="1033"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCWebDeploymentTool"/>
-		</Configuration>
-		<Configuration
-			Name="Release - Pentium Pro+|Win32"
-			OutputDirectory="Release - Pentium Pro+"
-			IntermediateDirectory="Release - Pentium Pro+"
-			ConfigurationType="1"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE">
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="2"
-				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="1"
-				ImproveFloatingPointConsistency="TRUE"
-				FavorSizeOrSpeed="1"
-				OptimizeForProcessor="2"
-				OptimizeForWindowsApplication="TRUE"
+				OmitFramePointers="true"
 				AdditionalIncludeDirectories=".."
-				PreprocessorDefinitions="DYNAREC,WIN32,NDEBUG,_WINDOWS,ZLIB_DLL,WIN32_LEAN_AND_MEAN,ENABLE_64BIT_FPU"
-				StringPooling="TRUE"
-				ExceptionHandling="FALSE"
-				BasicRuntimeChecks="0"
+				PreprocessorDefinitions="ENABLE_OPCODE_DEBUGGER,DYNAREC,WIN32,NDEBUG,_WINDOWS,ZLIB_DLL,ENABLE_64BIT_FPU"
+				StringPooling="true"
 				RuntimeLibrary="0"
-				StructMemberAlignment="5"
-				BufferSecurityCheck="FALSE"
-				EnableFunctionLevelLinking="TRUE"
-				PrecompiledHeaderFile=".\obj/Release/1964.pch"
-				AssemblerOutput="2"
-				AssemblerListingLocation=".\obj/Release/"
-				ObjectFile=".\obj/Release/"
-				ProgramDataBaseFileName=".\obj/Release/"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderFile="../obj/core/Release_Opcode_Debugger/1964.pch"
+				AssemblerOutput="0"
+				AssemblerListingLocation="../obj/core/Release_Opcode_Debugger/"
+				ObjectFile="../obj/core/Release_Opcode_Debugger/"
+				ProgramDataBaseFileName="../obj/core/Release_Opcode_Debugger/"
 				BrowseInformation="1"
+				BrowseInformationFile="../obj/core/Release_Opcode_Debugger/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="0"
+				SuppressStartupBanner="true"
 				CallingConvention="1"
-				CompileAs="1"/>
+				CompileAs="0"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="zlib\zlib.lib comctl32.lib"
-				OutputFile="../Release/1964.exe"
-				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
-				ProgramDatabaseFile=".\obj/Release/1964.pdb"
-				GenerateMapFile="TRUE"
-				MapFileName=".\obj/Release/1964.map"
-				SubSystem="2"/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName=".\obj/Release/1964.tlb"/>
-			<Tool
-				Name="VCPostBuildEventTool"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1033"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCWebDeploymentTool"/>
-		</Configuration>
-		<Configuration
-			Name="Release with .NET Debugging|Win32"
-			OutputDirectory="Release with .NET Debugging"
-			IntermediateDirectory="Release with .NET Debugging"
-			ConfigurationType="1"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			WholeProgramOptimization="FALSE">
-			<Tool
-				Name="VCCLCompilerTool"
-				AdditionalOptions="/Oa"
-				Optimization="0"
-				GlobalOptimizations="FALSE"
-				InlineFunctionExpansion="0"
-				FavorSizeOrSpeed="1"
-				OmitFramePointers="FALSE"
-				OptimizeForProcessor="0"
-				OptimizeForWindowsApplication="TRUE"
-				AdditionalIncludeDirectories=".."
-				PreprocessorDefinitions="DYNAREC,WIN32,NDEBUG,_WINDOWS,ZLIB_DLL,WIN32_LEAN_AND_MEAN,ENABLE_64BIT_FPU"
-				StringPooling="TRUE"
-				ExceptionHandling="FALSE"
-				BasicRuntimeChecks="0"
-				RuntimeLibrary="0"
-				StructMemberAlignment="5"
-				BufferSecurityCheck="FALSE"
-				EnableFunctionLevelLinking="TRUE"
-				PrecompiledHeaderFile=".\obj/Release/1964.pch"
-				AssemblerOutput="2"
-				AssemblerListingLocation=".\obj/Release/"
-				ObjectFile=".\obj/Release/"
-				ProgramDataBaseFileName=".\obj/Release/"
-				BrowseInformation="1"
-				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="4"
-				CallingConvention="1"
-				CompileAs="1"/>
-			<Tool
-				Name="VCCustomBuildTool"/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="ddraw.lib zlib\zlib.lib comctl32.lib dsound.lib"
-				OutputFile="../Release/1964_Net_Debug.exe"
-				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories=""
-				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile=".\obj/Release/1964.pdb"
-				GenerateMapFile="TRUE"
-				MapFileName=".\obj/Release/1964.map"
-				SubSystem="2"
-				LargeAddressAware="0"
-				TerminalServerAware="0"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				TargetMachine="1"/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName=".\obj/Release/1964.tlb"/>
-			<Tool
-				Name="VCPostBuildEventTool"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
 				Culture="1033"
-				AdditionalIncludeDirectories=""/>
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
+				Name="VCLinkerTool"
+				AdditionalOptions="/MACHINE:I386"
+				AdditionalDependencies="opengl32.lib dsound.lib zlib\zlib.lib comctl32.lib"
+				OutputFile="..\..\bin\$(ConfigurationName)\1964.exe"
+				LinkIncremental="1"
+				SuppressStartupBanner="true"
+				ProgramDatabaseFile="../obj/core/Release_Opcode_Debugger/1964-opcodedebugger.pdb"
+				SubSystem="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory="../obj/core/Debug/"
+			IntermediateDirectory="../obj/core/Debug/"
+			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			DeleteExtensionsOnClean="*.*"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\obj/Debug/1964.tlb"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="4"
+				OmitFramePointers="true"
+				AdditionalIncludeDirectories=".."
+				PreprocessorDefinitions="ENABLE_OPCODE_DEBUGGER,WIN32,ZLIB_DLL,_DEBUG"
+				RuntimeLibrary="1"
+				StructMemberAlignment="5"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderFile=""
+				AssemblerOutput="2"
+				AssemblerListingLocation="../obj/core/Debug/"
+				ObjectFile="../obj/core/Debug/"
+				ProgramDataBaseFileName="../obj/core/Debug/"
+				BrowseInformation="1"
+				BrowseInformationFile="../obj/core/Debug/"
+				WarningLevel="3"
+				SuppressStartupBanner="true"
+				DebugInformationFormat="4"
+				CallingConvention="1"
+				CompileAs="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG,WINDEBUG_1964"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalOptions="/MACHINE:I386"
+				AdditionalDependencies="dsound.lib dxguid.lib dinput.lib odbc32.lib odbccp32.lib comctl32.lib opengl32.lib zlib/zlib.lib kernel32.lib shell32.lib shlwapi.lib"
+				OutputFile="..\..\bin\$(ConfigurationName)\1964.exe"
+				LinkIncremental="2"
+				SuppressStartupBanner="true"
+				IgnoreDefaultLibraryNames=""
+				GenerateDebugInformation="true"
+				ProgramDatabaseFile="../obj/core/Debug/1964dbug.pdb"
+				SubSystem="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release Not Optimized|Win32"
+			OutputDirectory="../obj/core/ReleaseNoOpt/"
+			IntermediateDirectory="../obj/core/ReleaseNoOpt/"
+			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			ManagedExtensions="0"
+			DeleteExtensionsOnClean="*.*"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+				GeneratedProxyLanguage="0"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\obj/Release/1964.tlb"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				AdditionalOptions="/Oa"
+				Optimization="4"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				OmitFramePointers="true"
+				EnableFiberSafeOptimizations="false"
+				AdditionalIncludeDirectories=".."
+				PreprocessorDefinitions="WIN32,ZLIB_DLL,WIN32_EXTRA_LEAN"
+				StringPooling="true"
+				ExceptionHandling="0"
+				BasicRuntimeChecks="0"
+				RuntimeLibrary="0"
+				StructMemberAlignment="5"
+				BufferSecurityCheck="false"
+				EnableFunctionLevelLinking="false"
+				EnableEnhancedInstructionSet="0"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderFile="../obj/core/ReleaseNoOpt/1964.pch"
+				AssemblerOutput="2"
+				AssemblerListingLocation="../obj/core/ReleaseNoOpt/"
+				ObjectFile="../obj/core/ReleaseNoOpt/"
+				ProgramDataBaseFileName="../obj/core/ReleaseNoOpt/"
+				BrowseInformation="1"
+				BrowseInformationFile="../obj/core/ReleaseNoOpt/"
+				WarningLevel="3"
+				SuppressStartupBanner="true"
+				DebugInformationFormat="0"
+				CallingConvention="1"
+				CompileAs="1"
+				DisableSpecificWarnings="4201"
+				ShowIncludes="false"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"
+				AdditionalIncludeDirectories=""
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalOptions="/MACHINE:I386"
+				AdditionalDependencies="opengl32.lib ddraw.lib zlib\zlib.lib comctl32.lib dsound.lib kernel32.lib shell32.lib shlwapi.lib"
+				OutputFile="..\..\bin\$(ConfigurationName)\1964.exe"
+				LinkIncremental="1"
+				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories=""
+				ProgramDatabaseFile="../obj/core/ReleaseNoOpt/1964.pdb"
+				GenerateMapFile="true"
+				MapFileName="../obj/core/ReleaseNoOpt/1964.map"
+				SubSystem="2"
+				SwapRunFromCD="false"
+				SwapRunFromNet="false"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				OptimizeForWindows98="2"
+				SetChecksum="false"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				TargetMachine="1"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
+	<References>
+	</References>
 	<Files>
 		<Filter
 			Name="core"
-			Filter="">
+			>
 			<File
-				RelativePath=".\1964ini.c">
+				RelativePath=".\_memory.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\1964ini.h">
-			</File>
-			<File
-				RelativePath=".\DbgPrint.h">
-			</File>
-			<File
-				RelativePath=".\DebugR4300i.c">
-			</File>
-			<File
-				RelativePath=".\FPU.c">
-			</File>
-			<File
-				RelativePath=".\Globals.h">
-			</File>
-			<File
-				RelativePath=".\Kaillera\Kaillera.c">
-			</File>
-			<File
-				RelativePath=".\Kaillera\Kaillera.h">
-			</File>
-			<File
-				RelativePath=".\R4300i.c">
-			</File>
-			<File
-				RelativePath=".\Tlb.c">
-			</File>
-			<File
-				RelativePath=".\debug_option.c">
-			</File>
-			<File
-				RelativePath=".\debug_option.h">
-			</File>
-			<File
-				RelativePath=".\dma.c">
-			</File>
-			<File
-				RelativePath=".\dma.h">
-			</File>
-			<File
-				RelativePath=".\emulator.c">
+				RelativePath=".\cheatcode.cpp"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						AdditionalOptions="/Oa"/>
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release with .NET Debugging|Win32">
+					Name="Release Opcode Debugger|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						AdditionalOptions="/Oa"/>
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Not Optimized|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\emulator.h">
+				RelativePath=".\compiler.cpp"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Opcode Debugger|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Not Optimized|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\fileio.c">
+				RelativePath=".\DebugR4300i.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\fileio.h">
+				RelativePath=".\dma.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\gamesave.c">
+				RelativePath=".\emulator.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\gamesave.h">
+				RelativePath=".\fileio.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\globals.c">
+				RelativePath=".\FPU.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\hardware.h">
+				RelativePath=".\FrameBuffer.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\iPIF.c">
+				RelativePath=".\gamesave.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\iPIF.h">
+				RelativePath=".\globals.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\interrupt.c">
+				RelativePath=".\iFpuWithCP1Unusable.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\interrupt.h">
+				RelativePath=".\imagelist.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\memory.c">
+				RelativePath=".\interrupt.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\memory.h">
+				RelativePath=".\iPIF.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\memory2.c">
+				RelativePath=".\memory2.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\n64rcp.c">
+				RelativePath=".\n64rcp.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\n64rcp.h">
+				RelativePath=".\profiler.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\netplay.c">
+				RelativePath=".\R4300i.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\netplay.h">
+				RelativePath=".\R4300i_32bit.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\profiler.c">
+				RelativePath=".\romlist.cpp"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Opcode Debugger|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release Not Optimized|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\r4300i.h">
+				RelativePath=".\State.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\timer.c">
+				RelativePath=".\timer.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\timer.h">
+				RelativePath=".\Tlb.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\zlib\unzip.h">
+				RelativePath=".\ZLIST.cpp"
+				>
 			</File>
-			<File
-				RelativePath=".\zlib\zconf.h">
-			</File>
-			<File
-				RelativePath=".\zlib\zlib.h">
-			</File>
+			<Filter
+				Name="headers"
+				>
+				<File
+					RelativePath=".\_memory.h"
+					>
+				</File>
+				<File
+					RelativePath=".\DbgPrint.h"
+					>
+				</File>
+				<File
+					RelativePath=".\debug_option.h"
+					>
+				</File>
+				<File
+					RelativePath=".\dma.h"
+					>
+				</File>
+				<File
+					RelativePath=".\emulator.h"
+					>
+				</File>
+				<File
+					RelativePath=".\fileio.h"
+					>
+				</File>
+				<File
+					RelativePath="FrameBuffer.h"
+					>
+				</File>
+				<File
+					RelativePath=".\gamesave.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Globals.h"
+					>
+				</File>
+				<File
+					RelativePath=".\hardware.h"
+					>
+				</File>
+				<File
+					RelativePath=".\interrupt.h"
+					>
+				</File>
+				<File
+					RelativePath=".\iPIF.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Kaillera\Kaillera.h"
+					>
+				</File>
+				<File
+					RelativePath=".\n64rcp.h"
+					>
+				</File>
+				<File
+					RelativePath=".\netplay-spec.h"
+					>
+				</File>
+				<File
+					RelativePath=".\r4300i.h"
+					>
+				</File>
+				<File
+					RelativePath=".\r4300i_32bit.h"
+					>
+				</File>
+				<File
+					RelativePath=".\timer.h"
+					>
+				</File>
+				<File
+					RelativePath=".\zlib\unzip.h"
+					>
+				</File>
+				<File
+					RelativePath=".\zlib\zconf.h"
+					>
+				</File>
+				<File
+					RelativePath=".\zlib\zlib.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="win32"
-			Filter="">
+			>
 			<File
-				RelativePath=".\cheatcode.c">
+				RelativePath=".\win32\1964ini.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\cheatcode.h">
+				RelativePath=".\win32\N64logo.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\win32\registry.c">
+				RelativePath=".\win32\registry.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\win32\registry.h">
+				RelativePath=".\win32\tooltips.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\romlist.c">
+				RelativePath=".\win32\windebug.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\romlist.h">
+				RelativePath=".\win32\wingui.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\win32\windebug.c">
-			</File>
-			<File
-				RelativePath=".\win32\windebug.h">
-			</File>
-			<File
-				RelativePath=".\win32\wingui.c">
-			</File>
-			<File
-				RelativePath=".\win32\wingui.h">
-			</File>
-			<File
-				RelativePath=".\win32\wingui2.c">
+				RelativePath=".\win32\wingui2.cpp"
+				>
 			</File>
 			<Filter
 				Name="Plugins"
-				Filter="">
+				>
 				<File
-					RelativePath=".\win32\DLL_Rsp.c">
+					RelativePath=".\win32\Dll_Audio.cpp"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release Opcode Debugger|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release Not Optimized|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\win32\DLL_Rsp.h">
+					RelativePath=".\win32\Dll_Input.cpp"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release Opcode Debugger|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release Not Optimized|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\win32\Dll_Audio.c">
+					RelativePath=".\win32\DLL_Rsp.cpp"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release Opcode Debugger|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release Not Optimized|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\win32\Dll_Audio.h">
+					RelativePath=".\win32\Dll_Video.cpp"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release Opcode Debugger|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release Not Optimized|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\win32\Dll_Input.c">
-				</File>
-				<File
-					RelativePath=".\win32\Dll_Input.h">
-				</File>
-				<File
-					RelativePath=".\win32\Dll_Video.c">
-				</File>
-				<File
-					RelativePath=".\win32\Dll_Video.h">
-				</File>
-				<File
-					RelativePath=".\plugins.h">
+					RelativePath=".\kaillera\Kaillera.cpp"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Resource Files"
-				Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
+				Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+				>
 				<File
-					RelativePath="win32\1964.bmp">
+					RelativePath="win32\1964.bmp"
+					>
 				</File>
 				<File
-					RelativePath=".\win32\audio.bmp">
+					RelativePath=".\win32\almost_p.ico"
+					>
 				</File>
 				<File
-					RelativePath=".\win32\bitmap2.bmp">
+					RelativePath=".\win32\audio.bmp"
+					>
 				</File>
 				<File
-					RelativePath=".\win32\bmp00001.bmp">
+					RelativePath=".\win32\bitmap2.bmp"
+					>
 				</File>
 				<File
-					RelativePath=".\win32\icon2.ico">
+					RelativePath=".\win32\bmp00001.bmp"
+					>
 				</File>
 				<File
-					RelativePath=".\win32\input.bmp">
+					RelativePath=".\win32\icon1.ico"
+					>
 				</File>
 				<File
-					RelativePath=".\win32\logo.bmp">
+					RelativePath=".\win32\icon2.ico"
+					>
 				</File>
 				<File
-					RelativePath=".\win32\resource.h">
+					RelativePath=".\win32\input.bmp"
+					>
 				</File>
 				<File
-					RelativePath=".\win32\rom_open.bmp">
+					RelativePath=".\win32\logo.bmp"
+					>
 				</File>
 				<File
-					RelativePath="win32\toolbar1.bmp">
+					RelativePath=".\win32\not_play.ico"
+					>
 				</File>
 				<File
-					RelativePath=".\win32\video.bmp">
+					RelativePath=".\win32\playable.ico"
+					>
 				</File>
 				<File
-					RelativePath=".\win32\wingui.rc">
+					RelativePath=".\win32\resource.h"
+					>
+				</File>
+				<File
+					RelativePath=".\win32\rom_open.bmp"
+					>
+				</File>
+				<File
+					RelativePath=".\win32\rsp.bmp"
+					>
+				</File>
+				<File
+					RelativePath="win32\toolbar1.bmp"
+					>
+				</File>
+				<File
+					RelativePath=".\win32\toolbar24bit.bmp"
+					>
+				</File>
+				<File
+					RelativePath=".\win32\unknown.ico"
+					>
+				</File>
+				<File
+					RelativePath=".\win32\video.bmp"
+					>
+				</File>
+				<File
+					RelativePath=".\win32\wingui.rc"
+					>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="Release|Win32"
+						>
 						<Tool
 							Name="VCResourceCompilerTool"
-							AdditionalIncludeDirectories="win32;$(NoInherit)"/>
+							AdditionalIncludeDirectories="win32;$(NoInherit)"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release Opcode Debugger|Win32">
+						Name="Release Opcode Debugger|Win32"
+						>
 						<Tool
 							Name="VCResourceCompilerTool"
-							AdditionalIncludeDirectories="win32;$(NoInherit)"/>
+							AdditionalIncludeDirectories="win32;$(NoInherit)"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCResourceCompilerTool"
-							AdditionalIncludeDirectories="win32;$(NoInherit)"/>
+							AdditionalIncludeDirectories="win32;$(NoInherit)"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release - Pentium Pro+|Win32">
+						Name="Release Not Optimized|Win32"
+						>
 						<Tool
 							Name="VCResourceCompilerTool"
-							AdditionalIncludeDirectories="win32;$(NoInherit)"/>
+							AdditionalIncludeDirectories="win32;$(NoInherit)"
+						/>
 					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with .NET Debugging|Win32">
-						<Tool
-							Name="VCResourceCompilerTool"
-							AdditionalIncludeDirectories="win32;$(NoInherit)"/>
-					</FileConfiguration>
+				</File>
+			</Filter>
+			<Filter
+				Name="headers"
+				>
+				<File
+					RelativePath=".\1964ini.h"
+					>
+				</File>
+				<File
+					RelativePath=".\cheatcode.h"
+					>
+				</File>
+				<File
+					RelativePath=".\win32\registry.h"
+					>
+				</File>
+				<File
+					RelativePath=".\romlist.h"
+					>
+				</File>
+				<File
+					RelativePath=".\win32\windebug.h"
+					>
+				</File>
+				<File
+					RelativePath=".\win32\wingui.h"
+					>
 				</File>
 			</Filter>
 		</Filter>
 		<Filter
 			Name="Dynarec"
-			Filter="">
+			>
 			<File
-				RelativePath=".\dynaRec\Analyze.c">
+				RelativePath=".\dynarec\Analyze.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\dynaRec\OpcodeDebugger.c">
+				RelativePath=".\dynarec\dynaCOP1.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\compiler.c">
+				RelativePath=".\dynarec\dynaCPU.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\compiler.h">
+				RelativePath=".\dynarec\dynaLog.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\dynaRec\dynaBranch.h">
+				RelativePath=".\dynarec\OpcodeDebugger.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\dynaRec\dynaCOP1.c">
+				RelativePath=".\dynarec\regcache.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\dynaRec\dynaCOP1.h">
+				RelativePath=".\dynarec\regcache_sse_fpu.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\dynaRec\dynaCPU.c">
+				RelativePath=".\dynarec\RegcacheNew.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\dynaRec\dynaCPU.h">
+				RelativePath=".\dynarec\x86.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\dynaRec\dynaCPU_defines.h">
+				RelativePath=".\dynarec\xmm.cpp"
+				>
 			</File>
-			<File
-				RelativePath=".\dynaRec\dynaHelper.h">
-			</File>
-			<File
-				RelativePath=".\dynaRec\dynaLog.c">
-			</File>
-			<File
-				RelativePath=".\dynaRec\dynaLog.h">
-			</File>
-			<File
-				RelativePath=".\dynaRec\dynaRec.h">
-			</File>
-			<File
-				RelativePath=".\hle.c">
-			</File>
-			<File
-				RelativePath=".\hle.h">
-			</File>
-			<File
-				RelativePath=".\dynaRec\opcodeDebugger.h">
-			</File>
-			<File
-				RelativePath=".\dynaRec\regcache.c">
-			</File>
-			<File
-				RelativePath=".\dynaRec\regcache.h">
-			</File>
-			<File
-				RelativePath=".\dynaRec\x86.c">
-			</File>
-			<File
-				RelativePath=".\dynaRec\x86.h">
-			</File>
+			<Filter
+				Name="headers"
+				>
+				<File
+					RelativePath=".\compiler.h"
+					>
+				</File>
+				<File
+					RelativePath=".\COPYRIGHT.txt"
+					>
+				</File>
+				<File
+					RelativePath=".\dynaRec\dynaBranch.h"
+					>
+				</File>
+				<File
+					RelativePath=".\dynaRec\dynaCOP1.h"
+					>
+				</File>
+				<File
+					RelativePath=".\dynaRec\dynaCPU.h"
+					>
+				</File>
+				<File
+					RelativePath=".\dynaRec\dynaHelper.h"
+					>
+				</File>
+				<File
+					RelativePath=".\dynaRec\dynaLog.h"
+					>
+				</File>
+				<File
+					RelativePath=".\dynaRec\dynaRec.h"
+					>
+				</File>
+				<File
+					RelativePath=".\hle.h"
+					>
+				</File>
+				<File
+					RelativePath=".\dynaRec\opcodeDebugger.h"
+					>
+				</File>
+				<File
+					RelativePath=".\dynaRec\regcache.h"
+					>
+				</File>
+				<File
+					RelativePath=".\dynaRec\x86.h"
+					>
+				</File>
+				<File
+					RelativePath=".\dynaRec\xmm.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<File
-			RelativePath=".\COPYRIGHT.txt">
+			RelativePath=".\win32\1964.exe.manifest"
+			>
+			<FileConfiguration
+				Name="Release|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release Opcode Debugger|Win32"
+				ExcludedFromBuild="true"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|Win32"
+				ExcludedFromBuild="true"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release Not Optimized|Win32"
+				ExcludedFromBuild="true"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+				/>
+			</FileConfiguration>
 		</File>
 		<File
-			RelativePath=".\zlib\zlib.lib">
+			RelativePath=".\Core.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\Core.h"
+			>
+		</File>
+		<File
+			RelativePath=".\InterpretedOpcodes.cpp"
+			>
+			<FileConfiguration
+				Name="Release|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					CallingConvention="1"
+					CompileAs="2"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					CompileAs="2"
+				/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath=".\InterpretedOpcodes.h"
+			>
+		</File>
+		<File
+			RelativePath=".\Main.cpp"
+			>
+			<FileConfiguration
+				Name="Release|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					CallingConvention="0"
+					CompileAs="2"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					CompileAs="2"
+				/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath=".\Memory.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\Memory.h"
+			>
+		</File>
+		<File
+			RelativePath=".\OpcodeMap.h"
+			>
+		</File>
+		<File
+			RelativePath=".\Registers.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\Registers.h"
+			>
+		</File>
+		<File
+			RelativePath="stdafx.h"
+			>
+		</File>
+		<File
+			RelativePath=".\TODO.txt"
+			>
+		</File>
+		<File
+			RelativePath=".\zlib\zlib.lib"
+			>
 		</File>
 	</Files>
 	<Globals>

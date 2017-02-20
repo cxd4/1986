@@ -1,5 +1,5 @@
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -12,13 +12,7 @@
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
 
-#include "../interrupt.h"
-#include "../n64rcp.h"
-#include "../memory.h"
-#include "DLL_Rsp.h"
-#include "Dll_Audio.h"
-#include "Dll_Video.h"
-#include "wingui.h"
+#include "../stdafx.h"
 
 /********** RSP DLL: Functions *********************/
 void	(__cdecl *_RSPCloseDLL)			( void ) = NULL;
@@ -29,7 +23,15 @@ DWORD	(__cdecl *_DoRspCycles)			( DWORD ) = NULL;
 void	(__cdecl *_InitiateRSP_1_0)		( RSP_INFO_1_0 rspinfo, DWORD * cycles) = NULL;
 void	(__cdecl *_InitiateRSP_1_1)		( RSP_INFO_1_1 rspinfo, DWORD * cycles) = NULL;
 void	(__cdecl *_RSP_GetDllInfo)		(PLUGIN_INFO *) = NULL;
+void	(__cdecl *_RSP_Under_Selecting_DllAbout) (HWND _hWnd) = NULL;
 
+#ifdef _DEBUG
+static void __cdecl DebuggerMsgCallBack(char *msg)
+{
+	TRACE0(msg);
+}
+static void (__cdecl *_SetDebuggerCallBack)(void (_cdecl *DbgCallBackFun)(char *msg)) = NULL;
+#endif
 
 uint16		RSPVersion = 0;;
 DWORD		RspTaskValue = 0;;
@@ -153,44 +155,44 @@ void InitializeRSP (void)
 	RspInfo10.MemoryBswaped = FALSE;
 	RspInfo11.MemoryBswaped = FALSE;
 
-	RspInfo10.MI__INTR_REG = &MI_INTR_REG_R;
-	RspInfo11.MI__INTR_REG = &MI_INTR_REG_R;
+	RspInfo10.MI__INTR_REG = (DWORD*)&MI_INTR_REG_R;
+	RspInfo11.MI__INTR_REG = (DWORD*)&MI_INTR_REG_R;
 		
-	RspInfo10.SP__MEM_ADDR_REG = &SP_MEM_ADDR_REG;
-	RspInfo11.SP__MEM_ADDR_REG = &SP_MEM_ADDR_REG;
-	RspInfo10.SP__DRAM_ADDR_REG = &SP_DRAM_ADDR_REG;
-	RspInfo11.SP__DRAM_ADDR_REG = &SP_DRAM_ADDR_REG;
-	RspInfo10.SP__RD_LEN_REG = &SP_RD_LEN_REG;
-	RspInfo11.SP__RD_LEN_REG = &SP_RD_LEN_REG;
-	RspInfo10.SP__WR_LEN_REG = &SP_WR_LEN_REG;
-	RspInfo11.SP__WR_LEN_REG = &SP_WR_LEN_REG;
-	RspInfo10.SP__STATUS_REG = &SP_STATUS_REG;
-	RspInfo11.SP__STATUS_REG = &SP_STATUS_REG;
-	RspInfo10.SP__DMA_FULL_REG = &SP_DMA_FULL_REG;
-	RspInfo11.SP__DMA_FULL_REG = &SP_DMA_FULL_REG;
-	RspInfo10.SP__DMA_BUSY_REG = &SP_DMA_BUSY_REG;
-	RspInfo11.SP__DMA_BUSY_REG = &SP_DMA_BUSY_REG;
-	RspInfo10.SP__PC_REG = &SP_PC_REG;
-	RspInfo11.SP__PC_REG = &SP_PC_REG;
-	RspInfo10.SP__SEMAPHORE_REG = &SP_SEMAPHORE_REG;
-	RspInfo11.SP__SEMAPHORE_REG = &SP_SEMAPHORE_REG;
+	RspInfo10.SP__MEM_ADDR_REG = (DWORD*)&SP_MEM_ADDR_REG;
+	RspInfo11.SP__MEM_ADDR_REG = (DWORD*)&SP_MEM_ADDR_REG;
+	RspInfo10.SP__DRAM_ADDR_REG = (DWORD*)&SP_DRAM_ADDR_REG;
+	RspInfo11.SP__DRAM_ADDR_REG = (DWORD*)&SP_DRAM_ADDR_REG;
+	RspInfo10.SP__RD_LEN_REG = (DWORD*)&SP_RD_LEN_REG;
+	RspInfo11.SP__RD_LEN_REG = (DWORD*)&SP_RD_LEN_REG;
+	RspInfo10.SP__WR_LEN_REG = (DWORD*)&SP_WR_LEN_REG;
+	RspInfo11.SP__WR_LEN_REG = (DWORD*)&SP_WR_LEN_REG;
+	RspInfo10.SP__STATUS_REG = (DWORD*)&SP_STATUS_REG;
+	RspInfo11.SP__STATUS_REG = (DWORD*)&SP_STATUS_REG;
+	RspInfo10.SP__DMA_FULL_REG = (DWORD*)&SP_DMA_FULL_REG;
+	RspInfo11.SP__DMA_FULL_REG = (DWORD*)&SP_DMA_FULL_REG;
+	RspInfo10.SP__DMA_BUSY_REG = (DWORD*)&SP_DMA_BUSY_REG;
+	RspInfo11.SP__DMA_BUSY_REG = (DWORD*)&SP_DMA_BUSY_REG;
+	RspInfo10.SP__PC_REG = (DWORD*)&SP_PC_REG;
+	RspInfo11.SP__PC_REG = (DWORD*)&SP_PC_REG;
+	RspInfo10.SP__SEMAPHORE_REG = (DWORD*)&SP_SEMAPHORE_REG;
+	RspInfo11.SP__SEMAPHORE_REG = (DWORD*)&SP_SEMAPHORE_REG;
 		
-	RspInfo10.DPC__START_REG = &DPC_START_REG;
-	RspInfo11.DPC__START_REG = &DPC_START_REG;
-	RspInfo10.DPC__END_REG = &DPC_END_REG;
-	RspInfo11.DPC__END_REG = &DPC_END_REG;
-	RspInfo10.DPC__CURRENT_REG = &DPC_CURRENT_REG;
-	RspInfo11.DPC__CURRENT_REG = &DPC_CURRENT_REG;
-	RspInfo10.DPC__STATUS_REG = &DPC_STATUS_REG;
-	RspInfo11.DPC__STATUS_REG = &DPC_STATUS_REG;
-	RspInfo10.DPC__CLOCK_REG = &DPC_CLOCK_REG;
-	RspInfo11.DPC__CLOCK_REG = &DPC_CLOCK_REG;
-	RspInfo10.DPC__BUFBUSY_REG = &DPC_BUFBUSY_REG;
-	RspInfo11.DPC__BUFBUSY_REG = &DPC_BUFBUSY_REG;
-	RspInfo10.DPC__PIPEBUSY_REG = &DPC_PIPEBUSY_REG;
-	RspInfo11.DPC__PIPEBUSY_REG = &DPC_PIPEBUSY_REG;
-	RspInfo10.DPC__TMEM_REG = &DPC_TMEM_REG;
-	RspInfo11.DPC__TMEM_REG = &DPC_TMEM_REG;
+	RspInfo10.DPC__START_REG = (DWORD*)&DPC_START_REG;
+	RspInfo11.DPC__START_REG = (DWORD*)&DPC_START_REG;
+	RspInfo10.DPC__END_REG = (DWORD*)&DPC_END_REG;
+	RspInfo11.DPC__END_REG = (DWORD*)&DPC_END_REG;
+	RspInfo10.DPC__CURRENT_REG = (DWORD*)&DPC_CURRENT_REG;
+	RspInfo11.DPC__CURRENT_REG = (DWORD*)&DPC_CURRENT_REG;
+	RspInfo10.DPC__STATUS_REG = (DWORD*)&DPC_STATUS_REG;
+	RspInfo11.DPC__STATUS_REG = (DWORD*)&DPC_STATUS_REG;
+	RspInfo10.DPC__CLOCK_REG = (DWORD*)&DPC_CLOCK_REG;
+	RspInfo11.DPC__CLOCK_REG = (DWORD*)&DPC_CLOCK_REG;
+	RspInfo10.DPC__BUFBUSY_REG = (DWORD*)&DPC_BUFBUSY_REG;
+	RspInfo11.DPC__BUFBUSY_REG = (DWORD*)&DPC_BUFBUSY_REG;
+	RspInfo10.DPC__PIPEBUSY_REG = (DWORD*)&DPC_PIPEBUSY_REG;
+	RspInfo11.DPC__PIPEBUSY_REG = (DWORD*)&DPC_PIPEBUSY_REG;
+	RspInfo10.DPC__TMEM_REG = (DWORD*)&DPC_TMEM_REG;
+	RspInfo11.DPC__TMEM_REG = (DWORD*)&DPC_TMEM_REG;
 	
 	if (RSPVersion == 0x0100) 
 	{ 
@@ -200,9 +202,8 @@ void InitializeRSP (void)
 	{ 
 		InitiateRSP_1_1(RspInfo11, &RspTaskValue); 
 	}
-#ifndef _DEBUG
-	//InitiateInternalRSP(RspInfo11, &RspTaskValue);
-#endif
+
+//    InitiateInternalRSP(RspInfo11, &RspTaskValue);
 }
 
 BOOL LoadRSPPlugin(char * libname) 
@@ -245,6 +246,15 @@ BOOL LoadRSPPlugin(char * libname)
 		_RSPDllConfig = (void (__cdecl *)(HWND))GetProcAddress( hRSPHandle, "DllConfig" );
 		_RSPDllAbout = (void (__cdecl *)(HWND))GetProcAddress( hRSPHandle, "DllAbout" );
 
+#ifdef _DEBUG
+		_SetDebuggerCallBack = (void (__cdecl *)(void (_cdecl *DbgCallBackFun)(char *msg))) 
+			GetProcAddress(hinstControllerPlugin, "SetDebuggerCallBack");
+		if( _SetDebuggerCallBack )
+		{
+			_SetDebuggerCallBack(DebuggerMsgCallBack);
+		}
+#endif
+
 		if( _DoRspCycles == NULL	||
 			_RSPRomClosed == NULL	||
 			_RSPCloseDLL == NULL	||
@@ -268,9 +278,30 @@ void CloseRSPPlugin (void)
 {
 	if (hRSPHandle != NULL) 
 	{ 
-		RSPCloseDLL(); 
+		RSPCloseDLL();
+
+		_DoRspCycles = NULL;
+		_RSPRomClosed = NULL;
+		_RSPCloseDLL =  NULL;
+		_RSPDllConfig = NULL;
+		_RSPDllAbout =  NULL;
+
 		FreeLibrary(hRSPHandle);
 		hRSPHandle = NULL;
 	}
 }
 
+void RSP_Under_Selecting_DllAbout(HWND _hWnd)
+{
+	if(_RSP_Under_Selecting_DllAbout != NULL)
+	{
+		__try
+		{
+			_RSP_Under_Selecting_DllAbout(_hWnd);
+		}
+
+		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
+		{
+		}
+	}
+}

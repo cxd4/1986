@@ -9,7 +9,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -21,21 +21,21 @@
  * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
-#include <windows.h>
-#include "../globals.h"
-#include "../memory.h"
-#include "registry.h"
-#include "DLL_Video.h"
-#include "../romlist.h"
-#include "wingui.h"
-#include "../emulator.h"
+#include "../stdafx.h"
+#include <float.h>
 
 uint16		GfxPluginVersion;
 HINSTANCE	hinstLibVideo = NULL;
 GFX_INFO	Gfx_Info;
+int			UsingInternalVideo=0;
+BOOL		bRomIsOpened = FALSE;
+
+BOOL ToCaptureScreen=FALSE;
+char *CaptureScreenDirectory=NULL;
 
 BOOL (__cdecl *_VIDEO_InitiateGFX) (GFX_INFO) = NULL;
 void (__cdecl *_VIDEO_ProcessDList) (void) = NULL;
+DWORD (__cdecl *_VIDEO_ProcessDList_Count_Cycles) (void) = NULL;
 void (__cdecl *_VIDEO_RomOpen) (void) = NULL;
 void (__cdecl *_VIDEO_RomClosed) (void) = NULL;
 void (__cdecl *_VIDEO_DllClose) () = NULL;
@@ -60,6 +60,13 @@ void (__cdecl *_VIDEO_ShowCFB) (void) = NULL;
 /* Used when selecting plugins */
 void (__cdecl *_VIDEO_Under_Selecting_Test) (HWND) = NULL;
 void (__cdecl *_VIDEO_Under_Selecting_About) (HWND) = NULL;
+
+void (__cdecl *_VIDEO_FrameBufferWrite) (DWORD addr, DWORD size) = NULL;
+void (__cdecl *_VIDEO_FrameBufferWriteList) (FrameBufferModifyEntry *plist, DWORD size) = NULL;
+void (__cdecl *_VIDEO_FrameBufferRead) (DWORD addr) = NULL;
+void (__cdecl *_VIDEO_GetFrameBufferInfo) (void *pinfo) = NULL;
+void (__cdecl *_VIDEO_SetOnScreenText) (char *msg) = NULL;
+BOOL (__cdecl *_VIDEO_GetFullScreenStatus) (void) = NULL;
 
 /*
  =======================================================================================================================
@@ -110,6 +117,7 @@ BOOL LoadVideoPlugin(char *libname)
 				_VIDEO_RomOpen = (void(__cdecl *) (void)) GetProcAddress(hinstLibVideo, "RomOpen");
 				_VIDEO_RomClosed = (void(__cdecl *) (void)) GetProcAddress(hinstLibVideo, "RomClosed");
 				_VIDEO_ProcessDList = (void(__cdecl *) (void)) GetProcAddress(hinstLibVideo, "ProcessDList");
+				_VIDEO_ProcessDList_Count_Cycles = (DWORD(__cdecl *) (void)) GetProcAddress(hinstLibVideo, "ProcessDListCountCycles");
 				_VIDEO_UpdateScreen = (void(__cdecl *) (void)) GetProcAddress(hinstLibVideo, "UpdateScreen");
 				_VIDEO_ChangeWindow = (void(__cdecl *) (int)) GetProcAddress(hinstLibVideo, "ChangeWindow");
 
@@ -118,6 +126,31 @@ BOOL LoadVideoPlugin(char *libname)
 				_VIDEO_CaptureScreen = (void(__cdecl *) (char *)) GetProcAddress(hinstLibVideo, "CaptureScreen");
 				_VIDEO_ProcessRDPList = (void(__cdecl *) (void)) GetProcAddress(hinstLibVideo, "ProcessRDPList");
 				_VIDEO_ShowCFB = (void(__cdecl *) (void)) GetProcAddress(hinstLibVideo, "ShowCFB");
+
+				_VIDEO_FrameBufferWriteList = (void(__cdecl *) (FrameBufferModifyEntry *, DWORD)) GetProcAddress(hinstLibVideo, "FBWList");
+				_VIDEO_FrameBufferRead = (void(__cdecl *) (DWORD)) GetProcAddress(hinstLibVideo, "FBRead");
+				_VIDEO_FrameBufferWrite = (void(__cdecl *) (DWORD, DWORD)) GetProcAddress(hinstLibVideo, "FBWrite");
+				_VIDEO_GetFrameBufferInfo = (void(__cdecl *) (void *pinfo)) GetProcAddress(hinstLibVideo, "FBGetFrameBufferInfo");
+				_VIDEO_GetFullScreenStatus = (BOOL (__cdecl *) (void)) GetProcAddress(hinstLibVideo, "GetFullScreenStatus");
+				_VIDEO_SetOnScreenText = (void (__cdecl *)(char *msg)) GetProcAddress(hinstLibVideo, "SetOnScreenText");
+
+				if( _VIDEO_FrameBufferRead == NULL && _VIDEO_FrameBufferWrite == NULL )
+				{
+					emustatus.VideoPluginSupportingFrameBuffer = FALSE;
+				}
+				else
+				{
+					emustatus.VideoPluginSupportingFrameBuffer = TRUE;
+				}
+
+				if( _VIDEO_GetFrameBufferInfo == NULL )
+				{
+					emustatus.VideoPluginProvideFrameBufferInfo = FALSE;
+				}
+				else
+				{
+					emustatus.VideoPluginProvideFrameBufferInfo = TRUE;
+				}
 
 				return(TRUE);
 			}
@@ -160,6 +193,8 @@ void GetPluginsResizeRequest(LPRECT lpRect)
 {
 	RECT RequestRect;
 	GetWindowRect(gui.hwnd1964main, &RequestRect);
+	
+	
 	if ( (RequestRect.right  != lpRect->right)  || 
 	   (RequestRect.left   != lpRect->left)   ||
 	   (RequestRect.top    != lpRect->top)    || 
@@ -181,12 +216,20 @@ BOOL VIDEO_InitiateGFX(GFX_INFO Gfx_Info)
 	RECT Rect;
 	
 	GFX_PluginRECT.UseThis = FALSE;
+	bRomIsOpened = FALSE;
 
 	__try
 	{
-		GetWindowRect(gui.hwnd1964main, &Rect);
-		_VIDEO_InitiateGFX(Gfx_Info);
-		GetPluginsResizeRequest(&Rect);
+		if (!UsingInternalVideo) //Make this a guistatus or emustatus or something.
+		{
+			GetWindowRect(gui.hwnd1964main, &Rect);
+			_VIDEO_InitiateGFX(Gfx_Info);
+			GetPluginsResizeRequest(&Rect);
+		}
+		else
+		{
+		//	Internal_VIDEO_InitiateGFX(Gfx_Info);
+		}
 	}
 	__except(NULL, EXCEPTION_EXECUTE_HANDLER)
 	{
@@ -200,10 +243,48 @@ BOOL VIDEO_InitiateGFX(GFX_INFO Gfx_Info)
  =======================================================================================================================
  =======================================================================================================================
  */
-void VIDEO_ProcessDList(void)
+DWORD VIDEO_ProcessDList(void)
 {
-	/* try/except is handled from the call */
-	if(_VIDEO_ProcessDList != NULL) _VIDEO_ProcessDList();
+	int k = 100;
+
+    _control87(_RC_NEAR|_PC_64, _MCW_RC|_MCW_PC);    
+
+    /* try/except is handled from the call */
+	
+#ifndef _DEBUG
+	__try
+#endif
+	{
+		if(_VIDEO_ProcessDList_Count_Cycles != NULL && currentromoptions.RSP_RDP_Timing)
+			k = _VIDEO_ProcessDList_Count_Cycles();
+		else if(_VIDEO_ProcessDList != NULL) 
+			_VIDEO_ProcessDList();
+	}
+#ifndef _DEBUG
+	__except(NULL, EXCEPTION_EXECUTE_HANDLER)
+	{
+		DisplayError("Exception in VIDEO_ProcessDList");
+		Trigger_DPInterrupt();
+	}
+#endif
+
+    RestoreOldRoundingMode(((uint32) cCON31 & 0x00000003) << 8);
+
+	if( ToCaptureScreen && CaptureScreenDirectory != NULL )
+	{
+		__try
+		{
+			_VIDEO_CaptureScreen(CaptureScreenDirectory);
+		}
+
+		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
+		{
+			DisplayError("Exception in Capture Screen");
+		}
+		ToCaptureScreen = FALSE;
+	}
+
+	return k;
 }
 
 /*
@@ -216,10 +297,18 @@ void VIDEO_RomOpen(void)
 	{
 		__try
 		{
-			RECT Rect;
-			GetWindowRect(gui.hwnd1964main, &Rect);
-			_VIDEO_RomOpen();
-			GetPluginsResizeRequest(&Rect);
+			if (!UsingInternalVideo)
+			{
+				RECT Rect;
+				GetWindowRect(gui.hwnd1964main, &Rect);
+				_VIDEO_RomOpen();
+				bRomIsOpened = TRUE;
+				GetPluginsResizeRequest(&Rect);
+			}
+			else
+			{
+//				Internal_VIDEO_RomOpen();
+			}
 		}
 
 		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
@@ -239,7 +328,11 @@ void VIDEO_RomClosed(void)
 	{
 		__try
 		{
-			_VIDEO_RomClosed();
+			if( bRomIsOpened )
+			{
+				bRomIsOpened = FALSE;
+				_VIDEO_RomClosed();
+			}
 		}
 
 		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
@@ -329,6 +422,7 @@ void VIDEO_DllClose(void)
 	{
 		__try
 		{
+			if (!UsingInternalVideo)
 			_VIDEO_DllClose();
 		}
 
@@ -353,6 +447,7 @@ void CloseVideoPlugin(void)
 
 	_VIDEO_InitiateGFX = NULL;
 	_VIDEO_ProcessDList = NULL;
+	_VIDEO_ProcessDList_Count_Cycles = NULL;
 	_VIDEO_RomOpen = NULL;
 	_VIDEO_DllClose = NULL;
 	_VIDEO_DllConfig = NULL;
@@ -399,6 +494,7 @@ void VIDEO_About(HWND hParent)
 {
 	if(_VIDEO_About != NULL)
 	{
+		if (!UsingInternalVideo)
 		_VIDEO_About(hParent);
 	}
 	else
@@ -415,7 +511,8 @@ void VIDEO_Test(HWND hParent)
 {
 	if(_VIDEO_Test != NULL)
 	{
-		_VIDEO_Test(hParent);
+		if (!UsingInternalVideo)
+			_VIDEO_Test(hParent);
 	}
 	else
 	{
@@ -431,7 +528,8 @@ void VIDEO_MoveScreen(int x, int y)
 {
 	if(_VIDEO_MoveScreen != NULL)
 	{
-		_VIDEO_MoveScreen(x, y);
+		if (!UsingInternalVideo)
+			_VIDEO_MoveScreen(x, y);
 	}
 }
 
@@ -448,9 +546,11 @@ void VIDEO_UpdateScreen(void)
 
 	if(_VIDEO_UpdateScreen != NULL) __try
 	{
-		_VIDEO_UpdateScreen();
+		if (!UsingInternalVideo)
+		{
+			_VIDEO_UpdateScreen();
+		}
 	}
-
 	__except(NULL, EXCEPTION_EXECUTE_HANDLER)
 	{
 		DisplayError("Video UpdateScreen failed.");
@@ -465,7 +565,8 @@ void VIDEO_DrawScreen(void)
 {
 	if(_VIDEO_DrawScreen != NULL) __try
 	{
-		_VIDEO_DrawScreen();
+		if (!UsingInternalVideo)
+			_VIDEO_DrawScreen();
 	}
 
 	__except(NULL, EXCEPTION_EXECUTE_HANDLER)
@@ -486,7 +587,8 @@ void VIDEO_ViStatusChanged(void)
 	{
 		__try
 		{
-			_VIDEO_ViStatusChanged();
+			if (!UsingInternalVideo)
+				_VIDEO_ViStatusChanged();
 		}
 
 		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
@@ -506,7 +608,8 @@ void VIDEO_ViWidthChanged(void)
 	{
 		__try
 		{
-			_VIDEO_ViWidthChanged();
+			if (!UsingInternalVideo)
+				_VIDEO_ViWidthChanged();
 		}
 
 		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
@@ -523,17 +626,11 @@ void VIDEO_ViWidthChanged(void)
  */
 void VIDEO_CaptureScreen(char *Directory)
 {
+	// Call from GUI thread
 	if(_VIDEO_CaptureScreen != NULL)
 	{
-		__try
-		{
-			_VIDEO_CaptureScreen(Directory);
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
-			DisplayError("Exception in Capture Screen");
-		}
+		ToCaptureScreen = TRUE;
+		CaptureScreenDirectory = Directory;
 	}
 }
 
@@ -607,5 +704,145 @@ void VIDEO_Under_Selecting_Test(HWND hParent)
 	else
 	{
 		DisplayError("%s: Test function is not available for this plug-in.", "Video Plugin");
+	}
+}
+
+
+/******************************************************************
+  Function: FrameBufferWrite
+  Purpose:  This function is called to notify the dll that the
+            frame buffer has been modified by CPU at the given address.
+  input:    addr		rdram address
+			val			val
+			size		1 = BYTE, 2 = WORD, 4 = DWORD
+  output:   none
+*******************************************************************/ 
+void VIDEO_FrameBufferWrite(DWORD addr, DWORD size)
+{
+	if( _VIDEO_FrameBufferWrite != NULL  )
+	{
+		_VIDEO_FrameBufferWrite( addr, size);
+	}
+	//TRACE0("Write into frame buffer");
+}
+
+/******************************************************************
+  Function: FrameBufferWriteList
+  Purpose:  This function is called to notify the dll that the
+            frame buffer has been modified by CPU at the given address.
+  input:    FrameBufferModifyEntry *plist
+			size = size of the plist, max = 1024
+  output:   none
+*******************************************************************/ 
+void VIDEO_FrameBufferWriteList(FrameBufferModifyEntry *plist, DWORD size);
+
+/******************************************************************
+  Function: FrameBufferRead
+  Purpose:  This function is called to notify the dll that the
+            frame buffer memory is beening read at the given address.
+			DLL should copy content from its render buffer to the frame buffer
+			in N64 RDRAM
+			DLL is responsible to maintain its own frame buffer memory addr list
+			DLL should copy 4KB block content back to RDRAM frame buffer.
+			Emulator should not call this function again if other memory
+			is read within the same 4KB range
+  input:    addr		rdram address
+			val			val
+			size		1 = BYTE, 2 = WORD, 4 = DWORD
+  output:   none
+*******************************************************************/ 
+void VIDEO_FrameBufferRead(DWORD addr)
+{
+	if( _VIDEO_FrameBufferRead != NULL )
+	{
+		_VIDEO_FrameBufferRead( addr );
+	}
+	//TRACE0("Read from frame buffer");
+}
+
+
+/************************************************************************
+Function: FBGetFrameBufferInfo
+Purpose:  This function is called by the emulator core to retrieve frame
+buffer information from the video plugin in order to be able
+to notify the video plugin about CPU frame buffer read/write
+operations
+
+size:
+= 1		byte
+= 2		word (16 bit) <-- this is N64 default depth buffer format
+= 4		dword (32 bit)
+
+when frame buffer information is not available yet, set all values
+in the FrameBufferInfo structure to 0
+
+input:		FrameBufferInfo *pinfo
+			pinfo is pointed to a FrameBufferInfo structure array which to be
+filled in by this function
+			Upto to 6 FrameBufferInfo structure
+output:		Values are return in the FrameBufferInfo structure
+/************************************************************************/
+
+void VIDEO_GetFrameBufferInfo(void *pinfo)
+{
+	if( _VIDEO_GetFrameBufferInfo != NULL )
+	{
+		_VIDEO_GetFrameBufferInfo(pinfo);
+	}
+}
+
+
+
+BOOL VIDEO_FrameBufferSupportRead()
+{
+	return _VIDEO_FrameBufferRead != NULL;
+}
+
+BOOL VIDEO_FrameBufferSupportWrite()
+{
+	return _VIDEO_FrameBufferWrite != NULL;
+}
+
+BOOL VIDEO_FrameBufferSupport()
+{
+	return VIDEO_FrameBufferSupportRead() || VIDEO_FrameBufferSupportWrite();
+}
+
+/******************************************************************
+Function: GetFullScreenStatus
+Purpose:  
+Input:    
+Output:   TRUE if current display is in full screen
+FALSE if current display is in windowed mode
+
+Attention: After the CPU core call the ChangeWindow function to request
+the video plugin to switch between full screen and window mode,
+the plugin may not carry out the request at the function call.
+The video plugin may want to delay and do the screen switching later.
+
+*******************************************************************/ 
+int VIDEO_GetFullScreenStatus(void)
+{
+	if( _VIDEO_GetFullScreenStatus )
+	{
+		return _VIDEO_GetFullScreenStatus();
+	}
+	else
+		return -1;
+}
+
+
+/******************************************************************
+Function: SetOnScreenText
+Purpose:  
+Input:    char *msg
+Output:   
+
+*******************************************************************/ 
+void VIDEO_SetOnScreenText(char *msg)
+{
+	if( _VIDEO_SetOnScreenText )
+	{
+		_VIDEO_SetOnScreenText(msg);
 	}
 }

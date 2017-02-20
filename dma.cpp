@@ -6,7 +6,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -18,29 +18,14 @@
  * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
-#include <windows.h>
-#include "interrupt.h"
-#include "r4300i.h"
-#include "n64rcp.h"
-#include "dma.h"
-#include "debug_option.h"
-#include "iPIF.h"
-#include "timer.h"
-#include "emulator.h"
-#include "hardware.h"
-#include "1964ini.h"
-#include "memory.h"
-#include "win32/Dll_Audio.h"
-#include "gamesave.h"
-#include "win32/windebug.h"
-#include "compiler.h"
-#include "fileio.h"
+#include "stdafx.h"
 
-#ifdef SAVEOPCOUNTER
-#define EXTRA_DMA_TIMING(val)	DMAIncreaseTimer(val);
-#else
+//#ifdef SAVEOPCOUNTER
+//#define EXTRA_DMA_TIMING(val)	DMAIncreaseTimer(val);
 #define EXTRA_DMA_TIMING(val)
-#endif
+//#else
+//#define EXTRA_DMA_TIMING(val)
+//#endif
 uint32			PIDMASourceAddress = 0;
 uint32			PIDMATargetAddress = 0;
 uint32			PIDMACurrentPosition = 0;
@@ -113,6 +98,19 @@ void FastPIMemoryCopy(void)
 		Check_And_Invalidate_Compiled_Blocks_By_DMA(PIDMATargetAddress, PIDMALength, "PIDMA");
 	}
 	
+	if( emustatus.VideoPluginSupportingFrameBuffer )
+	{
+		if(GetPtrIdex(PIDMATargetAddress) != -1 )
+		{
+			VIDEO_FrameBufferWrite(PIDMATargetAddress, PIDMALength);
+		}
+		
+		if( GetPtrIdex(PIDMASourceAddress) != -1 )
+		{
+			VIDEO_FrameBufferRead(PIDMASourceAddress);
+		}
+	}
+	
 	target = (uint32) PMEM_READ_UWORD(PIDMATargetAddress);
 	source = (uint32) PMEM_READ_UWORD(PIDMASourceAddress);
 	
@@ -130,13 +128,13 @@ void FastPIMemoryCopy(void)
 			mov ebx, source
 			align 16
 _Label :
-			test eax, eax
+			and eax, eax
 			jz _Label2
 			mov ecx, dword ptr[ebx]
+			inc eax
 			mov dword ptr[edx], ecx
 			add ebx, 4
 			add edx, 4
-			inc eax
 			jmp _Label
 _Label2 :
 			popad
@@ -195,6 +193,14 @@ void DMA_PI_MemCopy_From_DRAM_To_Cart(void)
 		}
 	);
 
+	if(PIDMALength & 0x1)
+	{
+		TRACE4( "%08X: PI Copy RDRAM to CART %db from %08X to %08X", gHWS_pc, PIDMALength, PIDMASourceAddress|0xA0000000, PIDMATargetAddress);
+		TRACE0("Warning, PI DMA, odd length");
+
+		PIDMALength++;
+	}
+
 	DEBUG_SRAM_TRACE(TRACE3( "SRAM/FLASHRAM or CART Write, %08X bytes %08X to %08X", PIDMALength, PIDMASourceAddress, PIDMATargetAddress));
 
 	if((PI_CART_ADDR_REG & 0x1F000000) == MEMORY_START_C2A2)	/* Flashram PI DMA read */
@@ -218,7 +224,7 @@ void DMA_PI_MemCopy_From_DRAM_To_Cart(void)
 		return;
 	}
 
-	if(currentromoptions.DMA_Segmentation == USEDMASEG_YES && debug_opcode == 0	)
+	if(currentromoptions.timing_Control != NO_DELAY && debug_opcode == 0	)
 	{
 		/* Setup DMA transfer in segments */
 		PIDMAInProgress = DMA_PI_READ;
@@ -286,11 +292,13 @@ void DMA_PI_MemCopy_From_Cart_To_DRAM(void)
 		TRACE4( "%08X: PI Copy CART to RDRAM %db from %08X to %08X", gHWS_pc, len, pi_cart_addr_reg|0xA0000000, pi_dram_addr_reg);
 		TRACE0("Warning, PI DMA, odd length");
 
-		len++;	/* This makes Doraemon3 (J) works, I hope this will not affect other game */
-				/* because this should not happen in regular games */
+		/* This makes Doraemon3 (J) works, I hope this will not affect other game */
+		/* because this should not happen in regular games */
+
+		len ++;
 	}
 
-#ifdef DEBUG_COMMON
+#ifdef _DEBUG
 	if(pi_dram_addr_reg & 0x7)
 	{
 		TRACE1("Warning, PI DMA, address does not align as requirement. RDRAM ADDR = %08X", pi_dram_addr_reg);
@@ -362,12 +370,12 @@ void DMA_PI_MemCopy_From_Cart_To_DRAM(void)
 			for(; i < 0; i += 4, addr += 4)
 			{
 L1:
-				if(sDYN_PC_LOOKUP[((uint16) (addr >> 16))] != gMemoryState.dummyAllZero)
+				if(gHardwareState.sDYN_PC_LOOKUP[((uint16) (addr >> 16))] != gMemoryState.dummyAllZero)
 				{
 					/* Need to clear the Dyna marks in dynarommap, how to do it? */
 					if(*(uint32 *) (RDRAM_Copy + (addr & 0x007FFFFF)) != DUMMYOPCODE)
 					{
-						*(uint32 *) ((uint8 *) sDYN_PC_LOOKUP[((uint16) (addr >> 16))] + (uint16) addr) = 0;
+						*(uint32 *) ((uint8 *) gHardwareState.sDYN_PC_LOOKUP[((uint16) (addr >> 16))] + (uint16) addr) = 0;
 					}
 				}
 				else
@@ -443,7 +451,7 @@ L1:
 	 * gAllocationLength - (PIDMASourceAddress&0x0FFFFFFF); PIDMALength = len;
 	 * TRACE1("Warning, DMA length is too long, trimmed, len=%d", len); }
 	 */
-	if(currentromoptions.DMA_Segmentation == USEDMASEG_YES && debug_opcode == 0)
+	if(currentromoptions.timing_Control != NO_DELAY && debug_opcode == 0)
 	{
 		/* Setup DMA transfer in segments */
 		PIDMAInProgress = DMA_PI_WRITE;
@@ -492,7 +500,7 @@ void DMA_MemCopy_DRAM_To_SP(int WasCalledByRSP)
 
 	DEBUG_SP_DMA_MACRO(TRACE3("SP DMA Read  %d bytes from %08X to %08X", SP_RD_LEN_REG + 1, SP_DRAM_ADDR_REG, SP_MEM_ADDR_REG));
 
-#ifdef DEBUG_COMMON
+#ifdef _DEBUG
 	/* Check Half Word Alignment */
 	if(SP_DRAM_ADDR_REG & 0x7)
 	{
@@ -522,10 +530,17 @@ void DMA_MemCopy_DRAM_To_SP(int WasCalledByRSP)
 		);
 	}
 #endif
-	SPDMALength = (SP_RD_LEN_REG & 0x00000FFF) +
-	1;	/* SP_RD_LEN_REG bit [0-11] is length to transfer */
+	SPDMALength = (SP_RD_LEN_REG & 0x00000FFF) + 1;	/* SP_RD_LEN_REG bit [0-11] is length to transfer */
 
-	if((currentromoptions.DMA_Segmentation == USEDMASEG_YES) && (!WasCalledByRSP))
+	if(SPDMALength & 0x1)
+	{
+		TRACE1("Warning, PI DMA DRAM to SP, odd length = %d", SPDMALength);
+
+		SPDMALength++;
+	}
+
+
+	if((currentromoptions.timing_Control != NO_DELAY) && (!WasCalledByRSP))
 	{
 		DEBUG_SP_DMA_TRACE0("SP DMA Starting");
 
@@ -555,9 +570,11 @@ void DMA_MemCopy_DRAM_To_SP(int WasCalledByRSP)
 	{
 		__try
 		{
-//			//ignore IMEM for speed (if not using low-level RSP)
+			//ignore IMEM for speed (if not using low-level RSP)
 //			if ((emuoptions.UsingRspPlugin == FALSE) && (sp_mem_addr_reg & 0x00001000))
-//				;
+            {
+//				MessageBox(0, "Optimize2", "", 0);
+            }
 //			else
 			memcpy
 			(
@@ -635,7 +652,14 @@ void DMA_MemCopy_SP_to_DRAM(int WasCalledByRSP)
 #endif
 	SPDMALength = (SP_WR_LEN_REG & 0x00000FFF) + 1;	/* SP_RD_LEN_REG bit [0-11] is length to transfer */
 
-	if((currentromoptions.DMA_Segmentation == USEDMASEG_YES) && (!WasCalledByRSP))
+	if(SPDMALength & 0x1)
+	{
+		TRACE1("Warning, PI DMA SP to DRAM, odd length = %d", SPDMALength);
+
+		SPDMALength++;
+	}
+
+	if((currentromoptions.timing_Control != NO_DELAY ) && (!WasCalledByRSP))
 	{
 		DEBUG_SP_DMA_TRACE0("SP DMA Starting");
 
@@ -689,6 +713,8 @@ void DMA_MemCopy_SP_to_DRAM(int WasCalledByRSP)
     Serial Interface DMA Write
  =======================================================================================================================
  */
+
+static int siCount=0;
 void Do_DMA_MemCopy_SI_To_DRAM(void)
 {
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -705,7 +731,14 @@ void Do_DMA_MemCopy_SI_To_DRAM(void)
 		/* Skip this DMA */
 		SI_STATUS_REG |= SI_STATUS_INTERRUPT;
 		Trigger_SIInterrupt();
+		//KAILLERA_LOG(fprintf(ktracefile, "SI at pos #1 at compare = %08X\n", Get_COUNT_Register()));
 
+		return;
+	}
+
+	if( SI_PIF_ADDR_RD64B_REG != 0x1FC007C0 )
+	{
+		TRACE1("Warning, SI PIF RD REG = %0*X", SI_PIF_ADDR_RD64B_REG);
 		return;
 	}
 
@@ -716,10 +749,13 @@ void Do_DMA_MemCopy_SI_To_DRAM(void)
 		Check_And_Invalidate_Compiled_Blocks_By_DMA(si_dram_addr_reg | 0x80000000, 64, "SIDMA");
 	}
 
+	//siCount++;
+	//if( siCount%10 == 0 )
+	{
 	iPifCheck();
 
-	PIF_RAM_PHYS_addr = (uint32) (&gMS_PIF[PIF_RAM_PHYS]);	/* From */
-	RDRAM_addr = (uint32) & gMS_RDRAM[0];					/* To */
+	PIF_RAM_PHYS_addr = (uint32) (&gMS_PIF[PIF_RAM_PHYS]);	// From
+	RDRAM_addr = (uint32) & gMS_RDRAM[0];					// To
 
 	_asm
 	{
@@ -768,10 +804,13 @@ void Do_DMA_MemCopy_SI_To_DRAM(void)
 		mov dword ptr[edi + 8], eax
 		mov dword ptr[edi + 12], ebx
 	}
+	}
 
 	EXTRA_DMA_TIMING(64);
 	SI_STATUS_REG |= SI_STATUS_INTERRUPT;
 	Trigger_SIInterrupt();
+	//KAILLERA_LOG(fprintf(ktracefile, "SI at pos #2 at compare = %08X\n", Get_COUNT_Register()));
+
 }
 
 /*
@@ -781,7 +820,7 @@ void Do_DMA_MemCopy_SI_To_DRAM(void)
  */
 void DMA_MemCopy_SI_To_DRAM(void)
 {
-	if(currentromoptions.DMA_Segmentation == USEDMASEG_YES && debug_opcode == 0)
+	if(currentromoptions.timing_Control != NO_DELAY && debug_opcode == 0)
 	{
 		DEBUG_SI_DMA_TRACE0("SI DMA Read Start");
 
@@ -795,7 +834,10 @@ void DMA_MemCopy_SI_To_DRAM(void)
 
 		/* Set SI DMA Busy */
 		SI_STATUS_REG |= SI_STATUS_DMA_BUSY;
-		Set_SIDMA_Timer_Event(64);
+		if( currentromoptions.timing_Control == DELAY_DMA_SI || currentromoptions.timing_Control == DELAY_DMA_SI_AI )
+			Set_SIDMA_Timer_Event(900);
+		else
+			Set_SIDMA_Timer_Event(64);
 	}
 	else
 	{
@@ -824,8 +866,16 @@ void Do_DMA_MemCopy_DRAM_to_SI(void)
 		/* Skip this DMA */
 		SI_STATUS_REG |= SI_STATUS_INTERRUPT;
 		Trigger_SIInterrupt();
+		//KAILLERA_LOG(fprintf(ktracefile, "SI at pos #3 at compare = %08X\n", Get_COUNT_Register()));
 		return;
 	}
+
+	if( SI_PIF_ADDR_WR64B_REG != 0x1FC007C0 )
+	{
+		TRACE1("Warning, SI PIF RD REG = %0*X", SI_PIF_ADDR_WR64B_REG);
+		return;
+	}
+
 
 	DEBUG_SI_DMA_TRACE0("Doing actual SI DMA Write");
 
@@ -881,7 +931,9 @@ void Do_DMA_MemCopy_DRAM_to_SI(void)
 
 	EXTRA_DMA_TIMING(64);
 
+	gHWS_COP0Reg[COUNT] = Get_COUNT_Register();		// Need this for netplay synchronization
 	SI_STATUS_REG |= SI_STATUS_INTERRUPT;
+	//KAILLERA_LOG(fprintf(ktracefile, "SI at pos #4 at compare = %08X\n", Get_COUNT_Register()));
 	Trigger_SIInterrupt();
 }
 
@@ -892,7 +944,7 @@ void Do_DMA_MemCopy_DRAM_to_SI(void)
  */
 void DMA_MemCopy_DRAM_to_SI(void)
 {
-	if(currentromoptions.DMA_Segmentation == USEDMASEG_YES && debug_opcode == 0)
+	if(currentromoptions.timing_Control != NO_DELAY && debug_opcode == 0)
 	{
 		DEBUG_SI_DMA_TRACE0("SI DMA Write Start");
 
@@ -906,7 +958,11 @@ void DMA_MemCopy_DRAM_to_SI(void)
 
 		/* Set SI DMA Busy */
 		SI_STATUS_REG |= SI_STATUS_DMA_BUSY;
-		Set_SIDMA_Timer_Event(64);
+
+		if( currentromoptions.timing_Control == DELAY_DMA_SI || currentromoptions.timing_Control == DELAY_DMA_SI_AI )
+			Set_SIDMA_Timer_Event(900);
+		else
+			Set_SIDMA_Timer_Event(64);
 	}
 	else
 	{
@@ -920,7 +976,12 @@ void DMA_MemCopy_DRAM_to_SI(void)
  */
 void DMA_AI(void)
 {
-	/* AI_STATUS_REG |= AI_STATUS_DMA_BUSY; */
+	if (AUDIO_IsMusyX() == TRUE)
+	{
+		currentromoptions.timing_Control = DELAY_DMA_AI;
+	}
+
+//	 AI_STATUS_REG |= AI_STATUS_DMA_BUSY; 
 }
 
 /*
@@ -980,6 +1041,13 @@ void DoSPDMASegment(void)
 		if(SPDMAInProgress == DMA_SP_WRITE)
 		{
 			
+			//ignore IMEM for speed (if not using low-level RSP)
+//			if ((emuoptions.UsingRspPlugin == FALSE) && (SP_MEM_ADDR_REG & 0x00001000))
+			{
+                //MessageBox(0, "Optimize3", "", 0);
+                //Do Nothing
+			}
+//			else
 			memcpy
 			(
 				&gMS_RDRAM[SP_DRAM_ADDR_REG & 0x00FFFFFF],
@@ -989,11 +1057,11 @@ void DoSPDMASegment(void)
 		}
 		else
 		{
-//			//ignore IMEM for speed (if not using low-level RSP)
+			//ignore IMEM for speed (if not using low-level RSP)
 //			if ((emuoptions.UsingRspPlugin == FALSE) && (SP_MEM_ADDR_REG & 0x00001000))
-//			{
-//				//Do Nothing
-//			}
+			{
+                //Do Nothing
+			}
 //			else
 						
 			memcpy

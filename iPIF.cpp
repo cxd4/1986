@@ -9,7 +9,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -21,26 +21,9 @@
  * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
-#include <windows.h>
-#include <stdio.h>
-#include "globals.h"
-#include "n64rcp.h"
-#include "hardware.h"
-#include "memory.h"
-#include "iPif.h"
-#include "gamesave.h"
-#include "fileio.h"
-#include "debug_option.h"
-#include "emulator.h"
-#include "win32/windebug.h"
-#include "win32/DLL_Input.h"
-#include "kaillera/Kaillera.h"
-#include "gamesave.h"
-#include "netplay.h"
+#include "stdafx.h"
 
 _u8 EEProm_Status_Byte = 0x00;
-
-_u8 bufin[64];
 
 /*
  =======================================================================================================================
@@ -170,7 +153,7 @@ void BuildCRC(_u8 *data, _u8 *crc)
     Read Data from MemPak
  =======================================================================================================================
  */
-void ReadControllerPak(int device, char *cmd)
+void ReadControllerPak(int device, unsigned char *cmd)
 {
 	uint8	crc;
 	uint16	offset = *(_u16 *) &cmd[1];
@@ -229,7 +212,7 @@ void WriteControllerPak(int device, char *cmd)
 		FileIO_WriteMemPak(device);		//Save the file to disk
 	}
 
-	BuildCRC(&cmd[3], &crc);	/* Build CRC of the Data */
+	BuildCRC((unsigned char*)&cmd[3], &crc);	/* Build CRC of the Data */
 	cmd[35] = crc;
 }
 
@@ -240,30 +223,36 @@ void WriteControllerPak(int device, char *cmd)
  */
 BOOL ControllerCommand(_u8 *cmd, int device)
 {
+	//static int count=0;
+	//if( count == 0 )
+	//	MessageBox(gui.hwnd1964main,"Warning","Warning",MB_OK);
+	//count++;
+
 	emustatus.ControllerReadCount++;
 
-	if(Kaillera_Is_Running == TRUE)
+	//KAILLERA_LOG(fprintf(ktracefile, "P%d cmd %d at VI %d\n", device, cmd[2], viTotalCount));
+
+
+	if( Kaillera_Is_Running == TRUE )
 	{
-		// Need only the first device for kaillera mode cause this is the only device we really use ;)
-		if(!Controls[0].Present)
+		if( kailleraClientStatus[device] == FALSE )
 		{
 			cmd[1] |= 0x80;
 			cmd[3] = 0xFF;
 			cmd[4] = 0xFF;
 			cmd[5] = 0xFF;
+			//KAILLERA_LOG(fprintf(ktracefile, "P%d get status %08X%08X at VI %d\n", device, *(DWORD*)&cmd[0], *(DWORD*)&cmd[4], viTotalCount));
 			return TRUE;
 		}
 	}
-	else
+	else if( !Controls[device].Present )
 	{
-		if(!Controls[device].Present)
-		{
-			cmd[1] |= 0x80;
-			cmd[3] = 0xFF;
-			cmd[4] = 0xFF;
-			cmd[5] = 0xFF;
-			return TRUE;
-		}
+		cmd[1] |= 0x80;
+		cmd[3] = 0xFF;
+		cmd[4] = 0xFF;
+		cmd[5] = 0xFF;
+		//KAILLERA_LOG(fprintf(ktracefile, "P%d get status %08X%08X at VI %d\n", device, *(DWORD*)&cmd[0], *(DWORD*)&cmd[4], viTotalCount));
+		return TRUE;
 	}
 
 	switch(cmd[2])
@@ -273,87 +262,34 @@ BOOL ControllerCommand(_u8 *cmd, int device)
 	case 0x00:				/* 0x00 return the status */
 		cmd[3] = 0x05;		/* for Adaptoid only */
 		cmd[4] = 0x00;		/* for Adaptoid only */
-		if
-		(
-			(Controls[device].Plugin & PLUGIN_MEMPAK)
-		&&	(currentromoptions.Save_Type == MEMPAK_SAVETYPE || currentromoptions.Save_Type == ANYUSED_SAVETYPE)
-		) cmd[5] = 0x01;
+		if( currentromoptions.Save_Type == MEMPAK_SAVETYPE || currentromoptions.Save_Type == ANYUSED_SAVETYPE ) 
+			cmd[5] = 0x01;
 		else
-			cmd[5] = 0x00;	/* no mempack - reversed fir Adaptoid only (Bit 0x01 would be rumble-pack) */
+			cmd[5] = 0x00;	/* no mempak - reversed fir Adaptoid only (Bit 0x01 would be rumble-pack) */
+
+		//KAILLERA_LOG(fprintf(ktracefile, "P%d get status %08X%08X at VI %d\n", device, *(DWORD*)&cmd[0], *(DWORD*)&cmd[4], viTotalCount));
 		break;
 
 	/* Read Controller Data ... need a DInput interface first =) */
 	case 0x01:
 		{
-			/*~~~~~~~~~*/
 			BUTTONS Keys;
-			/*~~~~~~~~~*/
 
-			if(Kaillera_Is_Running)
+			if(Kaillera_Is_Running )
 			{
-				/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-				typedef struct
-				{
-					unsigned int	c;
-					BUTTONS			b;
-				} kbuffer;
-				static kbuffer	kBuffers[8];
-				int				reclen;
-				int				internal_counter = 0;
-				/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-				CONTROLLER_GetKeys(0, &Keys);
-
-label_Jump:
-				if(internal_counter > 100)
-				{
-					MessageBox(NULL, "internal_counter reached !!!", "Error", 0);
-					Kaillera_Is_Running = FALSE;
-				}
-
-				memcpy(&kBuffers[0].b, &Keys, sizeof(BUTTONS));
-				kBuffers[0].c = Kaillera_Counter;
-				reclen = kailleraModifyPlayValues((void *) kBuffers, sizeof(kbuffer));
-
-				if(reclen == -1)
-				{
-					MessageBox(NULL, "Kaillera timeout", "Error", 0);
-					Kaillera_Is_Running = FALSE;
-				}
-				else if(reclen > 0)
-				{
-					int i;
-					for(i = 0; i < Kaillera_Players; i++)
-					{
-						if(kBuffers[i].c != Kaillera_Counter)	
-						{
-							/* This synchronizes all players */
-							/* but could make game play really slow */
-							goto label_Jump;
-						}
-					}
-				}
-				else
-					goto label_Jump;
-
-				Kaillera_Counter++;
-				internal_counter++;
-
-				memcpy(&Keys, &kBuffers[device].b, sizeof(BUTTONS));
+				KailleraGetPlayerKeyValuesFor1Player(&Keys, device);
 			}
 			else
 			{
-				if( NetplayInitialized )
-				{
-					netplay_get_keys(device, &Keys, emustatus.DListCount);
-				}
-				else
-					CONTROLLER_GetKeys(device, &Keys);
+				CONTROLLER_GetKeys(device, &Keys);
 			}
 
+			if( ktracefile )	fprintf(ktracefile, "P%d get key value %08X at VI %d\n", device, *(DWORD *) &Keys, viTotalCount);
 			*(DWORD *) &cmd[3] = *(DWORD *) &Keys;
 			DEBUG_CONTROLLER_TRACE(TRACE2("Read controller %d, return %X", device, *(DWORD *) &Keys););
 		}
+
+		//KAILLERA_LOG(fprintf(ktracefile, "P%d get Keys %08X%08X at VI %d\n", device, *(DWORD*)&cmd[0], *(DWORD*)&cmd[4], viTotalCount));
 		break;
 
 	/* Read Controller Pak */
@@ -364,12 +300,19 @@ label_Jump:
 			ReadControllerPak(device, &cmd[2]);
 			break;
 		case PLUGIN_NONE:
+			if( currentromoptions.Save_Type == MEMPAK_SAVETYPE || currentromoptions.Save_Type == ANYUSED_SAVETYPE )
+			{
+				// Always support mempak here, the flag "Controls[device].Plugin" is sometime reset by input plugin
+				ReadControllerPak(device, &cmd[2]);
+				break;
+			}
 		case PLUGIN_RUMBLE_PAK:
 		case PLUGIN_TANSFER_PAK:
 		default:
 			break;
 		}
 
+		//KAILLERA_LOG(fprintf(ktracefile, "P%d get Pak %08X%08X at VI %d\n", device, *(DWORD*)&cmd[0], *(DWORD*)&cmd[4], viTotalCount));
 		return FALSE;
 		break;
 
@@ -378,21 +321,28 @@ label_Jump:
 		switch(Controls[device].Plugin)
 		{
 		case PLUGIN_MEMPAK:
-			WriteControllerPak(device, &cmd[2]);
+			WriteControllerPak(device, (char*)&cmd[2]);
 			break;
 		case PLUGIN_NONE:
+			if( currentromoptions.Save_Type == MEMPAK_SAVETYPE || currentromoptions.Save_Type == ANYUSED_SAVETYPE )
+			{
+				// Always support mempak here, the flag "Controls[device].Plugin" is sometime reset by input plugin
+				WriteControllerPak(device, (char*)&cmd[2]);
+				break;
+			}
 		case PLUGIN_RUMBLE_PAK:
 		case PLUGIN_TANSFER_PAK:
 		default:
 			break;
 		}
 
+		//KAILLERA_LOG(fprintf(ktracefile, "P%d write Pak %08X%08X at VI %d\n", device, *(DWORD*)&cmd[0], *(DWORD*)&cmd[4], viTotalCount));
 		return FALSE;
 		break;
 
 	default:
 		TRACE2("Unkown ControllerCommand %X, pc=%08X", cmd[2], gHWS_pc);
-#ifdef DEBUG_COMMON
+#ifdef _DEBUG
 		{
 			/*~~~~~~~~~~~~~~~~~~*/
 			char	line[100];
@@ -417,14 +367,12 @@ label_Jump:
 		/* Treat this as GET_STATUS */
 		cmd[3] = 0x05;		/* for Adaptoid only */
 		cmd[4] = 0x00;		/* for Adaptoid only */
-		if
-		(
-			(Controls[device].Plugin & PLUGIN_MEMPAK)
-		&&	(currentromoptions.Save_Type == MEMPAK_SAVETYPE || currentromoptions.Save_Type == ANYUSED_SAVETYPE)
-		) cmd[5] = 0x01;
+		if( currentromoptions.Save_Type == MEMPAK_SAVETYPE || currentromoptions.Save_Type == ANYUSED_SAVETYPE )
+			cmd[5] = 0x01;
 		else
-			cmd[5] = 0x00;	/* no mempack - for Adaptoid only (Bit 0x01 would be rumble-pack) */
+			cmd[5] = 0x00;	/* no mempak - for Adaptoid only (Bit 0x01 would be rumble-pack) */
 
+		//KAILLERA_LOG(fprintf(ktracefile, "P%d get status %08X%08X at VI %d\n", device, *(DWORD*)&cmd[0], *(DWORD*)&cmd[4], viTotalCount));
 		/* exit(IPIF_EXIT); */
 		break;
 	}
@@ -437,7 +385,7 @@ label_Jump:
     Read EEprom (loads EEprom from file if it is present)
  =======================================================================================================================
  */
-void ReadEEprom(char *dest, long offset)
+void ReadEEprom(unsigned char *dest, long offset)
 {
 #ifdef DEBUG_SI_EEPROM
 	if(debugoptions.debug_si_eeprom)
@@ -495,8 +443,9 @@ void WriteEEprom(char *src, long offset)
     Handles all Commands which are sent to the EEprom
  =======================================================================================================================
  */
-BOOL EEpromCommand(_u8 *cmd, int device)
+BOOL EEpromCommand(_u8 *cmd)
 {
+	
 	switch(cmd[2])
 	{
 	/* reporting eeprom state ... hmmm */
@@ -505,7 +454,7 @@ BOOL EEpromCommand(_u8 *cmd, int device)
 #ifdef DEBUG_SI_EEPROM
 		if(debugoptions.debug_si_eeprom)
 		{
-			TRACE0("Execute EEPROM GetStatis Commands");
+			TRACE0("Execute EEPROM GetStatus Commands");
 		}
 #endif
 		cmd[3] = 0x00;
@@ -520,7 +469,7 @@ BOOL EEpromCommand(_u8 *cmd, int device)
 
 	/* Write to Eeprom */
 	case 0x05:
-		WriteEEprom(&cmd[4], cmd[3] * 8);
+		WriteEEprom((char*)&cmd[4], cmd[3] * 8);
 		break;
 
 	default:
@@ -797,7 +746,8 @@ uint32 SrcCodeLUT[] = {
 0x0006001A, 0x006900A7, 0x02000070, 0x00C00001, //
 0x0006001A, 0x006A00A8, 0x02000080, 0x00000001, //
 0x0006001A, 0x006A00A9, 0x02000090, 0x00400001, //
-0x0006001A, 0x006A00AA, 0x020000A0, 0x00800001  //
+0x0006001A, 0x006A00AA, 0x020000A0, 0x00800001, //
+0x8FBB1DB8, 0x76B63CEC, 0x025BEAED, 0xEC803A6B,
 };
 
 uint32 ResCodeLUT[] = {
@@ -1067,7 +1017,8 @@ uint32 ResCodeLUT[] = {
  0x6E6C4E40, 0xF94BECD6, 0x006EECC6, 0x9FBFF9CB,
  0x6E6C8CAA, 0x55D5F9DB, 0x00717171, 0xF9F9F9CB,
  0x551517B7, 0x4E404ED0, 0x005555B5, 0xC6A88C5A,
- 0xE6C46EEE, 0x993955D5, 0x00171717, 0xF9F971E1
+ 0xE6C46EEE, 0x993955D5, 0x00171717, 0xF9F971E1,
+ 0xDEB04FDB, 0x4CF76A13, 0x000B73E7, 0x4AC64045,
 	};
 
 /*
@@ -1076,16 +1027,16 @@ uint32 ResCodeLUT[] = {
  =======================================================================================================================
  */
 extern void __cdecl error(char *Message, ...);
-void iPifCheck(void)
+void __cdecl iPifCheck(void)
 {
 	/*~~~~~~~~~~~~~~~~~*/
 	int i, count, device;
+	_u8 bufin[64];
 	/*~~~~~~~~~~~~~~~~~*/
-
+	uint8* PIF_Ram_Phys = &gMS_PIF[PIF_RAM_PHYS];
 	for(i = 0; i < 64; i++)
 	{
-		/* bufin[i]=mem.pi_ram[i^3]; */
-		bufin[i] = gMS_PIF[(PIF_RAM_PHYS + i) ^ 3];
+		bufin[i] = PIF_Ram_Phys[i ^ 3];
 	}
 
 #ifdef LOG_PIF
@@ -1119,8 +1070,7 @@ void iPifCheck(void)
 					//error("Decrypt %08X %08X %08X %08X", tmp[13], tmp[12], tmp[15], tmp[14]);
 					for(i = 0; i < 64; i++)
 					{
-						// mem.pi_ram[i^3] = bufin[i];
-						gMS_PIF[(PIF_RAM_PHYS + i) ^ 3] = bufin[i];
+						PIF_Ram_Phys[i ^ 3] = bufin[i];
 					}
 					return;
 				}
@@ -1142,8 +1092,7 @@ void iPifCheck(void)
 		}
 
 		/*
-		 * no-op Commands £
-		 * FD is from Command and Conquer
+		 * no-op Commands ?		 * FD is from Command and Conquer
 		 */
 		if((cmd[0] == 0xFF) || (cmd[0] == 0xFD))
 		{
@@ -1179,7 +1128,7 @@ void iPifCheck(void)
 		case 1:
 		case 2:
 		case 3:
-			if(Controls[device].RawData)
+			if(Controls[device].RawData && Kaillera_Is_Running == FALSE )
 			{
 				CONTROLLER_ControllerCommand(device, cmd);
 				CONTROLLER_ReadController(device, cmd);
@@ -1196,7 +1145,7 @@ void iPifCheck(void)
 
 		/* EEprom Command */
 		case 4:
-			if(!EEpromCommand(cmd, device))
+			if(!EEpromCommand(cmd))
 			{
 				count = 64;
 			}
@@ -1204,17 +1153,17 @@ void iPifCheck(void)
 
 		default:
 			DisplayError("Unknown Command for unknwon Device %x", device);
-			exit(IPIF_EXIT);
+			return;
 		}
 
-#ifdef DEBUG_COMMON
+#ifdef _DEBUG
 		switch(cmd[2])
 		{
 		case 0x00:
 		case 0xFF:
 			if(debugoptions.debug_si_controller)
 			{
-				sprintf(tracemessage, "Get Status: %02X %02X %02X %02X %02X %02X %02X",
+				sprintf(tracemessage, "Get Status %d: %02X %02X %02X %02X %02X %02X %02X", device,
 						cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6]); 
 				RefreshOpList(tracemessage);
 			}
@@ -1222,7 +1171,7 @@ void iPifCheck(void)
 		case 0x01:
 			if(debugoptions.debug_si_controller)
 			{
-				sprintf(tracemessage, "Read Controller: %02X %02X %02X %02X %02X %02X %02X",
+				sprintf(tracemessage, "Read Controller %d: %02X %02X %02X %02X %02X %02X %02X", device,
 						cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6]); 
 				RefreshOpList(tracemessage);
 			}
@@ -1230,7 +1179,7 @@ void iPifCheck(void)
 		case 0x02:
 			if(debugoptions.debug_si_mempak)
 			{
-				sprintf(tracemessage, "Read Mempak: %02X %02X %02X %02X %02X %02X %02X",
+				sprintf(tracemessage, "Read Mempak %d: %02X %02X %02X %02X %02X %02X %02X", device,
 						cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6]); 
 				RefreshOpList(tracemessage);
 			}
@@ -1238,7 +1187,7 @@ void iPifCheck(void)
 		case 0x03:
 			if(debugoptions.debug_si_mempak)
 			{
-				sprintf(tracemessage, "Write Mempak: %02X %02X %02X %02X %02X %02X %02X",
+				sprintf(tracemessage, "Write Mempak %d: %02X %02X %02X %02X %02X %02X %02X", device,
 						cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6]); 
 				RefreshOpList(tracemessage);
 			}
@@ -1247,12 +1196,7 @@ void iPifCheck(void)
 #endif
 
 		/*
-		 * increase count £
-		 * i think that the maximum command size is 12 bytes long £
-		 * if it is longer than 12 bytes i cut it 12 Bytes £
-		 * i think so because normally the formula £
-		 * (size of Command-Bytes + size of Answer-Bytes + 2 for the 2 size Bytes) for the £
-		 * command size works pretty fine, but it doesn't work together with the EEprom
+		 * increase count ?		 * i think that the maximum command size is 12 bytes long ?		 * if it is longer than 12 bytes i cut it 12 Bytes ?		 * i think so because normally the formula ?		 * (size of Command-Bytes + size of Answer-Bytes + 2 for the 2 size Bytes) for the ?		 * command size works pretty fine, but it doesn't work together with the EEprom
 		 * Write CMD
 		 */
 		device++;	/* only one command per controller =) */
@@ -1261,20 +1205,18 @@ void iPifCheck(void)
 		2;			/* size of Command-Bytes + size of Answer-Bytes + 2 for the 2 size Bytes */
 	}
 
-	if(Controls[0].RawData)
+	if(Controls[0].RawData && Kaillera_Is_Running == FALSE )
 	{
 		CONTROLLER_ControllerCommand(-1, bufin);	/* 1 signalling end of processing the pif ram. */
 	}
 
 	/*
-	 * write answer packet to pi_ram £
-	 * bufin[63] = 1;
+	 * write answer packet to pi_ram ?	 * bufin[63] = 1;
 	 */
 	bufin[63] = 0;	/* Set the last bit is 0 as successfully return */
 	for(i = 0; i < 64; i++)
 	{
-		/* mem.pi_ram[i^3] = bufin[i]; */
-		gMS_PIF[(PIF_RAM_PHYS + i) ^ 3] = bufin[i];
+		PIF_Ram_Phys[i ^ 3] = bufin[i];
 	}
 
 #ifdef LOG_PIF
@@ -1293,7 +1235,7 @@ void LogPIFData(char *data, BOOL input)
 	if(stream != NULL)
 	{
 		int				i, j;
-		unsigned char	*p = data;
+		unsigned char	*p = (unsigned char*)data;
 
 		if(input)
 		{

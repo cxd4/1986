@@ -10,7 +10,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -20,17 +20,12 @@
  * details. You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
- * authors: email: schibo@emulation64.com, rice1964@yahoo.com £
+ * authors: email: schibo@emulation64.com, rice1964@yahoo.com ?
  */
-#include <windows.h>
-#include <stdio.h>
-#include "globals.h"
-#include "timer.h"
-#include "n64rcp.h"
-#include "win32/windebug.h"
+#include "stdafx.h"
 
-char			*profiler_process_names[] = { "R4300i", "Video", "Audio", "Compiler", "Idle", "RSP", "RDP" };
-uint64			profiler_timer_count[] = { 0, 0, 0, 0, 0, 0, 0 };
+char			*profiler_process_names[] = { "R4300i", "Video", "Audio", "Compiler", "Idle", "RSP", "RDP", "Netplay", "Kaillera" };
+uint64			profiler_timer_count[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 static int		process_being_profiling = R4300I_PROF;
 static uint32	start_timer_h, stop_timer_h, start_timer_l, stop_timer_l;
@@ -89,33 +84,74 @@ void stop_profiling(void)
 	profiling_started = FALSE;
 }
 
+int get_current_profiling_process(void)
+{
+	return process_being_profiling;
+}
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
+
+unsigned int cpuIdlePercentages[4]={0,0,0,0};
+int cpuIdlePercentageIdx=0;
 void format_profiler_result_msg(char *msg)
 {
-	/*~~~~~~~~~~~~~~~~~~~*/
 	uint64	totaltimer = 0;
 	int		i;
-	/*~~~~~~~~~~~~~~~~~~~*/
 
 	for(i = 0; i < MAX_PROF; i++)
 	{
 		totaltimer += profiler_timer_count[i];
 	}
 
-	if(totaltimer == 0) totaltimer = 1;
-	sprintf
-	(
-		msg,
-		"core-%2d%% video-%2d%% audio-%2d%% compiler-%2d%% idle-%2d%%",
-		(uint32) (profiler_timer_count[R4300I_PROF] * 100 / totaltimer),
-		(uint32) (profiler_timer_count[VIDEO_PROF] * 100 / totaltimer),
-		(uint32) (profiler_timer_count[AUDIO_PROF] * 100 / totaltimer),
-		(uint32) (profiler_timer_count[COMPILER_PROF] * 100 / totaltimer),
-		(uint32) (profiler_timer_count[CPU_IDLE_PROF] * 100 / totaltimer)
-	);
+    if(totaltimer == 0) totaltimer = 1;
+
+	if( Kaillera_Is_Running )
+	{
+		sprintf
+			(
+			msg,
+			"%s:%2.1f%% %s:%2.1f%% %s:%2.1f%% %s:%2.1f%% %s:%2.1f%% %s:%2.1f%% %s: %2.1f%%",
+			TranslateStringByString("core"),
+			(profiler_timer_count[R4300I_PROF] * 100.0f / totaltimer),
+			TranslateStringByString("video"),
+			(profiler_timer_count[VIDEO_PROF] * 100.0f / totaltimer),
+			TranslateStringByString("audio"),
+			(profiler_timer_count[AUDIO_PROF] * 100.0f / totaltimer),
+			TranslateStringByString("compiler"),
+			(profiler_timer_count[COMPILER_PROF] * 100.0f / totaltimer),
+			TranslateStringByString("idle"),
+			(profiler_timer_count[CPU_IDLE_PROF] * 100.0f / totaltimer),
+			TranslateStringByString("netplay"),
+			(profiler_timer_count[NETPLAY_PROF] * 100.0f / totaltimer),
+			TranslateStringByString("kaillera"),
+			(profiler_timer_count[KAILLERA_PROF] * 100.0f / totaltimer)
+			);
+	}
+	else
+	{
+		sprintf
+			(
+			msg,
+			"%s:%2.1f%% %s:%2.1f%% %s:%2.1f%% %s:%2.1f%% %s:%2.1f%%",
+			TranslateStringByString("core"),
+			(profiler_timer_count[R4300I_PROF] * 100.0f / totaltimer),
+			TranslateStringByString("video"),
+			(profiler_timer_count[VIDEO_PROF] * 100.0f / totaltimer),
+			TranslateStringByString("audio"),
+			(profiler_timer_count[AUDIO_PROF] * 100.0f / totaltimer),
+			TranslateStringByString("compiler"),
+			(profiler_timer_count[COMPILER_PROF] * 100.0f / totaltimer),
+			TranslateStringByString("idle"),
+			(profiler_timer_count[CPU_IDLE_PROF] * 100.0f / totaltimer)
+			);
+	}
+
+
+	cpuIdlePercentageIdx++;
+	cpuIdlePercentageIdx %= 4;
+	cpuIdlePercentages[cpuIdlePercentageIdx] = (uint32)(((double)(__int64)profiler_timer_count[CPU_IDLE_PROF] * 100.0 / (double)(__int64)totaltimer)+0.5);
 }
 
 /*

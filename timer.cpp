@@ -9,7 +9,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -21,26 +21,22 @@
  * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
-#include <windows.h>
-#include <process.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "stdafx.h"
 #include <time.h>
-#include "globals.h"
-#include "hardware.h"
-#include "r4300i.h"
-#include "n64rcp.h"
-#include "interrupt.h"
-#include "debug_option.h"
-#include "emulator.h"
-#include "timer.h"
-#include "win32/windebug.h"
-#include "1964ini.h"
-#include "compiler.h"
 
 BOOL	CPUNeedToDoOtherTask = FALSE;
 BOOL	CPUNeedToCheckInterrupt = FALSE;
-int		CounterFactor = COUTERFACTOR_2;
+BOOL	CPUNeedToCheckException = FALSE;
+int		CounterFactor = COUTERFACTOR_3;
+int     AutoCounterFactor = 3;
+
+AudioStatusType audioStatus;
+
+int		viframeskipcount=0;
+int		framecounter=0;				/* To count how many frames are displayed per second */
+int		viCountPerSecond=0;			/* To count how many VI interrupts per second */
+unsigned int	viTotalCount=0;		/* Total VI counts  */
+float	vips=50;						/* VI/s */
 
 /* Optimized new CPU COUNT and VI counter variables */
 uint64	current_counter;
@@ -48,12 +44,10 @@ uint64	next_vi_counter;		/* use 64bit varible, will never overflow */
 uint64	next_count_counter;		/* value in here is in the unit of VIcounter, not in the half rate */
 uint32  vi_field_number = 0;;
 /*
- * speed concerning about using 64bit is not a big deal here £
- * because these two variables will not be used in emu main loop £
- * only when VI/COMPARE interrrupt happens
+ * speed concerning about using 64bit is not a big deal here ? * because these two variables will not be used in emu main loop ? * only when VI/COMPARE interrrupt happens
  */
 __int32 counter_leap;
-__int32 countdown_counter;
+
 void	Set_Countdown_Counter(void);
 uint32	Get_COUNT_Register(void);
 uint32	Get_VIcounter(void);
@@ -77,7 +71,8 @@ enum COUNTER_TARGET_TYPE
 	SP_DLIST_COUNTER_TYPE,
 	SP_ALIST_COUNTER_TYPE,
 	CHECK_INTERRUPT_COUNTER_TYPE,
-	DELAY_AI_INTERRUPT_COUNTER_TYPE
+	DELAY_AI_INTERRUPT_COUNTER_TYPE,
+	DP_DLIST_COUNTER_TYPE,
 };
 
 struct Counter_Node
@@ -107,7 +102,7 @@ int					Timer_Event_Count;
 #define NEW_COUNTER_TRACE_MACRO(macro)
 #define NEW_COUNTER_TRACE1(str, arg1)
 #endif
-int VICounterFactors[9] = { 1, 1, 1, 2, 2, 3, 3, 4, 8 };
+int VICounterFactors[9] = { 1, 1, 1, 2, 2, 3, 3, 4, 4 };
 int CounterFactors[9] = { 1, 1, 2, 2, 4, 3, 6, 4, 8 };	/* 1 = half rate, 2 = full rate */
 
 /*
@@ -199,23 +194,22 @@ void Refresh_Count_Down_Counter(void)
 		return;
 	}
 
-	current_counter = current_counter + counter_leap - countdown_counter;
+	current_counter = current_counter + counter_leap - r.r_.countdown_counter;
 
 	if((__int64) Timer_Event_List_Header->target_counter - (__int64) current_counter > 0x60000000)
 	{
-		/* ok, next timer target is too large, must be a non-setted COMPARE counter target */
+		/* ok, next timer target is too large, must be an unset COMPARE counter target */
 		counter_leap = 0x60000000;
-		countdown_counter = counter_leap;
+		r.r_.countdown_counter = counter_leap;
 	}
 	else
 	{
 		counter_leap = (__int32) ((__int64) Timer_Event_List_Header->target_counter - (__int64) current_counter);
 
 		/*
-		 * if( counter_leap < 0 ) £
-		 * DisplayError("Warning, counter_leap < 0");
+		 * if( counter_leap < 0 ) ?		 * DisplayError("Warning, counter_leap < 0");
 		 */
-		countdown_counter = counter_leap;
+		r.r_.countdown_counter = counter_leap;
 	}
 }
 
@@ -230,14 +224,13 @@ void Add_New_Timer_Event(uint64 newtimer, int type)
 	uint64				new_target;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	new_target = current_counter + counter_leap - countdown_counter + newtimer; /* new target counter */
+	new_target = current_counter + counter_leap - r.r_.countdown_counter + newtimer; /* new target counter */
 
 	if(type != VI_COUNTER_TYPE && emustatus.cpucore == DYNACOMPILER)
 	{
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		/*
-		 * here, we need to register consider the target timer value £
-		 * 1080 works after I do this
+		 * here, we need to register consider the target timer value ?		 * 1080 works after I do this
 		 */
 		uint32	*ptr, pc, saveitlb, blksize;
 		uint8	*blk;
@@ -269,7 +262,7 @@ void Add_New_Timer_Event(uint64 newtimer, int type)
 			ITLB_Error = saveitlb;
 		}
 
-		ptr = (uint32 *) ((uint8 *) sDYN_PC_LOOKUP[pc >> 16] + (uint16) pc);
+		ptr = (uint32 *) ((uint8 *) gHardwareState.sDYN_PC_LOOKUP[pc >> 16] + (uint16) pc);
 		blk = (uint8 *) *ptr;
 		if(blk)
 		{
@@ -411,9 +404,9 @@ int Get_1st_Timer_Event_Type(void)
  */
 void Set_PIDMA_Timer_Event(uint32 len)
 {
+	static int k = 0;
 	/*
-	 * Thanks to zilmar £
-	 * ChangeTimer(PiTimer,(int)(PI_WR_LEN_REG * 8.9) + 50);
+	 * Thanks to zilmar ?	 * ChangeTimer(PiTimer,(int)(PI_WR_LEN_REG * 8.9) + 50);
 	 */
 	NEW_COUNTER_TRACE_MACRO(DEBUG_PI_DMA_TRACE1("PI DMA Delays %d cycles", (int) ((float) len * 8.9 + 50)));
 
@@ -424,10 +417,7 @@ void Set_PIDMA_Timer_Event(uint32 len)
 	Add_New_Timer_Event((uint32) ((float) len * 8.89 + 50), PI_DMA_COUNTER_TYPE);
 
 	/*
-	 * Add_New_Timer_Event((uint32)((float)len* 8.9 + 50), PI_DMA_COUNTER_TYPE); £
-	 * Add_New_Timer_Event((uint32)((float)len* 4 + 50), PI_DMA_COUNTER_TYPE); £
-	 * Add_New_Timer_Event(len/2, PI_DMA_COUNTER_TYPE); £
-	 * Add_New_Timer_Event(2, PI_DMA_COUNTER_TYPE);
+	 * Add_New_Timer_Event((uint32)((float)len* 8.9 + 50), PI_DMA_COUNTER_TYPE); ?	 * Add_New_Timer_Event((uint32)((float)len* 4 + 50), PI_DMA_COUNTER_TYPE); ?	 * Add_New_Timer_Event(len/2, PI_DMA_COUNTER_TYPE); ?	 * Add_New_Timer_Event(2, PI_DMA_COUNTER_TYPE);
 	 */
 	NEW_COUNTER_TRACE_MACRO(DEBUG_PI_DMA_TRACE1("Current timer is: %08X", (uint32) current_counter));
 }
@@ -441,15 +431,12 @@ void Set_SIDMA_Timer_Event(uint32 len)
 	NEW_COUNTER_TRACE_MACRO(DEBUG_SI_DMA_TRACE1("SI DMA Delays %d cycles", (int) ((float) len * 8.9 + 50)));
 
 	/*
-	 * Add_New_Timer_Event((uint32)((float)len* 8.9 + 500), SI_DMA_COUNTER_TYPE); £
-	 * Add_New_Timer_Event(len/2, SI_DMA_COUNTER_TYPE); £
-	 * Add_New_Timer_Event(2, SI_DMA_COUNTER_TYPE);
+	 * Add_New_Timer_Event((uint32)((float)len* 8.9 + 500), SI_DMA_COUNTER_TYPE); ?	 * Add_New_Timer_Event(len/2, SI_DMA_COUNTER_TYPE); ?	 * Add_New_Timer_Event(2, SI_DMA_COUNTER_TYPE);
 	 */
 	Add_New_Timer_Event((uint32) ((float) len * 4 + 10), SI_DMA_COUNTER_TYPE);
 
 	/*
-	 * Add_New_Timer_Event((uint32)((float)len* 7.55 + 10), SI_DMA_COUNTER_TYPE); £
-	 * Add_New_Timer_Event((uint32)(490), SI_DMA_COUNTER_TYPE);
+	 * Add_New_Timer_Event((uint32)((float)len* 7.55 + 10), SI_DMA_COUNTER_TYPE); ?	 * Add_New_Timer_Event((uint32)(490), SI_DMA_COUNTER_TYPE);
 	 */
 	NEW_COUNTER_TRACE_MACRO(DEBUG_SI_DMA_TRACE1("Current timer is: %08X", (uint32) current_counter));
 }
@@ -490,22 +477,22 @@ void Set_SP_DLIST_Timer_Event(uint32 len)
 	NEW_COUNTER_TRACE_MACRO(DEBUG_SP_TASK_TRACE1("Delay to Trigger DSP_Break after SP DList %d cycles", len));
 
 	/*
-	 * Trigger_RSPBreak(); //Trigger directly without delay £
-	 * This value affects Taz Express, this game does not work if I use timer=2 for SP
-	 * DLIST £
-	 * but this will make Snow Kids flicker
+	 * Trigger_RSPBreak(); //Trigger directly without delay ?	 * This value affects Taz Express, this game does not work if I use timer=2 for SP
+	 * DLIST ?	 * but this will make Snowboard Kids flicker
 	 */
-	if(len * 3 > 700)
-		Add_New_Timer_Event(700, SP_DLIST_COUNTER_TYPE);
-	else
-		Add_New_Timer_Event(len * 3, SP_DLIST_COUNTER_TYPE);
+	//if(len * 3 > 700)
+	//	Add_New_Timer_Event(700, SP_DLIST_COUNTER_TYPE);
+	//else
+	//	Add_New_Timer_Event(len * 3, SP_DLIST_COUNTER_TYPE);
+	Add_New_Timer_Event(len, SP_DLIST_COUNTER_TYPE);
 
-	/*
-	 * Add_New_Timer_Event(len*3, SP_DLIST_COUNTER_TYPE); £
-	 * Add_New_Timer_Event(700, SP_DLIST_COUNTER_TYPE); £
-	 * Add_New_Timer_Event(400, SP_DLIST_COUNTER_TYPE); £
-	 * Add_New_Timer_Event(2, SP_DLIST_COUNTER_TYPE);
-	 */
+	NEW_COUNTER_TRACE_MACRO(DEBUG_SP_TASK_TRACE1("Current timer is: %08X", (uint32) current_counter));
+}
+
+void Set_DP_DLIST_Timer_Event(uint32 len)
+{
+	NEW_COUNTER_TRACE_MACRO(DEBUG_SP_TASK_TRACE1("Delay to Trigger DP_Interrupt after DP DList %d cycles", len));
+	Add_New_Timer_Event(len, DP_DLIST_COUNTER_TYPE);
 	NEW_COUNTER_TRACE_MACRO(DEBUG_SP_TASK_TRACE1("Current timer is: %08X", (uint32) current_counter));
 }
 
@@ -515,7 +502,11 @@ void Set_SP_DLIST_Timer_Event(uint32 len)
  */
 void Set_SP_ALIST_Timer_Event(uint32 len)
 {
-	Add_New_Timer_Event(0x100000000, SP_ALIST_COUNTER_TYPE);
+	if(len * 3 > 700)
+		Add_New_Timer_Event(700, SP_DLIST_COUNTER_TYPE);
+	else
+		Add_New_Timer_Event(len * 3, SP_DLIST_COUNTER_TYPE);
+	//Add_New_Timer_Event(0x100000000, SP_ALIST_COUNTER_TYPE);
 }
 
 /*
@@ -553,9 +544,9 @@ void Set_Check_Interrupt_Timer_Event_Again(void)
  =======================================================================================================================
  =======================================================================================================================
  */
-void Set_Delay_AI_Interrupt_Timer_Event(void)
+void Set_Delay_AI_Interrupt_Timer_Event(unsigned __int32 delay)
 {
-	Add_New_Timer_Event(10, DELAY_AI_INTERRUPT_COUNTER_TYPE);
+	Add_New_Timer_Event(delay, DELAY_AI_INTERRUPT_COUNTER_TYPE);
 }
 
 /*
@@ -604,7 +595,35 @@ void Trigger_Timer_Event(void)
 	case SP_DLIST_COUNTER_TYPE:
 		Remove_1st_Timer_Event(SP_DLIST_COUNTER_TYPE);
 		NEW_COUNTER_TRACE_MACRO(DEBUG_SP_TASK_TRACE1("Now Trigger DSP_Break, Current timer is: %08X", (uint32) current_counter));
-		OPCODE_DEBUGGER_EPILOGUE(Trigger_RSPBreak();) CPU_Check_Interrupts();
+
+		(SP_STATUS_REG) |= 0x00000203;
+		SP_STATUS_REG |= SP_STATUS_HALT;
+		SP_STATUS_REG &= ~SP_STATUS_DMA_BUSY;
+		SP_STATUS_REG &= ~SP_STATUS_IO_FULL;
+		SP_STATUS_REG &= ~SP_STATUS_DMA_FULL;
+		MI_INTR_REG_R |= MI_INTR_SP;
+		if((MI_INTR_MASK_REG_R) & MI_INTR_MASK_SP)
+		{
+			SET_EXCEPTION(EXC_INT) gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
+		}
+
+		OPCODE_DEBUGGER_EPILOGUE(Trigger_RSPBreak(););
+		CPU_Check_Interrupts();
+		break;
+	case DP_DLIST_COUNTER_TYPE:
+		Remove_1st_Timer_Event(DP_DLIST_COUNTER_TYPE);
+		NEW_COUNTER_TRACE_MACRO(DEBUG_SP_TASK_TRACE1("Now Trigger DSP_Break, Current timer is: %08X", (uint32) current_counter));
+		OPCODE_DEBUGGER_EPILOGUE(Trigger_DPInterrupt();); 
+		(MI_INTR_REG_R) |= MI_INTR_DP;
+		DPC_STATUS_REG &= ~DPC_STATUS_CMD_BUSY;
+		DPC_STATUS_REG &= ~DPC_STATUS_DMA_BUSY;
+		DPC_STATUS_REG |= DPC_STATUS_CBUF_READY;
+
+		if((MI_INTR_MASK_REG_R) & MI_INTR_DP)
+		{
+			SET_EXCEPTION(EXC_INT) gHWS_COP0Reg[CAUSE] |= CAUSE_IP3;
+		}
+		CPU_Check_Interrupts();
 		break;
 	case SP_ALIST_COUNTER_TYPE:
 		Remove_1st_Timer_Event(SP_ALIST_COUNTER_TYPE);
@@ -616,7 +635,9 @@ void Trigger_Timer_Event(void)
 		break;
 	case DELAY_AI_INTERRUPT_COUNTER_TYPE:
 		Remove_1st_Timer_Event(DELAY_AI_INTERRUPT_COUNTER_TYPE);
-		OPCODE_DEBUGGER_EPILOGUE(Trigger_AIInterrupt();) CPU_Check_Interrupts();
+		OPCODE_DEBUGGER_EPILOGUE(Trigger_AIInterrupt(););
+		MI_INTR_REG_R |= MI_INTR_AI;
+		CPU_Check_Interrupts();
 		break;
 	default:
 		DisplayError("Invalid timer event is triggered, should never happens");
@@ -632,17 +653,17 @@ void Trigger_Timer_Event(void)
  */
 void Set_Countdown_Counter(void)
 {
-	current_counter = current_counter + counter_leap - countdown_counter;
+	current_counter = current_counter + counter_leap - r.r_.countdown_counter;
 	if(next_vi_counter < next_count_counter)
 	{
-		countdown_counter = (__int32) (next_vi_counter - current_counter);
+		r.r_.countdown_counter = (__int32) (next_vi_counter - current_counter);
 	}
 	else
 	{
-		countdown_counter = (__int32) (next_count_counter - current_counter);
+		r.r_.countdown_counter = (__int32) (next_count_counter - current_counter);
 	}
 
-	counter_leap = countdown_counter;
+	counter_leap = r.r_.countdown_counter;
 }
 
 /*
@@ -663,7 +684,7 @@ uint32 Get_VIcounter(void)
 				(
 					(
 						max_vi_count +
-						(current_counter + counter_leap - countdown_counter) -
+						(current_counter + counter_leap - r.r_.countdown_counter) -
 						CounterTargets[i].target_counter
 					)
 				) % max_vi_count;
@@ -680,7 +701,7 @@ uint32 Get_VIcounter(void)
  */
 void Count_Down(uint32 count)
 {
-	countdown_counter -= count;
+	r.r_.countdown_counter -= count;
 }
 
 /*
@@ -690,13 +711,13 @@ void Count_Down(uint32 count)
 void Check_VI_and_COMPARE_Interrupt(void)
 {
 	gHWS_COP0Reg[COUNT] = Get_COUNT_Register();
-	if(next_vi_counter <= current_counter + counter_leap - countdown_counter)
+	if(next_vi_counter <= current_counter + counter_leap - r.r_.countdown_counter)
 	{						/* ok, should trigger a VI interrupt */
 		OPCODE_DEBUGGER_EPILOGUE(Trigger_VIInterrupt(););
 		next_vi_counter += max_vi_count;
 	}
 
-	if(next_count_counter <= current_counter + counter_leap - countdown_counter)
+	if(next_count_counter <= current_counter + counter_leap - r.r_.countdown_counter)
 	{						/* ok, should trigger a COMPARE interrupt */
 		OPCODE_DEBUGGER_EPILOGUE(Trigger_CompareInterrupt(););
 		next_count_counter += 0x100000000;
@@ -705,7 +726,7 @@ void Check_VI_and_COMPARE_Interrupt(void)
 	Set_Countdown_Counter();
 }
 
-#define DOUBLE_COUNT	1 //2	/* 1 */
+#define DOUBLE_COUNT	1
 
 /*
  =======================================================================================================================
@@ -713,25 +734,15 @@ void Check_VI_and_COMPARE_Interrupt(void)
  */
 uint32 Get_COUNT_Register(void)
 {
-#ifdef ENABLE_OPCODE_DEBUGGER
 	return(uint32)
 		(
-			(current_counter + counter_leap - countdown_counter) *
-			CounterFactors[CounterFactor] /
+			(current_counter + counter_leap - r.r_.countdown_counter) 
+		*	CounterFactors[CounterFactor] /
 			VICounterFactors[CounterFactor] /
-			DOUBLE_COUNT
+			DOUBLE_COUNT //
+			//rand() %
+			//4
 		);
-#else
-	return(uint32)
-		(
-			(current_counter + counter_leap - countdown_counter) *
-			CounterFactors[CounterFactor] /
-			VICounterFactors[CounterFactor] /
-			DOUBLE_COUNT +
-			rand() %
-			4
-		);
-#endif
 }
 
 /*
@@ -775,24 +786,25 @@ void Set_COMPARE_Timer_Event(void)
  =======================================================================================================================
  =======================================================================================================================
  */
-void Set_PI_DMA_Timeout_Target_Counter(uint32 pi_dma_length)
-{
-}
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
+
 void Init_Count_Down_Counters(void)
 {
-	srand((unsigned) time(NULL));
-	Init_Timer_Event_List();
+//	srand((unsigned) time(NULL));
+	
+    //these needed to be initialized. I guess this won't affect emulation
+    //when this function is called in the middle of emulation?
+    current_counter = 0;
+    next_vi_counter = 0;
+    next_count_counter = 0;
+    
+    Init_Timer_Event_List();
 	current_counter = gHWS_COP0Reg[COUNT] *
 		VICounterFactors[CounterFactor] /
 		CounterFactors[CounterFactor] *
 		DOUBLE_COUNT;
 	counter_leap = 0;
-	countdown_counter = 0;
+	r.r_.countdown_counter = 0;
 	next_vi_counter = current_counter+current_counter%max_vi_count;
 
 	if(gHWS_COP0Reg[COMPARE] != 0)

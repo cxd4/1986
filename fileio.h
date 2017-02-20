@@ -8,7 +8,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -22,13 +22,13 @@
  */
 #ifndef _FILEIO_H__1964_
 #define _FILEIO_H__1964_
-
 #include "1964ini.h"
 
-/* function declarations */
 BOOL		ReadRomData(char *RomPath);
-long		ReadRomHeader(char *RomPath, INI_ENTRY *ini_entry);
-long		ReadZippedRomHeader(char *RomPath, INI_ENTRY *ini_entry);
+
+long		__cdecl ReadRomHeader(			char		*RomPath, INI_ENTRY	*ini_entry );
+long		__cdecl ReadZippedRomHeader(	char		*RomPath, INI_ENTRY	*ini_entry);
+
 BOOL		ReadZippedRomData(char *RomPath);
 BOOL		ByteSwap(uint32 Size, uint8 *Image);
 int			LoadGNUDistConditions(char *ConditionsBuf);
@@ -42,15 +42,19 @@ void		FileIO_SaveState(void);
 void		FileIO_LoadState(void);
 void		FileIO_gzSaveState(void);
 void		FileIO_gzLoadState(void);
-void		FileIO_gzSaveStateFile(const char *filename);
+void		FileIO_gzSaveStateFile(const char *filename, DWORD version);
+void		FileIO_gzSaveStateFile_099(const char *filename);
+void		FileIO_gzSaveStateFile_085(const char *filename);
 void		FileIO_gzLoadStateFile(const char *filename);
 void		FileIO_ImportPJ64State(const char *filename);
 void		FileIO_ExportPJ64State(const char *filename);
 BOOL		FileIO_Load1964Ini(void);
+BOOL		FileIO_CheckAndCreateFolder(const char *pathname);
 BOOL		FileIO_Write1964Ini(void);
 void		SwapRomName(uint8 *name);
+char		*myfgets(char *line, int maxlen, FILE *file);
 
-extern BOOL Is_Reading_Rom_File;
-extern BOOL To_Stop_Reading_Rom_File;
-extern void Close_Save();
+extern		BOOL Is_Reading_Rom_File;
+extern		BOOL To_Stop_Reading_Rom_File;
+extern		void Close_Save();
 #endif

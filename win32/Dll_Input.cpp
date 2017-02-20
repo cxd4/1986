@@ -9,7 +9,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -21,11 +21,7 @@
  * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
-#include <windows.h>
-#include "../globals.h"
-#include "registry.h"
-#include "../plugins.h"
-#include "DLL_Input.h"
+#include "../stdafx.h"
 
 CONTROL		Controls[4];
 
@@ -47,6 +43,14 @@ void (__cdecl *_CONTROLLER_WM_KeyDown) (WPARAM wParam, LPARAM lParam) = NULL;
 void (__cdecl *_CONTROLLER_WM_KeyUp) (WPARAM wParam, LPARAM lParam) = NULL;
 void (__cdecl *_CONTROLLER_Under_Selecting_DllAbout) (HWND) = NULL;
 void (__cdecl *_CONTROLLER_Under_Selecting_DllTest) (HWND) = NULL;
+
+#ifdef _DEBUG
+static void __cdecl DebuggerMsgCallBack(char *msg)
+{
+	TRACE0(msg);
+}
+static void (__cdecl *_SetDebuggerCallBack)(void (_cdecl *DbgCallBackFun)(char *msg)) = NULL;
+#endif
 
 /*
  =======================================================================================================================
@@ -79,7 +83,7 @@ BOOL LoadControllerPlugin(char *libname)
 
 			if(Plugin_Info.Type == PLUGIN_TYPE_CONTROLLER)
 			{
-				if(Plugin_Info.Version == CONTROLLER_VERSION)
+				//if(Plugin_Info.Version == CONTROLLER_VERSION)
 				{
 					_CONTROLLER_CloseDLL = (void(__cdecl *) (void)) GetProcAddress(hinstControllerPlugin, "CloseDLL");
 					_CONTROLLER_ControllerCommand = (void(__cdecl *) (int Control, BYTE *Command)) GetProcAddress
@@ -123,6 +127,15 @@ BOOL LoadControllerPlugin(char *libname)
 							hinstControllerPlugin,
 							"WM_KeyUp"
 						);
+
+#ifdef _DEBUG
+					_SetDebuggerCallBack = (void (__cdecl *)(void (_cdecl *DbgCallBackFun)(char *msg))) 
+						GetProcAddress(hinstControllerPlugin, "SetDebuggerCallBack");
+					if( _SetDebuggerCallBack )
+					{
+						_SetDebuggerCallBack(DebuggerMsgCallBack);
+					}
+#endif
 					return(TRUE);
 				}
 			}
@@ -323,15 +336,13 @@ void CONTROLLER_InitiateControllers(HWND _hMainWindow, CONTROL _Controls[4])
 	}
 
 	/*
-	 * Add mempak support in 1964 by configure the control 4 as mempak £
-	 * no matter if the control plugin support it or not
+	 * Add mempak support in 1964 by configure the control 4 as mempak ?	 * no matter if the control plugin support it or not
 	 */
-	if(_Controls[0].Plugin == PLUGIN_NONE) _Controls[0].Plugin = PLUGIN_MEMPAK;
+	if(_Controls[0].Plugin == PLUGIN_NONE) 
+		_Controls[0].Plugin = PLUGIN_MEMPAK;
 
 	/*
-	 * Controls[1].Present = FALSE; £
-	 * _Controls[2].Present = FALSE; £
-	 * _Controls[3].Present = FALSE;
+	 * Controls[1].Present = FALSE; ?	 * _Controls[2].Present = FALSE; ?	 * _Controls[3].Present = FALSE;
 	 */
 }
 

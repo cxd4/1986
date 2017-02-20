@@ -9,7 +9,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -21,17 +21,7 @@
  * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
-#include <windows.h>
-#include "r4300i.h"
-#include "n64rcp.h"
-#include "gamesave.h"
-#include "hardware.h"
-#include "memory.h"
-#include "iPIF.h"
-#include "1964ini.h"
-#include "fileio.h"
-#include "win32/windebug.h"
-#include "debug_option.h"
+#include "stdafx.h"
 
 struct GAMESAVESTATUS	gamesave;
 
@@ -97,12 +87,12 @@ void Flashram_Command(unsigned __int32 data)
 				break;
 			case FLASH_ERASE:
 				DEBUG_FLASHRAM_TRACE(TRACE1("Executed Erase: %08X", FlashRAM_Offset));
-				memset(pLOAD_UBYTE_PARAM_2(0xA8000000) + FlashRAM_Offset, 0xFF, 128);
+				memset(pLOAD_UBYTE_PARAM(0xA8000000) + FlashRAM_Offset, 0xFF, 128);
 				FileIO_WriteFLASHRAM(0,0,0);	//Write to disk
 				break;
 			case FLASH_WRITE:
 				DEBUG_FLASHRAM_TRACE(TRACE1("Executed Write: %08X", FlashRAM_Offset));
-				memcpy(pLOAD_UBYTE_PARAM_2(0xA8000000) + FlashRAM_Offset, &FlashRAM_Buffer[0], 128);
+				memcpy(pLOAD_UBYTE_PARAM(0xA8000000) + FlashRAM_Offset, &FlashRAM_Buffer[0], 128);
 				FileIO_WriteFLASHRAM(0,0,0);	//Write to disk
 				break;
 			}
@@ -166,7 +156,7 @@ void DMA_Flashram_To_RDRAM(unsigned __int32 rdramaddr, unsigned __int32 flashram
 	{
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		uint8	*rdramoffset = (uint8 *) &gMS_RDRAM[0] + (rdramaddr & 0x007FFFFF);
-		uint8	*flashramoffset = pLOAD_UBYTE_PARAM_2(0x88000000);
+		uint8	*flashramoffset = pLOAD_UBYTE_PARAM(0x88000000);
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 		flashramaddr = (flashramaddr & 0x001FFFF) * 2;

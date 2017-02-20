@@ -9,7 +9,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -21,25 +21,91 @@
  * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
-#include "dynarec/dynalog.h"
+#include "stdafx.h"
+#include "dbgprint.h"
+
+
+#ifdef PLACATE_THIS_THING
+void RefreshOpList(char* whatever)
+{
+}
+
+#endif
 
 #ifndef _DEBUG
-#define RefreshOpList(lala)
-
-/* define DEBUG_COMMON 1 */
+char *DebugPrintInstr(unsigned _int32 Instruction)
+{
+	return "";
+}
 #endif
-#include <windows.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include "debug_option.h"
-#include "r4300i.h"
-#include "globals.h"
-#include "hardware.h"
-#include "interrupt.h"
-#include "DbgPrint.h"
-#include "win32/windebug.h"
 
-#include "n64rcp.h"
+
+int		debug_annoying_messages = 0;
+
+char	tracemessage[256];	/* message buffer to display message into debug box */
+
+extern uint32 Experiment;
+
+#ifdef _DEBUG
+
+
+
+struct DEBUGOPTIONS debugoptions;
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+
+void init_debug_options(void)
+{
+	debugoptions.debug_io = 0;
+	debugoptions.debug_io_vi = 0;
+	debugoptions.debug_io_sp = 0;
+	debugoptions.debug_io_pi = 0;
+	debugoptions.debug_io_ai = 0;
+	debugoptions.debug_io_mi = 0;
+	debugoptions.debug_io_si = 0;
+	debugoptions.debug_io_ri = 0;
+	debugoptions.debug_io_dp = 0;
+	debugoptions.debug_io_dps = 0;
+	debugoptions.debug_io_rdram = 0;
+	debugoptions.debug_audio = 0;
+	debugoptions.debug_trap = 1;
+	debugoptions.debug_si_controller = 1;
+	debugoptions.debug_compare_interrupt = 0;
+	debugoptions.debug_cpu_counter = 0;
+	debugoptions.debug_sp_task = 1;
+	debugoptions.debug_si_task = 0;
+	debugoptions.debug_sp_dma = 0;
+	debugoptions.debug_si_dma = 0;
+	debugoptions.debug_pi_dma = 1;
+	debugoptions.debug_netplay = 1;
+	debugoptions.debug_si_mempak = 1;
+	debugoptions.debug_dump_mempak = 0;
+	debugoptions.debug_tlb = 1;
+	debugoptions.debug_tlb_detail = 0;
+	debugoptions.debug_tlb_extra = 0;
+	debugoptions.debug_si_eeprom = 0;
+	debugoptions.debug_vi_interrupt = 0;
+	debugoptions.debug_ai_interrupt = 0;
+	debugoptions.debug_si_interrupt = 0;
+	debugoptions.debug_pi_interrupt = 0;
+	debugoptions.debug_interrupt = 0;
+	debugoptions.debug_sram = 0;
+	debugoptions.debug_dyna_compiler = 0;
+	debugoptions.debug_dyna_execution = 0;
+	debugoptions.debug_dyna_log = 0;
+	debugoptions.debug_64bit_fpu = 0;
+	debugoptions.debug_cache = 0;
+	debugoptions.debug_dyna_mod_code = 0;
+	debugoptions.debug_protect_memory = 0;
+	debugoptions.debug_exception_services = 0;
+	debugoptions.debug_framebuffer_rw = 0;
+}
+
+
+char	tracemessage[256];	/* message buffer to display message into debug box */
 
 void	RefreshDebugger(void);
 char	op_str[0xFF];
@@ -275,7 +341,7 @@ char	*si_RegNames[NUMBEROFSIREG] =
  */
 void debug_r4300i_unknown(uint32 Instruction)
 {
-	DBGPRINT_OPCODE("[UNKNOWN OPCODE]")
+	DBGPRINT_OPCODE("[UNKNOWN OPCODE]");
 };
 
 /*
@@ -285,7 +351,7 @@ void debug_r4300i_unknown(uint32 Instruction)
 
 void debug_r4300i_add(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_RD("ADD     ")
+	DBGPRINT_RS_RT_RD("ADD     ");
 };
 
 /*
@@ -294,7 +360,7 @@ void debug_r4300i_add(uint32 Instruction)
  */
 void debug_r4300i_addi(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_IMM("ADDI    ")
+	DBGPRINT_RS_RT_IMM("ADDI    ");
 };
 
 /*
@@ -303,7 +369,7 @@ void debug_r4300i_addi(uint32 Instruction)
  */
 void debug_r4300i_addiu(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_IMM("ADDIU   ")
+	DBGPRINT_RS_RT_IMM("ADDIU   ");
 };
 
 /*
@@ -312,7 +378,7 @@ void debug_r4300i_addiu(uint32 Instruction)
  */
 void debug_r4300i_addu(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_RD("ADDU     ")
+	DBGPRINT_RS_RT_RD("ADDU     ");
 };
 
 /*
@@ -321,7 +387,7 @@ void debug_r4300i_addu(uint32 Instruction)
  */
 void debug_r4300i_and(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_RD("AND      ")
+	DBGPRINT_RS_RT_RD("AND      ");
 };
 
 /*
@@ -330,7 +396,7 @@ void debug_r4300i_and(uint32 Instruction)
  */
 void debug_r4300i_andi(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_IMM("ANDI     ")
+	DBGPRINT_RS_RT_IMM("ANDI     ");
 };
 
 /*
@@ -339,7 +405,7 @@ void debug_r4300i_andi(uint32 Instruction)
  */
 void debug_r4300i_beq(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_OFF_BRANCH("BEQ     ")
+	DBGPRINT_RS_RT_OFF_BRANCH("BEQ     ");
 };
 
 /*
@@ -348,7 +414,7 @@ void debug_r4300i_beq(uint32 Instruction)
  */
 void debug_r4300i_beql(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_OFF_BRANCH("BEQL    ")
+	DBGPRINT_RS_RT_OFF_BRANCH("BEQL    ");
 };
 
 /*
@@ -357,7 +423,7 @@ void debug_r4300i_beql(uint32 Instruction)
  */
 void debug_r4300i_bgtz(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_OFF_BRANCH("BGTZ    ")
+	DBGPRINT_RS_RT_OFF_BRANCH("BGTZ    ");
 };
 
 /*
@@ -366,7 +432,7 @@ void debug_r4300i_bgtz(uint32 Instruction)
  */
 void debug_r4300i_bgtzl(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_OFF_BRANCH("BGTZL   ")
+	DBGPRINT_RS_RT_OFF_BRANCH("BGTZL   ");
 };
 
 /*
@@ -375,7 +441,7 @@ void debug_r4300i_bgtzl(uint32 Instruction)
  */
 void debug_r4300i_blez(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_OFF_BRANCH("BLEZ    ")
+	DBGPRINT_RS_RT_OFF_BRANCH("BLEZ    ");
 };
 
 /*
@@ -384,7 +450,7 @@ void debug_r4300i_blez(uint32 Instruction)
  */
 void debug_r4300i_blezl(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_OFF_BRANCH("BLEZL   ")
+	DBGPRINT_RS_RT_OFF_BRANCH("BLEZL   ");
 };
 
 /*
@@ -393,7 +459,7 @@ void debug_r4300i_blezl(uint32 Instruction)
  */
 void debug_r4300i_bne(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_OFF_BRANCH("BNE     ")
+	DBGPRINT_RS_RT_OFF_BRANCH("BNE     ");
 };
 
 /*
@@ -402,7 +468,7 @@ void debug_r4300i_bne(uint32 Instruction)
  */
 void debug_r4300i_bnel(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_OFF_BRANCH("BNEL    ")
+	DBGPRINT_RS_RT_OFF_BRANCH("BNEL    ");
 };
 
 /*
@@ -411,7 +477,7 @@ void debug_r4300i_bnel(uint32 Instruction)
  */
 void debug_r4300i_break(uint32 Instruction)
 {
-	DBGPRINT_OPCODE("BREAK   ")
+	DBGPRINT_OPCODE("BREAK   ");
 };
 
 /*
@@ -420,7 +486,7 @@ void debug_r4300i_break(uint32 Instruction)
  */
 void debug_r4300i_cache(uint32 Instruction)
 {
-	DBGPRINT_OPCODE("CACHE   ")
+	DBGPRINT_OPCODE("CACHE   ");
 };
 
 /*
@@ -429,7 +495,7 @@ void debug_r4300i_cache(uint32 Instruction)
  */
 void debug_r4300i_dadd(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_RD("DADD    ")
+	DBGPRINT_RS_RT_RD("DADD    ");
 };
 
 /*
@@ -438,7 +504,7 @@ void debug_r4300i_dadd(uint32 Instruction)
  */
 void debug_r4300i_daddi(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_IMM("DADDI   ")
+	DBGPRINT_RS_RT_IMM("DADDI   ");
 };
 
 /*
@@ -447,7 +513,7 @@ void debug_r4300i_daddi(uint32 Instruction)
  */
 void debug_r4300i_daddiu(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_IMM("DADDIU  ")
+	DBGPRINT_RS_RT_IMM("DADDIU  ");
 };
 
 /*
@@ -456,7 +522,7 @@ void debug_r4300i_daddiu(uint32 Instruction)
  */
 void debug_r4300i_daddu(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_RD("DADDU   ")
+	DBGPRINT_RS_RT_RD("DADDU   ");
 };
 
 /*
@@ -465,7 +531,7 @@ void debug_r4300i_daddu(uint32 Instruction)
  */
 void debug_r4300i_ddiv(uint32 Instruction)
 {
-	DBGPRINT_RS_RT("DDIV    ")
+	DBGPRINT_RS_RT("DDIV    ");
 };
 
 /*
@@ -474,7 +540,7 @@ void debug_r4300i_ddiv(uint32 Instruction)
  */
 void debug_r4300i_ddivu(uint32 Instruction)
 {
-	DBGPRINT_RS_RT("DDIVU   ")
+	DBGPRINT_RS_RT("DDIVU   ");
 };
 
 /*
@@ -483,7 +549,7 @@ void debug_r4300i_ddivu(uint32 Instruction)
  */
 void debug_r4300i_div(uint32 Instruction)
 {
-	DBGPRINT_RS_RT("DIV     ")
+	DBGPRINT_RS_RT("DIV     ");
 };
 
 /*
@@ -492,7 +558,7 @@ void debug_r4300i_div(uint32 Instruction)
  */
 void debug_r4300i_divu(uint32 Instruction)
 {
-	DBGPRINT_RS_RT("DIVU    ")
+	DBGPRINT_RS_RT("DIVU    ");
 };
 
 /*
@@ -501,7 +567,7 @@ void debug_r4300i_divu(uint32 Instruction)
  */
 void debug_r4300i_dmult(uint32 Instruction)
 {
-	DBGPRINT_RS_RT("DMULT   ")
+	DBGPRINT_RS_RT("DMULT   ");
 };
 
 /*
@@ -510,7 +576,7 @@ void debug_r4300i_dmult(uint32 Instruction)
  */
 void debug_r4300i_dmultu(uint32 Instruction)
 {
-	DBGPRINT_RS_RT("DMULTU  ")
+	DBGPRINT_RS_RT("DMULTU  ");
 };
 
 /*
@@ -519,7 +585,7 @@ void debug_r4300i_dmultu(uint32 Instruction)
  */
 void debug_r4300i_dsll(uint32 Instruction)
 {
-	DBGPRINT_RT_RD_SA("DSLL    ")
+	DBGPRINT_RT_RD_SA("DSLL    ");
 };
 
 /*
@@ -528,7 +594,7 @@ void debug_r4300i_dsll(uint32 Instruction)
  */
 void debug_r4300i_dsll32(uint32 Instruction)
 {
-	DBGPRINT_RT_RD_SA("DSLL32   ")
+	DBGPRINT_RT_RD_SA("DSLL32   ");
 };
 
 /*
@@ -537,7 +603,7 @@ void debug_r4300i_dsll32(uint32 Instruction)
  */
 void debug_r4300i_dsllv(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_RD("DSLLV    ")
+	DBGPRINT_RS_RT_RD("DSLLV    ");
 };
 
 /*
@@ -546,7 +612,7 @@ void debug_r4300i_dsllv(uint32 Instruction)
  */
 void debug_r4300i_dsra(uint32 Instruction)
 {
-	DBGPRINT_RT_RD_SA("DSRA    ")
+	DBGPRINT_RT_RD_SA("DSRA    ");
 };
 
 /*
@@ -555,7 +621,7 @@ void debug_r4300i_dsra(uint32 Instruction)
  */
 void debug_r4300i_dsra32(uint32 Instruction)
 {
-	DBGPRINT_RT_RD_SA("DSRA32  ")
+	DBGPRINT_RT_RD_SA("DSRA32  ");
 };
 
 /*
@@ -564,7 +630,7 @@ void debug_r4300i_dsra32(uint32 Instruction)
  */
 void debug_r4300i_dsrav(uint32 Instruction)
 {
-	DBGPRINT_RT_RD_SA("DSRAV   ")
+	DBGPRINT_RT_RD_SA("DSRAV   ");
 };
 
 /*
@@ -573,7 +639,7 @@ void debug_r4300i_dsrav(uint32 Instruction)
  */
 void debug_r4300i_dsrl(uint32 Instruction)
 {
-	DBGPRINT_RT_RD_SA("DSRL    ")
+	DBGPRINT_RT_RD_SA("DSRL    ");
 };
 
 /*
@@ -582,7 +648,7 @@ void debug_r4300i_dsrl(uint32 Instruction)
  */
 void debug_r4300i_dsrl32(uint32 Instruction)
 {
-	DBGPRINT_RT_RD_SA("DSRL32  ")
+	DBGPRINT_RT_RD_SA("DSRL32  ");
 };
 
 /*
@@ -591,7 +657,7 @@ void debug_r4300i_dsrl32(uint32 Instruction)
  */
 void debug_r4300i_dsrlv(uint32 Instruction)
 {
-	DBGPRINT_RT_RD_RS("DSRLV   ")
+	DBGPRINT_RT_RD_RS("DSRLV   ");
 };
 
 /*
@@ -600,7 +666,7 @@ void debug_r4300i_dsrlv(uint32 Instruction)
  */
 void debug_r4300i_dsub(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_RD("DSUB    ")
+	DBGPRINT_RS_RT_RD("DSUB    ");
 };
 
 /*
@@ -609,7 +675,7 @@ void debug_r4300i_dsub(uint32 Instruction)
  */
 void debug_r4300i_dsubu(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_RD("DSUBU   ")
+	DBGPRINT_RS_RT_RD("DSUBU   ");
 };
 
 /*
@@ -636,7 +702,7 @@ void debug_r4300i_jal(uint32 Instruction)
  */
 void debug_r4300i_jalr(uint32 Instruction)
 {
-	DBGPRINT_RS_RD("JALR    ")
+	DBGPRINT_RS_RD("JALR    ");
 };
 
 /*
@@ -645,7 +711,7 @@ void debug_r4300i_jalr(uint32 Instruction)
  */
 void debug_r4300i_jr(uint32 Instruction)
 {
-	DBGPRINT_RS("JR      ")
+	DBGPRINT_RS("JR      ");
 };
 
 /*
@@ -654,7 +720,7 @@ void debug_r4300i_jr(uint32 Instruction)
  */
 void debug_r4300i_lb(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT_OFFSET("LB      ")
+	DBGPRINT_BASE_RT_OFFSET("LB      ");
 };
 
 /*
@@ -663,7 +729,7 @@ void debug_r4300i_lb(uint32 Instruction)
  */
 void debug_r4300i_lbu(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT_OFFSET("LBU     ")
+	DBGPRINT_BASE_RT_OFFSET("LBU     ");
 };
 
 /*
@@ -672,7 +738,7 @@ void debug_r4300i_lbu(uint32 Instruction)
  */
 void debug_r4300i_ld(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT64BIT_OFFSET("LD      ")
+	DBGPRINT_BASE_RT64BIT_OFFSET("LD      ");
 };
 
 /*
@@ -681,7 +747,7 @@ void debug_r4300i_ld(uint32 Instruction)
  */
 void debug_r4300i_ldc1(uint32 Instruction)
 {
-	DBGPRINT_BASE_FPR64BIT_OFFSET("LDC1		")
+	DBGPRINT_BASE_FPR64BIT_OFFSET("LDC1		");
 };
 
 /*
@@ -690,7 +756,7 @@ void debug_r4300i_ldc1(uint32 Instruction)
  */
 void debug_r4300i_ldl(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT64BIT_OFFSET("LDL     ")
+	DBGPRINT_BASE_RT64BIT_OFFSET("LDL     ");
 };
 
 /*
@@ -699,7 +765,7 @@ void debug_r4300i_ldl(uint32 Instruction)
  */
 void debug_r4300i_ldr(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT64BIT_OFFSET("LDR     ")
+	DBGPRINT_BASE_RT64BIT_OFFSET("LDR     ");
 };
 
 /*
@@ -708,7 +774,7 @@ void debug_r4300i_ldr(uint32 Instruction)
  */
 void debug_r4300i_lh(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT_OFFSET("LH      ")
+	DBGPRINT_BASE_RT_OFFSET("LH      ");
 };
 
 /*
@@ -717,7 +783,7 @@ void debug_r4300i_lh(uint32 Instruction)
  */
 void debug_r4300i_lhu(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT_OFFSET("LHU     ")
+	DBGPRINT_BASE_RT_OFFSET("LHU     ");
 };
 
 /*
@@ -726,7 +792,7 @@ void debug_r4300i_lhu(uint32 Instruction)
  */
 void debug_r4300i_ll(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT_OFFSET("LL      ")
+	DBGPRINT_BASE_RT_OFFSET("LL      ");
 };
 
 /*
@@ -735,7 +801,7 @@ void debug_r4300i_ll(uint32 Instruction)
  */
 void debug_r4300i_lld(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT_OFFSET("LLD     ")
+	DBGPRINT_BASE_RT_OFFSET("LLD     ");
 };
 
 /*
@@ -744,7 +810,7 @@ void debug_r4300i_lld(uint32 Instruction)
  */
 void debug_r4300i_lui(uint32 Instruction)
 {
-	DBGPRINT_RT_IMM("LUI     ")
+	DBGPRINT_RT_IMM("LUI     ");
 };
 
 /*
@@ -753,7 +819,7 @@ void debug_r4300i_lui(uint32 Instruction)
  */
 void debug_r4300i_lw(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT_OFFSET("LW      ")
+	DBGPRINT_BASE_RT_OFFSET("LW      ");
 };
 
 /*
@@ -762,7 +828,7 @@ void debug_r4300i_lw(uint32 Instruction)
  */
 void debug_r4300i_lwc1(uint32 Instruction)
 {
-	DBGPRINT_BASE_FPR_OFFSET("LWC1    ")
+	DBGPRINT_BASE_FPR_OFFSET("LWC1    ");
 };
 
 /*
@@ -771,7 +837,7 @@ void debug_r4300i_lwc1(uint32 Instruction)
  */
 void debug_r4300i_lwl(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT_OFFSET("LWL     ")
+	DBGPRINT_BASE_RT_OFFSET("LWL     ");
 };
 
 /*
@@ -780,7 +846,7 @@ void debug_r4300i_lwl(uint32 Instruction)
  */
 void debug_r4300i_lwr(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT_OFFSET("LWR     ")
+	DBGPRINT_BASE_RT_OFFSET("LWR     ");
 };
 
 /*
@@ -789,7 +855,7 @@ void debug_r4300i_lwr(uint32 Instruction)
  */
 void debug_r4300i_lwu(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT_OFFSET("LWU     ")
+	DBGPRINT_BASE_RT_OFFSET("LWU     ");
 };
 
 /*
@@ -798,7 +864,7 @@ void debug_r4300i_lwu(uint32 Instruction)
  */
 void debug_r4300i_mfhi(uint32 Instruction)
 {
-	DBGPRINT_RD("MFHI    ")
+	DBGPRINT_RD("MFHI    ");
 };
 
 /*
@@ -807,7 +873,7 @@ void debug_r4300i_mfhi(uint32 Instruction)
  */
 void debug_r4300i_mflo(uint32 Instruction)
 {
-	DBGPRINT_RD("MFLO    ")
+	DBGPRINT_RD("MFLO    ");
 };
 
 /*
@@ -816,7 +882,7 @@ void debug_r4300i_mflo(uint32 Instruction)
  */
 void debug_r4300i_mthi(uint32 Instruction)
 {
-	DBGPRINT_RS("MTHI    ")
+	DBGPRINT_RS("MTHI    ");
 };
 
 /*
@@ -825,7 +891,7 @@ void debug_r4300i_mthi(uint32 Instruction)
  */
 void debug_r4300i_mtlo(uint32 Instruction)
 {
-	DBGPRINT_RS("MTLO    ")
+	DBGPRINT_RS("MTLO    ");
 };
 
 /*
@@ -834,7 +900,7 @@ void debug_r4300i_mtlo(uint32 Instruction)
  */
 void debug_r4300i_mult(uint32 Instruction)
 {
-	DBGPRINT_RS_RT("MULT    ")
+	DBGPRINT_RS_RT("MULT    ");
 };
 
 /*
@@ -843,7 +909,7 @@ void debug_r4300i_mult(uint32 Instruction)
  */
 void debug_r4300i_multu(uint32 Instruction)
 {
-	DBGPRINT_RS_RT("MULTU   ")
+	DBGPRINT_RS_RT("MULTU   ");
 };
 
 /*
@@ -852,7 +918,7 @@ void debug_r4300i_multu(uint32 Instruction)
  */
 void debug_r4300i_nor(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_RD("NOR     ")
+	DBGPRINT_RS_RT_RD("NOR     ");
 };
 
 /*
@@ -861,7 +927,7 @@ void debug_r4300i_nor(uint32 Instruction)
  */
 void debug_r4300i_or(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_RD("OR      ")
+	DBGPRINT_RS_RT_RD("OR      ");
 };
 
 /*
@@ -870,7 +936,7 @@ void debug_r4300i_or(uint32 Instruction)
  */
 void debug_r4300i_ori(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_IMMH("ORI     ")
+	DBGPRINT_RS_RT_IMMH("ORI     ");
 };
 
 /*
@@ -879,7 +945,7 @@ void debug_r4300i_ori(uint32 Instruction)
  */
 void debug_r4300i_sb(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT_OFFSET("SB      ")
+	DBGPRINT_BASE_RT_OFFSET("SB      ");
 };
 
 /*
@@ -888,7 +954,7 @@ void debug_r4300i_sb(uint32 Instruction)
  */
 void debug_r4300i_sc(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT_OFFSET("SC      ")
+	DBGPRINT_BASE_RT_OFFSET("SC      ");
 };
 
 /*
@@ -897,7 +963,7 @@ void debug_r4300i_sc(uint32 Instruction)
  */
 void debug_r4300i_scd(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT_OFFSET("SCD     ")
+	DBGPRINT_BASE_RT_OFFSET("SCD     ");
 };
 
 /*
@@ -906,7 +972,7 @@ void debug_r4300i_scd(uint32 Instruction)
  */
 void debug_r4300i_sd(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT64BIT_OFFSET("SD      ")
+	DBGPRINT_BASE_RT64BIT_OFFSET("SD      ");
 };
 
 /*
@@ -915,7 +981,7 @@ void debug_r4300i_sd(uint32 Instruction)
  */
 void debug_r4300i_sdc1(uint32 Instruction)
 {
-	DBGPRINT_BASE_FPR64BIT_OFFSET("LDC1    ")
+	DBGPRINT_BASE_FPR64BIT_OFFSET("LDC1    ");
 };
 
 /*
@@ -924,7 +990,7 @@ void debug_r4300i_sdc1(uint32 Instruction)
  */
 void debug_r4300i_sdl(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT64BIT_OFFSET("SDL     ")
+	DBGPRINT_BASE_RT64BIT_OFFSET("SDL     ");
 };
 
 /*
@@ -933,8 +999,8 @@ void debug_r4300i_sdl(uint32 Instruction)
  */
 void debug_r4300i_sdr(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT64BIT_OFFSET("SDR     ")
-};
+	DBGPRINT_BASE_RT64BIT_OFFSET("SDR     ");
+}
 
 /*
  =======================================================================================================================
@@ -942,7 +1008,7 @@ void debug_r4300i_sdr(uint32 Instruction)
  */
 void debug_r4300i_sh(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT_OFFSET("SH      ")
+	DBGPRINT_BASE_RT_OFFSET("SH      ");
 };
 
 /*
@@ -951,7 +1017,7 @@ void debug_r4300i_sh(uint32 Instruction)
  */
 void debug_r4300i_sll(uint32 Instruction)
 {
-	DBGPRINT_RT_RD_SA("SLL     ")
+	DBGPRINT_RT_RD_SA("SLL     ");
 };
 
 /*
@@ -960,7 +1026,7 @@ void debug_r4300i_sll(uint32 Instruction)
  */
 void debug_r4300i_sllv(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_RD("SLLV    ")
+	DBGPRINT_RS_RT_RD("SLLV    ");
 };
 
 /*
@@ -969,7 +1035,7 @@ void debug_r4300i_sllv(uint32 Instruction)
  */
 void debug_r4300i_slt(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_RD("SLT     ")
+	DBGPRINT_RS_RT_RD("SLT     ");
 };
 
 /*
@@ -978,7 +1044,7 @@ void debug_r4300i_slt(uint32 Instruction)
  */
 void debug_r4300i_slti(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_IMM("SLTI    ")
+	DBGPRINT_RS_RT_IMM("SLTI    ");
 };
 
 /*
@@ -987,7 +1053,7 @@ void debug_r4300i_slti(uint32 Instruction)
  */
 void debug_r4300i_sltiu(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_IMM("SLTIU   ")
+	DBGPRINT_RS_RT_IMM("SLTIU   ");
 };
 
 /*
@@ -996,7 +1062,7 @@ void debug_r4300i_sltiu(uint32 Instruction)
  */
 void debug_r4300i_sltu(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_RD("SLTU    ")
+	DBGPRINT_RS_RT_RD("SLTU    ");
 };
 
 /*
@@ -1005,7 +1071,7 @@ void debug_r4300i_sltu(uint32 Instruction)
  */
 void debug_r4300i_sra(uint32 Instruction)
 {
-	DBGPRINT_RT_RD_SA("SRA     ")
+	DBGPRINT_RT_RD_SA("SRA     ");
 };
 
 /*
@@ -1014,7 +1080,7 @@ void debug_r4300i_sra(uint32 Instruction)
  */
 void debug_r4300i_srav(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_RD("SRAV    ")
+	DBGPRINT_RS_RT_RD("SRAV    ");
 };
 
 /*
@@ -1023,7 +1089,7 @@ void debug_r4300i_srav(uint32 Instruction)
  */
 void debug_r4300i_srl(uint32 Instruction)
 {
-	DBGPRINT_RT_RD_SA("SRL     ")
+	DBGPRINT_RT_RD_SA("SRL     ");
 };
 
 /*
@@ -1032,7 +1098,7 @@ void debug_r4300i_srl(uint32 Instruction)
  */
 void debug_r4300i_srlv(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_RD("SRLV    ")
+	DBGPRINT_RS_RT_RD("SRLV    ");
 };
 
 /*
@@ -1041,7 +1107,7 @@ void debug_r4300i_srlv(uint32 Instruction)
  */
 void debug_r4300i_sub(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_RD("SUB     ")
+	DBGPRINT_RS_RT_RD("SUB     ");
 };
 
 /*
@@ -1050,7 +1116,7 @@ void debug_r4300i_sub(uint32 Instruction)
  */
 void debug_r4300i_subu(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_RD("SUBU    ")
+	DBGPRINT_RS_RT_RD("SUBU    ");
 };
 
 /*
@@ -1059,7 +1125,7 @@ void debug_r4300i_subu(uint32 Instruction)
  */
 void debug_r4300i_sw(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT_OFFSET("SW      ")
+	DBGPRINT_BASE_RT_OFFSET("SW      ");
 };
 
 /*
@@ -1068,7 +1134,7 @@ void debug_r4300i_sw(uint32 Instruction)
  */
 void debug_r4300i_swc1(uint32 Instruction)
 {
-	DBGPRINT_BASE_FPR_OFFSET("SWC1    ")
+	DBGPRINT_BASE_FPR_OFFSET("SWC1    ");
 };
 
 /*
@@ -1077,7 +1143,7 @@ void debug_r4300i_swc1(uint32 Instruction)
  */
 void debug_r4300i_swl(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT_OFFSET("SWL     ")
+	DBGPRINT_BASE_RT_OFFSET("SWL     ");
 };
 
 /*
@@ -1086,7 +1152,7 @@ void debug_r4300i_swl(uint32 Instruction)
  */
 void debug_r4300i_swr(uint32 Instruction)
 {
-	DBGPRINT_BASE_RT_OFFSET("SWR     ")
+	DBGPRINT_BASE_RT_OFFSET("SWR     ");
 };
 
 /*
@@ -1095,7 +1161,7 @@ void debug_r4300i_swr(uint32 Instruction)
  */
 void debug_r4300i_sync(uint32 Instruction)
 {
-	DBGPRINT_OPCODE("SYNC    ")
+	DBGPRINT_OPCODE("SYNC    ");
 };
 
 /*
@@ -1104,7 +1170,7 @@ void debug_r4300i_sync(uint32 Instruction)
  */
 void debug_r4300i_syscall(uint32 Instruction)
 {
-	DBGPRINT_OPCODE("SYSCALL ")
+	DBGPRINT_OPCODE("SYSCALL ");
 };
 
 /*
@@ -1113,7 +1179,7 @@ void debug_r4300i_syscall(uint32 Instruction)
  */
 void debug_r4300i_teq(uint32 Instruction)
 {
-	DBGPRINT_RS_RT("TEQ     ")
+	DBGPRINT_RS_RT("TEQ     ");
 };
 
 /*
@@ -1122,7 +1188,7 @@ void debug_r4300i_teq(uint32 Instruction)
  */
 void debug_r4300i_tge(uint32 Instruction)
 {
-	DBGPRINT_RS_RT("TGE     ")
+	DBGPRINT_RS_RT("TGE     ");
 };
 
 /*
@@ -1131,7 +1197,7 @@ void debug_r4300i_tge(uint32 Instruction)
  */
 void debug_r4300i_tgeu(uint32 Instruction)
 {
-	DBGPRINT_RS_RT("TGEU    ")
+	DBGPRINT_RS_RT("TGEU    ");
 };
 
 /*
@@ -1140,7 +1206,7 @@ void debug_r4300i_tgeu(uint32 Instruction)
  */
 void debug_r4300i_tlt(uint32 Instruction)
 {
-	DBGPRINT_RS_RT("TLT     ")
+	DBGPRINT_RS_RT("TLT     ");
 };
 
 /*
@@ -1149,7 +1215,7 @@ void debug_r4300i_tlt(uint32 Instruction)
  */
 void debug_r4300i_tltu(uint32 Instruction)
 {
-	DBGPRINT_RS_RT("TLTU    ")
+	DBGPRINT_RS_RT("TLTU    ");
 };
 
 /*
@@ -1158,7 +1224,7 @@ void debug_r4300i_tltu(uint32 Instruction)
  */
 void debug_r4300i_tne(uint32 Instruction)
 {
-	DBGPRINT_RS_RT("TNE     ")
+	DBGPRINT_RS_RT("TNE     ");
 };
 
 /*
@@ -1167,7 +1233,7 @@ void debug_r4300i_tne(uint32 Instruction)
  */
 void debug_r4300i_xor(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_RD("XOR     ")
+	DBGPRINT_RS_RT_RD("XOR     ");
 };
 
 /*
@@ -1176,7 +1242,7 @@ void debug_r4300i_xor(uint32 Instruction)
  */
 void debug_r4300i_xori(uint32 Instruction)
 {
-	DBGPRINT_RS_RT_IMMH("XORI    ")
+	DBGPRINT_RS_RT_IMMH("XORI    ");
 };
 
 /*
@@ -1185,7 +1251,7 @@ void debug_r4300i_xori(uint32 Instruction)
  */
 void debug_r4300i_REGIMM_bgez(uint32 Instruction)
 {
-	DBGPRINT_RS_OFF_BRANCH("BGEZ    ")
+	DBGPRINT_RS_OFF_BRANCH("BGEZ    ");
 };
 
 /*
@@ -1194,7 +1260,7 @@ void debug_r4300i_REGIMM_bgez(uint32 Instruction)
  */
 void debug_r4300i_REGIMM_bgezall(uint32 Instruction)
 {
-	DBGPRINT_RS_OFF_BRANCH("BGEZALL ")
+	DBGPRINT_RS_OFF_BRANCH("BGEZALL ");
 };
 
 /*
@@ -1203,7 +1269,7 @@ void debug_r4300i_REGIMM_bgezall(uint32 Instruction)
  */
 void debug_r4300i_REGIMM_bgezl(uint32 Instruction)
 {
-	DBGPRINT_RS_OFF_BRANCH("BGEZL   ")
+	DBGPRINT_RS_OFF_BRANCH("BGEZL   ");
 };
 
 /*
@@ -1212,7 +1278,7 @@ void debug_r4300i_REGIMM_bgezl(uint32 Instruction)
  */
 void debug_r4300i_REGIMM_bltz(uint32 Instruction)
 {
-	DBGPRINT_RS_OFF_BRANCH("BLTZ    ")
+	DBGPRINT_RS_OFF_BRANCH("BLTZ    ");
 };
 
 /*
@@ -1221,7 +1287,7 @@ void debug_r4300i_REGIMM_bltz(uint32 Instruction)
  */
 void debug_r4300i_REGIMM_bltzal(uint32 Instruction)
 {
-	DBGPRINT_RS_OFF_BRANCH("BLTZAL  ")
+	DBGPRINT_RS_OFF_BRANCH("BLTZAL  ");
 };
 
 /*
@@ -1230,7 +1296,7 @@ void debug_r4300i_REGIMM_bltzal(uint32 Instruction)
  */
 void debug_r4300i_REGIMM_bltzall(uint32 Instruction)
 {
-	DBGPRINT_RS_OFF_BRANCH("BLTZALL ")
+	DBGPRINT_RS_OFF_BRANCH("BLTZALL ");
 };
 
 /*
@@ -1239,7 +1305,7 @@ void debug_r4300i_REGIMM_bltzall(uint32 Instruction)
  */
 void debug_r4300i_REGIMM_bltzl(uint32 Instruction)
 {
-	DBGPRINT_RS_OFF_BRANCH("BLTZL   ")
+	DBGPRINT_RS_OFF_BRANCH("BLTZL   ");
 };
 
 /*
@@ -1248,7 +1314,7 @@ void debug_r4300i_REGIMM_bltzl(uint32 Instruction)
  */
 void debug_r4300i_REGIMM_bgezal(uint32 Instruction)
 {
-	DBGPRINT_RS_OFF_BRANCH("BGEZAL  ")
+	DBGPRINT_RS_OFF_BRANCH("BGEZAL  ");
 };
 
 /*
@@ -1257,7 +1323,7 @@ void debug_r4300i_REGIMM_bgezal(uint32 Instruction)
  */
 void debug_r4300i_REGIMM_teqi(uint32 Instruction)
 {
-	DBGPRINT_RS_IMM("TEQI    ")
+	DBGPRINT_RS_IMM("TEQI    ");
 };
 
 /*
@@ -1266,7 +1332,7 @@ void debug_r4300i_REGIMM_teqi(uint32 Instruction)
  */
 void debug_r4300i_REGIMM_tgei(uint32 Instruction)
 {
-	DBGPRINT_RS_IMM("TGEI    ")
+	DBGPRINT_RS_IMM("TGEI    ");
 };
 
 /*
@@ -1275,7 +1341,7 @@ void debug_r4300i_REGIMM_tgei(uint32 Instruction)
  */
 void debug_r4300i_REGIMM_tgeiu(uint32 Instruction)
 {
-	DBGPRINT_RS_IMM("TGEIU   ")
+	DBGPRINT_RS_IMM("TGEIU   ");
 };
 
 /*
@@ -1284,7 +1350,7 @@ void debug_r4300i_REGIMM_tgeiu(uint32 Instruction)
  */
 void debug_r4300i_REGIMM_tlti(uint32 Instruction)
 {
-	DBGPRINT_RS_IMM("TLTI    ")
+	DBGPRINT_RS_IMM("TLTI    ");
 };
 
 /*
@@ -1293,7 +1359,7 @@ void debug_r4300i_REGIMM_tlti(uint32 Instruction)
  */
 void debug_r4300i_REGIMM_tltiu(uint32 Instruction)
 {
-	DBGPRINT_RS_IMM("TLTIU   ")
+	DBGPRINT_RS_IMM("TLTIU   ");
 };
 
 /*
@@ -1302,7 +1368,7 @@ void debug_r4300i_REGIMM_tltiu(uint32 Instruction)
  */
 void debug_r4300i_REGIMM_tnei(uint32 Instruction)
 {
-	DBGPRINT_RS_IMM("TNEI    ")
+	DBGPRINT_RS_IMM("TNEI    ");
 };
 
 /*
@@ -1311,7 +1377,7 @@ void debug_r4300i_REGIMM_tnei(uint32 Instruction)
  */
 void debug_r4300i_COP0_eret(uint32 Instruction)
 {
-	DBGPRINT_OPCODE("ERET    ")
+	DBGPRINT_OPCODE("ERET    ");
 };
 
 /*
@@ -1320,7 +1386,7 @@ void debug_r4300i_COP0_eret(uint32 Instruction)
  */
 void debug_r4300i_COP0_mfc0(uint32 Instruction)
 {
-	DBGPRINT_RT_FS_COP0("MFC0    ")
+	DBGPRINT_RT_FS_COP0("MFC0    ");
 };
 
 /*
@@ -1329,7 +1395,7 @@ void debug_r4300i_COP0_mfc0(uint32 Instruction)
  */
 void debug_r4300i_COP0_mtc0(uint32 Instruction)
 {
-	DBGPRINT_RT_FS_COP0("MTC0    ")
+	DBGPRINT_RT_FS_COP0("MTC0    ");
 };
 
 /*
@@ -1338,7 +1404,7 @@ void debug_r4300i_COP0_mtc0(uint32 Instruction)
  */
 void debug_r4300i_COP0_tlbp(uint32 Instruction)
 {
-	DBGPRINT_OPCODE("TLBP    ")
+	DBGPRINT_OPCODE("TLBP    ");
 };
 
 /*
@@ -1374,7 +1440,7 @@ void debug_r4300i_COP0_tlbwr(uint32 Instruction)
  */
 void debug_r4300i_COP1_abs_s(uint32 Instruction)
 {
-	DBGPRINT_FD_FS("ABS.S   ")
+	DBGPRINT_FD_FS("ABS.S   ");
 };
 
 /*
@@ -1383,7 +1449,7 @@ void debug_r4300i_COP1_abs_s(uint32 Instruction)
  */
 void debug_r4300i_COP1_abs_d(uint32 Instruction)
 {
-	DBGPRINT_FD_FS("ABS.D   ")
+	DBGPRINT_FD_FS("ABS.D   ");
 };
 
 /*
@@ -1392,7 +1458,7 @@ void debug_r4300i_COP1_abs_d(uint32 Instruction)
  */
 void debug_r4300i_COP1_add_s(uint32 Instruction)
 {
-	DBGPRINT_FPU_FD_FS_FT("ADD.S   ")
+	DBGPRINT_FPU_FD_FS_FT("ADD.S   ");
 };
 
 /*
@@ -1401,7 +1467,7 @@ void debug_r4300i_COP1_add_s(uint32 Instruction)
  */
 void debug_r4300i_COP1_add_d(uint32 Instruction)
 {
-	DBGPRINT_FPU_FD_FS_FT("ADD.D   ")
+	DBGPRINT_FPU_FD_FS_FT("ADD.D   ");
 };
 
 /*
@@ -1410,7 +1476,7 @@ void debug_r4300i_COP1_add_d(uint32 Instruction)
  */
 void debug_r4300i_COP1_bc1f(uint32 Instruction)
 {
-	DBGPRINT_FPR_OFF_BRANCH("BC1F    ")
+	DBGPRINT_FPR_OFF_BRANCH("BC1F    ");
 };
 
 /*
@@ -1419,7 +1485,7 @@ void debug_r4300i_COP1_bc1f(uint32 Instruction)
  */
 void debug_r4300i_COP1_bc1fl(uint32 Instruction)
 {
-	DBGPRINT_FPR_OFF_BRANCH("BC1FL   ")
+	DBGPRINT_FPR_OFF_BRANCH("BC1FL   ");
 };
 
 /*
@@ -1428,7 +1494,7 @@ void debug_r4300i_COP1_bc1fl(uint32 Instruction)
  */
 void debug_r4300i_COP1_bc1t(uint32 Instruction)
 {
-	DBGPRINT_FPR_OFF_BRANCH("BC1T    ")
+	DBGPRINT_FPR_OFF_BRANCH("BC1T    ");
 };
 
 /*
@@ -1437,7 +1503,7 @@ void debug_r4300i_COP1_bc1t(uint32 Instruction)
  */
 void debug_r4300i_COP1_bc1tl(uint32 Instruction)
 {
-	DBGPRINT_FPR_OFF_BRANCH("BC1TL   ")
+	DBGPRINT_FPR_OFF_BRANCH("BC1TL   ");
 };
 
 /*
@@ -1446,7 +1512,7 @@ void debug_r4300i_COP1_bc1tl(uint32 Instruction)
  */
 void debug_r4300i_C_F_S(uint32 Instruction)
 {
-	DBGPRINT_FPR_FT_FS("C.F.S   ")
+	DBGPRINT_FPR_FT_FS("C.F.S   ");
 };
 
 /*
@@ -1455,7 +1521,7 @@ void debug_r4300i_C_F_S(uint32 Instruction)
  */
 void debug_r4300i_C_F_D(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FT_FS("C.F.D   ")
+	DBGPRINT_FPR64BIT_FT_FS("C.F.D   ");
 };
 
 /*
@@ -1464,7 +1530,7 @@ void debug_r4300i_C_F_D(uint32 Instruction)
  */
 void debug_r4300i_C_UN_S(uint32 Instruction)
 {
-	DBGPRINT_FPR_FT_FS("C.UN.S  ")
+	DBGPRINT_FPR_FT_FS("C.UN.S  ");
 };
 
 /*
@@ -1473,7 +1539,7 @@ void debug_r4300i_C_UN_S(uint32 Instruction)
  */
 void debug_r4300i_C_UN_D(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FT_FS("C.UN.D  ")
+	DBGPRINT_FPR64BIT_FT_FS("C.UN.D  ");
 };
 
 /*
@@ -1482,7 +1548,7 @@ void debug_r4300i_C_UN_D(uint32 Instruction)
  */
 void debug_r4300i_C_EQ_S(uint32 Instruction)
 {
-	DBGPRINT_FPR_FT_FS("C.EQ.S  ")
+	DBGPRINT_FPR_FT_FS("C.EQ.S  ");
 };
 
 /*
@@ -1491,7 +1557,7 @@ void debug_r4300i_C_EQ_S(uint32 Instruction)
  */
 void debug_r4300i_C_EQ_D(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FT_FS("C.EQ.D  ")
+	DBGPRINT_FPR64BIT_FT_FS("C.EQ.D  ");
 };
 
 /*
@@ -1500,7 +1566,7 @@ void debug_r4300i_C_EQ_D(uint32 Instruction)
  */
 void debug_r4300i_C_UEQ_S(uint32 Instruction)
 {
-	DBGPRINT_FPR_FT_FS("C.UEQ.S ")
+	DBGPRINT_FPR_FT_FS("C.UEQ.S ");
 };
 
 /*
@@ -1509,7 +1575,7 @@ void debug_r4300i_C_UEQ_S(uint32 Instruction)
  */
 void debug_r4300i_C_UEQ_D(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FT_FS("C.UEQ.D ")
+	DBGPRINT_FPR64BIT_FT_FS("C.UEQ.D ");
 };
 
 /*
@@ -1518,7 +1584,7 @@ void debug_r4300i_C_UEQ_D(uint32 Instruction)
  */
 void debug_r4300i_C_OLT_S(uint32 Instruction)
 {
-	DBGPRINT_FPR_FT_FS("C.OLT.S ")
+	DBGPRINT_FPR_FT_FS("C.OLT.S ");
 };
 
 /*
@@ -1527,7 +1593,7 @@ void debug_r4300i_C_OLT_S(uint32 Instruction)
  */
 void debug_r4300i_C_OLT_D(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FT_FS("C.OLT.D ")
+	DBGPRINT_FPR64BIT_FT_FS("C.OLT.D ");
 };
 
 /*
@@ -1536,7 +1602,7 @@ void debug_r4300i_C_OLT_D(uint32 Instruction)
  */
 void debug_r4300i_C_ULT_S(uint32 Instruction)
 {
-	DBGPRINT_FPR_FT_FS("C.ULT.S ")
+	DBGPRINT_FPR_FT_FS("C.ULT.S ");
 };
 
 /*
@@ -1545,7 +1611,7 @@ void debug_r4300i_C_ULT_S(uint32 Instruction)
  */
 void debug_r4300i_C_ULT_D(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FT_FS("C.ULT.D ")
+	DBGPRINT_FPR64BIT_FT_FS("C.ULT.D ");
 };
 
 /*
@@ -1554,7 +1620,7 @@ void debug_r4300i_C_ULT_D(uint32 Instruction)
  */
 void debug_r4300i_C_OLE_S(uint32 Instruction)
 {
-	DBGPRINT_FPR_FT_FS("C.OLE.S ")
+	DBGPRINT_FPR_FT_FS("C.OLE.S ");
 };
 
 /*
@@ -1563,7 +1629,7 @@ void debug_r4300i_C_OLE_S(uint32 Instruction)
  */
 void debug_r4300i_C_OLE_D(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FT_FS("C.OLE.D ")
+	DBGPRINT_FPR64BIT_FT_FS("C.OLE.D ");
 };
 
 /*
@@ -1572,7 +1638,7 @@ void debug_r4300i_C_OLE_D(uint32 Instruction)
  */
 void debug_r4300i_C_ULE_S(uint32 Instruction)
 {
-	DBGPRINT_FPR_FT_FS("C.ULE.S ")
+	DBGPRINT_FPR_FT_FS("C.ULE.S ");
 };
 
 /*
@@ -1581,7 +1647,7 @@ void debug_r4300i_C_ULE_S(uint32 Instruction)
  */
 void debug_r4300i_C_ULE_D(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FT_FS("C.ULE.D ")
+	DBGPRINT_FPR64BIT_FT_FS("C.ULE.D ");
 };
 
 /*
@@ -1590,7 +1656,7 @@ void debug_r4300i_C_ULE_D(uint32 Instruction)
  */
 void debug_r4300i_C_SF_S(uint32 Instruction)
 {
-	DBGPRINT_FPR_FT_FS("C.SF.S  ")
+	DBGPRINT_FPR_FT_FS("C.SF.S  ");
 };
 
 /*
@@ -1599,7 +1665,7 @@ void debug_r4300i_C_SF_S(uint32 Instruction)
  */
 void debug_r4300i_C_SF_D(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FT_FS("C.SF.D  ")
+	DBGPRINT_FPR64BIT_FT_FS("C.SF.D  ");
 };
 
 /*
@@ -1608,7 +1674,7 @@ void debug_r4300i_C_SF_D(uint32 Instruction)
  */
 void debug_r4300i_C_NGLE_S(uint32 Instruction)
 {
-	DBGPRINT_FPR_FT_FS("C.NGLE.S")
+	DBGPRINT_FPR_FT_FS("C.NGLE.S");
 };
 
 /*
@@ -1617,7 +1683,7 @@ void debug_r4300i_C_NGLE_S(uint32 Instruction)
  */
 void debug_r4300i_C_NGLE_D(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FT_FS("C.NGLE.D")
+	DBGPRINT_FPR64BIT_FT_FS("C.NGLE.D");
 };
 
 /*
@@ -1626,7 +1692,7 @@ void debug_r4300i_C_NGLE_D(uint32 Instruction)
  */
 void debug_r4300i_C_SEQ_S(uint32 Instruction)
 {
-	DBGPRINT_FPR_FT_FS("C.SEQ.S ")
+	DBGPRINT_FPR_FT_FS("C.SEQ.S ");
 };
 
 /*
@@ -1635,7 +1701,7 @@ void debug_r4300i_C_SEQ_S(uint32 Instruction)
  */
 void debug_r4300i_C_SEQ_D(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FT_FS("C.SEQ.D ")
+	DBGPRINT_FPR64BIT_FT_FS("C.SEQ.D ");
 };
 
 /*
@@ -1644,7 +1710,7 @@ void debug_r4300i_C_SEQ_D(uint32 Instruction)
  */
 void debug_r4300i_C_NGL_S(uint32 Instruction)
 {
-	DBGPRINT_FPR_FT_FS("C.NGL.S ")
+	DBGPRINT_FPR_FT_FS("C.NGL.S ");
 };
 
 /*
@@ -1653,7 +1719,7 @@ void debug_r4300i_C_NGL_S(uint32 Instruction)
  */
 void debug_r4300i_C_NGL_D(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FT_FS("C.NGL.D ")
+	DBGPRINT_FPR64BIT_FT_FS("C.NGL.D ");
 };
 
 /*
@@ -1662,7 +1728,7 @@ void debug_r4300i_C_NGL_D(uint32 Instruction)
  */
 void debug_r4300i_C_LT_S(uint32 Instruction)
 {
-	DBGPRINT_FPR_FT_FS("C.LT.S  ")
+	DBGPRINT_FPR_FT_FS("C.LT.S  ");
 };
 
 /*
@@ -1671,7 +1737,7 @@ void debug_r4300i_C_LT_S(uint32 Instruction)
  */
 void debug_r4300i_C_LT_D(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FT_FS("C.LT.D  ")
+	DBGPRINT_FPR64BIT_FT_FS("C.LT.D  ");
 };
 
 /*
@@ -1680,7 +1746,7 @@ void debug_r4300i_C_LT_D(uint32 Instruction)
  */
 void debug_r4300i_C_NGE_S(uint32 Instruction)
 {
-	DBGPRINT_FPR_FT_FS("C.NGE.S ")
+	DBGPRINT_FPR_FT_FS("C.NGE.S ");
 };
 
 /*
@@ -1689,7 +1755,7 @@ void debug_r4300i_C_NGE_S(uint32 Instruction)
  */
 void debug_r4300i_C_NGE_D(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FT_FS("C.NGE.D ")
+	DBGPRINT_FPR64BIT_FT_FS("C.NGE.D ");
 };
 
 /*
@@ -1698,7 +1764,7 @@ void debug_r4300i_C_NGE_D(uint32 Instruction)
  */
 void debug_r4300i_C_LE_S(uint32 Instruction)
 {
-	DBGPRINT_FPR_FT_FS("C.LE.S  ")
+	DBGPRINT_FPR_FT_FS("C.LE.S  ");
 };
 
 /*
@@ -1707,7 +1773,7 @@ void debug_r4300i_C_LE_S(uint32 Instruction)
  */
 void debug_r4300i_C_LE_D(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FT_FS("C.LE.D  ")
+	DBGPRINT_FPR64BIT_FT_FS("C.LE.D  ");
 };
 
 /*
@@ -1716,7 +1782,7 @@ void debug_r4300i_C_LE_D(uint32 Instruction)
  */
 void debug_r4300i_C_NGT_S(uint32 Instruction)
 {
-	DBGPRINT_FPR_FT_FS("C.NGT.S ")
+	DBGPRINT_FPR_FT_FS("C.NGT.S ");
 };
 
 /*
@@ -1725,7 +1791,7 @@ void debug_r4300i_C_NGT_S(uint32 Instruction)
  */
 void debug_r4300i_C_NGT_D(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FT_FS("C.NGT.D ")
+	DBGPRINT_FPR64BIT_FT_FS("C.NGT.D ");
 };
 
 /*
@@ -1734,7 +1800,7 @@ void debug_r4300i_C_NGT_D(uint32 Instruction)
  */
 void debug_r4300i_COP1_ceilw(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FS_FD("CEIL.W.fmt ")
+	DBGPRINT_FPR64BIT_FS_FD("CEIL.W.fmt ");
 };
 
 /*
@@ -1743,7 +1809,7 @@ void debug_r4300i_COP1_ceilw(uint32 Instruction)
  */
 void debug_r4300i_COP1_ceill(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FS_FD("CEIL.L.fmt ")
+	DBGPRINT_FPR64BIT_FS_FD("CEIL.L.fmt ");
 };
 
 /*
@@ -1752,7 +1818,7 @@ void debug_r4300i_COP1_ceill(uint32 Instruction)
  */
 void debug_r4300i_COP1_cfc1(uint32 Instruction)
 {
-	DBGPRINT_RT_FS_COP1("CFC1    ")
+	DBGPRINT_RT_FS_COP1("CFC1    ");
 };
 
 /*
@@ -1761,7 +1827,7 @@ void debug_r4300i_COP1_cfc1(uint32 Instruction)
  */
 void debug_r4300i_COP1_ctc1(uint32 Instruction)
 {
-	DBGPRINT_RT_FS_COP1("CTC1    ")
+	DBGPRINT_RT_FS_COP1("CTC1    ");
 };
 
 /*
@@ -1770,7 +1836,7 @@ void debug_r4300i_COP1_ctc1(uint32 Instruction)
  */
 void debug_r4300i_COP1_cvtd_s(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FS_FD("CVT.D.S ")
+	DBGPRINT_FPR64BIT_FS_FD("CVT.D.S ");
 };
 
 /*
@@ -1779,7 +1845,7 @@ void debug_r4300i_COP1_cvtd_s(uint32 Instruction)
  */
 void debug_r4300i_COP1_cvtd_w(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FS_FD("CVT.D.W ")
+	DBGPRINT_FPR64BIT_FS_FD("CVT.D.W ");
 };
 
 /*
@@ -1788,7 +1854,7 @@ void debug_r4300i_COP1_cvtd_w(uint32 Instruction)
  */
 void debug_r4300i_COP1_cvtd_l(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FS_FD("CVT.D.L ")
+	DBGPRINT_FPR64BIT_FS_FD("CVT.D.L ");
 };
 
 /*
@@ -1797,7 +1863,7 @@ void debug_r4300i_COP1_cvtd_l(uint32 Instruction)
  */
 void debug_r4300i_COP1_cvtl_s(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FS_FD("CVT.L.S ")
+	DBGPRINT_FPR64BIT_FS_FD("CVT.L.S ");
 };
 
 /*
@@ -1806,7 +1872,7 @@ void debug_r4300i_COP1_cvtl_s(uint32 Instruction)
  */
 void debug_r4300i_COP1_cvtl_d(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FS_FD("CVT.L.D ")
+	DBGPRINT_FPR64BIT_FS_FD("CVT.L.D ");
 };
 
 /*
@@ -1815,7 +1881,7 @@ void debug_r4300i_COP1_cvtl_d(uint32 Instruction)
  */
 void debug_r4300i_COP1_cvts_d(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FS_FD("CVT.S.D ")
+	DBGPRINT_FPR64BIT_FS_FD("CVT.S.D ");
 };
 
 /*
@@ -1824,7 +1890,7 @@ void debug_r4300i_COP1_cvts_d(uint32 Instruction)
  */
 void debug_r4300i_COP1_cvts_w(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FS_FD("CVT.S.W ")
+	DBGPRINT_FPR64BIT_FS_FD("CVT.S.W ");
 };
 
 /*
@@ -1833,7 +1899,7 @@ void debug_r4300i_COP1_cvts_w(uint32 Instruction)
  */
 void debug_r4300i_COP1_cvts_l(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FS_FD("CVT.S.L ")
+	DBGPRINT_FPR64BIT_FS_FD("CVT.S.L ");
 };
 
 /*
@@ -1842,7 +1908,7 @@ void debug_r4300i_COP1_cvts_l(uint32 Instruction)
  */
 void debug_r4300i_COP1_cvtw_s(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FS_FD("CVT.W.S ")
+	DBGPRINT_FPR64BIT_FS_FD("CVT.W.S ");
 };
 
 /*
@@ -1851,7 +1917,7 @@ void debug_r4300i_COP1_cvtw_s(uint32 Instruction)
  */
 void debug_r4300i_COP1_cvtw_d(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FS_FD("CVT.W.D ")
+	DBGPRINT_FPR64BIT_FS_FD("CVT.W.D ");
 };
 
 /*
@@ -1860,7 +1926,7 @@ void debug_r4300i_COP1_cvtw_d(uint32 Instruction)
  */
 void debug_r4300i_COP1_div_s(uint32 Instruction)
 {
-	DBGPRINT_FPU_FD_FS_FT("DIV.S   ")
+	DBGPRINT_FPU_FD_FS_FT("DIV.S   ");
 };
 
 /*
@@ -1869,7 +1935,7 @@ void debug_r4300i_COP1_div_s(uint32 Instruction)
  */
 void debug_r4300i_COP1_div_d(uint32 Instruction)
 {
-	DBGPRINT_FPU_FD_FS_FT("DIV.D   ")
+	DBGPRINT_FPU_FD_FS_FT("DIV.D   ");
 };
 
 /*
@@ -1878,7 +1944,7 @@ void debug_r4300i_COP1_div_d(uint32 Instruction)
  */
 void debug_r4300i_COP1_dmfc1(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FT_FS("DMFC1   ")
+	DBGPRINT_FPR64BIT_FT_FS("DMFC1   ");
 };
 
 /*
@@ -1887,7 +1953,7 @@ void debug_r4300i_COP1_dmfc1(uint32 Instruction)
  */
 void debug_r4300i_COP1_dmtc1(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FT_FS("DMTC1   ")
+	DBGPRINT_FPR64BIT_FT_FS("DMTC1   ");
 };
 
 /*
@@ -1896,7 +1962,7 @@ void debug_r4300i_COP1_dmtc1(uint32 Instruction)
  */
 void debug_r4300i_COP1_floorl(uint32 Instruction)
 {
-	DBGPRINT_FD_FS("FLOOR.L ")
+	DBGPRINT_FD_FS("FLOOR.L ");
 };
 
 /*
@@ -1905,7 +1971,7 @@ void debug_r4300i_COP1_floorl(uint32 Instruction)
  */
 void debug_r4300i_COP1_floorw(uint32 Instruction)
 {
-	DBGPRINT_FD_FS("FLOOR.W ")
+	DBGPRINT_FD_FS("FLOOR.W ");
 };
 
 /*
@@ -1914,7 +1980,7 @@ void debug_r4300i_COP1_floorw(uint32 Instruction)
  */
 void debug_r4300i_COP1_mfc1(uint32 Instruction)
 {
-	DBGPRINT_FPR_FT_FS("MFC1    ")
+	DBGPRINT_FPR_FT_FS("MFC1    ");
 };
 
 /*
@@ -1923,7 +1989,7 @@ void debug_r4300i_COP1_mfc1(uint32 Instruction)
  */
 void debug_r4300i_COP1_mov_s(uint32 Instruction)
 {
-	DBGPRINT_FD_FS("MOV.S   ")
+	DBGPRINT_FD_FS("MOV.S   ");
 };
 
 /*
@@ -1932,7 +1998,7 @@ void debug_r4300i_COP1_mov_s(uint32 Instruction)
  */
 void debug_r4300i_COP1_mov_d(uint32 Instruction)
 {
-	DBGPRINT_FD_FS("MOV.D   ")
+	DBGPRINT_FD_FS("MOV.D   ");
 };
 
 /*
@@ -1941,7 +2007,7 @@ void debug_r4300i_COP1_mov_d(uint32 Instruction)
  */
 void debug_r4300i_COP1_mtc1(uint32 Instruction)
 {
-	DBGPRINT_FPR_FT_FS("MTC1    ")
+	DBGPRINT_FPR_FT_FS("MTC1    ");
 };
 
 /*
@@ -1950,7 +2016,7 @@ void debug_r4300i_COP1_mtc1(uint32 Instruction)
  */
 void debug_r4300i_COP1_mul_s(uint32 Instruction)
 {
-	DBGPRINT_FPU_FD_FS_FT("MUL.S   ")
+	DBGPRINT_FPU_FD_FS_FT("MUL.S   ");
 };
 
 /*
@@ -1959,7 +2025,7 @@ void debug_r4300i_COP1_mul_s(uint32 Instruction)
  */
 void debug_r4300i_COP1_mul_d(uint32 Instruction)
 {
-	DBGPRINT_FPU_FD_FS_FT("MUL.D   ")
+	DBGPRINT_FPU_FD_FS_FT("MUL.D   ");
 };
 
 /*
@@ -1968,7 +2034,7 @@ void debug_r4300i_COP1_mul_d(uint32 Instruction)
  */
 void debug_r4300i_COP1_neg_s(uint32 Instruction)
 {
-	DBGPRINT_FD_FS("NEG.S   ")
+	DBGPRINT_FD_FS("NEG.S   ");
 };
 
 /*
@@ -1977,7 +2043,7 @@ void debug_r4300i_COP1_neg_s(uint32 Instruction)
  */
 void debug_r4300i_COP1_neg_d(uint32 Instruction)
 {
-	DBGPRINT_FD_FS("NEG.D   ")
+	DBGPRINT_FD_FS("NEG.D   ");
 };
 
 /*
@@ -1986,7 +2052,7 @@ void debug_r4300i_COP1_neg_d(uint32 Instruction)
  */
 void debug_r4300i_COP1_roundl(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FS_FD("ROUND.L.fmt ")
+	DBGPRINT_FPR64BIT_FS_FD("ROUND.L.fmt ");
 };
 
 /*
@@ -1995,7 +2061,7 @@ void debug_r4300i_COP1_roundl(uint32 Instruction)
  */
 void debug_r4300i_COP1_roundw(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FS_FD("ROUND.W.fmt ")
+	DBGPRINT_FPR64BIT_FS_FD("ROUND.W.fmt ");
 };
 
 /*
@@ -2004,7 +2070,7 @@ void debug_r4300i_COP1_roundw(uint32 Instruction)
  */
 void debug_r4300i_COP1_sqrt_s(uint32 Instruction)
 {
-	DBGPRINT_FD_FS("SQRT.S  ")
+	DBGPRINT_FD_FS("SQRT.S  ");
 };
 
 /*
@@ -2013,7 +2079,7 @@ void debug_r4300i_COP1_sqrt_s(uint32 Instruction)
  */
 void debug_r4300i_COP1_sqrt_d(uint32 Instruction)
 {
-	DBGPRINT_FD_FS("SQRT.D  ")
+	DBGPRINT_FD_FS("SQRT.D  ");
 };
 
 /*
@@ -2022,7 +2088,7 @@ void debug_r4300i_COP1_sqrt_d(uint32 Instruction)
  */
 void debug_r4300i_COP1_sub_s(uint32 Instruction)
 {
-	DBGPRINT_FD_FS_FT("SUB.S   ")
+	DBGPRINT_FD_FS_FT("SUB.S   ");
 };
 
 /*
@@ -2031,7 +2097,7 @@ void debug_r4300i_COP1_sub_s(uint32 Instruction)
  */
 void debug_r4300i_COP1_sub_d(uint32 Instruction)
 {
-	DBGPRINT_FD_FS_FT("SUB.D   ")
+	DBGPRINT_FD_FS_FT("SUB.D   ");
 };
 
 /*
@@ -2040,7 +2106,7 @@ void debug_r4300i_COP1_sub_d(uint32 Instruction)
  */
 void debug_r4300i_COP1_truncl(uint32 Instruction)
 {
-	DBGPRINT_FPR64BIT_FS_FD("TRUNC.L.fmt ")
+	DBGPRINT_FPR64BIT_FS_FD("TRUNC.L.fmt ");
 };
 
 /*
@@ -2049,7 +2115,7 @@ void debug_r4300i_COP1_truncl(uint32 Instruction)
  */
 void debug_r4300i_COP1_truncw_s(uint32 Instruction)
 {
-	DBGPRINT_FD_FS("TRUNC.W.S")
+	DBGPRINT_FD_FS("TRUNC.W.S");
 };
 
 /*
@@ -2058,7 +2124,7 @@ void debug_r4300i_COP1_truncw_s(uint32 Instruction)
  */
 void debug_r4300i_COP1_truncw_d(uint32 Instruction)
 {
-	DBGPRINT_FD_FS("TRUNC.W.D")
+	DBGPRINT_FD_FS("TRUNC.W.D");
 };
 
 /* table decoding function prototypes */
@@ -2757,6 +2823,7 @@ void debug_COP1_L(uint32 Instruction)
 	DebugCOP1LInstruction[_FUNCTION_](Instruction);
 }
 
+
 /*
  =======================================================================================================================
     main decoding function
@@ -2768,6 +2835,7 @@ char *DebugPrintInstruction(uint32 Instruction)
 	DebugInstruction[(Instruction >> 26)](Instruction);
 
 	/* refresh the opcode list */
+
 	RefreshOpList(op_str);
 	return(op_str);
 }
@@ -2821,7 +2889,7 @@ void DebugPrintPC(uint32 thePC)
  * DebuggerEnabled
  */
 extern BOOL IsBooting;
-#ifdef WINDEBUG_1964
+#ifdef _DEBUG
 
 /*
  =======================================================================================================================
@@ -2983,7 +3051,7 @@ void Dbg_Handle_SP(uint32 value)
 	}
 }
 
-#ifdef DEBUG_COMMON
+#ifdef _DEBUG
 
 /*
  =======================================================================================================================
@@ -3283,4 +3351,6 @@ void DebugIO(uint32 QuerAddr, char *operation, uint32 value)
 		break;
 	}
 }
+#endif
+
 #endif

@@ -1,707 +1,430 @@
-/*$T Analyze.c GC 1.136 02/28/02 18:46:24 */
+
+//Be careful with div, ddiv, ddivu, divu. and shitvs. They protect register.
+
+// Analyze.c: 1st dyna pass
 
 
-/*$6
- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- This file does pre-compile analysis.
- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- */
+// 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com>.  This
+// program is free software;  you can redistribute it and/or modify it under the
+// terms of the GNU  General Public  License as  published by  the Free Software
+// Foundation; either version 2 of the License,  or (at your option)  any  later
+// version.  This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.  You should have received a copy of the GNU  General Public  License
+// along with this program; if not, write to the Free Software Foundation, Inc.,
+// 59 Temple Place  -  Suite  330,  Boston, MA  02111-1307,  USA. To contact the
+// authors: email: schibo@emulation64.com, rice1964@yahoo.com
+
+#include "../stdafx.h"
+
+uint32 EndOfBlock;
+uint32 Delay;
+extern BOOL IsBooting;
 
 
-/*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
- * program is free software; you can redistribute it and/or modify it under the
- * terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 2 of the License, or (at your option) any later
- * version. This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
- * details. You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software Foundation, Inc.,
- * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
- * authors: email: schibo@emulation64.com, rice1964@yahoo.com
- */
-#include <windows.h>
-#include "../r4300i.h"
-#include "OpcodeDebugger.h"
-#include "../Compiler.h"
-#include "regcache.h"
-
-typedef enum
+void InvalidateAnalysis()
 {
-	I		= 1,	/* Immediate type. Uses rs, rt */
-	R,				/* Register type. */
-	B,				/* Branch type. Terminator. */
-	J,				/* Jump type. Terminator. */
-	LUI,
-	SH,				/* shift. ex: Rd=RT<<sa */
-	EMPTY,
-	TODO
+    int k;
+
+    for(k = NUM_CONSTS-1; k >= 0; k--)
+    {
+        ConstMap[k].FinalAddressUsedAt = 0xffffffff;
+    }
+    EndOfBlock = 1;
 }
-Instruction_Format;
 
-typedef enum { AGI_STALL = 1, NOT_PAIRED } Optimization_Bit_Flags;
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-
+// example:  rt = rs + immediate
 int I_Type(unsigned __int32 Instruction)
 {
-	return I;
+//    InvalidateAnalysis(); return;
+
+    ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
+    ConstMap[RS_BASE_FMT].FinalAddressUsedAt  = gHWS_pc;
+    
+    return 1;
 }
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
+int BR_Type(unsigned __int32 Instruction)
+{
+//    InvalidateAnalysis(); return;
+
+    ConstMap[RS_BASE_FMT].FinalAddressUsedAt  = gHWS_pc; //The +4 will help pairing at the flush
+    
+    
+    if ((currentromoptions.Link_4KB_Blocks == USE4KBLINKBLOCK_YES) && (!IsBooting) 
+        && ( (Instruction >>26 == 6) || (Instruction >>26 == 7)|| (Instruction >>26 == 22)|| (Instruction >>26 == 23)) )
+    ;
+    else
+    if ((currentromoptions.Link_4KB_Blocks == USE4KBLINKBLOCK_YES) && (!IsBooting) 
+        && (Instruction >>26 == 1) && ( (RT_FT == 0/*bltz*/)|| (RT_FT == 2/*bltzl*/)|| (RT_FT == 1/*bgez*/)|| (RT_FT == 3/*bgezl*/) ) ) 
+   ;
+
+
+    else
+
+    Delay = 1;
+    
+    return 1;
+}
+
 int J_Type(unsigned __int32 Instruction)
 {
-	return J;
+//    InvalidateAnalysis(); return;
+
+    if ((currentromoptions.Link_4KB_Blocks == USE4KBLINKBLOCK_YES) && (!IsBooting) 
+        && (Instruction >>26 == 17) && (RS_BASE_FMT == 8) && (  ((Instruction & RT_FT) == 0)|| ((Instruction & RT_FT) == 1)/*bc1t*/)
+        ||((Instruction & RT_FT) == 2)/*bc1fl*/||((Instruction & RT_FT) == 3)/*bc1tl*/)
+
+    ;
+    else if (Instruction >> 26 == 3) //jal
+    ;
+    else
+    Delay = 1;
+    
+    //Note: jal writes to RA, and Interrupts() uses RA very late. 
+    //So, do not set ConstMap[RA].FinalAddressUsedAt here.
+    return 1;
 }
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
 int R_Type(unsigned __int32 Instruction)
 {
-	return R;
+//    InvalidateAnalysis(); return;
+    
+    ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
+    ConstMap[RS_BASE_FMT].FinalAddressUsedAt  = gHWS_pc;
+    ConstMap[RD_FS].FinalAddressUsedAt = gHWS_pc;
+
+    return -1;
 }
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
+int ST_Type(unsigned __int32 Instruction)
+{
+//    InvalidateAnalysis(); return;
+    
+    ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
+    ConstMap[RS_BASE_FMT].FinalAddressUsedAt  = gHWS_pc;
+
+    return -1;
+}
+
+
 int B_Type(unsigned __int32 Instruction)
 {
-	return B;
+//    InvalidateAnalysis(); return;
+
+    ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc; //The +4 will help pairing at the flush
+    ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc; //The +4 will help pairing at the flush
+    
+    if ((currentromoptions.Link_4KB_Blocks == USE4KBLINKBLOCK_YES) && (!IsBooting) 
+        && ( (Instruction >>26 == 5) || (Instruction >>26 == 4)||(Instruction >>26 == 20)|| (Instruction >>26 == 21) ) )
+    ;
+
+    else
+
+    Delay = 1;
+
+    return -1;
 }
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
+//shifts: address in SA field
 int SH_Type(unsigned __int32 Instruction)
 {
-	return SH;
+  //InvalidateAnalysis(); return;
+
+    ConstMap[RD_FS].FinalAddressUsedAt = gHWS_pc;
+    ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
+    return -1;
 }
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-int LUI_Type(unsigned __int32 Instruction)
+int RT_Type(unsigned __int32 Instruction)
 {
-	return LUI;
+//    InvalidateAnalysis(); return;
+
+    ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
+    return -1;
 }
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
+int CFC1_Type(unsigned __int32 Instruction)
+{
+    
+//    InvalidateAnalysis(); return;
+    
+    //Conker freezes if this is used
+    
+    if ( (RD_FS==0) || (RD_FS==31) ) //make sure this check is consistent with the op.
+    {
+        ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
+    }
+    return -1;
+}
+
+
+
+
+int RS_Type(unsigned __int32 Instruction)
+{
+//    InvalidateAnalysis(); return;
+    
+    ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
+    return -1;
+}
+
+int RD_Type(unsigned __int32 Instruction)
+{
+//    InvalidateAnalysis(); return;
+    
+    ConstMap[RD_FS].FinalAddressUsedAt = gHWS_pc;
+    return -1;
+}
+
+
 int Empty(unsigned __int32 Instruction)
 {
-	return EMPTY;
+    return -1;
 }
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
 int ToDo(unsigned __int32 Instruction)
 {
-	return TODO;
+    InvalidateAnalysis();
+    return -1;
 }
 
 int Special(unsigned __int32 Instruction);
 int CP0_(unsigned __int32 Instruction);
+int CP1_(unsigned __int32 Instruction);
+int Regimm_(unsigned __int32 Instruction);
+int _BC0_(unsigned __int32  Instruction);
+int _BC1_(unsigned __int32  Instruction);
 
-int (*Get_Instruction_Format[64]) (unsigned __int32 Instruction) =
+//Conker problem at:
+//0: addiu
+//4: slti
+
+
+//Use this line to debug a row below.
+//ToDo,ToDo,ToDo,ToDo,ToDo,ToDo,ToDo,ToDo,
+
+
+int (*Get_NormalInstruction_Format[64]) (unsigned __int32 Instruction) =
 {
-	Special,
-	B_Type,
-	J_Type,
-	J_Type,
-	B_Type,
-	B_Type,
-	B_Type,
-	B_Type,
+//  special, regimm,  j,      jal,    beq,    bne,     blez,    bgtz,
+    Special, Regimm_, J_Type, J_Type, B_Type, B_Type,  BR_Type, BR_Type,
 
-	/* 1 *2 J JAL BEQ BNE BLEZ BGTZ */
-	I_Type,
-	I_Type,
-	I_Type,
-	I_Type,
-	I_Type,
-	I_Type,
-	I_Type,
-	LUI_Type,
+//  addi,    addiu,   slti,   sltiu,  andi,   ori,     xori,    lui,
+    I_Type,  I_Type,  I_Type, I_Type, I_Type, I_Type,  I_Type,  RT_Type,
 
-	/*
-	 * ADDI ADDIU SLTI SLTIU ANDI ORI XORI LUI £
-	 * NOT NOT < but here because incomplete
-	 */
-	CP0_,
-	B_Type,
-	Empty,
-	Empty,
-	B_Type,
-	B_Type,
-	B_Type,
-	B_Type,
+//  cop0,    cop1,    cop2,   resrvd, beql,   bnel,    blezl,   bgtzl,
+    CP0_,    CP1_,    ToDo,   Empty,  B_Type, B_Type,  BR_Type, BR_Type,
 
-	/* CP0 *4 BEQL BNEL BLEZL BGTZL */
-	I_Type,
-	I_Type,
-	I_Type,
-	I_Type,
-	Empty,
-	Empty,
-	Empty,
-	Empty,
 
-	/* DADDI DADDIU LDL LDR */
-	I_Type,
-	I_Type,
-	I_Type,
-	I_Type,
-	I_Type,
-	I_Type,
-	I_Type,
-	I_Type,
+//  daddi,   daddiu,  ldl,    ldr,    resrvd, resrvd,  resrvd,  resrvd, 
+    I_Type,  I_Type,  I_Type, I_Type, Empty,  Empty,   Empty,   Empty,
 
-	/* LB LH LWL LW LBU LHU LWR LWU */
-	I_Type,
-	I_Type,
-	I_Type,
-	I_Type,
-	I_Type,
-	I_Type,
-	I_Type,
-	ToDo,
+//  lb,      lh,      lwl,    lw,     lbu,    lhu,     lwr,     lwu,
+    I_Type,  I_Type,  I_Type, I_Type, I_Type, I_Type,  I_Type,  I_Type,
 
-	/* SB SH SWL SW SDL SDR SWR CACHE */
-	I_Type,
-	ToDo,
-	Empty,
-	Empty,
-	I_Type,
-	ToDo,
-	Empty,
-	I_Type,
+//  sb,      sh,      swl,    sw,     sdl,    sdr,     swr,     cache,
+    I_Type,  I_Type,  I_Type, I_Type, I_Type, I_Type,  I_Type,  ToDo,
 
-	/* LL LWC1 LLD LDC1 (LDC2) LD */
-	I_Type,
-	ToDo,
-	Empty,
-	Empty,
-	I_Type,
-	ToDo,
-	Empty,
-	I_Type
+//  ll,      lwc1,    lwc2,   resrvd, lld,    ldc1,    ldc2,    ld,
+    I_Type,  RS_Type, Empty,  Empty,  I_Type, RS_Type, Empty,   I_Type,
 
-	/* SC SWC1 SCD SDC1 (SDC2) SD */
+//  sc,      swc1,    swc2,   resrvd, scd,    sdc1,    sdc2,    sd
+    I_Type,  RS_Type, Empty,  Empty,  I_Type, RS_Type, Empty,   I_Type
 };
 
-int (*Get_SPECIAL_Instruction_Format[64]) (uint32 Instruction) =
+int (*Get_SpecialInstruction_Format[64]) (uint32 Instruction) =
 {
-	J_Type,
-	J_Type,
-	SH_Type,
-	SH_Type,
-	R_Type,
-	Empty,
-	R_Type,
-	R_Type,
+//  shift,   resrvd,  shift,   shift,   shiftv,  resrvd, shiftv,  shiftv,
+    SH_Type, Empty,   SH_Type, SH_Type, R_Type,  Empty,  R_Type,  R_Type,
 
-	/* SLL SRL SRA SLLV SRLV SRAV */
-	J_Type,
-	J_Type,
-	Empty,
-	Empty,
-	ToDo,
-	ToDo,
-	ToDo,
-	ToDo,
+//  jr,      jalr,    resrvd,  resrvd,  syscall, Break,  resrvd,  sync,
+    BR_Type, BR_Type, Empty,   Empty,   ToDo,    ToDo,   Empty,   ToDo,
 
-	/* JR JALR SYSCALL BREAK SYNC */
-	ToDo,
-	ToDo,
-	ToDo,
-	ToDo,
-	R_Type,
-	ToDo,
-	R_Type,
-	R_Type,
+//  mfhi,    mthi,    mflo,    mtlo,    dsllv,   resrvd, dsrlv,   dsrav,    
+    RD_Type, RS_Type, RD_Type, RS_Type, R_Type,  Empty,  R_Type,  R_Type,
 
-	/* MFHI MTHI MFLO MTLO DSLLV DSRLV DSRAV */
-	ToDo,
-	ToDo,
-	ToDo,
-	ToDo,
-	ToDo,
-	ToDo,
-	ToDo,
-	ToDo,
+//  mul,     mul,     Div,      divu,   dmult,   dmultu, ddiv,    ddivu,
+    ST_Type, ST_Type, ST_Type, ST_Type, ST_Type, ST_Type,ST_Type, ST_Type,
 
-	/* MULT MULTU DIV DIVU DMULT DMULTU DDIV DDIVU */
-	R_Type,
-	R_Type,
-	R_Type,
-	R_Type,
-	R_Type,
-	R_Type,
-	R_Type,
-	R_Type,
+//  add,     addu,    sub,     subu,    and,     or,     xor,     nor,
+    R_Type,  R_Type,  R_Type,  R_Type,  R_Type,  R_Type, R_Type,  R_Type,
 
-	/* ADD ADDU SUB SUBU AND OR XOR NOR */
-	Empty,
-	Empty,
-	R_Type,
-	R_Type,
-	R_Type,
-	R_Type,
-	R_Type,
-	R_Type,
+//  resrvd,  resrvd,  slt,     sltu,    dadd,    daddu,  dsub,    dsubu,
+    Empty,   Empty,   R_Type,  R_Type,  R_Type,  R_Type, R_Type,  R_Type,
 
-	/* SLT SLTU DADD DADDU DSUB DSUBU */
-	ToDo,
-	ToDo,
-	ToDo,
-	ToDo,
-	ToDo,
-	Empty,
-	ToDo,
-	ToDo,
+//  tge,     tgeu,    tlt,     tltu,    teq,     resrvd, tne,     resrvd,
+    ToDo,    ToDo,    ToDo,    ToDo,    ToDo,    Empty,  ToDo,    Empty,
 
-	/* TGE TGEU TLT TLTU TEQ TNE */
-	SH_Type,
-	Empty,
-	SH_Type,
-	SH_Type,
-	SH_Type,
-	Empty,
-	SH_Type,
-	SH_Type
-
-	/* DSLL DSRL DSRA DSLL32 DSRL32 DSRA32 */
+//  dsll,    resrvd,  dsrl,    dsra,    dsll32,  resrvd, dsrl32,  dsra32
+    SH_Type, Empty,   SH_Type, SH_Type, SH_Type, Empty,  SH_Type, SH_Type
 };
 
 int (*Get_CP0_Instruction_Format[32]) (uint32 Instruction) =
 {
-	ToDo,
-	Empty,
-	Empty,
-	Empty,
-	ToDo,
-	Empty,
-	Empty,
-	Empty,
+//  mf,       dmf,     cf,     resrvd, mt,      dmt,     ct,     resrvd,
+    RT_Type,  RT_Type, ToDo,   Empty,  RT_Type, RT_Type, ToDo,   Empty,
 
-	/* MFC0 MTC0 */
-	ToDo,
-	ToDo,
-	ToDo,
-	ToDo,
-	ToDo,
-	Empty,
-	ToDo,
-	ToDo,
-	ToDo,
-	ToDo,
-	ToDo,
-	ToDo,
-	ToDo,
-	Empty,
-	ToDo,
-	ToDo,
-
-	/* 1 */
-	ToDo,
-	ToDo,
-	ToDo,
-	ToDo,
-	ToDo,
-	Empty,
-	Empty,
-	Empty
+//  bc,       resrvd,  resrvd, resrvd, resrvd,  resrvd,  resrvd, resrvd,        
+    _BC0_,    Empty,   Empty,  Empty,  Empty,    Empty,  Empty,  Empty,
+    
+//  cop0_tlb, resrvd,  resrvd, resrvd, resrvd,  resrvd,  resrvd, resrvd,
+    Empty,     Empty,   Empty,  Empty,  Empty,    Empty,  Empty,  Empty,
+    
+//  resrvd,   resrvd,  resrvd, resrvd, resrvd,  resrvd,  resrvd, resrvd
+    Empty,    Empty,   Empty,  Empty,  Empty,    Empty,  Empty,  Empty
 };
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
+int (*Get_RegimmInstruction_Format[32]) (uint32 Instruction) =
+{
+//  _bltz,   _bgez,   _bltzl,   _bgezl,  resrvd, resrvd, resrvd, resrvd,
+    BR_Type, BR_Type, BR_Type,  BR_Type, Empty,  Empty,  Empty,  Empty,
+
+//  _tgei,   _tgeiu,  _tlti,    _tltiu,   _teqi,  resrvd, _tnei,  resrvd,        
+    ToDo,    ToDo,    ToDo,     ToDo,    ToDo,    Empty,  ToDo,   Empty,
+
+//  _bltzal, _bgezal, _bltzall, _bgezall, resrvd, resrvd, resrvd, resrvd,
+    BR_Type, BR_Type, BR_Type,  BR_Type,  Empty,  Empty,  Empty,  Empty,
+
+//  resrvd,  resrvd,  resrvd,   resrvd,   resrvd, resrvd, resrvd, resrvd
+    Empty,   Empty,   Empty,    Empty,    Empty,  Empty,  Empty,  Empty
+};
+
+
+//-----------------------------
+// COP0
+
+int (*Get_CP0_RT_Instruction_Format[32]) (uint32 Instruction) =
+{
+//  bcf,    bct,    bcfl,   bctl,   resrvd, resrvd, resrvd, resrvd
+    ToDo,   ToDo,   ToDo,   ToDo,   Empty,  Empty,  Empty,  Empty,
+
+//  resrvd, resrvd, resrvd, resrvd, resrvd, resrvd, resrvd, resrvd
+    Empty,  Empty,  Empty,  Empty,  Empty,  Empty,  Empty,  Empty,
+
+//  resrvd, resrvd, resrvd, resrvd, resrvd, resrvd, resrvd, resrvd
+    Empty,  Empty,  Empty,  Empty,  Empty,  Empty,  Empty,  Empty,
+
+//  resrvd, resrvd, resrvd, resrvd, resrvd, resrvd, resrvd, resrvd
+    Empty,  Empty,  Empty,  Empty,  Empty,  Empty,  Empty,  Empty
+};
+
+//-----------------------------
+// COP1
+
+
+int (*Get_CP1_Instruction_Format[32]) (uint32 Instruction) =
+{
+//  mfc1,    dmfc1,   cfc1,   resrvd, mtc1,    dmtc1,   ctc1,    resrvd,
+    RT_Type, RT_Type, CFC1_Type,   Empty,  RT_Type, RT_Type, RT_Type, Empty,
+
+//  _ BC_,   resrvd,  resrvd, resrvd, resrvd,  resrvd,  resrvd,  resrvd,    
+    _BC1_,   Empty,   Empty,  Empty,  Empty,   Empty,   Empty,   Empty,
+
+//  _S_,     _D_,     resrvd, resrvd, _W_,     _L_,     resrvd,  resrvd,
+    Empty,   Empty,   Empty,  Empty,  Empty,   Empty,   Empty,   Empty,
+
+//  resrvd,  resrvd,  resrvd, resrvd, resrvd,  resrvd,  resrvd,  resrvd
+    Empty,   Empty,   Empty,  Empty,  Empty,   Empty,   Empty,   Empty
+};
+
+int (*Get_CP1_RT_Instruction_Format[32]) (uint32 Instruction) =
+{
+//  bc1f,   bc1t,   bc1fl,  bc1tl,  resrvd, resrvd, resrvd, resrvd,    
+    J_Type, J_Type, J_Type, J_Type, Empty,  Empty,  Empty,  Empty,
+
+//  resrvd, resrvd, resrvd, resrvd, resrvd, resrvd, resrvd, resrvd
+    Empty,  Empty,  Empty,  Empty,  Empty,  Empty,  Empty,  Empty,
+    
+//  resrvd, resrvd, resrvd, resrvd, resrvd, resrvd, resrvd, resrvd
+    Empty,  Empty,  Empty,  Empty,  Empty,  Empty,  Empty,  Empty,
+    
+//  resrvd, resrvd, resrvd, resrvd, resrvd, resrvd, resrvd, resrvd
+    Empty,  Empty,  Empty,  Empty,  Empty,  Empty,  Empty,  Empty
+};
+
 
 int Special(unsigned __int32 Instruction)
 {
-	return Get_SPECIAL_Instruction_Format[_FUNCTION_](Instruction);
-
-	/* return J; */
+    return Get_SpecialInstruction_Format[_FUNCTION_](Instruction);
 }
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
 int CP0_(unsigned __int32 Instruction)
 {
-	return Get_CP0_Instruction_Format[RS_BASE_FMT](Instruction);
+    return Get_CP0_Instruction_Format[RS_BASE_FMT](Instruction);
 }
 
-#define Get_SA_FD(Instruction)			((unsigned __int32) ((Instruction >> 6) & 0x1F))
-#define Get_RD_FS(Instruction)			((unsigned __int32) ((Instruction >> 11) & 0x1F))
-#define Get_RT_FT(Instruction)			((unsigned __int32) ((Instruction >> 16) & 0x1F))
-#define Get_RS_BASE_FMT(Instruction)	((unsigned __int32) ((Instruction >> 21) & 0x1F))
-
-int Instruction_Order[0x1000];	/* 4K should do it */
-
-/*
- =======================================================================================================================
-    This will likely become an obsolete function. The original intent of this function was to reorder instructions in a
-    block to reduce register misses, AGI stalls, and to improve pairing of x86 instructions. The trouble with it is
-    that it is a pre-compile step, and analyzes MIPS instructions only, so it is not very good. Some kind of
-    post-compile analysis would be a better idea such as compiling into intermediate x86 asm source and then analyzing
-    that before building the machine code.
- =======================================================================================================================
- */
-void Reorder_Instructions_In_Block(void)
+int CP1_(unsigned __int32 Instruction)
 {
-	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	unsigned _int32 Instruction[7];
-	unsigned _int32 Instruction_Format[3];
-	unsigned _int32 tempPC = gHWS_pc;
-	uint32			rt[7];
-	uint32			rs[7];
-	uint32			rd[7];
-	int				Unoptimized = 0;
-	int				EndOfBlock = 0;
-	int				k;
-	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-	/* return; */
-	if(ITLB_Error) return;
-
-	memset(Instruction_Order, 0, sizeof(Instruction_Order));			/* Todo: memset only by previous block size!. */
-	for(k = 0; !EndOfBlock; gHWS_pc += 4, k++)
-	{
-		/* level1: */
-		Instruction[0] = DynaFetchInstruction2(gHWS_pc + (Instruction_Order[k] << 2));
-		Instruction_Format[0] = Get_Instruction_Format[Instruction[0] >> 26](Instruction[0]);
-
-		rd[0] = 100;
-		rd[1] = 101;
-		rd[2] = 102;
-
-		switch(Instruction_Format[0])
-		{
-		case R:
-		case I:
-		case SH:
-			if(Instruction_Format[0] == I)
-			{
-				rt[0] = Get_RT_FT(Instruction[0]);						/* Target */
-				rs[0] = Get_RS_BASE_FMT(Instruction[0]);				/* Source */
-			}
-			else if(Instruction_Format[0] == SH)
-			{
-				rt[0] = Get_RD_FS(Instruction[0]);						/* Target */
-				rs[0] = Get_RT_FT(Instruction[0]);						/* Source */
-			}
-			else if(Instruction_Format[0] == R)
-			{
-				rt[0] = Get_RD_FS(Instruction[0]);						/* Target */
-				rs[0] = Get_RS_BASE_FMT(Instruction[0]);				/* Source */
-				rd[0] = Get_RT_FT(Instruction[0]);						/* Operand2 */
-			}
-
-			/* level2: */
-			Instruction[1] = DynaFetchInstruction2(gHWS_pc + 4 + (Instruction_Order[k + 1] << 2));
-			Instruction_Format[1] = Get_Instruction_Format[Instruction[1] >> 26](Instruction[1]);
-			switch(Instruction_Format[1])
-			{
-			case R:
-			case I:
-			case SH:
-				if(Instruction_Format[1] == I)
-				{
-					rt[1] = Get_RT_FT(Instruction[1]);					/* Target */
-					rs[1] = Get_RS_BASE_FMT(Instruction[1]);			/* Source */
-				}
-				else if(Instruction_Format[1] == SH)
-				{
-					rt[1] = Get_RD_FS(Instruction[1]);					/* Target */
-					rs[1] = Get_RT_FT(Instruction[1]);					/* Source */
-				}
-				else if(Instruction_Format[1] == R)
-				{
-					rt[1] = Get_RD_FS(Instruction[1]);					/* Target */
-					rs[1] = Get_RS_BASE_FMT(Instruction[1]);			/* Source */
-					rd[1] = Get_RT_FT(Instruction[1]);					/* Operand2 */
-				}
-
-				if(rt[0] != rt[1]) Unoptimized |= NOT_PAIRED;
-
-				if(Unoptimized)
-				{
-					/* level3: */
-					Instruction[2] = DynaFetchInstruction2(gHWS_pc + 8 + (Instruction_Order[k + 2] << 2));
-					Instruction_Format[2] = Get_Instruction_Format[Instruction[2] >> 26](Instruction[2]);
-					switch(Instruction_Format[2])
-					{
-					case I:
-					case SH:
-					case R:
-						if(Instruction_Format[2] == I)
-						{
-							rt[2] = Get_RT_FT(Instruction[2]);			/* Target */
-							rs[2] = Get_RS_BASE_FMT(Instruction[2]);	/* Source */
-						}
-						else if(Instruction_Format[2] == SH)
-						{
-							rt[2] = Get_RD_FS(Instruction[2]);			/* Target */
-							rs[2] = Get_RT_FT(Instruction[2]);			/* Source */
-						}
-						else if(Instruction_Format[2] == R)
-						{
-							rt[2] = Get_RD_FS(Instruction[2]);			/* Target */
-							rs[2] = Get_RS_BASE_FMT(Instruction[2]);	/* Source */
-							rd[2] = Get_RT_FT(Instruction[2]);			/* Operand2 */
-						}
-
-						/*
-						 * Search for next instruction to use. Right now just use [2]. £
-						 * Check for no conflict in previous instruction(s)
-						 */
-						{
-							if
-							(
-								(rt[2] == rt[0])
-							&&	(rd[2] != rd[1])
-							&&	(rd[2] != rs[1])
-							&&	(rd[2] != rt[1])
-							&&	(rs[2] != rd[1])
-							&&	(rs[2] != rt[1])
-							&&	(rt[2] != rd[1])
-							&&	(rt[2] != rs[1])
-							&&	(rt[2] != rt[1])
-							)
-							{
-								/* swap. */
-								Instruction_Order[k + 2] = Instruction_Order[k + 1] - 1;
-								Instruction_Order[k + 1] += 1;
-							}
-						}
-						break;
-					}
-				}
-				break;
-			}
-			break;
-		case LUI:
-			break;
-		case TODO:
-		case EMPTY:
-		case J:
-		case B:
-			EndOfBlock = 1;
-			break;
-		}
-
-		Unoptimized = 0;
-	}
-
-	gHWS_pc = tempPC;
+    return Get_CP1_Instruction_Format[RS_BASE_FMT](Instruction);
 }
 
-extern uint32	FetchInstruction(void);
 
-/*
- =======================================================================================================================
-    This function will setup to use load-and-execute x86 instructions when it is appropriate to use them. It also calls
-    Reorder_Instructions_In_Block().
- =======================================================================================================================
- */
+int Regimm_(unsigned __int32 Instruction)
+{
+    return Get_RegimmInstruction_Format[RT_FT](Instruction);
+}
+
+int _BC0_(unsigned __int32 Instruction)
+{
+    return Get_CP0_RT_Instruction_Format[RT_FT](Instruction);
+}
+
+int _BC1_(unsigned __int32 Instruction)
+{
+    return Get_CP1_RT_Instruction_Format[RT_FT](Instruction);
+}
+
+
+
+extern uint32   FetchInstruction(void);
+extern uint32   DynaFetchInstruction(uint32 pc);
+
 extern void __cdecl error(char *Message, ...);
 void AnalyzeBlock(void)
 {
-	/*~~~~~~~~~~~~~~~~~~~~~*/
-	uint32	Instruction;
-	uint32	tempPC = gHWS_pc;
-	uint32	EndOfBlock = 0;
-	uint32	fmt = 0xffffffff;
-	_int32	k;
-	/*~~~~~~~~~~~~~~~~~~~~~*/
+    uint32  Instruction;
+    uint32  tempPC = gHWS_pc;
 
-	for(k = 33; k >= 0; k--)
-	{
-		ConstMap[k].FinalAddressUsedAt = 0xffffffff;
-	}
+    EndOfBlock = 0;
 
-	if(ITLB_Error) return;
+    if(ITLB_Error) 
+    {
+//        MessageBox(0, "Ok Then", "", 0);
+        return;
+    }
 
-//	/*
-//	 * Rice: This is still in development, but you can uncomment the next line to try
-//	 * it out. It's cool. So far only a few games work with it (somewhat).
-//	 Reorder_Instructions_In_Block();
-//	 */
-	while(!EndOfBlock)
-	{
-		/*~~~~~~~*/
-		int opcode;
-		/*~~~~~~~*/
+    while(!EndOfBlock)
+    {
+        Instruction = DynaFetchInstruction(gHWS_pc);
+        if (ITLB_Error)
+        {
+            gHWS_pc = tempPC;
+            ConstMap[RA].FinalAddressUsedAt = 0xffffffff;
+            InvalidateAnalysis();
+            return;
+        }
 
-_start:
-		Instruction = DynaFetchInstruction2(gHWS_pc);
-		opcode = _OPCODE_;
-		if((opcode >= 4) && (opcode <= 7))						/* beq, bne, blez, bgtz */
-		{
-			/* it is assumed that more times than not, delay slots will be executed. */
-			if(!EndOfBlock)
-			{
-				ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
-				ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
-				gHWS_pc += 4;
-				EndOfBlock = 1;
-				goto _start;
-			}
-		}
-		else if((opcode >= 20) && (opcode <= 23))				/* beql, bnel, blezl, bgtzl */
-		{
-			/* it is assumed that more times than not, delay slots will be executed. */
-			if(!EndOfBlock)
-			{
-				ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
-				ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
-				gHWS_pc += 4;
-				EndOfBlock = 1;
-				goto _start;
-			}
-		}
-		else if((opcode == 2) || (opcode == 3))
-		{
-			/* delay slots always executed. */
-			if(!EndOfBlock)
-			{
-				gHWS_pc += 4;
-				EndOfBlock = 1;
-				goto _start;
-			}
-		}
-		else if(opcode == 15)
-			ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
-		else if(opcode >= 32 && opcode <= 49)					/* load/stores */
-		{
-			ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
-			ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
-		}
-		else if(opcode >= 52 && opcode <= 63)					/* load/stores */
-		{
-			ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
-			ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
-		}
-		else if(opcode >= 8 && opcode < 15)						/* imm type */
-		{
-			ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
-			ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
-		}
-		else if(opcode == 17)									/* COP1 */
-		{
-			/* do nothing */
-		}
-		else
-		{
-			switch(opcode)
-			{
-			case 0:
-				fmt = Instruction & 0x1f;
-				if((fmt >= 40) && (fmt <= 47))					/* gates */
-				{
-					ConstMap[RD_FS].FinalAddressUsedAt = gHWS_pc;
-					ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
-					ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
-				}
-				else if((fmt == 0) || (fmt == 2) || (fmt == 3)) /* sll, srl, sra */
-				{
-					if(Instruction != 0)
-					{
-						ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
-						ConstMap[RD_FS].FinalAddressUsedAt = gHWS_pc;
-					}
-				}
-				else if((fmt == 4) || (fmt == 6) || (fmt == 7)) /* sllv, srlv, srav */
-				{
-					ConstMap[RD_FS].FinalAddressUsedAt = gHWS_pc;
-					ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
-					ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
-				}
-				else if((fmt == 25)||(fmt==26)||(fmt==29)||(fmt==31)) /* div, divu, dmultu, ddivu*/
-				{
-					ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
-					ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
-				}
+        Get_NormalInstruction_Format[_OPCODE_](Instruction);
+        gHWS_pc += 4;
+        if (Delay)
+        {
+            Delay = 0;
+            Instruction = DynaFetchInstruction(gHWS_pc);
+            if (ITLB_Error)
+            {
+                InvalidateAnalysis();
+                gHWS_pc = tempPC;
+                ConstMap[RA].FinalAddressUsedAt = 0xffffffff;
+                return;
+            }
 
-				else if((fmt == 18)) /* mflo */
-				{
-					ConstMap[RD_FS].FinalAddressUsedAt = gHWS_pc;
-					ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
-				}
-				
-				else if ((fmt==10)||(fmt==11)||(fmt==5)||(fmt==1))
-				{
-					//unused. do nothing.
-				}
-				else if ((fmt==8)||(fmt==9)) //jal, jalr
-				{
-					if(EndOfBlock) break;
-					ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
-					gHWS_pc += 4;
-					EndOfBlock = 1;
-					goto _start;
-					break;
-				}
-				else
-				{
-					//error("%d", fmt);
-					goto _invalidate;
-				}
-				break;
-			case 1: /* Regimm Instructions */
-				/* it is assumed that more times than not, delay slots will be executed. */
-				if(EndOfBlock) break;
-				ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
-				ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
-				gHWS_pc += 4;
-				EndOfBlock = 1;
-				goto _start;
-				break;
+            Get_NormalInstruction_Format[_OPCODE_](Instruction);
+            EndOfBlock = 1;
+        }
+    }
 
-				/* just invalidate our analysis. We don't do enough of it yet :) */
-
-			case 16: //COP0 instruction
-			{
-				if (RS_BASE_FMT==16)
-					if ((_FUNCTION_) == 24) //eret
-						goto _invalidate;
-			}
-			break;
-			default:
-_invalidate:
-				/* DisplayError("%d %d", opcode, fmt); */
-				if(!EndOfBlock)
-					for(k = 33; k >= 0; k--)
-					{
-						ConstMap[k].FinalAddressUsedAt = 0xFFFFFFFF;
-					}
-
-				EndOfBlock = 1;
-				break;
-			}
-		}
-
-		gHWS_pc += 4;
-	}
-
-	gHWS_pc = tempPC;
+    gHWS_pc = tempPC;
+    ConstMap[RA].FinalAddressUsedAt = 0xffffffff;
 }

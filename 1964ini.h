@@ -8,7 +8,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -57,7 +57,9 @@ enum CODECHECKTYPE
 
 enum USETLBTYPE { USETLB_DEFAULT, USETLB_YES, USETLB_NO };
 
-enum MAXFPSTYPE { MAXFPS_DEFAULT, MAXFPS_NONE, MAXFPS_NTSC_60, MAXFPS_PAL_50, MAXFPS_AUTO_SYNC };
+enum MAXFPSTYPE {	MAXFPS_DEFAULT, MAXFPS_NONE, MAXFPS_NTSC_60, MAXFPS_PAL_50, MAXFPS_AUTO_SYNC, MAXFPS_10, 
+					MAXFPS_15, MAXFPS_20, MAXFPS_25, MAXFPS_30, MAXFPS_40, MAXFPS_70, MAXFPS_80, MAXFPS_90,
+					MAXFPS_100, MAXFPS_120, MAXFPS_150, MAXFPS_180, MAXFPS_210};
 
 enum RDRAMSIZETYPE { RDRAMSIZE_DEFAULT, RDRAMSIZE_4MB, RDRAMSIZE_8MB };
 
@@ -78,7 +80,7 @@ enum COUNTERFACTOR
 
 enum USEFPUHACK { USEFPUHACK_DEFAULT, USEFPUHACK_YES, USEFPUHACK_NO };
 
-enum USEDMASEGMENTATION { USEDMASEG_DEFAULT, USEDMASEG_YES, USEDMASEG_NO };
+enum USEDMASEGMENTATION { USEDMASEG_DEFAULT, DELAY_DMA, NO_DELAY, DELAY_DMA_SI, DELAY_DMA_AI, DELAY_DMA_SI_AI };
 
 enum USE4KBLINKBLOCK { USE4KBLINKBLOCK_DEFAULT, USE4KBLINKBLOCK_YES, USE4KBLINKBLOCK_NO };
 
@@ -88,7 +90,11 @@ enum ASSUME32BIT { ASSUME_32BIT_DEFAULT, ASSUME_32BIT_YES, ASSUME_32BIT_NO };
 
 enum USEHLE { USEHLE_DEFAULT, USEHLE_YES, USEHLE_NO };
 
-struct INI_ENTRY_STRUCT
+enum USERSPRDPTIMING { USE_RSP_RDP_TIMING_DEFAULT, USE_RSP_RDP_TIMING_YES, USE_RSP_RDP_TIMING_NO };
+
+enum USECFBRW { USECFBRW_DEFAULT, USECFBRW_YES, USECFBRW_NO };
+
+typedef struct INI_ENTRY_STRUCT
 {
 	char				Game_Name[40];
 	char				Comments[80];
@@ -106,35 +112,52 @@ struct INI_ENTRY_STRUCT
 	int					Counter_Factor;
 	int					Use_Register_Caching;
 	int					FPU_Hack;
-	int					DMA_Segmentation;
+	int					timing_Control;
 	int					Link_4KB_Blocks;
 	int					Advanced_Block_Analysis;
 	int					Assume_32bit;
 	int					Use_HLE;
-};
-typedef struct INI_ENTRY_STRUCT INI_ENTRY;
+
+	// By Rice, 05/18/2003
+	// New options, working together with video/audio plugins
+	// Working with RiceDaedalus plugins only
+	int					RSP_RDP_Timing;		// Plugin will provide more accurate RSP/RDP timing info
+	int					frame_buffer_rw;	// to tell video plugin about CPU direct frame buffer read/write
+
+	int					numberOfPlayers;
+
+	// ROM specified plugin names
+	char				videoPluginName[40];
+	char				audioPluginName[40];
+	char				inputPluginName[40];
+	char				rspPluginName[40];
+
+	char				iconFilename[256];
+} INI_ENTRY;
 
 /* Support update to 3000 entries, should be enough for all the N64 Games */
 #define MAX_INI_ENTRIES 3000
 
 /* Globals definition */
-char				*rdram_size_names[];
-char				*save_type_names[];
-char				*emulator_type_names[];
-char				*codecheck_type_names[];
-char				*maxfps_type_names[];
-char				*usetlb_type_names[];
-char				*eepromsize_type_names[];
-char				*counter_factor_names[];
-char				*register_caching_names[];
-char				*use_fpu_hack_names[];
-char				*use_dma_segmentation[];
-char				*use_4kb_link_block_names[];
-char				*use_block_analysis_names[];
-char				*use_HLE_names[];
-char				*assume_32bit_names[];
+extern char				*rdram_size_names[];
+extern char				*save_type_names[];
+extern char				*emulator_type_names[];
+extern char				*codecheck_type_names[];
+extern char				*maxfps_type_names[];
+extern char				*usetlb_type_names[];
+extern char				*eepromsize_type_names[];
+extern char				*counter_factor_names[];
+extern char				*register_caching_names[];
+extern char				*use_fpu_hack_names[];
+extern char				*timing_control_names[];
+extern char				*use_4kb_link_block_names[];
+extern char				*use_block_analysis_names[];
+extern char				*use_HLE_names[];
+extern char				*assume_32bit_names[];
+extern char				*use_RSP_RDP_Timing_names[];
+extern char				*use_Frame_Buffer_R_W_names[];
 
-float				vips_speed_limits[];
+extern double				vips_speed_limits[];
 
 extern INI_ENTRY	currentromoptions;
 extern INI_ENTRY	*ini_entries[MAX_INI_ENTRIES];	/* Only allocate memory for entry pointers */
@@ -142,14 +165,17 @@ extern INI_ENTRY	*ini_entries[MAX_INI_ENTRIES];	/* Only allocate memory for entr
 /* entries will be dynamically allocated */
 extern int			ini_entry_count;
 
-/* Function definition */
 void				InitIniEntries(void);
 INI_ENTRY			*GetNewIniEntry(void);
-int					AddIniEntry(const INI_ENTRY *);
+int					__cdecl AddIniEntry(const INI_ENTRY *);
 void				DeleteIniEntry(const int index);
 void				DeleteAllIniEntries(void);
 int					FindIniEntry(const char *gamename, const uint32 crc1, const uint32 crc2, const uint8 country);
-int					FindIniEntry2(const INI_ENTRY *);
+
+int
+__cdecl
+FindIniEntry2(const INI_ENTRY *);
+
 int					ReadIniEntry(FILE *, INI_ENTRY *);
 int					WriteIniEntry(FILE *, const INI_ENTRY *);
 int					ReadAllIniEntries(FILE *);
@@ -165,7 +191,6 @@ uint32				ConvertHexStringToInt(const char *str, int nchars);
 
 /* 1964 default options */
 extern INI_ENTRY	defaultoptions;
-extern int			romlist_sort_method;
 
 extern char			default_rom_directory[_MAX_PATH];
 extern char			default_save_directory[_MAX_PATH];
@@ -175,4 +200,5 @@ extern char			user_set_rom_directory[_MAX_PATH];
 extern char			user_set_save_directory[_MAX_PATH];
 extern char			state_save_directory[_MAX_PATH];
 extern char			user_set_plugin_directory[_MAX_PATH];
+extern char			user_set_state_save_directory[_MAX_PATH];
 #endif

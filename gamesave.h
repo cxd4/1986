@@ -8,7 +8,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -50,8 +50,8 @@ extern struct GAMESAVESTATUS	gamesave;
 #define FLASHRAM_STATUS_REG_WORD1_ADDR	0xA8000000
 #define FLASHRAM_STATUS_REG_WORD2_ADDR	0xA8000004
 #define FLASHRAM_COMMAND_REG_ADDR		0xA8010000
-#define FLASHRAM_STATUS_REG_1			(LOAD_UWORD_PARAM_2(FLASHRAM_STATUS_REG_WORD1_ADDR))
-#define FLASHRAM_STATUS_REG_2			(LOAD_UWORD_PARAM_2(FLASHRAM_STATUS_REG_WORD2_ADDR))
+#define FLASHRAM_STATUS_REG_1			(LOAD_UWORD_PARAM(FLASHRAM_STATUS_REG_WORD1_ADDR))
+#define FLASHRAM_STATUS_REG_2			(LOAD_UWORD_PARAM(FLASHRAM_STATUS_REG_WORD2_ADDR))
 
 void							Flashram_Command(unsigned __int32 val);
 unsigned __int32				Flashram_Get_Status(uint32 addr);

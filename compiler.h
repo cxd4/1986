@@ -8,7 +8,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -47,19 +47,22 @@ struct CompilerStatus
 	uint32			cp0Counter;
 	uint32			KEEP_RECOMPILING;
 	uint32			BlockStart;
+	int				schiboException;
 	int				Is_Compiling;
 	unsigned long	lCodePosition;
 	uint32			*pcptr;
 	uint32			realpc_fetched;
 	uint32			FlagJAL;
 	uint32			InstructionCount;
+    BOOL            IsFirstFPUInstructionToTest; //First FPU in a block or immediately after and MTC0 STATUS instruction.
+                                                 //To check for CP1 Unusable Exceptions.
+    BOOL            BranchDelay;
+
 };
 
 typedef struct BLOCK_ENTRY_STRUCT	BLOCK_ENTRY;
 extern struct CompilerStatus		compilerstatus;
 extern BLOCK_ENTRY					*current_block_entry;
-extern uint8						*sDYN_PC_LOOKUP[0x10000];
-extern uint8						*dyna_CodeTable;
 extern uint8						*dyna_RecompCode;
 uint32								Dyna_Compile_Block(void);
 uint32								Dyna_Compile_4KB_Block(void);

@@ -1,5 +1,3 @@
-extern int Instruction_Order[];      // Return pointer to the compiled block
-extern void RecompileFunction(void);
 extern void osEnqueueAndYield(void); //Mario(US) 80327c80
 extern void osSendMessage(void);        
 extern void osDisableInt(void);      //Mario(US) 803274d0

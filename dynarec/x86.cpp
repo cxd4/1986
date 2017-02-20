@@ -1,41 +1,23 @@
-/*$T x86.c GC 1.136 02/28/02 08:36:03 */
 
+// x86.c: Builds Intel x86 machine code.
 
-/*$6
- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- In this file, the calls to x86 assembly functions are converted to machine code.
- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- */
+// 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com>.  This
+// program is free software;  you can redistribute it and/or modify it under the
+// terms of the GNU  General Public  License as  published by  the Free Software
+// Foundation; either version 2 of the License,  or (at your option)  any  later
+// version.  This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+// details.  You should have received a copy of the GNU  General Public  License
+// along with this program; if not, write to the Free Software Foundation, Inc.,
+// 59 Temple Place  -  Suite  330,  Boston, MA  02111-1307,  USA. To contact the
+// authors: email: schibo@emulation64.com, rice1964@yahoo.com
 
-
-/*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
- * program is free software; you can redistribute it and/or modify it under the
- * terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 2 of the License, or (at your option) any later
- * version. This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
- * details. You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software Foundation, Inc.,
- * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
- * authors: email: schibo@emulation64.com, rice1964@yahoo.com
- */
-#include "../globals.h"
-#include "../debug_option.h"
-#include "../compiler.h"
-#include "x86.h"
-#include "dynaLog.h"
-#include "regcache.h"
-
-extern void __cdecl MBox(char *debug, ...);
-extern void __cdecl DisplayError(char *Message, ...);
+#include "../stdafx.h"
 
 unsigned long		JumpTargets[100];
 unsigned char		*RecompCode;
 unsigned long		lCodeSize;
-
-char				*RegNames[] = { "EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI" };
 
 /*
  =======================================================================================================================
@@ -47,6 +29,9 @@ void SetTranslator(unsigned char *Code, unsigned long Pos, unsigned long Size)
 	RecompCode = Code;
 	compilerstatus.lCodePosition = Pos;
 	lCodeSize = Size;
+    
+    //Uncomment the next line to debug the overrun. This is for Debugging only!!
+    //lCodeSize = 65536*16;
 }
 
 /*
@@ -55,12 +40,14 @@ void SetTranslator(unsigned char *Code, unsigned long Pos, unsigned long Size)
  */
 void SetTarget(unsigned char bIndex)
 {
-	/*~~~~~~~~~~~~~~*/
 	char	bPosition;
-	/*~~~~~~~~~~~~~~*/
 
-	LOGGING_DYNA(LogDyna("j_point %i:\n", bIndex);) bPosition = (char)
-		((compilerstatus.lCodePosition - JumpTargets[bIndex]) & 0xFF);
+	bPosition = (char)((compilerstatus.lCodePosition - JumpTargets[bIndex]) & 0xFF);
+    if (((_int32)JumpTargets[bIndex]) <= 0)
+  {
+//        __asm int 3;
+    }
+    else
 	RecompCode[JumpTargets[bIndex] - 1] = bPosition;
 }
 
@@ -71,29 +58,20 @@ void SetTarget(unsigned char bIndex)
 void DynaBufferOverrun(void)
 {
 	compilerstatus.DynaBufferOverError = TRUE;
-	compilerstatus.lCodePosition  = 0;
+	TRACE0("Dyna buffer overrun");
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void WC8(unsigned char bValue)
+void WC8(unsigned int bValue)
 {
-	if(compilerstatus.DynaBufferOverError) return;
+	if((compilerstatus.lCodePosition + 100000) > lCodeSize) 
+		DynaBufferOverrun();
 
-	if(gMultiPass.WriteCode)
-	{
-		if((compilerstatus.lCodePosition + 10) > lCodeSize) 
-		{
-			DynaBufferOverrun();
-		}
-		else
-		{
-			RecompCode[compilerstatus.lCodePosition] = bValue;
-			compilerstatus.lCodePosition++;
-		}
-	}
+    RecompCode[compilerstatus.lCodePosition] = (unsigned __int8)bValue;
+	compilerstatus.lCodePosition++;
 }
 
 /*
@@ -102,20 +80,11 @@ void WC8(unsigned char bValue)
  */
 void WC16(unsigned int wValue)
 {
-	if(compilerstatus.DynaBufferOverError) return;
+	if((compilerstatus.lCodePosition + 100000) > lCodeSize) 
+		DynaBufferOverrun();
 
-	if(gMultiPass.WriteCode)
-	{
-		if((compilerstatus.lCodePosition + 10) > lCodeSize) 
-		{
-			DynaBufferOverrun();
-		}
-		else
-		{
-			(*((unsigned _int16 *) (&RecompCode[compilerstatus.lCodePosition])) = (unsigned _int16) (wValue));
-			compilerstatus.lCodePosition += 2;
-		}
-	}
+	(*((unsigned _int16 *) (&RecompCode[compilerstatus.lCodePosition])) = (unsigned _int16) (wValue));
+	compilerstatus.lCodePosition += 2;
 }
 
 /*
@@ -124,97 +93,90 @@ void WC16(unsigned int wValue)
  */
 void WC32(unsigned long dwValue)
 {
-	if(compilerstatus.DynaBufferOverError) return;
+    if((compilerstatus.lCodePosition + 100000) > lCodeSize) 
+    	DynaBufferOverrun();
 
-	if(gMultiPass.WriteCode)
+    (*((unsigned _int32 *) (&RecompCode[compilerstatus.lCodePosition])) = (unsigned _int32) (dwValue));
+	compilerstatus.lCodePosition += 4;
+}
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void ADD_Reg2ToReg1(unsigned int Reg1, unsigned int Reg2)
+{
+	WC8(0x03);
+	WC8( (0xC0 | (Reg1 << 3) | Reg2));
+}
+
+void SBB_Reg2FromReg1(unsigned int Reg1, unsigned int Reg2)
+{
+	WC8(0x1B);
+	WC8( (0xC0 | (Reg1 << 3) | Reg2));
+}
+
+
+/*
+ =======================================================================================================================
+ CMOV is for Pentium Pro and above
+ =======================================================================================================================
+ */
+void CMOVcc_Reg2ToReg1(unsigned char ConditionCode, unsigned char Reg1, unsigned char Reg2)
+{
+	WC8( 0x0F);
+	WC8( (0x40 | ConditionCode));
+	WC8( (0xC0 | (Reg1 << 3) | Reg2));
+}
+
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void ADD_MemoryToReg(unsigned int Reg, unsigned int ModRM, unsigned int Address)
+{
+    WC8(0x03);
+	Encode_Slash_R(Reg, ModRM, Address);
+}
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void SUB_MemoryToReg(unsigned int Reg, unsigned int ModRM, unsigned int Address)
+{
+    WC8(0x2B);
+	Encode_Slash_R(Reg, ModRM, Address);
+}
+
+void SUB_ImmFromReg(unsigned int OperandSize, unsigned int Reg, unsigned int Data, unsigned int PreserveFlags)
+{
+    if((Data == 0)&&(!PreserveFlags)) return;
+
+    if(OperandSize == 1)
 	{
-		if((compilerstatus.lCodePosition + 10) > lCodeSize) 
+		if((Data < 128) || (Data >= (0xffffff80)))	// [-128 to 127] 
 		{
-			DynaBufferOverrun();
-		}
-		else
-		{
-			(*((unsigned _int32 *) (&RecompCode[compilerstatus.lCodePosition])) = (unsigned _int32) (dwValue));
-			compilerstatus.lCodePosition += 4;
+			SUB_Imm8sxToReg(Reg, (unsigned char) Data, PreserveFlags);
+			return;
 		}
 	}
-}
 
-/*
- =======================================================================================================================
-    Now some X86 Opcodes ...
- =======================================================================================================================
- */
+	if(Reg == Reg_EAX)
+	{
+		WC8( (0x2C | OperandSize));	// SUB_ImmToEAX 
+	}
+	else
+	{
+		WC8( (0x80 | OperandSize));
+		WC8( (0xE8 | Reg));
+	}
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void ADD_Reg2ToReg1(unsigned char OperandSize, unsigned char Reg1, unsigned char Reg2)
-{
-	WC8((unsigned char) (0x02 | OperandSize));
-	WC8((unsigned char) (0xC0 | (Reg1 << 3) | Reg2));
-	LOGGING_DYNA(LogDyna("	ADD %s, %s\n", RegNames[Reg1], RegNames[Reg2]););
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void ADD_MemoryToReg(unsigned char OperandSize, unsigned char Reg, unsigned char ModRM, unsigned long Address)
-{
-	WC8((unsigned char) (0x02 | OperandSize));
-	Encode_Slash_R(Reg, ModRM, Address);
-
-	/* LOGGING_DYNA(LogDyna(" ADD %s, %s\n", RegNames[Reg1], RegNames[Reg2]);); */
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void AND_MemoryToReg(unsigned char OperandSize, unsigned char Reg, unsigned char ModRM, unsigned long Address)
-{
-	WC8((unsigned char) (0x22 | OperandSize));
-	Encode_Slash_R(Reg, ModRM, Address);
-
-	/* LOGGING_DYNA(LogDyna(" ADD %s, %s\n", RegNames[Reg1], RegNames[Reg2]);); */
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void SUB_MemoryToReg(unsigned char OperandSize, unsigned char Reg, unsigned char ModRM, unsigned long Address)
-{
-	WC8((unsigned char) (0x2A | OperandSize));
-	Encode_Slash_R(Reg, ModRM, Address);
-
-	/* LOGGING_DYNA(LogDyna(" ADD %s, %s\n", RegNames[Reg1], RegNames[Reg2]);); */
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void OR_MemoryToReg(unsigned char OperandSize, unsigned char Reg, unsigned char ModRM, unsigned long Address)
-{
-	WC8((unsigned char) (0x0A | OperandSize));
-	Encode_Slash_R(Reg, ModRM, Address);
-
-	/* LOGGING_DYNA(LogDyna(" ADD %s, %s\n", RegNames[Reg1], RegNames[Reg2]);); */
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void XOR_MemoryToReg(unsigned char OperandSize, unsigned char Reg, unsigned char ModRM, unsigned long Address)
-{
-	WC8((unsigned char) (0x32 | OperandSize));
-	Encode_Slash_R(Reg, ModRM, Address);
-
-	/* LOGGING_DYNA(LogDyna(" ADD %s, %s\n", RegNames[Reg1], RegNames[Reg2]);); */
+	if(OperandSize == 0)
+		WC8( Data);
+	else
+		WC32(Data);
 }
 
 /*
@@ -222,75 +184,44 @@ void XOR_MemoryToReg(unsigned char OperandSize, unsigned char Reg, unsigned char
     Danger: if Operand size == 0!. Fix! (Fortunately we never use 0 yet)
  =======================================================================================================================
  */
-void ADD_ImmToReg(unsigned char OperandSize, unsigned char Reg, unsigned long Data)
+void ADD_ImmToReg(unsigned int Reg, unsigned int Data, unsigned int PreserveFlags)
 {
-	if(Data == 0) return;
-	if(OperandSize == 1)
-	{
-		if(Data == 0xffffffff)
-		{
-			DEC_Reg(1, Reg);
-			return;
-		}
+    if((Data == 0)&&(!PreserveFlags)) return;
 
-		if(Data == 1)
+		if((Data < 128) || (Data >= (0xffffff80)))	// [-128 to 127] 
 		{
-			INC_Reg(1, Reg);
+			ADD_Imm8sxToReg(Reg, (unsigned char) Data);
 			return;
 		}
-
-		if((Data < 128) || (Data >= (0xffffff80)))	/* [-128 to 127] */
-		{
-			ADD_Imm8sxToReg(1, Reg, (unsigned char) Data);
-			return;
-		}
-	}
 
 	if(Reg == Reg_EAX)
 	{
-		WC8((unsigned char) (0x04 | OperandSize));	/* ADD_ImmToEAX */
+		WC8(0x05);	// ADD_ImmToEAX 
 	}
 	else
 	{
-		WC8((unsigned char) (0x80 | OperandSize));
-		WC8((unsigned char) (0xC0 | Reg));
+		WC8(0x81);
+		WC8( (0xC0 | Reg));
 	}
 
-	if(OperandSize == 0)
-		WC8((unsigned char) Data);
-	else
-		WC32(Data);
-
-	LOGGING_DYNA(LogDyna("	ADD %s, 0x%08X\n", RegNames[Reg], Data););
+	WC32(Data);
 }
+
+
+
+
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void ADD_ImmToMemory(unsigned long Address, unsigned long Data)
+void AND_ImmToEAX(unsigned int OperandSize, unsigned int Data)
 {
-	WC8((unsigned char) 0x81);
-	WC8((unsigned char) 0x05);
-	WC32(Address);
-	WC32((unsigned long) (Data));
-
-	LOGGING_DYNA(LogDyna(" ADD [0x%08X], 0x%08x\n", Address, Data););
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void AND_ImmToEAX(unsigned char OperandSize, unsigned long Data)
-{
-	WC8((unsigned char) (0x24 | OperandSize));
+	WC8( (0x24 | OperandSize));
 	if(OperandSize == 0)
-		WC8((unsigned char) Data);
+		WC8( Data);
 	else
 		WC32(Data);
-
-	LOGGING_DYNA(LogDyna("	AND EAX, 0x%08X\n", Data);)
 }
 
 /*
@@ -298,38 +229,31 @@ void AND_ImmToEAX(unsigned char OperandSize, unsigned long Data)
     Be careful with operandsize = 0!. there is no esl, edl
  =======================================================================================================================
  */
-void AND_ImmToReg(unsigned char OperandSize, unsigned char Reg, unsigned long Data)
+void AND_ImmToReg(unsigned int Reg, unsigned int Data, unsigned int FlagsMatter)
 {
-	if(Data == 0xffffffff) return;
-	if(OperandSize == 1)
-	{
-		if(Data == 0)
+    if((Data == 0xffffffff)&&(!FlagsMatter)) return;
+
+		if((Data == 0)&&(!FlagsMatter))
 		{
-			XOR_Reg2ToReg1(1, Reg, Reg);
+			XOR_Reg2ToReg1(Reg, Reg);
 			return;
 		}
 
 		if((Data < 128) || (Data >= (0xffffff80)))	/* [-128 to 127] */
 		{
-			AND_Imm8sxToReg(OperandSize, Reg, (unsigned char) Data);
+			AND_Imm8sxToReg(Reg, (unsigned char) Data);
 			return;
 		}
-	}
 
 	if(Reg == Reg_EAX)
 	{
-		AND_ImmToEAX(OperandSize, Data);
+		AND_ImmToEAX(1, Data);
 		return;
 	}
 
-	WC8((unsigned char) (0x80 | OperandSize));
-	WC8((unsigned char) (0xE0 | Reg));
-	if(OperandSize != 0)
-		WC32(Data);
-	else
-		WC8((unsigned char) (Data & 0xFF));
-
-	LOGGING_DYNA(LogDyna("	AND %s, 0x%08X\n", RegNames[Reg], Data);)
+	WC8(0x81);
+	WC8( (0xE0 | Reg));
+	WC32(Data);
 }
 
 /*
@@ -339,24 +263,10 @@ void AND_ImmToReg(unsigned char OperandSize, unsigned char Reg, unsigned long Da
 void AND_ImmToMemory(unsigned long Address, unsigned long Data)
 {
 	if(Data == 0xffffffff) return;
-	WC8((unsigned char) 0x81);
-	WC8((unsigned char) 0x25);
+	WC8( 0x81);
+	WC8( 0x25);
 	WC32(Address);
 	WC32(Data);
-
-	LOGGING_DYNA(LogDyna("	AND [0x%08X], 0x%08x\n", Address, Data);)
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void BSWAP(unsigned char Reg)
-{
-	WC8((unsigned char) 0x0F);
-	WC8((unsigned char) (0xC8 | Reg));
-
-	LOGGING_DYNA(LogDyna("	BSWAP %s\n", RegNames[Reg]);)
 }
 
 /*
@@ -365,27 +275,21 @@ void BSWAP(unsigned char Reg)
  */
 void X86_CALL(unsigned long dwAddress)
 {
-	/*~~~~~~~~~~~~~~~~~~~~~~*/
 	unsigned __int32	wTemp;
-	/*~~~~~~~~~~~~~~~~~~~~~~*/
 
 	wTemp = dwAddress - (unsigned __int32) (char *) &RecompCode[compilerstatus.lCodePosition] - 5;
 	WC8(0xe8);
 	WC32(wTemp);
-
-	LOGGING_DYNA(LogDyna("	CALL 0x%08X\n", dwAddress);)
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void CALL_Reg(unsigned char Reg)
+void CALL_Reg(unsigned int Reg)
 {
-	WC8((unsigned char) 0xFF);
-	WC8((unsigned char) (0xD0 | Reg));
-
-	LOGGING_DYNA(LogDyna("	CALL %s\n", RegNames[Reg]);)
+	WC8( 0xFF);
+	WC8( (0xD0 | Reg));
 }
 
 /*
@@ -394,42 +298,36 @@ void CALL_Reg(unsigned char Reg)
  */
 void CDQ(void)
 {
-	WC8((unsigned char) 0x99);
-
-	LOGGING_DYNA(LogDyna("	CDQ\n");)
+	WC8( 0x99);
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void CMP_Reg1WithReg2(unsigned char OperandSize, unsigned char Reg1, unsigned char Reg2)
+void CMP_Reg1WithReg2(unsigned int Reg1, unsigned int Reg2)
 {
-	WC8((unsigned char) (0x38 | OperandSize));
-	WC8((unsigned char) (0xC0 | (Reg1 << 3) | Reg2));
-
-	LOGGING_DYNA(LogDyna("	CMP %s, %s\n", RegNames[Reg1], RegNames[Reg2]);)
+	WC8(0x39);
+	WC8( (0xC0 | (Reg1 << 3) | Reg2));
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void CMP_Reg2WithReg1(unsigned char OperandSize, unsigned char Reg1, unsigned char Reg2)
+void CMP_Reg2WithReg1(unsigned int Reg1, unsigned int Reg2)
 {
-	WC8((unsigned char) (0x3A | OperandSize));
-	WC8((unsigned char) (0xC0 | (Reg1 << 3) | Reg2));
-
-	LOGGING_DYNA(LogDyna("	CMP %s, %s\n", RegNames[Reg2], RegNames[Reg1]);)
+	WC8(0x3B);
+	WC8( (0xC0 | (Reg1 << 3) | Reg2));
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void CMP_EAXWithImm(unsigned char OperandSize, unsigned long Data)
+void CMP_EAXWithImm(unsigned int OperandSize, unsigned int Data)
 {
-	WC8((unsigned char) (0x3C | OperandSize));
+	WC8( (0x3C | OperandSize));
 	WC32(Data);
 }
 
@@ -437,37 +335,25 @@ void CMP_EAXWithImm(unsigned char OperandSize, unsigned long Data)
  =======================================================================================================================
  =======================================================================================================================
  */
-void CMP_RegWithImm(unsigned char OperandSize, unsigned char Reg, unsigned long Data)
+void CMP_RegWithImm(unsigned int Reg, unsigned int Data)
 {
-	if(OperandSize == 1)
+	if(Data == 0)
+		CMP_RegWith0(Reg); 
+
+	if((Data < 128) || (Data >= (0xffffff80)))	// [-128 to 127] 
 	{
-		if(Data == 0)
-		{
-			if(Reg == Reg_EAX)
-			{
-				TEST_EAXWithEAX();
-				return;
-			}
-
-			TEST_Reg2WithReg1(1, Reg, Reg);
-			return;
-		}
-
-		if((Data < 128) || (Data >= (0xffffff80)))	/* [-128 to 127] */
-		{
-			CMP_sImm8WithReg(1, Reg, (unsigned char) Data);
-			return;
-		}
-
-		if(Reg == Reg_EAX)
-		{
-			CMP_EAXWithImm(1, Data);
-			return;
-		}
+		CMP_sImm8WithReg(1, Reg, (unsigned char) Data);
+		return;
 	}
 
-	WC8((unsigned char) (0x80 | OperandSize));
-	WC8((unsigned char) (0xF8 | Reg));
+	if(Reg == Reg_EAX)
+	{
+		CMP_EAXWithImm(1, Data);
+		return;
+	}
+
+	WC8(0x81);
+	WC8( (0xF8 | Reg));
 	WC32(Data);
 }
 
@@ -475,36 +361,25 @@ void CMP_RegWithImm(unsigned char OperandSize, unsigned char Reg, unsigned long 
  =======================================================================================================================
  =======================================================================================================================
  */
-void CMP_RegWithShort(unsigned char OperandSize, unsigned char Reg, unsigned char Data)
+void CMP_RegWith0(unsigned int Reg)
 {
-	if(OperandSize == 1)
+	if(Reg == Reg_EAX)
 	{
-		if(Data == 0)
-		{
-			if(Reg == Reg_EAX)
-			{
-				TEST_EAXWithEAX();
-				return;
-			}
-
-			TEST_Reg2WithReg1(1, Reg, Reg);
-			return;
-		}
+		TEST_EAXWithEAX();
+		return;
 	}
 
-	WC8((unsigned char) (0x82 | OperandSize));	/* assumed for now..verify */
-	WC8((unsigned char) (0xF8 | Reg));
-	WC8(Data);
+	TEST_Reg2WithReg1(Reg, Reg);
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void CMP_MemoryWithImm(unsigned char OperandSize, unsigned long dwAddress, unsigned long Data)
+void CMP_MemoryWithImm(unsigned int dwAddress, unsigned int Data)
 {
-	WC8((unsigned char) (0x80 | OperandSize));
-	WC8((unsigned char) 0x3D);
+	WC8(0x81);
+	WC8( 0x3D);
 	WC32(dwAddress);
 	WC32(Data);
 }
@@ -513,10 +388,10 @@ void CMP_MemoryWithImm(unsigned char OperandSize, unsigned long dwAddress, unsig
  =======================================================================================================================
  =======================================================================================================================
  */
-void CMP_RegWithMemory(unsigned char Reg, unsigned long dwAddress)
+void CMP_RegWithMemory(unsigned int Reg, unsigned int dwAddress)
 {
 	WC8(0x3B);
-	WC8((unsigned char) (0x05 | (Reg << 3)));
+	WC8( (0x05 | (Reg << 3)));
 	WC32(dwAddress);
 }
 
@@ -528,17 +403,15 @@ void FABS(void)
 {
 	WC8(0xd9);
 	WC8(0xe1);
-
-	LOGGING_DYNA(LogDyna("	FABS\n");)
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void FADD_Memory(unsigned char OperandSize, unsigned long dwAddress)
+void FADD_Memory(unsigned int OperandSize, unsigned int dwAddress)
 {
-	WC8((unsigned char) (0xD8 + OperandSize));
+	WC8( (0xD8 + OperandSize));
 	WC8(0x05);
 	WC32(dwAddress);
 }
@@ -549,7 +422,7 @@ void FADD_Memory(unsigned char OperandSize, unsigned long dwAddress)
  */
 void FCOMP(unsigned char OperandSize, unsigned long dwAddress)
 {
-	WC8((unsigned char) (0xD8 + OperandSize));
+	WC8( (0xD8 + OperandSize));
 	WC8(0x1D);
 	WC32(dwAddress);
 }
@@ -560,11 +433,8 @@ void FCOMP(unsigned char OperandSize, unsigned long dwAddress)
  */
 void FNSTSW(void)
 {
-	/* WC8(0x9B); why this ? */
 	WC8(0xDF);
 	WC8(0xE0);
-
-	LOGGING_DYNA(LogDyna("	FNSTSW\n");)
 }
 
 /*
@@ -573,7 +443,7 @@ void FNSTSW(void)
  */
 void FDIV_Memory(unsigned char OperandSize, unsigned long dwAddress)
 {
-	WC8((unsigned char) (0xD8 + OperandSize));
+	WC8( (0xD8 + OperandSize));
 	WC8(0x35);
 	WC32(dwAddress);
 }
@@ -582,46 +452,33 @@ void FDIV_Memory(unsigned char OperandSize, unsigned long dwAddress)
  =======================================================================================================================
  =======================================================================================================================
  */
+void FISTP_Memory(unsigned char OperandSize, unsigned long dwAddress)
+{
+	WC8( (0xDB + OperandSize));
+	
+    if (OperandSize == FORMAT_QUAD)
+    {
+        WC8(0x05+(8*7));
+	    WC32(dwAddress);
+    }
+    else
+    {
+        WC8(0x05+(8*3));
+	    WC32(dwAddress);
+    }
+}
+
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
 void FLD_Memory(unsigned char OperandSize, unsigned long dwAddress)
 {
-	WC8((unsigned char) (0xD9 + OperandSize));
+	WC8( (0xD9 + OperandSize));
 	WC8(0x05);
 	WC32(dwAddress);
 }
-
-
-void FLD(unsigned char OperandSize, unsigned char ModRM, unsigned long dwAddress)
-{
-	if (ModRM == ModRM_disp8_EBP)
-	{
-		WC8((unsigned char) (0xD9+OperandSize));
-		WC8((unsigned char) (0x45));
-		WC8((unsigned char) dwAddress);
-	}
-	else
-	{
-		WC8((unsigned char) (0xD9 + OperandSize));
-		WC8(0x05);
-		WC32(dwAddress);
-	}
-}
-
-void FSTP(unsigned char OperandSize, unsigned char ModRM, unsigned long dwAddress)
-{
-	if (ModRM == ModRM_disp8_EBP)
-	{
-		WC8((unsigned char) (0xD9+OperandSize));
-		WC8((unsigned char) (0x55+8));
-		WC8((unsigned char) dwAddress);
-	}
-	else
-	{
-		WC8((unsigned char) (0xd9 + OperandSize));
-		WC8(0x1d);
-		WC32(dwAddress);
-	}
-}
-
 
 /*
  =======================================================================================================================
@@ -638,21 +495,15 @@ void FLDCW_Memory(unsigned long dwAddress)
  =======================================================================================================================
  =======================================================================================================================
  */
-void FISTP_Memory(unsigned char OperandSize, unsigned long dwAddress)
-{
-	WC8(0xDB);
-	WC8(0x1D);
-	WC32(dwAddress);
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
 void FILD_Memory(unsigned char OperandSize, unsigned long dwAddress)
 {
-	WC8((unsigned char) (0xDB + OperandSize));
-	WC8(0x05);
+	WC8( (0xDB + OperandSize));
+	
+    if (OperandSize == FORMAT_QUAD)
+        WC8(0x2D);
+    else
+        WC8(0x05);
+
 	WC32(dwAddress);
 }
 
@@ -662,7 +513,7 @@ void FILD_Memory(unsigned char OperandSize, unsigned long dwAddress)
  */
 void FMUL_Memory(unsigned char OperandSize, unsigned long dwAddress)
 {
-	WC8((unsigned char) (0xD8 + OperandSize));
+	WC8( (0xD8 + OperandSize));
 	WC8(0x0d);
 	WC32(dwAddress);
 }
@@ -675,8 +526,6 @@ void FNEG(void)
 {
 	WC8(0xd9);
 	WC8(0xe0);
-
-	LOGGING_DYNA(LogDyna("	FNEG\n");)
 }
 
 /*
@@ -687,8 +536,6 @@ void FRNDINT(void)
 {
 	WC8(0xD9);
 	WC8(0xFC);
-
-	LOGGING_DYNA(LogDyna("	FRNDINT\n");)
 }
 
 /*
@@ -699,8 +546,6 @@ void FSQRT(void)
 {
 	WC8(0xd9);
 	WC8(0xfa);
-
-	LOGGING_DYNA(LogDyna("	FSQRT\n");)
 }
 
 /*
@@ -709,7 +554,7 @@ void FSQRT(void)
  */
 void FSTP_Memory(unsigned char OperandSize, unsigned long dwAddress)
 {
-	WC8((unsigned char) (0xd9 + OperandSize));
+	WC8( (0xd9 + OperandSize));
 	WC8(0x1d);
 	WC32(dwAddress);
 }
@@ -720,7 +565,7 @@ void FSTP_Memory(unsigned char OperandSize, unsigned long dwAddress)
  */
 void FSUB_Memory(unsigned char OperandSize, unsigned long dwAddress)
 {
-	WC8((unsigned char) (0xD8 + OperandSize));
+	WC8( (0xD8 + OperandSize));
 	WC8(0x25);
 	WC32(dwAddress);
 }
@@ -729,33 +574,21 @@ void FSUB_Memory(unsigned char OperandSize, unsigned long dwAddress)
  =======================================================================================================================
  =======================================================================================================================
  */
-void IMUL_EAXWithReg(unsigned char OperandSize, unsigned char Reg)
+void IMUL_EAXWithReg(unsigned int Reg)
 {
-	WC8((unsigned char) (0xF6 | OperandSize));
-	WC8((unsigned char) (0xE8 | Reg));
+	WC8(0xF7);
+	WC8( (0xE8 | Reg));
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void IMUL_EAXWithMemory(unsigned char OperandSize, unsigned long Address)
+void IMUL_EAXWithMemory(unsigned int OperandSize, unsigned int Address)
 {
-	WC8((unsigned char) (0xF6 | OperandSize));
-	WC8((unsigned char) (0x2D));
+	WC8( (0xF6 | OperandSize));
+	WC8( (0x2D));
 	WC32(Address);
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void IMUL_Reg2ToReg1(unsigned char Reg1, unsigned char Reg2)
-{
-	WC16(0xAF0F);
-	WC8((unsigned char) (0xC0 | (Reg1 << 3) | Reg2));
-
-	LOGGING_DYNA(LogDyna("	IMUL %s, %s\n", RegNames[Reg2], RegNames[Reg1]);)
 }
 
 /*
@@ -763,11 +596,12 @@ void IMUL_Reg2ToReg1(unsigned char Reg1, unsigned char Reg2)
     Incomplete..assumed: operandsize = 1
  =======================================================================================================================
  */
-void DEC_Reg(unsigned char OperandSize, unsigned char Reg)
+void DEC_Reg(unsigned int OperandSize, unsigned int Reg)
 {
+	
 	if(OperandSize == 1)
 	{
-		WC8((unsigned char) (0x48 | Reg));
+		WC8( (0x48 | Reg));
 	}
 	else
 	{
@@ -779,16 +613,16 @@ void DEC_Reg(unsigned char OperandSize, unsigned char Reg)
  =======================================================================================================================
  =======================================================================================================================
  */
-void INC_Reg(unsigned char OperandSize, unsigned char Reg)
+void INC_Reg(unsigned int OperandSize, unsigned int Reg)
 {
 	if(OperandSize == 1)
 	{
-		WC8((unsigned char) (0x40 | Reg));
+		WC8( (0x40 | Reg));
 	}
 	else
 	{
 		WC8(0xfe);
-		WC8((unsigned char) (0xc0 | Reg));
+		WC8( (0xc0 | Reg));
 	}
 }
 
@@ -796,10 +630,10 @@ void INC_Reg(unsigned char OperandSize, unsigned char Reg)
  =======================================================================================================================
  =======================================================================================================================
  */
-void DIV_EAXWithReg(unsigned char OperandSize, unsigned char Reg)
+void DIV_EAXWithReg(unsigned int OperandSize, unsigned int Reg)
 {
-	WC8((unsigned char) (0xF6 | OperandSize));
-	WC8((unsigned char) (0xF0 | Reg));
+	WC8( (0xF6 | OperandSize));
+	WC8( (0xF0 | Reg));
 }
 
 /*
@@ -808,8 +642,8 @@ void DIV_EAXWithReg(unsigned char OperandSize, unsigned char Reg)
  */
 void IDIV_EAXWithReg(unsigned char OperandSize, unsigned char Reg)
 {
-	WC8((unsigned char) (0xF6 | OperandSize));
-	WC8((unsigned char) (0xF8 | Reg));
+	WC8( (0xF6 | OperandSize));
+	WC8( (0xF8 | Reg));
 }
 
 /*
@@ -818,8 +652,8 @@ void IDIV_EAXWithReg(unsigned char OperandSize, unsigned char Reg)
  */
 void Jcc(unsigned char ConditionCode, unsigned char Offset)
 {
-	WC8((unsigned char) (0x70 | ConditionCode));
-	WC8((unsigned char) Offset);
+	WC8( (0x70 | ConditionCode));
+	WC8( Offset);
 }
 
 /*
@@ -830,8 +664,8 @@ void Jcc_auto(unsigned char ConditionCode, unsigned long Index)
 {
 	LOGGING_DYNA(LogDyna("	Jcc () to %i\n", Index);) 
 	
-	WC8((unsigned char) (0x70 | ConditionCode));
-	WC8((unsigned char) 0x00);
+	WC8( (0x70 | ConditionCode));
+	WC8( 0x00);
 	JumpTargets[Index] = compilerstatus.lCodePosition;
 }
 
@@ -841,10 +675,25 @@ void Jcc_auto(unsigned char ConditionCode, unsigned long Index)
  */
 __inline void Jcc_Near_auto(unsigned char ConditionCode, unsigned long Index)
 {
-	LOGGING_DYNA(LogDyna("	Jcc () to %i\n", Index);) WC8((unsigned char) (0x0F));
-	WC8((unsigned char) (0x80 | ConditionCode));
-	WC32(0x00000000);
+	LOGGING_DYNA(LogDyna("	Jcc () to %i\n", Index);) 
+		
+	WC8( (0x0F));
+	WC8( (0x80 | ConditionCode));
+	WC32(0x90909090);
 	JumpTargets[Index] = compilerstatus.lCodePosition;
+}
+
+int Jcc_Near(unsigned char ConditionCode, unsigned long dwAddress)
+{
+	unsigned __int32	wTemp;
+
+	wTemp = dwAddress - (unsigned __int32) (char *) &RecompCode[compilerstatus.lCodePosition] - 6;
+    WC8( (0x0F));
+	WC8( (0x80 | ConditionCode));
+    WC32(wTemp);
+    
+    return (int)(&dyna_RecompCode[compilerstatus.lCodePosition] - 4);
+
 }
 
 /*
@@ -853,13 +702,22 @@ __inline void Jcc_Near_auto(unsigned char ConditionCode, unsigned long Index)
  */
 void SetNearTarget(unsigned char bIndex)
 {
-	/*~~~~~~~~~~*/
 	int wPosition;
-	/*~~~~~~~~~~*/
 
 	LOGGING_DYNA(LogDyna("j_point %i:\n", bIndex););
 
+
 	wPosition = ((compilerstatus.lCodePosition - JumpTargets[bIndex]));
+    if (((_int32)JumpTargets[bIndex]) <= 4)
+    {
+//        __asm int 3;
+    }
+
+//00445DBA 8B 0C 85 80 D5 45 00 mov         ecx,dword ptr [eax*4+45D580h] 
+//00445DC1 8B 15 14 D7 45 00 mov         edx,dword ptr ds:[45D714h] 
+//00445DC7 8B 45 F8         mov         eax,dword ptr [ebp-8] 
+//00445DCA 89 44 0A FC      mov         dword ptr [edx+ecx-4],eax 
+    else
 	*(unsigned _int32 *) &RecompCode[JumpTargets[bIndex] - 4] = wPosition;
 }
 
@@ -869,8 +727,8 @@ void SetNearTarget(unsigned char bIndex)
  */
 void JMP_Short(unsigned char Offset)
 {
-	WC8((unsigned char) 0xEB);
-	WC8((unsigned char) Offset);
+	WC8( 0xEB);
+	WC8( Offset);
 }
 
 /*
@@ -879,8 +737,8 @@ void JMP_Short(unsigned char Offset)
  */
 void JMP_Short_auto(unsigned long Index)
 {
-	LOGGING_DYNA(LogDyna("	JMP_SHORT () to %i\n", Index);) WC8((unsigned char) 0xEB);
-	WC8((unsigned char) 0x00);
+	LOGGING_DYNA(LogDyna("	JMP_SHORT () to %i\n", Index);) WC8( 0xEB);
+	WC8( 0x00);
 	JumpTargets[Index] = compilerstatus.lCodePosition;
 }
 
@@ -911,160 +769,138 @@ void JMP_FAR(unsigned long dwAddress)
  =======================================================================================================================
  =======================================================================================================================
  */
-void LEA(unsigned char OperandSize, unsigned char Reg, unsigned char ModRM, unsigned long Address)
-{
-	WC8(0x8D);
-	Encode_Slash_R(Reg, ModRM, Address);
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void MOV_Reg2ToReg1(unsigned char OperandSize, unsigned char Reg1, unsigned char Reg2)
+void MOV_Reg2ToReg1(unsigned int Reg1, unsigned int Reg2)
 {
 	if(Reg1 == Reg2) return;
-	WC8((unsigned char) (0x8A | OperandSize));
-	WC8((unsigned char) (0xC0 | (Reg1 << 3) | Reg2));
-
-	LOGGING_DYNA(LogDyna("	MOV %s, %s\n", RegNames[Reg1], RegNames[Reg2]);)
+	WC8( 0x8B);
+	WC8( (0xC0 | (Reg1 << 3) | Reg2));
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void MOV_MemoryToReg(unsigned char OperandSize, unsigned char Reg, unsigned char ModRM, unsigned long Address)
+void MOV_MemoryToReg(unsigned int Reg, unsigned int ModRM, unsigned int Address)
 {
-	if((Reg == Reg_EAX) && (ModRM == ModRM_disp32))
+    if (ModRM  == (0xC0|Reg))
+    {
+        return;
+    }
+
+
+    
+    if((Reg == Reg_EAX) && (ModRM == ModRM_disp32))
 	{
-		MOV_MemoryToEAX(OperandSize, Address);
+		MOV_MemoryToEAX(Address);
 		return;
 	}
 
-	WC8((unsigned char) (0x8A | OperandSize));
+	WC8(0x8B);
 	Encode_Slash_R(Reg, ModRM, Address);
-
-	LOGGING_DYNA(LogDyna("	MOV %s, [0x%08X]\n", RegNames[Reg], Address);)
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void MOV_ModRMToReg(unsigned char OperandSize, unsigned char Reg, unsigned char ModRM)
+void MOV_ModRMToReg(unsigned int Reg, unsigned int ModRM)
 {
 	if(Reg == Reg_ESP || Reg == Reg_EBP)
 		DisplayError("Fix me in function MOV_ModRMToReg(), does not support ESP and EBP");
-	WC8((unsigned char) (0x8A | OperandSize));
-	WC8((unsigned char) ((Reg << 3) | ModRM));
-	LOGGING_DYNA(LogDyna("	MOV %s, [%s]\n", RegNames[Reg], RegNames[ModRM]);)
+	WC8(0x8B);
+	WC8( ((Reg << 3) | ModRM));
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void MOV_RegToModRM(unsigned char OperandSize, unsigned char Reg, unsigned char ModRM)
+void MOV_RegToModRM(unsigned int OperandSize, unsigned int Reg, unsigned int ModRM)
 {
 	if(Reg == Reg_ESP || Reg == Reg_EBP)
 		DisplayError("Fix me in function MOV_ModRMToReg(), does not support ESP and EBP");
-	WC8((unsigned char) (0x88 | OperandSize));
-	WC8((unsigned char) ((Reg << 3) | ModRM));
-	LOGGING_DYNA(LogDyna("	MOV [%s], %s\n", RegNames[ModRM], RegNames[Reg]);)
+	WC8( (0x88 | OperandSize));
+	WC8( ((Reg << 3) | ModRM));
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void MOVSX_MemoryToReg(unsigned char OperandSize, unsigned char Reg, unsigned char ModRM, unsigned long Address)
+void MOVSX_Memory8ToReg(unsigned int Reg, unsigned int ModRM, unsigned int Address)
 {
 	WC8(0x0F);
-	WC8((unsigned char) (0xBE | OperandSize));
-	WC8((unsigned char) (ModRM | (Reg << 3)));
+	WC8(0xBE);
+	WC8( (ModRM | (Reg << 3)));
 	if(Address != 0) WC32(Address);
-
-	LOGGING_DYNA(LogDyna("	MOVSX %s, [0x%08X]\n", RegNames[Reg], Address);)
 }
 
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void MOVZX_MemoryToReg(unsigned char OperandSize, unsigned char Reg, unsigned char ModRM, unsigned long Address)
+void MOVSX_Memory16ToReg(unsigned int Reg, unsigned int ModRM, unsigned int Address)
 {
 	WC8(0x0F);
-	WC8((unsigned char) (0xB6 | OperandSize));
-	WC8((unsigned char) (ModRM | (Reg << 3)));
+	WC8(0xBF);
+	WC8( (ModRM | (Reg << 3)));
 	if(Address != 0) WC32(Address);
-
-	LOGGING_DYNA(LogDyna("	MOVSX %s, [0x%08X]\n", RegNames[Reg], Address);)
 }
+
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void MOV_MemoryToEAX(unsigned char OperandSize, unsigned long Address)
+void MOVZX_Memory8ToReg(unsigned int Reg, unsigned int ModRM, unsigned int Address)
 {
-	WC8((unsigned char) (0xA0 | OperandSize));
+	WC8(0x0F);
+	WC8(0xB6);
+	WC8( (ModRM | (Reg << 3)));
+	if(Address != 0) WC32(Address);
+}
+
+void MOVZX_Memory16ToReg(unsigned int Reg, unsigned int ModRM, unsigned int Address)
+{
+	WC8(0x0F);
+	WC8(0xB7);
+	WC8( (ModRM | (Reg << 3)));
+	if(Address != 0) WC32(Address);
+}
+
+
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void MOV_MemoryToEAX(unsigned int Address)
+{
+	WC8(0xA1);
 	WC32(Address);
 }
 
 /*
  =======================================================================================================================
-    1964 uses ebp as a ponter to the middle of the Mips GPR array in memory. £
-    Address can also represent displacement.
+    1964 uses ebp as a ponter to the middle of the Mips GPR array in memory. ?    Address can also represent displacement.
  =======================================================================================================================
  */
-void MOV_RegToMemory(unsigned char OperandSize, unsigned char Reg, unsigned char ModRM, unsigned long Address)
+void MOV_RegToMemory(unsigned int OperandSize, unsigned int Reg, unsigned int ModRM, unsigned int Address)
 {
-	if((Reg == Reg_EAX) && (ModRM == ModRM_disp32))
+    
+    if((Reg == Reg_EAX) && (ModRM == ModRM_disp32))
 	{
 		MOV_EAXToMemory(OperandSize, Address);
 		return;
 	}
 
-	WC8((unsigned char) (0x88 | OperandSize));
+	WC8( (0x88 | OperandSize));
 	Encode_Slash_R(Reg, ModRM, Address);
-
-	LOGGING_DYNA(LogDyna("	MOV [0x%08X],%s\n", Address, RegNames[Reg]);)
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void MOV_RegToMemory2(unsigned char OperandSize, unsigned char Reg, unsigned char ModRM, unsigned long Address)
+void MOV_EAXToMemory(unsigned int OperandSize, unsigned int Address)
 {
-	WC8((unsigned char) (0x88 | OperandSize));
-	WC8((unsigned char) (0x80 | ModRM | (Reg << 3)));
-	WC32(Address);
-
-	LOGGING_DYNA(LogDyna("	MOV [0x%08X],%s\n", Address, RegNames[Reg]);)
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void MOV_MemoryToReg2(unsigned char OperandSize, unsigned char Reg, unsigned char ModRM, unsigned long Address)
-{
-	WC8((unsigned char) (0x8a | OperandSize));
-	WC8((unsigned char) (0x80 | ModRM | (Reg << 3)));
-	WC32(Address);
-
-	LOGGING_DYNA(LogDyna("	MOV %s, [0x%08X]\n", RegNames[Reg], Address);)
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void MOV_EAXToMemory(unsigned char OperandSize, unsigned long Address)
-{
-	WC8((unsigned char) (0xA2 | OperandSize));
+	WC8( (0xA2 | OperandSize));
 	WC32(Address);
 }
 
@@ -1072,42 +908,22 @@ void MOV_EAXToMemory(unsigned char OperandSize, unsigned long Address)
  =======================================================================================================================
  =======================================================================================================================
  */
-void MOV_ImmToReg(unsigned char OperandSize, unsigned char Reg, unsigned long Data)
+void MOV_ImmToReg(unsigned int Reg, unsigned int Data)
 {
-	if(OperandSize == 1)
+	if(Data == 0)
 	{
-		if(Data == 0)
-		{
-			XOR_Reg2ToReg1(1, Reg, Reg);
-			return;
-		}
-
-		if(Data == 1)
-		{
-			XOR_Reg2ToReg1(1, Reg, Reg);
-			INC_Reg(1, Reg);
-			return;
-		}
-
-		if ((Data < 128) || (Data >= 0xffffff80)) /* [-128 to 127] */
-		{
-			XOR_Reg2ToReg1(1, Reg, Reg);
-			OR_ShortToReg(1, Reg, (unsigned char) Data);
-			return;
-		}
+		XOR_Reg2ToReg1(Reg, Reg);
+		return;
 	}
 
-	WC8((unsigned char) (0xB0 | (OperandSize << 3) | Reg));
-	if(OperandSize == 0)
+	if (Data == -1)
 	{
-		WC8((unsigned char) Data);
-	}
-	else
-	{
-		WC32(Data);
+		OR_ImmToReg(Reg, 0xFFFFFFFF, 0);
+		return;
 	}
 
-	LOGGING_DYNA(LogDyna("	MOV %s, 0x%08X\n", RegNames[Reg], Data);)
+	WC8(0xB8 | Reg);
+	WC32(Data);
 }
 
 /*
@@ -1116,19 +932,20 @@ void MOV_ImmToReg(unsigned char OperandSize, unsigned char Reg, unsigned long Da
  */
 void MOV_ImmToMemory(unsigned char OperandSize, unsigned char ModRM, unsigned long Address, unsigned long Data)
 {
-	WC8((unsigned char) (0xC6 | OperandSize));
+	WC8( (0xC6 | OperandSize));
 	if((ModRM >= ModRM_disp8_EAX) && (ModRM <= ModRM_disp8_EDI))
 	{
-		if((Address == 0) && (ModRM != ModRM_disp8_EBP) && (ModRM != ModRM_disp8_SIB)) ModRM -= 0x40;
-		WC8((unsigned char) (ModRM));
+		if((Address == 0) && (ModRM != ModRM_disp8_EBP) && (ModRM != ModRM_disp8_SIB)) 
+			ModRM -= 0x40;
+		WC8( (ModRM));
 		if((Address == 0) && (ModRM == ModRM_EBP))
 			WC8(0x28);
 		else
-			WC8((unsigned char) Address);
+			WC8( Address);
 	}
 	else
 	{
-		WC8((unsigned char) (ModRM));
+		WC8( (ModRM));
 		if(Address != 0) WC32(Address);
 	}
 
@@ -1136,56 +953,27 @@ void MOV_ImmToMemory(unsigned char OperandSize, unsigned char ModRM, unsigned lo
 		WC32(Data);
 	else
 		WC8((unsigned __int8) (Data));
-
-	LOGGING_DYNA(LogDyna("	MOV [0x%08X], 0x%08x\n", Address, Data);)
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void MOVSX_Reg2ToReg1(unsigned char OperandSize, unsigned char Reg1, unsigned char Reg2)
+void MUL_EAXWithReg(unsigned int Reg)
 {
-	WC8((unsigned char) 0x0F);
-	WC8((unsigned char) (0xBE | OperandSize));
-	WC8((unsigned char) (0xC0 | (Reg1 << 3) | Reg2));
-
-	LOGGING_DYNA(LogDyna("	MOVSX %s, %s\n", RegNames[Reg1], RegNames[Reg2]);)
+	WC8(0xF7);
+	WC8( (0xE0 | Reg));
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void MOVZX_Reg2ToReg1(unsigned char OperandSize, unsigned char Reg1, unsigned char Reg2)
+void MUL_EAXWithMemory(unsigned int OperandSize, unsigned int Address)
 {
-	WC8((unsigned char) 0x0F);
-	WC8((unsigned char) (0xB6 | OperandSize));
-	WC8((unsigned char) (0xC0 | (Reg1 << 3) | Reg2));
-	LOGGING_DYNA(LogDyna("	MOVZX %s, %s\n", RegNames[Reg1], RegNames[Reg2]);)
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void MUL_EAXWithReg(unsigned char OperandSize, unsigned char Reg)
-{
-	WC8((unsigned char) (0xF6 | OperandSize));
-	WC8((unsigned char) (0xE0 | Reg));
-	LOGGING_DYNA(LogDyna("	MUL EAX, %s\n", RegNames[Reg]);)
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void MUL_EAXWithMemory(unsigned char OperandSize, unsigned long Address)
-{
-	WC8((unsigned char) (0xF6 | OperandSize));
-	WC8((unsigned char) (0x25));
+	WC8( (0xF6 | OperandSize));
+	WC8( (0x25));
 	WC32(Address);
-	LOGGING_DYNA(LogDyna("	MUL EAX, [0x%08x]\n", Address);)
 }
 
 /*
@@ -1194,20 +982,18 @@ void MUL_EAXWithMemory(unsigned char OperandSize, unsigned long Address)
  */
 void NEG_Reg(unsigned char OperandSize, unsigned char Reg)
 {
-	WC8((unsigned char) (0xF6 | OperandSize));
-	WC8((unsigned char) (0xD8 | Reg));
-	LOGGING_DYNA(LogDyna("	NEG %s\n", RegNames[Reg]);)
+	WC8( (0xF6 | OperandSize));
+	WC8( (0xD8 | Reg));
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void NOT_Reg(unsigned char OperandSize, unsigned char Reg)
+void NOT_Reg(unsigned int OperandSize, unsigned int Reg)
 {
-	WC8((unsigned char) (0xF6 | OperandSize));
-	WC8((unsigned char) (0xD0 | Reg));
-	LOGGING_DYNA(LogDyna("	NOT %s\n", RegNames[Reg]);)
+	WC8( (0xF6 | OperandSize));
+	WC8( (0xD0 | Reg));
 }
 
 /*
@@ -1216,57 +1002,45 @@ void NOT_Reg(unsigned char OperandSize, unsigned char Reg)
  */
 void NOP(void)
 {
-	WC8((unsigned char) 0x90);
-
-	LOGGING_DYNA(LogDyna("	NOP\n");)
+	WC8( 0x90);
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void OR_ImmToEAX(unsigned char OperandSize, unsigned long Data)
+void OR_ImmToEAX(unsigned int OperandSize, unsigned int Data)
 {
-	WC8((unsigned char) (0x0C | OperandSize));
+	WC8( (0x0C | OperandSize));
 	if(OperandSize == 0)
-		WC8((unsigned char) Data);
+		WC8( Data);
 	else
 		WC32(Data);
-
-	LOGGING_DYNA(LogDyna("	OR EAX, 0x%08X\n", Data);)
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void OR_ImmToReg(unsigned char OperandSize, unsigned char Reg, unsigned long Data)
+void OR_ImmToReg(unsigned int Reg, unsigned int Data, unsigned int FlagsMatter)
 {
-	if(Data == 0) return;
+	if((Data == 0)&&(!FlagsMatter)) return;
 
-	if(OperandSize == 1)
+	if((Data < 128) || (Data >= (0xffffff80)))	/* [-128 to 127] */
 	{
-		if((Data < 128) || (Data >= (0xffffff80)))	/* [-128 to 127] */
-		{
-			OR_ShortToReg(1, Reg, (unsigned char) Data);
-			return;
-		}
+		OR_ShortToReg(Reg, Data);
+		return;
 	}
 
 	if(Reg == Reg_EAX)
 	{
-		OR_ImmToEAX(OperandSize, Data);
+		OR_ImmToEAX(1, Data);
 		return;
 	}
 
-	WC8((unsigned char) (0x80 | OperandSize));
-	WC8((unsigned char) (0xC8 | Reg));
-	if(OperandSize != 0)
-		WC32(Data);
-	else
-		WC8((unsigned char) (Data & 0xFF));
-
-	LOGGING_DYNA(LogDyna("	OR %s, 0x%08X\n", RegNames[Reg], Data);)
+	WC8(0x81);
+	WC8( (0xC8 | Reg));
+	WC32(Data);
 }
 
 /*
@@ -1275,21 +1049,17 @@ void OR_ImmToReg(unsigned char OperandSize, unsigned char Reg, unsigned long Dat
  */
 void OR_RegToMemory(unsigned char OperandSize, unsigned char Reg, unsigned char ModRM, unsigned long Address)
 {
-	WC8((unsigned char) (0x0A | OperandSize));
+	WC8( (0x0A | OperandSize));
 	Encode_Slash_R(Reg, ModRM, Address);
-
-	LOGGING_DYNA(LogDyna("	MOV [0x%08X],%s\n", Address, RegNames[Reg]);)
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void POP_RegFromStack(unsigned char Reg)
+void POP_RegFromStack(unsigned int Reg)
 {
-	WC8((unsigned char) (0x58 | Reg));
-
-	LOGGING_DYNA(LogDyna("	POP %s\n", RegNames[Reg]);)
+	WC8( (0x58 | Reg));
 }
 
 /*
@@ -1298,10 +1068,8 @@ void POP_RegFromStack(unsigned char Reg)
  */
 void POPA(void)
 {
-	WC8((unsigned char) 0x66);
-	WC8((unsigned char) 0x61);
-
-	LOGGING_DYNA(LogDyna("	POPA\n");)
+	WC8( 0x66);
+	WC8( 0x61);
 }
 
 /*
@@ -1310,20 +1078,16 @@ void POPA(void)
  */
 void POPAD(void)
 {
-	WC8((unsigned char) 0x61);
-
-	LOGGING_DYNA(LogDyna("	POPAD\n");)
+	WC8( 0x61);
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void PUSH_RegToStack(unsigned char Reg)
+void PUSH_RegToStack(unsigned int Reg)
 {
-	WC8((unsigned char) (0x50 | Reg));
-
-	LOGGING_DYNA(LogDyna("	PUSH %s\n", RegNames[Reg]);)
+	WC8( (0x50 | Reg));
 }
 
 /*
@@ -1334,8 +1098,6 @@ void PUSH_WordToStack(unsigned __int32 wWord)
 {
 	WC8(0x68);
 	WC32(wWord);
-
-	LOGGING_DYNA(LogDyna("	PUSH 0x%08X\n", wWord);)
 }
 
 /*
@@ -1344,10 +1106,8 @@ void PUSH_WordToStack(unsigned __int32 wWord)
  */
 void PUSHA(void)
 {
-	WC8((unsigned char) 0x66);
-	WC8((unsigned char) 0x60);
-
-	LOGGING_DYNA(LogDyna("	PUSHAA\n");)
+	WC8( 0x66);
+	WC8( 0x60);
 }
 
 /*
@@ -1356,9 +1116,12 @@ void PUSHA(void)
  */
 void PUSHAD(void)
 {
-	WC8((unsigned char) 0x60);
+	WC8( 0x60);
+}
 
-	LOGGING_DYNA(LogDyna("	PUSHADA\n");)
+void RDTSC(void)
+{
+	WC16(0x310f);
 }
 
 /*
@@ -1367,9 +1130,7 @@ void PUSHAD(void)
  */
 void RET(void)
 {
-	WC8((unsigned char) 0xC3);
-
-	LOGGING_DYNA(LogDyna("	RET\n");)
+	WC8( 0xC3);
 }
 
 /*
@@ -1379,43 +1140,39 @@ void RET(void)
 void SAHF(void)
 {
 	WC8(0x9e);
-
-	LOGGING_DYNA(LogDyna("	SAHF\n");)
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void SETcc_Reg(unsigned char ConditionCode, unsigned char Reg)
+void SETcc_Reg(unsigned int ConditionCode, unsigned int Reg)
 {
-	WC8((unsigned char) 0x0F);
-	WC8((unsigned char) (0x90 | ConditionCode));
-	WC8((unsigned char) (0xC0 | Reg));
-	LOGGING_DYNA(LogDyna("	SET cc %s\n", RegNames[Reg]);)
+	WC8( 0x0F);
+	WC8( (0x90 | ConditionCode));
+	WC8( (0xC0 | Reg));
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void SAR_RegByCL(unsigned char OperandSize, unsigned char Reg)
+void SAR_RegByCL(unsigned int Reg)
 {
-	WC8((unsigned char) (0xD2 | OperandSize));
-	WC8((unsigned char) (0xF8 | Reg));
-	LOGGING_DYNA(LogDyna("	SAR %s,CL\n", RegNames[Reg]);)
+	WC8(0xD3);
+	WC8( (0xF8 | Reg));
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void SHL_RegByImm(unsigned char OperandSize, unsigned char Reg, unsigned char Data)
+void SHL_RegByImm(unsigned int Reg, unsigned int Data)
 {
 	if(Data == 0) return;
 	if(Data == 1)
 	{
-		ADD_Reg2ToReg1(1, Reg, Reg);
+		ADD_Reg2ToReg1(Reg, Reg);
 		return;
 	}
 
@@ -1439,115 +1196,95 @@ void SHL_RegByImm(unsigned char OperandSize, unsigned char Reg, unsigned char Da
 		return;
 	}
 
-	WC8((unsigned char) (0xC0 | OperandSize));
-	WC8((unsigned char) (0xE0 | Reg));
-	WC8((unsigned char) Data);
-	LOGGING_DYNA(LogDyna("	SHL %s,%d\n", RegNames[Reg], Data);)
+	WC8(0xC1);
+	WC8( (0xE0 | Reg));
+	WC8( Data);
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void SHR_RegByImm(unsigned char OperandSize, unsigned char Reg, unsigned char Data)
+void SHR_RegByImm(unsigned int Reg, unsigned int Data)
 {
 	if(Data == 0) return;
 	if(Data == 1)
 	{
-		SHR_RegBy1(OperandSize, Reg);
+		SHR_RegBy1(Reg);
 		return;
 	}
 
-	WC8((unsigned char) (0xC0 | OperandSize));
-	WC8((unsigned char) (0xE8 | Reg));
-	WC8((unsigned char) Data);
-	LOGGING_DYNA(LogDyna("	SHR %s,%d\n", RegNames[Reg], Data);)
+	WC8(0xC1);
+	WC8( (0xE8 | Reg));
+	WC8( Data);
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void SAR_RegByImm(unsigned char OperandSize, unsigned char Reg, unsigned char Data)
+void SAR_RegByImm(unsigned int Reg, unsigned int Data)
 {
 	if(Data == 0) return;
 	if(Data == 1)
 	{
-		SAR_RegBy1(OperandSize, Reg);
+		SAR_RegBy1(Reg);
 		return;
 	}
 
-	WC8((unsigned char) (0xC0 | OperandSize));
-	WC8((unsigned char) (0xF8 | Reg));
-	WC8((unsigned char) Data);
-	LOGGING_DYNA(LogDyna("	SAR %s,%d\n", RegNames[Reg], Data);)
+	WC8(0xC1);
+	WC8( (0xF8 | Reg));
+	WC8( Data);
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void SHL_RegBy1(unsigned char OperandSize, unsigned char Reg)
+void SHR_RegBy1(unsigned int Reg)
 {
-	ADD_Reg2ToReg1(1, Reg, Reg);
-
-	LOGGING_DYNA(LogDyna("	SHL %s,1\n", RegNames[Reg]);)
+	WC8(0xD1);
+	WC8( (0xE8 | Reg));
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void SHR_RegBy1(unsigned char OperandSize, unsigned char Reg)
+void SAR_RegBy1(unsigned char Reg)
 {
-	WC8((unsigned char) (0xD0 | OperandSize));
-	WC8((unsigned char) (0xE8 | Reg));
-	LOGGING_DYNA(LogDyna("	SHR %s,1\n", RegNames[Reg]);)
+	WC8(0xD1);
+	WC8( (0xF8 | Reg));
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void SAR_RegBy1(unsigned char OperandSize, unsigned char Reg)
+void SHL_RegByCL(unsigned int Reg)
 {
-	WC8((unsigned char) (0xD0 | OperandSize));
-	WC8((unsigned char) (0xF8 | Reg));
-	LOGGING_DYNA(LogDyna("	SAR %s,1\n", RegNames[Reg]);)
+	WC8(0xD3);
+	WC8( (0xE0 | Reg));
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void SHL_RegByCL(unsigned char OperandSize, unsigned char Reg)
+void SHR_RegByCL(unsigned int Reg)
 {
-	WC8((unsigned char) (0xD2 | OperandSize));
-	WC8((unsigned char) (0xE0 | Reg));
-	LOGGING_DYNA(LogDyna("	SHL %s,CL\n", RegNames[Reg]);)
+	WC8(0xD3);
+	WC8( (0xE8 | Reg));
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void SHR_RegByCL(unsigned char OperandSize, unsigned char Reg)
+void SUB_Reg1OfReg2(unsigned int Reg1, unsigned int Reg2)
 {
-	WC8((unsigned char) (0xD2 | OperandSize));
-	WC8((unsigned char) (0xE8 | Reg));
-	LOGGING_DYNA(LogDyna("	SHR %s,CL\n", RegNames[Reg]);)
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void SUB_Reg1OfReg2(unsigned char OperandSize, unsigned char Reg1, unsigned char Reg2)
-{
-	WC8((unsigned char) (0x28 | OperandSize));
-	WC8((unsigned char) (0xC0 | (Reg1 << 3) | Reg2));
-
-	LOGGING_DYNA(LogDyna("	SUB %s, %s\n", RegNames[Reg1], RegNames[Reg2]);)
+	WC8(0x29);
+	WC8( (0xC0 | (Reg1 << 3) | Reg2));
 }
 
 /*
@@ -1556,10 +1293,34 @@ void SUB_Reg1OfReg2(unsigned char OperandSize, unsigned char Reg1, unsigned char
  */
 void DEC_Memory(unsigned char OperandSize, unsigned long Address)
 {
-	WC8((unsigned char) (0xFE | OperandSize));
+
+	WC8( (0xFE | OperandSize));
 	WC8(0x0D);	/* Disp32 */
 	WC32(Address);
-	LOGGING_DYNA(LogDyna("	DEC [0x%x]\n", Address);)
+}
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void ADD_ImmToMemory(unsigned long Address, unsigned long Data)
+{
+//    if (Data == -1) {DEC_Memory(1, Address); return;} //not worth the trouble.
+
+		if((Data < 128) || (Data >= (0xffffff80)))	/* [-128 to 127] */
+		{
+            WC8( 0x83);
+        	WC8( 0x05);
+        	WC32(Address);
+            WC8( Data);
+        }
+        else
+        {
+            WC8( 0x81);
+        	WC8( 0x05);
+        	WC32(Address);
+        	WC32((unsigned long) (Data));
+        }
 }
 
 /*
@@ -1569,9 +1330,20 @@ void DEC_Memory(unsigned char OperandSize, unsigned long Address)
  */
 void SUB_ImmToMemory(unsigned long Address, unsigned long Data)
 {
-	ADD_ImmToMemory(Address, (uint32) (-(_int32) Data));
-
-	LOGGING_DYNA(LogDyna(" SUB [0x%08X], 0x%08x\n", Address, Data);)
+		if((Data < 128) || (Data >= (0xffffff80)))	/* [-128 to 127] */
+		{
+            WC8( 0x83);
+        	WC8( 0x2D);
+        	WC32(Address);
+            WC8( Data);
+        }
+        else
+        {
+            WC8( 0x81);
+        	WC8( 0x2D);
+        	WC32(Address);
+        	WC32((unsigned long) (Data));
+        }
 }
 
 /*
@@ -1584,18 +1356,6 @@ __inline void TEST_ImmWithMemory(unsigned long dwAddress, unsigned long Value)
 	WC8(0x05);
 	WC32(dwAddress);
 	WC32(Value);
-	LOGGING_DYNA(LogDyna("	TEST [0x%08x], 0x%08x\n", dwAddress, Value);)
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void TEST_EAXWithImm(unsigned char OperandSize, unsigned long dwAddress)
-{
-	WC8((unsigned char) (0xa8 | OperandSize));
-	WC32(dwAddress);
-	LOGGING_DYNA(LogDyna("	TEST EAX, 0x%08x\n", dwAddress);)
 }
 
 /*
@@ -1606,113 +1366,81 @@ void TEST_EAXWithEAX(void)
 {
 	WC8(0x85);
 	WC8(0xc0);
-
-	LOGGING_DYNA(LogDyna("	TEST EAX, EAX\n");)
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void TEST_Reg2WithReg1(unsigned char OperandSize, unsigned char Reg1, unsigned char Reg2)
+void TEST_Reg2WithReg1(unsigned char Reg1, unsigned char Reg2)
 {
-	if((Reg2 == Reg1) && (Reg1 == Reg_EAX))
+	if(Reg2 == Reg1)
 	{
-		TEST_EAXWithEAX();
-		return;
+		if
+		(Reg1 == Reg_EAX)
+		{
+			TEST_EAXWithEAX();
+		}
+		else
+		{
+			//ex: AND ecx, ecx (faster)
+			//Do not call AND_Reg2ToReg1() because it is designed to return
+			//when the operands are the same
+			WC8(0x23);
+			WC8( (0xC0 | (Reg1 << 3) | Reg2));
+		}
 	}
-
-	WC8((unsigned char) (0x84 | OperandSize));
-	WC8((unsigned char) (0xC0 | (Reg1 << 3) | Reg2));
-	LOGGING_DYNA(LogDyna("	TEST %s, %s\n", RegNames[Reg1], RegNames[Reg2]);)
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void TEST_RegWithImm(unsigned char OperandSize, unsigned char iReg, unsigned long dwAddress)
-{
-	WC8((unsigned char) (0xf6 | OperandSize));
-	WC8((unsigned char) (0xc0 | iReg));
-	WC32(dwAddress);
-	LOGGING_DYNA(LogDyna("	TEST %s, 0x%08x\n", RegNames[iReg], dwAddress);)
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void XCHG_Reg1WithReg2(unsigned char OperandSize, unsigned char Reg1, unsigned char Reg2)
-{
-	if(Reg1 == Reg2) return;	/* Note: if you are padding, do it manually with WC16() */
-	WC8((unsigned char) (0x86 | OperandSize));
-	WC8((unsigned char) (0xC0 | (Reg1 << 3) | Reg2));
-
-	LOGGING_DYNA(LogDyna("	XCHG %s, %s\n", RegNames[Reg1], RegNames[Reg2]);)
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-void XOR_ImmToEAX(unsigned char OperandSize, unsigned long Data)
-{
-	WC8((unsigned char) (0x34 | OperandSize));
-
-	if(OperandSize == 0)
-		WC8((unsigned char) Data);
 	else
-		WC32(Data);
-
-	LOGGING_DYNA(LogDyna("	OR EAX, 0x%08X\n", Data);)
+	{
+		WC8(0x85);
+		WC8( (0xC0 | (Reg1 << 3) | Reg2));
+	}
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void XOR_Reg2ToReg1(unsigned char OperandSize, unsigned char Reg1, unsigned char Reg2)
+void XOR_ImmToEAX(unsigned long Data)
 {
-	WC8((unsigned char) (0x32 | OperandSize));
-	WC8((unsigned char) (0xC0 | (Reg1 << 3) | Reg2));
-
-	LOGGING_DYNA(LogDyna("	XOR %s, %s\n", RegNames[Reg1], RegNames[Reg2]);)
+	WC8(0x35);
+	WC32(Data);
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void XOR_ImmToReg(unsigned char OperandSize, unsigned char Reg, unsigned long Data)
+void XOR_Reg2ToReg1(unsigned int Reg1, unsigned int Reg2)
 {
-	if(Data == 0) return;
+    WC8(0x33);
+    WC8( (0xC0 | (Reg1 << 3) | Reg2));
+}
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void XOR_ImmToReg(unsigned int Reg, unsigned int Data, unsigned int FlagsMatter)
+{
+	if((Data == 0)&&(!FlagsMatter)) return;
 
 	if((Data < 128) || (Data >= (0xffffff80)))	/* [-128 to 127] */
 	{
-		XOR_ShortToReg(OperandSize, Reg, (unsigned char) Data);
+		XOR_ShortToReg(Reg, (unsigned char) Data);
 		return;
 	}
 
 	if(Reg == Reg_EAX)
 	{
-		XOR_ImmToEAX(OperandSize, Data);
+		XOR_ImmToEAX(Data);
 		return;
 	}
 
 	/* Normal execution */
-	WC8((unsigned char) (0x80 | OperandSize));
-	WC8((unsigned char) (0xF0 | Reg));
-	if(OperandSize == 0)
-	{
-		WC8((unsigned char) Data);
-	}
-	else
-	{
-		WC32(Data);
-	}
-
-	LOGGING_DYNA(LogDyna("	XOR %s, 0x%08X\n", RegNames[Reg], Data);)
+	WC8(0x81);
+	WC8( (0xF0 | Reg));
+	WC32(Data);
 }
 
 /*
@@ -1720,108 +1448,122 @@ void XOR_ImmToReg(unsigned char OperandSize, unsigned char Reg, unsigned long Da
     When OperandSize is 0, this doesn't sign extend.
  =======================================================================================================================
  */
-void OR_ShortToReg(unsigned char OperandSize, unsigned char Reg, unsigned char Data)
+void OR_ShortToReg(unsigned int Reg, unsigned int Data)
 {
-	WC8((unsigned char) (0x80 | (OperandSize * 3)));
-	WC8((unsigned char) (0xC8 | Reg));
-	WC8((unsigned char) Data);
-
-	LOGGING_DYNA(LogDyna("\tOR %s, 0x%02X\n", RegNames[Reg], Data);)
+	WC8(0x83);
+	WC8( (0xC8 | Reg));
+	WC8( Data);
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void XOR_ShortToReg(unsigned char OperandSize, unsigned char Reg, unsigned char Data)
+void XOR_ShortToReg(unsigned int Reg, unsigned int Data)
 {
-	WC8((unsigned char) (0x80 | (OperandSize * 3)));
-	WC8((unsigned char) (0xF0 | Reg));
-	WC8((unsigned char) Data);
-
-	LOGGING_DYNA(LogDyna("	XOR %s, 0x%02X\n", RegNames[Reg], Data););
+	WC8(0x83);
+	WC8( (0xF0 | Reg));
+	WC8( Data);
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void AND_Reg2ToReg1(unsigned char OperandSize, unsigned char Reg1, unsigned char Reg2)
+void AND_Reg2ToReg1(unsigned int Reg1, unsigned int Reg2)
 {
 	if(Reg2 == Reg1) return;	/* Note: for testing, use TEST. */
-	WC8((unsigned char) (0x22 | OperandSize));
-	WC8((unsigned char) (0xC0 | (Reg1 << 3) | Reg2));
-
-	LOGGING_DYNA(LogDyna(" AND %s, %s\n", RegNames[Reg1], RegNames[Reg2]);)
+	WC8(0x23);
+	WC8( (0xC0 | (Reg1 << 3) | Reg2));
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void OR_Reg2ToReg1(unsigned char OperandSize, unsigned char Reg1, unsigned char Reg2)
+void OR_Reg2ToReg1(unsigned int Reg1, unsigned int Reg2)
 {
 	if(Reg2 == Reg1) return;
-	WC8((unsigned char) (0x0A | OperandSize));
-	WC8((unsigned char) (0xC0 | (Reg1 << 3) | Reg2));
-
-	LOGGING_DYNA(LogDyna(" AND %s, %s\n", RegNames[Reg1], RegNames[Reg2]);)
+	WC8(0x0B);
+	WC8( (0xC0 | (Reg1 << 3) | Reg2));
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void ADD_Imm8sxToReg(unsigned char OperandSize, unsigned char Reg, unsigned char Data)
+void ADD_Imm8sxToReg(unsigned int Reg, unsigned char Data)
 {
-	WC8((unsigned char) (0x83));
-	WC8((unsigned char) (0xC0 | Reg));
-	WC8((unsigned char) Data);
-
-	LOGGING_DYNA(LogDyna("	ADD %s, 0x%02X\n", RegNames[Reg], Data););
+//    if (Data == 1) {INC_Reg(1, Reg); return;}
+//    if (Data == 0xFF) {DEC_Reg(1, Reg); return;}
+    
+	WC8( (0x83));
+	WC8( (0xC0 | Reg));
+	WC8( Data);
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void ROL_RegByImm(unsigned char OperandSize, unsigned char Reg, unsigned char Data)
+void SUB_Imm8sxToReg(unsigned int Reg, unsigned char Data, int FlagsMatter)
 {
-	WC8((unsigned char) (0xC0 | OperandSize));
+    if (!FlagsMatter)
+    {
+        if (Data == 0xFF) {INC_Reg(1, Reg); return;}
+        if (Data == 1) {DEC_Reg(1, Reg); return;}
+    }
+
+	WC8(0x83);
+	WC8( (0xE8 | Reg));
+	WC8( Data);
+}
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void Calculate_ModRM_Byte_Via_Slash_Digit(int SlashDigit)
+{
+	x86params.ModRM |= (SlashDigit << 3);
+}
+
+
+/*
+ =======================================================================================================================
+ =======================================================================================================================
+ */
+void ROL_RegByImm(unsigned int Reg, unsigned int Data)
+{
+	WC8(0xC1);
 	x86params.ModRM = 0xC0 | Reg;
 	Calculate_ModRM_Byte_Via_Slash_Digit(0);
-	WC8((unsigned char) (x86params.ModRM));
-
-	/* WC8((unsigned char)Address); */
-	WC8((unsigned char) Data);
+	WC8(x86params.ModRM);
+	WC8(Data);
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void AND_Imm8sxToMemory(unsigned char Data, unsigned long Address)
+void AND_Imm8sxToMemory(unsigned int Data, unsigned int Address)
 {
-	WC8((unsigned char) (0x83));
+	WC8(0x83);
 	Calculate_ModRM_Byte_Via_Slash_Digit(4);
-	WC8((unsigned char) (x86params.ModRM));
-	WC8((unsigned char) Address);
-	WC8((unsigned char) Data);
-
-	/* LOGGING_DYNA(LogDyna(" ADD %s, 0x%02X\n", RegNames[Reg], Data);); */
+	WC8( (x86params.ModRM));
+	WC8( Address);
+	WC8( Data);
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void AND_Imm8sxToReg(unsigned char OperandSize, unsigned char Reg, unsigned char Data)
+void AND_Imm8sxToReg(unsigned int Reg, unsigned int Data)
 {
-	WC8((unsigned char) (0x80 | (OperandSize * 3)));
-	WC8((unsigned char) (0xE0 | Reg));
-	WC8((unsigned char) Data);
-
-	LOGGING_DYNA(LogDyna("	AND %s, 0x%02X\n", RegNames[Reg], Data););
+	WC8(0x83);
+	WC8(0xE0 | Reg);
+	WC8(Data);
 }
 
 
@@ -1829,44 +1571,47 @@ void AND_Imm8sxToReg(unsigned char OperandSize, unsigned char Reg, unsigned char
  =======================================================================================================================
  =======================================================================================================================
  */
-void CMP_sImm8WithReg(unsigned char OperandSize, unsigned char Reg, unsigned char Data)
+void CMP_sImm8WithReg(unsigned int OperandSize, unsigned int Reg, unsigned int Data)
 {
-	WC8((unsigned char) (0x83));
-	WC8((unsigned char) (0xF8 | Reg));
-	WC8((unsigned char) Data);
-	LOGGING_DYNA(LogDyna("	CMP %s, 0x%02X\n", RegNames[Reg], Data););
+	WC8( (0x83));
+	WC8( (0xF8 | Reg));
+	WC8( Data);
 }
 
 /*
  =======================================================================================================================
-    Encoders £
-    1964 uses ebp as a ponter to the middle of the Mips GPR array in memory.
+    Encoders ?    1964 uses ebp as a ponter to the middle of the Mips GPR array in memory.
  =======================================================================================================================
  */
-void Encode_Slash_R(unsigned char Reg, unsigned char ModRM, unsigned long Address)	/* so-named for the /r mnemonic in
+void Encode_Slash_R(unsigned int Reg, unsigned int ModRM, unsigned int Address)	/* so-named for the /r mnemonic in
 																					 * Intel x86 docs */
 {
 	if((ModRM >= ModRM_disp8_EAX) && (ModRM <= ModRM_disp8_EDI))
 	{
-		WC8((unsigned char) (ModRM | (Reg << 3)));
-		WC8((unsigned char) Address);
+		WC8( (ModRM | (Reg << 3)));
+		WC8( Address);
 	}
 	else if((ModRM >= ModRM_disp32_EAX) && (ModRM <= ModRM_disp32_EDI))
 	{
 		if(Address == 0)
 		{
 			ModRM -= ModRM_disp32_EAX;
-			WC8((unsigned char) (ModRM | (Reg << 3)));
+			WC8( (ModRM | (Reg << 3)));
 		}
 		else
 		{
-			WC8((unsigned char) (ModRM | (Reg << 3)));
+			WC8( (ModRM | (Reg << 3)));
 			WC32(Address);
 		}
 	}
 	else
 	{
-		WC8((unsigned char) (ModRM | (Reg << 3)));
+		WC8( (ModRM | (Reg << 3)));
 		if(Address != 0) WC32(Address);
 	}
+}
+
+void INT3()
+{
+    WC8(0xCC);
 }

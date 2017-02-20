@@ -9,7 +9,7 @@
 
 
 /*
- * 1964 Copyright (C) 1999-2002 Joel Middendorf, <schibo@emulation64.com> This
+ * 1964 Copyright (C) 1999-2004 Joel Middendorf, <schibo@emulation64.com> This
  * program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
@@ -21,12 +21,8 @@
  * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. To contact the
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
-#include <windows.h>
-#include "../globals.h"
-#include "../n64rcp.h"
-#include "../emulator.h"
-#include "registry.h"
-#include "DLL_Audio.h"
+#include "../stdafx.h"
+#include <float.h>
 
 AUDIO_INFO	Audio_Info;
 
@@ -43,15 +39,24 @@ BOOL (__cdecl *_AUDIO_Initialize) (AUDIO_INFO) = NULL;
 void (__cdecl *_AUDIO_End) () = NULL;
 void (__cdecl *_AUDIO_PlaySnd) (unsigned __int8 *, unsigned __int32 *) = NULL;
 _int32 (__cdecl *_AUDIO_TimeLeft) (unsigned char *) = NULL;
-void (__cdecl *_AUDIO_ProcessAList) (void) = NULL;
 void (__cdecl *_AUDIO_AiDacrateChanged) (int) = NULL;
 void (__cdecl *_AUDIO_AiLenChanged) (void) = NULL;
 DWORD (__cdecl *_AUDIO_AiReadLength) (void) = NULL;
 void (__cdecl *_AUDIO_AiUpdate) (BOOL) = NULL;
-
+void (__cdecl *_AUDIO_ProcessAList) (void) = NULL;
+DWORD (__cdecl *_AUDIO_ProcessAList_Count_Cycles) (void) = NULL;
+BOOL (__cdecl *_AUDIO_IsMusyX) (void) = NULL;
 /* Used when selecting plugins */
 void (__cdecl *_AUDIO_Under_Selecting_About) (HWND) = NULL;
 void (__cdecl *_AUDIO_Under_Selecting_Test) (HWND) = NULL;
+
+#ifdef _DEBUG
+static void __cdecl DebuggerMsgCallBack(char *msg)
+{
+	TRACE0(msg);
+}
+static void (__cdecl *_SetDebuggerCallBack)(void (_cdecl *DbgCallBackFun)(char *msg)) = NULL;
+#endif
 
 /*
  =======================================================================================================================
@@ -66,6 +71,7 @@ BOOL LoadAudioPlugin(char *libname)
 
 	/* Load the Audio DLL */
 	hinstLibAudio = LoadLibrary(libname);
+	Audio_Info.hinst = hinstLibAudio; //bug fix. The other plugins don't use an hInstance...weird spec.
 
 	if(hinstLibAudio != NULL)	/* Check if load DLL successfully */
 	{
@@ -97,6 +103,9 @@ BOOL LoadAudioPlugin(char *libname)
 					_AUDIO_Test = (void(__cdecl *) (HWND)) GetProcAddress(hinstLibAudio, "DllTest");
 					_AUDIO_Initialize = (BOOL(__cdecl *) (AUDIO_INFO)) GetProcAddress(hinstLibAudio, "InitiateAudio");
 					_AUDIO_ProcessAList = (void(__cdecl *) (void)) GetProcAddress(hinstLibAudio, "ProcessAList");
+					_AUDIO_ProcessAList_Count_Cycles = (DWORD(__cdecl *) (void)) GetProcAddress(hinstLibAudio, "ProcessAListCountCycles");
+					_AUDIO_IsMusyX = (BOOL(__cdecl *) (void)) GetProcAddress(hinstLibAudio, "IsMusyX");
+
 					_AUDIO_RomClosed = (void(__cdecl *) (void)) GetProcAddress(hinstLibAudio, "RomClosed");
 
 					if( strstr(Plugin_Info.Name, "Jabo") != NULL || strstr(Plugin_Info.Name, "jabo") != NULL )
@@ -109,10 +118,24 @@ BOOL LoadAudioPlugin(char *libname)
 										"RSP Plugin in plugin setting, or you can change to other audio plugins");
 						}
 					}
+					else if( strstr(Plugin_Info.Name, "0.40 Beta 2") != NULL )
+					{
+						CoreDoingAIUpdate = FALSE;
+					}
 					else
 					{
 						CoreDoingAIUpdate = TRUE;
 					}
+
+#ifdef _DEBUG
+					_SetDebuggerCallBack = (void (__cdecl *)(void (_cdecl *DbgCallBackFun)(char *msg))) 
+						GetProcAddress(hinstControllerPlugin, "SetDebuggerCallBack");
+					if( _SetDebuggerCallBack )
+					{
+						_SetDebuggerCallBack(DebuggerMsgCallBack);
+					}
+#endif
+
 					return(TRUE);
 				}
 			}
@@ -138,6 +161,24 @@ void AUDIO_GetDllInfo(PLUGIN_INFO *Plugin_Info)
 	}
 }
 
+BOOL AUDIO_IsMusyX(void)
+{
+	BOOL IsMusyX = FALSE;
+	
+	if(_AUDIO_IsMusyX != NULL) __try
+	{
+		IsMusyX = _AUDIO_IsMusyX();
+	}
+
+	__except(NULL, EXCEPTION_EXECUTE_HANDLER)
+	{	
+		IsMusyX = FALSE;
+	}
+
+	return(IsMusyX);
+}
+
+
 /*
  =======================================================================================================================
  =======================================================================================================================
@@ -161,21 +202,32 @@ BOOL AUDIO_Initialize(AUDIO_INFO Audio_Info)
  =======================================================================================================================
  =======================================================================================================================
  */
-void AUDIO_ProcessAList(void)
+DWORD AUDIO_ProcessAList(void)
 {
-	/* try/except is handled from the call to this function */
-	if(_AUDIO_ProcessAList != NULL)
-	{
-		__try
-		{
-			_AUDIO_ProcessAList();
-		}
+	int k = 1600;
 
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
+	/* try/except is handled from the call to this function */
+	__try
+	{
+		_control87(_RC_NEAR|_PC_64, _MCW_RC|_MCW_PC);
+
+		if(_AUDIO_ProcessAList_Count_Cycles != NULL && currentromoptions.RSP_RDP_Timing)
 		{
-			/* Some people won't have a soud card. No error. */
+			k = _AUDIO_ProcessAList_Count_Cycles();
 		}
+		else if(_AUDIO_ProcessAList != NULL) 
+			_AUDIO_ProcessAList();
+
+        RestoreOldRoundingMode(((uint32) cCON31 & 0x00000003) << 8);
 	}
+
+	__except(NULL, EXCEPTION_EXECUTE_HANDLER)
+	{
+		/* Some people won't have a sound card. No error. */
+		//MessageBox(0, "Exception", "", 0);
+	}
+
+	return k;
 }
 
 /*
@@ -340,8 +392,7 @@ DWORD AUDIO_AiReadLength(void)
 	{
 		/*
 		 * DisplayError("%s: Test box is not available for this plug-in.", "Audio
-		 * Plugin"); £
-		 * return AI_LEN_REG;
+		 * Plugin"); ?		 * return AI_LEN_REG;
 		 */
 		return 0;
 	}
@@ -360,6 +411,11 @@ void AUDIO_AiUpdate(BOOL update)
 	else
 	{
 		/* DisplayError("%s: Test box is not available for this plug-in.", "Audio Plugin"); */
+	}
+
+	if( Kaillera_Is_Running )
+	{
+		Trigger_AIInterrupt();
 	}
 }
 
