@@ -29,61 +29,61 @@
 #endif
 #include <windows.h>
 
-extern void				RefreshOpList(char *opcode);
+extern void             RefreshOpList(char *opcode);
 
-HWND					hRegswnd;					/* handle to GPR/FPU Regs window */
-HWND					hVIRegwnd;					/* handle to VI Regs window */
-HWND					hCodeListwnd;				/* handle to CodeList window */
-HWND					hEnterHexwnd;				/* handle to "Enter Hex" window */
-HWND					hCOP2Vecswnd;				/* handle to COP2 vectors window */
-HWND					hMemorywnd;					/* handle to Memory window */
+HWND                    hRegswnd;                   /* handle to GPR/FPU Regs window */
+HWND                    hVIRegwnd;                  /* handle to VI Regs window */
+HWND                    hCodeListwnd;               /* handle to CodeList window */
+HWND                    hEnterHexwnd;               /* handle to "Enter Hex" window */
+HWND                    hCOP2Vecswnd;               /* handle to COP2 vectors window */
+HWND                    hMemorywnd;                 /* handle to Memory window */
 
 /* Control Handles */
-HWND					GPREDIT[32];				/* Cop0 Register editbox handles */
-HWND					COP0EDIT[32];				/* Cop0 Register editbox handles */
-HWND					COP1EDIT[32];				/* Cop1 Register editbox handles */
-HWND					MISCEDIT[4];				/* PC, LLbit,MultHI/LO */
-HWND					VIREGEDIT[4];
-HWND					CODEEDIT[1];				/* editbox which holds info on all decoded opcodes */
-HWND					COP2VECEDIT[32][8];			/* editboxes which hold all COP2 vec data */
-HWND					MEMLISTBOX;					/* Listbox to display memory */
-HWND					MEMLOCEDIT;					/* Editbox to choose mem location */
+HWND                    GPREDIT[32];                /* Cop0 Register editbox handles */
+HWND                    COP0EDIT[32];               /* Cop0 Register editbox handles */
+HWND                    COP1EDIT[32];               /* Cop1 Register editbox handles */
+HWND                    MISCEDIT[4];                /* PC, LLbit,MultHI/LO */
+HWND                    VIREGEDIT[4];
+HWND                    CODEEDIT[1];                /* editbox which holds info on all decoded opcodes */
+HWND                    COP2VECEDIT[32][8];         /* editboxes which hold all COP2 vec data */
+HWND                    MEMLISTBOX;                 /* Listbox to display memory */
+HWND                    MEMLOCEDIT;                 /* Editbox to choose mem location */
 
-char					opBuffer[65535];			/* buffer to all the decoded opcode text */
-unsigned _int32			BreakAddress;				/* User-defined breakpoint */
+char                    opBuffer[65535];            /* buffer to all the decoded opcode text */
+unsigned _int32         BreakAddress;               /* User-defined breakpoint */
 
 /*
  * BOOL DebuggerBreakPointActive = FALSE; // if this flag is true, check for pc <=
  * RunToTargetAddress £
  * uint32 RunToTargetAddress; // the user-specified target break address
  */
-BOOL					DebuggerBreakPointActive;	/* if this flag is true, check for pc <= RunToTargetAddress */
-extern int				DebuggerOpcodeTraceEnabled; /* Flag to toggle debug printing on/off */
-extern BOOL				DebuggerActive;				/* is the debugger opcode trace on? */
-unsigned __int32		NextClearCode;
-int						OpCount;
+BOOL                    DebuggerBreakPointActive;   /* if this flag is true, check for pc <= RunToTargetAddress */
+extern int              DebuggerOpcodeTraceEnabled; /* Flag to toggle debug printing on/off */
+extern BOOL             DebuggerActive;             /* is the debugger opcode trace on? */
+unsigned __int32        NextClearCode;
+int                     OpCount;
 
-extern void				UpdateGPR(void);
-extern void				UpdateCOP0(void);
-extern void				UpdateFPR(void);
-extern void				UpdateMisc(void);
-extern void				RefreshDebugger(void);
+extern void             UpdateGPR(void);
+extern void             UpdateCOP0(void);
+extern void             UpdateFPR(void);
+extern void             UpdateMisc(void);
+extern void             RefreshDebugger(void);
 
-extern void				OpenDebugger(void);
-extern void				CloseDebugger(void);
+extern void             OpenDebugger(void);
+extern void             CloseDebugger(void);
 
-extern void				Set_Breakpoint(void);
-extern void				Clear_Breakpoint(void);
-extern unsigned _int32	StrToHex(char *HexStr);
+extern void             Set_Breakpoint(void);
+extern void             Clear_Breakpoint(void);
+extern unsigned _int32  StrToHex(char *HexStr);
 
-extern void				UpdateVIReg(void);
-extern void				UpdateCOP2Vec1(void);
-extern void				UpdateCOP2Vec2(void);
-extern void				UpdateCOP2Vec3(void);
-extern void				UpdateCOP2Vec4(void);
+extern void             UpdateVIReg(void);
+extern void             UpdateCOP2Vec1(void);
+extern void             UpdateCOP2Vec2(void);
+extern void             UpdateCOP2Vec3(void);
+extern void             UpdateCOP2Vec4(void);
 
-extern void				WinDynDebugPrintInstruction(unsigned __int32 Instruction);
-extern void				HandleBreakpoint(unsigned __int32 Instruction);
-void					ProcessDebugMenuCommand(WPARAM wParam);
+extern void             WinDynDebugPrintInstruction(unsigned __int32 Instruction);
+extern void             HandleBreakpoint(unsigned __int32 Instruction);
+void                    ProcessDebugMenuCommand(WPARAM wParam);
 #endif /* _WINDEBUG_H__1964_ */
 #endif /* WINDEBUG_1964 */

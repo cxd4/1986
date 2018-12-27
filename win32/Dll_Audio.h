@@ -40,28 +40,28 @@ extern void (__cdecl *_AUDIO_AiDacrateChanged) (int);
 extern void (__cdecl *_AUDIO_AiLenChanged) (void);
 extern DWORD (__cdecl *_AUDIO_AiReadLength) (void);
 extern void (__cdecl *_AUDIO_AiUpdate) (BOOL);
-BOOL			LoadAudioPlugin(char *libname);
-void			CloseAudioPlugin(void);
+BOOL            LoadAudioPlugin(char *libname);
+void            CloseAudioPlugin(void);
 
-extern void		AUDIO_GetDllInfo(PLUGIN_INFO *Plugin_Info);
-extern BOOL		AUDIO_Initialize(AUDIO_INFO Audio_Info);
-extern void		AUDIO_ProcessAList(void);
-extern void		AUDIO_DllConfig(HWND);
-extern void		AUDIO_Test(HWND);
-extern void		AUDIO_About(HWND);
-extern void		AUDIO_AiDacrateChanged(int);
-extern void		AUDIO_AiLenChanged(void);
-extern DWORD	AUDIO_AiReadLength(void);
-extern void		AUDIO_AiUpdate(BOOL);
-extern void		AUDIO_RomClosed(void);
+extern void     AUDIO_GetDllInfo(PLUGIN_INFO *Plugin_Info);
+extern BOOL     AUDIO_Initialize(AUDIO_INFO Audio_Info);
+extern void     AUDIO_ProcessAList(void);
+extern void     AUDIO_DllConfig(HWND);
+extern void     AUDIO_Test(HWND);
+extern void     AUDIO_About(HWND);
+extern void     AUDIO_AiDacrateChanged(int);
+extern void     AUDIO_AiLenChanged(void);
+extern DWORD    AUDIO_AiReadLength(void);
+extern void     AUDIO_AiUpdate(BOOL);
+extern void     AUDIO_RomClosed(void);
 
 /* Used when selecting plugin */
-extern void		AUDIO_Under_Selecting_Test(HWND);
-extern void		AUDIO_Under_Selecting_About(HWND);
+extern void     AUDIO_Under_Selecting_Test(HWND);
+extern void     AUDIO_Under_Selecting_About(HWND);
 extern void (__cdecl *_AUDIO_Under_Selecting_Test) (HWND);
 extern void (__cdecl *_AUDIO_Under_Selecting_About) (HWND);
 
-extern HINSTANCE	hinstLibAudio;
-extern BOOL	CoreDoingAIUpdate;
+extern HINSTANCE    hinstLibAudio;
+extern BOOL CoreDoingAIUpdate;
 
 #endif

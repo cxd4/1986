@@ -22,9 +22,9 @@
  */
 #include "1964ini.h"
 
-char			*CURRENT1964VERSION = "1964_085";
-uint32			gAllocationLength;
-uint8			HeaderDllPass[0x40];
-volatile int	Rom_Loaded = 0;
-t_rominfo		rominfo;				/* Rom information */
-char			generalmessage[256];	/* general purpose buffer to display messages */
+char            *CURRENT1964VERSION = "1964_085";
+uint32          gAllocationLength;
+uint8           HeaderDllPass[0x40];
+volatile int    Rom_Loaded = 0;
+t_rominfo       rominfo;                /* Rom information */
+char            generalmessage[256];    /* general purpose buffer to display messages */

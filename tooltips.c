@@ -11,9 +11,9 @@ HWND WINAPI CreateTT(HWND hwndOwner)
     icex.dwSize = sizeof(icex);
     icex.dwICC  = ICC_BAR_CLASSES;
 
-    if(!InitCommonControlsEx(&icex))
-       return NULL;
-	   
+    if (!InitCommonControlsEx(&icex))
+        return NULL;
+
     // Create the ToolTip control.
     hwndTT = CreateWindow(TOOLTIPS_CLASS, TEXT("Hello"),
                           WS_POPUP,
@@ -32,7 +32,7 @@ HWND WINAPI CreateTT(HWND hwndOwner)
     ti.rect.left = ti.rect.top = ti.rect.bottom = ti.rect.right = 0; 
 
     // Add the tool to the control, displaying an error if needed.
-    if(!SendMessage(hwndTT,TTM_ADDTOOL,0,(LPARAM)&ti)){
+    if (!SendMessage(hwndTT,TTM_ADDTOOL,0,(LPARAM)&ti)){
         MessageBox(hwndOwner,"Couldn't create the ToolTip control.",
                    "Error",MB_OK);
         return NULL;

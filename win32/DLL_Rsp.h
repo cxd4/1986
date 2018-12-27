@@ -18,74 +18,74 @@
 #include <windows.h>
 
 typedef struct {
-	HINSTANCE hInst;
-	BOOL MemoryBswaped;    /* If this is set to TRUE, then the memory has been pre
-	                          bswap on a dword (32 bits) boundry */
-	BYTE * RDRAM;
-	BYTE * DMEM;
-	BYTE * IMEM;
+    HINSTANCE hInst;
+    BOOL MemoryBswaped;    /* If this is set to TRUE, then the memory has been pre
+                              bswap on a dword (32 bits) boundry */
+    BYTE * RDRAM;
+    BYTE * DMEM;
+    BYTE * IMEM;
 
-	DWORD * MI__INTR_REG;
+    DWORD * MI__INTR_REG;
 
-	DWORD * SP__MEM_ADDR_REG;
-	DWORD * SP__DRAM_ADDR_REG;
-	DWORD * SP__RD_LEN_REG;
-	DWORD * SP__WR_LEN_REG;
-	DWORD * SP__STATUS_REG;
-	DWORD * SP__DMA_FULL_REG;
-	DWORD * SP__DMA_BUSY_REG;
-	DWORD * SP__PC_REG;
-	DWORD * SP__SEMAPHORE_REG;
+    DWORD * SP__MEM_ADDR_REG;
+    DWORD * SP__DRAM_ADDR_REG;
+    DWORD * SP__RD_LEN_REG;
+    DWORD * SP__WR_LEN_REG;
+    DWORD * SP__STATUS_REG;
+    DWORD * SP__DMA_FULL_REG;
+    DWORD * SP__DMA_BUSY_REG;
+    DWORD * SP__PC_REG;
+    DWORD * SP__SEMAPHORE_REG;
 
-	DWORD * DPC__START_REG;
-	DWORD * DPC__END_REG;
-	DWORD * DPC__CURRENT_REG;
-	DWORD * DPC__STATUS_REG;
-	DWORD * DPC__CLOCK_REG;
-	DWORD * DPC__BUFBUSY_REG;
-	DWORD * DPC__PIPEBUSY_REG;
-	DWORD * DPC__TMEM_REG;
+    DWORD * DPC__START_REG;
+    DWORD * DPC__END_REG;
+    DWORD * DPC__CURRENT_REG;
+    DWORD * DPC__STATUS_REG;
+    DWORD * DPC__CLOCK_REG;
+    DWORD * DPC__BUFBUSY_REG;
+    DWORD * DPC__PIPEBUSY_REG;
+    DWORD * DPC__TMEM_REG;
 
-	void (__cdecl *CheckInterrupts)( void );
-	void (__cdecl *ProcessDlist)( void );
-	void (__cdecl *ProcessAlist)( void );
-	void (__cdecl *ProcessRdpList)( void );
+    void (__cdecl *CheckInterrupts)( void );
+    void (__cdecl *ProcessDlist)( void );
+    void (__cdecl *ProcessAlist)( void );
+    void (__cdecl *ProcessRdpList)( void );
 } RSP_INFO_1_0;
 
 typedef struct {
-	HINSTANCE hInst;
-	BOOL MemoryBswaped;    /* If this is set to TRUE, then the memory has been pre
-	                          bswap on a dword (32 bits) boundry */
-	BYTE * RDRAM;
-	BYTE * DMEM;
-	BYTE * IMEM;
+    HINSTANCE hInst;
+    BOOL MemoryBswaped;    /* If this is set to TRUE, then the memory has been pre
+                              bswap on a dword (32 bits) boundry */
+    BYTE * RDRAM;
+    BYTE * DMEM;
+    BYTE * IMEM;
 
-	DWORD * MI__INTR_REG;
+    DWORD * MI__INTR_REG;
 
-	DWORD * SP__MEM_ADDR_REG;
-	DWORD * SP__DRAM_ADDR_REG;
-	DWORD * SP__RD_LEN_REG;
-	DWORD * SP__WR_LEN_REG;
-	DWORD * SP__STATUS_REG;
-	DWORD * SP__DMA_FULL_REG;
-	DWORD * SP__DMA_BUSY_REG;
-	DWORD * SP__PC_REG;
-	DWORD * SP__SEMAPHORE_REG;
+    DWORD * SP__MEM_ADDR_REG;
+    DWORD * SP__DRAM_ADDR_REG;
+    DWORD * SP__RD_LEN_REG;
+    DWORD * SP__WR_LEN_REG;
+    DWORD * SP__STATUS_REG;
+    DWORD * SP__DMA_FULL_REG;
+    DWORD * SP__DMA_BUSY_REG;
+    DWORD * SP__PC_REG;
+    DWORD * SP__SEMAPHORE_REG;
 
-	DWORD * DPC__START_REG;
-	DWORD * DPC__END_REG;
-	DWORD * DPC__CURRENT_REG;
-	DWORD * DPC__STATUS_REG;
-	DWORD * DPC__CLOCK_REG;
-	DWORD * DPC__BUFBUSY_REG;
-	DWORD * DPC__PIPEBUSY_REG;
-	DWORD * DPC__TMEM_REG;
+    DWORD * DPC__START_REG;
+    DWORD * DPC__END_REG;
+    DWORD * DPC__CURRENT_REG;
+    DWORD * DPC__STATUS_REG;
+    DWORD * DPC__CLOCK_REG;
+    DWORD * DPC__BUFBUSY_REG;
+    DWORD * DPC__PIPEBUSY_REG;
+    DWORD * DPC__TMEM_REG;
 
-	void ( __cdecl *CheckInterrupts)( void );
-	void (__cdecl *ProcessDlist)( void );
-	void (__cdecl *ProcessAlist)( void );
-	void (__cdecl *ProcessRdpList)( void );
-	void (__cdecl *ShowCFB)( void );
+    void ( __cdecl *CheckInterrupts)( void );
+    void (__cdecl *ProcessDlist)( void );
+    void (__cdecl *ProcessAlist)( void );
+    void (__cdecl *ProcessRdpList)( void );
+    void (__cdecl *ShowCFB)( void );
 } RSP_INFO_1_1;
 
 /********** RSP DLL: Functions *********************/
@@ -105,4 +105,3 @@ void InitializeRSP (void);
 extern BOOL rsp_plugin_is_loaded;
 
 #endif
-

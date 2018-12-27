@@ -23,8 +23,8 @@
 #ifndef _CHEATCODE_H__1964_
 #define _CHEATCODE_H__1964_
 
-#define MAX_CHEATCODE_PER_GROUP		100
-#define MAX_CHEATCODE_GROUP_PER_ROM 254	//Cannot exceed 254 groups, must be represented by using 1 byte
+#define MAX_CHEATCODE_PER_GROUP     100
+#define MAX_CHEATCODE_GROUP_PER_ROM 254 //Cannot exceed 254 groups, must be represented by using 1 byte
 
 //Option to apply cheat code and lock memory
 #define CHEATCODE_LOCK_MEMORY
@@ -32,32 +32,32 @@
 enum APPLYCHEATMODE { INGAME, BOOTUPONCE, GSBUTTON, ONLYIN1964 };
 
 struct CODENODE_STRUCT {
-	uint32	addr;
-	uint16	val;
+    uint32  addr;
+    uint16  val;
 };
 
-typedef struct CODENODE_STRUCT	CHEATCODENODE;
+typedef struct CODENODE_STRUCT  CHEATCODENODE;
 
 struct CODEGROUP_STRUCT {
-	int				country;
-	int				codecount;
-	BOOL			active;
-	char			name[80];
-	char			note[256];
-	CHEATCODENODE	codelist[MAX_CHEATCODE_PER_GROUP];
+    int             country;
+    int             codecount;
+    BOOL            active;
+    char            name[80];
+    char            note[256];
+    CHEATCODENODE   codelist[MAX_CHEATCODE_PER_GROUP];
 };
 typedef struct CODEGROUP_STRUCT CODEGROUP;
 
-extern int						codegroupcount;
-extern CODEGROUP				*codegrouplist;
-extern char						current_cheatcode_rom_internal_name[30];
+extern int                      codegroupcount;
+extern CODEGROUP                *codegrouplist;
+extern char                     current_cheatcode_rom_internal_name[30];
 
-extern void						InitCodeListForCurrentGame(void);
-extern void						CodeList_Clear(void);
-extern void						CodeList_GotoBeginning(void);
-extern BOOL						CodeList_ApplyAllCode(enum APPLYCHEATMODE mode);
-extern BOOL						CodeList_ReadCode(char *intername_rom_name);
-BOOL							IsCodeMatchRomCountryCode(int cheat_country_code, int rom_country_code);
+extern void                     InitCodeListForCurrentGame(void);
+extern void                     CodeList_Clear(void);
+extern void                     CodeList_GotoBeginning(void);
+extern BOOL                     CodeList_ApplyAllCode(enum APPLYCHEATMODE mode);
+extern BOOL                     CodeList_ReadCode(char *intername_rom_name);
+BOOL                            IsCodeMatchRomCountryCode(int cheat_country_code, int rom_country_code);
 
 #ifdef CHEATCODE_LOCK_MEMORY
 extern uint16 *cheatCodeBlockMap[0x800];
@@ -65,7 +65,7 @@ void InitCheatCodeEngineMemoryLock(void);
 void CloseCheatCodeEngineMemoryLock(void);
 BOOL CodeList_ApplyCode_At_Address(int index, uint32 addr_to_apply);
 
-#define BYTE_AFFECTED_BY_CHEAT_CODES	0xFF
+#define BYTE_AFFECTED_BY_CHEAT_CODES    0xFF
 #endif
 
 #endif

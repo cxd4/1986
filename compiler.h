@@ -27,54 +27,54 @@
 #include "debug_option.h"
 
 struct BLOCK_ENTRY_STRUCT {
-	BOOL						HasBeenCompiled;
-	uint32						block_ptr;
-	uint32						block_pc;
-	BOOL						need_target_1;
-	uint32						jmp_to_target_1_code_addr;	/* need to write target 1 block addr into this memory */
-	uint32						target_1_pc;
-	BOOL						need_target_2;
-	uint32						jmp_to_target_2_code_addr;	/* need to write target 2 block addr into this memory */
-	uint32						target_2_pc;
-	struct BLOCK_ENTRY_STRUCT	*next;
+    BOOL                        HasBeenCompiled;
+    uint32                      block_ptr;
+    uint32                      block_pc;
+    BOOL                        need_target_1;
+    uint32                      jmp_to_target_1_code_addr;  /* need to write target 1 block addr into this memory */
+    uint32                      target_1_pc;
+    BOOL                        need_target_2;
+    uint32                      jmp_to_target_2_code_addr;  /* need to write target 2 block addr into this memory */
+    uint32                      target_2_pc;
+    struct BLOCK_ENTRY_STRUCT   *next;
 };
 
 struct CompilerStatus {
-	uint32			TempPC;
-	BOOL			DynaBufferOverError;
-	uint32			cp0Counter;
-	uint32			KEEP_RECOMPILING;
-	uint32			BlockStart;
-	int				Is_Compiling;
-	unsigned long	lCodePosition;
-	uint32			*pcptr;
-	uint32			realpc_fetched;
-	uint32			FlagJAL;
-	uint32			InstructionCount;
+    uint32          TempPC;
+    BOOL            DynaBufferOverError;
+    uint32          cp0Counter;
+    uint32          KEEP_RECOMPILING;
+    uint32          BlockStart;
+    int             Is_Compiling;
+    unsigned long   lCodePosition;
+    uint32          *pcptr;
+    uint32          realpc_fetched;
+    uint32          FlagJAL;
+    uint32          InstructionCount;
 };
 
-typedef struct BLOCK_ENTRY_STRUCT	BLOCK_ENTRY;
-extern struct CompilerStatus		compilerstatus;
-extern BLOCK_ENTRY					*current_block_entry;
-extern uint8						*sDYN_PC_LOOKUP[0x10000];
-extern uint8						*dyna_CodeTable;
-extern uint8						*dyna_RecompCode;
-uint32								Dyna_Compile_Block(void);
-uint32								Dyna_Compile_4KB_Block(void);
+typedef struct BLOCK_ENTRY_STRUCT   BLOCK_ENTRY;
+extern struct CompilerStatus        compilerstatus;
+extern BLOCK_ENTRY                  *current_block_entry;
+extern uint8                        *sDYN_PC_LOOKUP[0x10000];
+extern uint8                        *dyna_CodeTable;
+extern uint8                        *dyna_RecompCode;
+uint32                              Dyna_Compile_Block(void);
+uint32                              Dyna_Compile_4KB_Block(void);
 
-BOOL							  IsTargetPcInTheSame4KB(uint32 pc, uint32 target);
-void							  InvalidateOneBlock(uint32 pc);
-void							  Invalidate4KBlock(uint32 addr, char *opcodename, int type, uint64 newvalue);
-void							  Check_And_Invalidate_Compiled_Blocks_By_DMA
-								(
-									uint32	startaddr,
-									uint32	len,
-									char	*operation
-								);
-void							  Dyna_Code_Check_None(void);
-void							  Set_Translate_PC(void);
-uint32								DynaFetchInstruction2(uint32 pc);
+BOOL                              IsTargetPcInTheSame4KB(uint32 pc, uint32 target);
+void                              InvalidateOneBlock(uint32 pc);
+void                              Invalidate4KBlock(uint32 addr, char *opcodename, int type, uint64 newvalue);
+void                              Check_And_Invalidate_Compiled_Blocks_By_DMA
+                                (
+                                    uint32  startaddr,
+                                    uint32  len,
+                                    char    *operation
+                                );
+void                              Dyna_Code_Check_None(void);
+void                              Set_Translate_PC(void);
+uint32                              DynaFetchInstruction2(uint32 pc);
 
 /* dynarec globals */
-extern uint8						*Block;
+extern uint8                        *Block;
 #endif

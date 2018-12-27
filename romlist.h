@@ -29,32 +29,32 @@
 #include "1964ini.h"
 
 struct ROMLIST_ENTRY_STRUCT {
-	INI_ENTRY	*pinientry;
-	char		romfilename[_MAX_FNAME];
-	long		size;
+    INI_ENTRY   *pinientry;
+    char        romfilename[_MAX_FNAME];
+    long        size;
 };
 
 enum {
-	ROMLIST_GAMENAME,
-	ROMLIST_COUNTRY,
-	ROMLIST_SIZE,
-	ROMLIST_COMMENT,
-	ROMLIST_GAMENAME_INVERT,
-	ROMLIST_COUNTRY_INVERT,
-	ROMLIST_SIZE_INVERT,
-	ROMLIST_COMMENT_INVERT
+    ROMLIST_GAMENAME,
+    ROMLIST_COUNTRY,
+    ROMLIST_SIZE,
+    ROMLIST_COMMENT,
+    ROMLIST_GAMENAME_INVERT,
+    ROMLIST_COUNTRY_INVERT,
+    ROMLIST_SIZE_INVERT,
+    ROMLIST_COMMENT_INVERT
 };
 
 enum {
-	ROMLIST_DISPLAY_INTERNAL_NAME,
-	ROMLIST_DISPLAY_ALTER_NAME,
-	ROMLIST_DISPLAY_FILENAME,
+    ROMLIST_DISPLAY_INTERNAL_NAME,
+    ROMLIST_DISPLAY_ALTER_NAME,
+    ROMLIST_DISPLAY_FILENAME,
 };
 
 typedef struct ROMLIST_ENTRY_STRUCT ROMLIST_ENTRY;
 
 /* Global variabls */
-#define MAX_ROMLIST			2000
+#define MAX_ROMLIST         2000
 
 extern ROMLIST_ENTRY *romlist[MAX_ROMLIST];
 extern int romlist_count;
@@ -103,23 +103,23 @@ extern BYTE ChangeButtonState(int nID);
 extern void CheckButton(int nID, BOOL bCheck);
 
 typedef enum {
-	ROMLIST_COL_GAMENAME=0,
-	ROMLIST_COL_COUNTRY,
-	ROMLIST_COL_SIZE,
-	ROMLIST_COL_STATUS,
-	ROMLIST_COL_GAMESAVE,
-	ROMLIST_COL_CICCHIP,
-	ROMLIST_COL_CRC1,
-	ROMLIST_COL_CRC2
+    ROMLIST_COL_GAMENAME=0,
+    ROMLIST_COL_COUNTRY,
+    ROMLIST_COL_SIZE,
+    ROMLIST_COL_STATUS,
+    ROMLIST_COL_GAMESAVE,
+    ROMLIST_COL_CICCHIP,
+    ROMLIST_COL_CRC1,
+    ROMLIST_COL_CRC2
 } ColumnID;
 
 typedef struct {
-	ColumnID	colID;
-	char		*text;
-	int			colPos;
-	BOOL		enabled;
-	int			colWidth;
-	HTREEITEM	treeViewID;
+    ColumnID    colID;
+    char        *text;
+    int         colPos;
+    BOOL        enabled;
+    int         colWidth;
+    HTREEITEM   treeViewID;
 } ColumnType;
 
 extern ColumnType romListColumns[];

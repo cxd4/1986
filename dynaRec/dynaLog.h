@@ -26,7 +26,7 @@
 /* Debugging tools (Disable these for public releases) */
 //#define ENABLE_DISPLAY_ERROR
 #ifdef DEBUG_COMMON
-#define LOG_DYNA	/* mandatory. do not comment. */
+#define LOG_DYNA    /* mandatory. do not comment. */
 #else
 
 /*
@@ -35,8 +35,8 @@
  */
 #endif
 extern void __cdecl LogDyna(char *debug, ...);
-extern void			InitLogDyna(void);
-extern void			CloseLogDyna(void);
+extern void         InitLogDyna(void);
+extern void         CloseLogDyna(void);
 
 #ifdef LOG_DYNA
 #define LOGGING_DYNA(macro) macro;

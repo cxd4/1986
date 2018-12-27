@@ -30,8 +30,8 @@
 
 void SP_Reset(void)
 {
-	/* Clear all STATUS Registers */
-	SP_STATUS_REG = 0;
+    /* Clear all STATUS Registers */
+    SP_STATUS_REG = 0;
 }
 
 /*
@@ -40,7 +40,7 @@ void SP_Reset(void)
  */
 void SI_Reset(void)
 {
-	SI_STATUS_REG = 0;
+    SI_STATUS_REG = 0;
 }
 
 /*
@@ -49,7 +49,7 @@ void SI_Reset(void)
  */
 void PI_Reset(void)
 {
-	PI_STATUS_REG = 0;
+    PI_STATUS_REG = 0;
 }
 
 /*
@@ -58,13 +58,13 @@ void PI_Reset(void)
  */
 void RCP_Reset(void)
 {
-	SP_Reset();
-	SI_Reset();
-	PI_Reset();
+    SP_Reset();
+    SI_Reset();
+    PI_Reset();
 
-	/*
-	 * VI_Reset(); £
-	 * AI_Reset();
-	 */
-	MI_INTR_REG_R = 0;
+    /*
+     * VI_Reset(); £
+     * AI_Reset();
+     */
+    MI_INTR_REG_R = 0;
 }

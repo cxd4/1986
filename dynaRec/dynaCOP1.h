@@ -57,7 +57,7 @@ extern void rs4300i_cop1_floorw_s(_u32 Instruction);
 extern void rs4300i_cop1_cvtd_s(_u32 Instruction);
 extern void rs4300i_cop1_cvtw_s(_u32 Instruction);
 extern void rs4300i_cop1_cvtl_s(_u32 Instruction);
-extern void rs4300i_c_s(_u32 Instruction);	/* cop1 compare single */
+extern void rs4300i_c_s(_u32 Instruction);  /* cop1 compare single */
 extern void rs4300i_c_f_s(_u32 Instruction);
 extern void rs4300i_c_un_s(_u32 Instruction);
 extern void rs4300i_c_eq_s(_u32 Instruction);
@@ -93,7 +93,7 @@ extern void rs4300i_cop1_floorw_d(_u32 Instruction);
 extern void rs4300i_cop1_cvts_d(_u32 Instruction);
 extern void rs4300i_cop1_cvtw_d(_u32 Instruction);
 extern void rs4300i_cop1_cvtl_d(_u32 Instruction);
-extern void rs4300i_c_d(_u32 Instruction);	/* cop1 compare double */
+extern void rs4300i_c_d(_u32 Instruction);  /* cop1 compare double */
 extern void rs4300i_c_f_d(_u32 Instruction);
 extern void rs4300i_c_un_d(_u32 Instruction);
 extern void rs4300i_c_eq_d(_u32 Instruction);

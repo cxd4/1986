@@ -23,9 +23,9 @@
 #ifndef __1964_DYNACPU_H
 #define __1964_DYNACPU_H
 
-void	COMPARE_Run(uint32 Inter_Opcode_Address, uint32 code);
+void    COMPARE_Run(uint32 Inter_Opcode_Address, uint32 code);
 #define _SAFTY_CPU_(x) \
-	if(debug_opcode!=0) COMPARE_Run((uint32) & x, reg->code);
+    if(debug_opcode!=0) COMPARE_Run((uint32) & x, reg->code);
 
 extern void dyna4300i_reserved(OP_PARAMS);
 extern void dyna4300i_reserved1(OP_PARAMS);
@@ -89,7 +89,7 @@ extern void dyna4300i_sdc1(OP_PARAMS);
 extern void dyna4300i_sdc2(OP_PARAMS);
 extern void dyna4300i_sd(OP_PARAMS);
 extern void dyna4300i_special_shift(OP_PARAMS); /* sll, srl, sra */
-extern void dyna4300i_shift_var(OP_PARAMS);		/* sllv, srlv, srav */
+extern void dyna4300i_shift_var(OP_PARAMS);     /* sllv, srlv, srav */
 extern void dyna4300i_special_jr(OP_PARAMS);
 extern void dyna4300i_special_jalr(OP_PARAMS);
 extern void dyna4300i_special_syscall(OP_PARAMS);
@@ -168,22 +168,22 @@ extern void dyna4300i_cop2_rs_not_implemented(OP_PARAMS);
 
 typedef void (*dyn_cpu_instr) (OP_PARAMS);
 
-extern dyn_cpu_instr	asm_instruction[64];
-extern dyn_cpu_instr	asm_special_instruction[64];
-extern dyn_cpu_instr	asm_regimm_instruction[32];
-extern dyn_cpu_instr	asm_cop0_rs_instruction[32];
-extern dyn_cpu_instr	asm_cop0_rt_instruction[32];
-extern dyn_cpu_instr	asm_cop0_instruction[64];
-extern dyn_cpu_instr	asm_cop2_rs_instruction[32];
-extern dyn_cpu_instr	dyna_instruction[64];
-extern dyn_cpu_instr	now_do_dyna_instruction[64];
-extern dyn_cpu_instr	dyna_special_instruction[64];
-extern dyn_cpu_instr	dyna_regimm_instruction[32];
-extern dyn_cpu_instr	dyna_cop0_rs_instruction[32];
-extern dyn_cpu_instr	dyna_cop0_rt_instruction[32];
-extern dyn_cpu_instr	dyna_tlb_instruction[64];
-extern dyn_cpu_instr	dyna_cop2_rs_instruction[32];
+extern dyn_cpu_instr    asm_instruction[64];
+extern dyn_cpu_instr    asm_special_instruction[64];
+extern dyn_cpu_instr    asm_regimm_instruction[32];
+extern dyn_cpu_instr    asm_cop0_rs_instruction[32];
+extern dyn_cpu_instr    asm_cop0_rt_instruction[32];
+extern dyn_cpu_instr    asm_cop0_instruction[64];
+extern dyn_cpu_instr    asm_cop2_rs_instruction[32];
+extern dyn_cpu_instr    dyna_instruction[64];
+extern dyn_cpu_instr    now_do_dyna_instruction[64];
+extern dyn_cpu_instr    dyna_special_instruction[64];
+extern dyn_cpu_instr    dyna_regimm_instruction[32];
+extern dyn_cpu_instr    dyna_cop0_rs_instruction[32];
+extern dyn_cpu_instr    dyna_cop0_rt_instruction[32];
+extern dyn_cpu_instr    dyna_tlb_instruction[64];
+extern dyn_cpu_instr    dyna_cop2_rs_instruction[32];
 
-extern void				SetRdRsRt32bit(HardwareState *reg);
-extern void				SetRdRsRt64bit(HardwareState *reg);
+extern void             SetRdRsRt32bit(HardwareState *reg);
+extern void             SetRdRsRt64bit(HardwareState *reg);
 #endif

@@ -24,21 +24,21 @@
 #define _REGISTRY_H__1964_
 
 typedef struct {
-	int		WindowXPos;
-	int		WindowYPos;
-	int		Maximized;
-	int		ClientWidth;
-	int		ThreadPriority;
-	char	ROMPath[MAX_PATH];
-	char	AudioPlugin[80];
-	char	InputPlugin[80];
-	char	VideoPlugin[80];
-	char	RSPPlugin[80];
-	char	NetplayPlugin[80];
+    int     WindowXPos;
+    int     WindowYPos;
+    int     Maximized;
+    int     ClientWidth;
+    int     ThreadPriority;
+    char    ROMPath[MAX_PATH];
+    char    AudioPlugin[80];
+    char    InputPlugin[80];
+    char    VideoPlugin[80];
+    char    RSPPlugin[80];
+    char    NetplayPlugin[80];
 } RegSettingsTyp;
 
-RegSettingsTyp	gRegSettings;
+RegSettingsTyp  gRegSettings;
 
-extern void		ReadConfiguration(void);
-extern void		WriteConfiguration(void);
+extern void     ReadConfiguration(void);
+extern void     WriteConfiguration(void);
 #endif

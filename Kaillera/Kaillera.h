@@ -10,13 +10,13 @@
 #ifndef _KAILLERADLL_H
 #define _KAILLERADLL_H
 
-extern BOOL			Kaillera_Is_Running;
-extern int			Kaillera_Players;
+extern BOOL         Kaillera_Is_Running;
+extern int          Kaillera_Players;
 extern unsigned int Kaillera_Counter;
 
-int					LoadDllKaillera(void);
-BOOL				IsKailleraDllLoaded(void);
-int					UnloadDllKaillera(void);
+int                 LoadDllKaillera(void);
+BOOL                IsKailleraDllLoaded(void);
+int                 UnloadDllKaillera(void);
 
 /*
  -----------------------------------------------------------------------------------------------------------------------
@@ -24,15 +24,15 @@ int					UnloadDllKaillera(void);
  -----------------------------------------------------------------------------------------------------------------------
  */
 typedef struct {
-	char	*appName;
-	char	*gameList;
+    char    *appName;
+    char    *gameList;
 
-	int (WINAPI *gameCallback) (char *game, int player, int numplayers);
+    int (WINAPI *gameCallback) (char *game, int player, int numplayers);
 
-	void (WINAPI *chatReceivedCallback) (char *nick, char *text);
-	void (WINAPI *clientDroppedCallback) (char *nick, int playernb);
+    void (WINAPI *chatReceivedCallback) (char *nick, char *text);
+    void (WINAPI *clientDroppedCallback) (char *nick, int playernb);
 
-	void (WINAPI *moreInfosCallback) (char *gamename);
+    void (WINAPI *moreInfosCallback) (char *gamename);
 }
 kailleraInfos;
 

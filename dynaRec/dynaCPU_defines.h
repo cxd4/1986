@@ -27,12 +27,12 @@
  */
 void LoadLowMipsCpuRegister(unsigned long mips_reg, unsigned char x86_reg)
 {
-	if (mips_reg == 0) {
-		XOR_Reg2ToReg1(1, x86_reg, x86_reg);
-	} else {
-		FetchEBP_Params(mips_reg);
-		MOV_MemoryToReg(1, x86_reg, x86params.ModRM, x86params.Address);
-	}
+    if (mips_reg == 0) {
+        XOR_Reg2ToReg1(1, x86_reg, x86_reg);
+    } else {
+        FetchEBP_Params(mips_reg);
+        MOV_MemoryToReg(1, x86_reg, x86params.ModRM, x86params.Address);
+    }
 }
 
 /*
@@ -41,12 +41,12 @@ void LoadLowMipsCpuRegister(unsigned long mips_reg, unsigned char x86_reg)
  */
 void LoadHighMipsCpuRegister(unsigned long mips_reg, unsigned char x86_reg)
 {
-	if (mips_reg == 0) {
-		XOR_Reg2ToReg1(1, x86_reg, x86_reg);
-	} else {
-		FetchEBP_Params(mips_reg);
-		MOV_MemoryToReg(1, x86_reg, x86params.ModRM, 4 + x86params.Address);
-	}
+    if (mips_reg == 0) {
+        XOR_Reg2ToReg1(1, x86_reg, x86_reg);
+    } else {
+        FetchEBP_Params(mips_reg);
+        MOV_MemoryToReg(1, x86_reg, x86params.ModRM, 4 + x86params.Address);
+    }
 }
 
 /*
@@ -55,5 +55,5 @@ void LoadHighMipsCpuRegister(unsigned long mips_reg, unsigned char x86_reg)
  */
 void StoreLowMipsCpuRegister(unsigned long iMipsReg, unsigned char iIntelReg)
 {
-	MOV_RegToMemory(1, iIntelReg, ModRM_disp32, (unsigned long) &gHWS_GPR[iMipsReg]);
+    MOV_RegToMemory(1, iIntelReg, ModRM_disp32, (unsigned long) &gHWS_GPR[iMipsReg]);
 }

@@ -26,13 +26,13 @@
 /* TRACE macros */
 #ifdef DEBUG_COMMON
 extern char tracemessage[256];
-#define TRACE0(str)						{ RefreshOpList(str); }
-#define TRACE1(str, arg1)				{ sprintf(tracemessage, str, arg1); RefreshOpList(tracemessage); }
-#define TRACE2(str, arg1, arg2)			{ sprintf(tracemessage, str, arg1, arg2); RefreshOpList(tracemessage); }
-#define TRACE3(str, arg1, arg2, arg3)	{ sprintf(tracemessage, str, arg1, arg2, arg3); RefreshOpList(tracemessage); }
+#define TRACE0(str)                     { RefreshOpList(str); }
+#define TRACE1(str, arg1)               { sprintf(tracemessage, str, arg1); RefreshOpList(tracemessage); }
+#define TRACE2(str, arg1, arg2)         { sprintf(tracemessage, str, arg1, arg2); RefreshOpList(tracemessage); }
+#define TRACE3(str, arg1, arg2, arg3)   { sprintf(tracemessage, str, arg1, arg2, arg3); RefreshOpList(tracemessage); }
 #define TRACE4(str, arg1, arg2, arg3, arg4) { \
-	sprintf(tracemessage, str, arg1, arg2, arg3, arg4); \
-	RefreshOpList(tracemessage); \
+    sprintf(tracemessage, str, arg1, arg2, arg3, arg4); \
+    RefreshOpList(tracemessage); \
 }
 #else
 #define TRACE0(str)
@@ -123,49 +123,49 @@ extern char tracemessage[256];
 #define DEBUG_DYNAEXECUTION
 
 struct DEBUGOPTIONS {
-	int debug_io;
-	int debug_io_vi;
-	int debug_io_sp;
-	int debug_io_pi;
-	int debug_io_ai;
-	int debug_io_mi;
-	int debug_io_si;
-	int debug_io_ri;
-	int debug_io_dp;
-	int debug_io_dps;
-	int debug_io_rdram;
-	int debug_audio;
-	int debug_trap;
-	int debug_compare_interrupt;
-	int debug_cpu_counter;
-	int debug_vi_interrupt;
-	int debug_ai_interrupt;
-	int debug_si_interrupt;
-	int debug_pi_interrupt;
-	int debug_interrupt;
-	int debug_sp_task;
-	int debug_si_task;
-	int debug_sp_dma;
-	int debug_si_dma;
-	int debug_pi_dma;
-	int debug_si_mempak;
-	int debug_si_controller;
-	int debug_dump_mempak;
-	int debug_si_eeprom;
-	int debug_tlb;
-	int debug_tlb_detail;
-	int debug_tlb_extra;
-	int debug_sram;
-	int debug_dyna_compiler;
-	int debug_dyna_execution;
-	int debug_dyna_log;
-	int debug_64bit_fpu;
-	int debug_cache;
-	int debug_dyna_mod_code;
-	int debug_protect_memory;
-	int debug_exception_services;
+    int debug_io;
+    int debug_io_vi;
+    int debug_io_sp;
+    int debug_io_pi;
+    int debug_io_ai;
+    int debug_io_mi;
+    int debug_io_si;
+    int debug_io_ri;
+    int debug_io_dp;
+    int debug_io_dps;
+    int debug_io_rdram;
+    int debug_audio;
+    int debug_trap;
+    int debug_compare_interrupt;
+    int debug_cpu_counter;
+    int debug_vi_interrupt;
+    int debug_ai_interrupt;
+    int debug_si_interrupt;
+    int debug_pi_interrupt;
+    int debug_interrupt;
+    int debug_sp_task;
+    int debug_si_task;
+    int debug_sp_dma;
+    int debug_si_dma;
+    int debug_pi_dma;
+    int debug_si_mempak;
+    int debug_si_controller;
+    int debug_dump_mempak;
+    int debug_si_eeprom;
+    int debug_tlb;
+    int debug_tlb_detail;
+    int debug_tlb_extra;
+    int debug_sram;
+    int debug_dyna_compiler;
+    int debug_dyna_execution;
+    int debug_dyna_log;
+    int debug_64bit_fpu;
+    int debug_cache;
+    int debug_dyna_mod_code;
+    int debug_protect_memory;
+    int debug_exception_services;
 };
-extern struct DEBUGOPTIONS	debugoptions;
+extern struct DEBUGOPTIONS  debugoptions;
 
 /*
  * This option to control if debugger will display debug information for audio
@@ -175,17 +175,17 @@ extern struct DEBUGOPTIONS	debugoptions;
 #endif
 #ifdef DEBUG_AUDIO
 #define DEBUG_AUDIO_MACRO(macro) \
-	if (debugoptions.debug_audio) { \
-		macro \
-	}
+    if (debugoptions.debug_audio) { \
+        macro \
+    }
 #define DEBUG_AUDIO_TRACE0(str) \
-	if (debugoptions.debug_audio) { \
-		TRACE0(str); \
-	}
+    if (debugoptions.debug_audio) { \
+        TRACE0(str); \
+    }
 #define DEBUG_AUDIO_TRACE1(str, arg1) \
-	if (debugoptions.debug_audio) { \
-		TRACE1(str, arg1); \
-	}
+    if (debugoptions.debug_audio) { \
+        TRACE1(str, arg1); \
+    }
 #else
 #define DEBUG_AUDIO_MACRO(macro)
 #define DEBUG_AUDIO_TRACE0(str)
@@ -193,17 +193,17 @@ extern struct DEBUGOPTIONS	debugoptions;
 #endif
 #ifdef DEBUG_SI_DMA
 #define DEBUG_SI_DMA_MACRO(macro) \
-	if (debugoptions.debug_si_dma) { \
-		macro \
-	}
+    if (debugoptions.debug_si_dma) { \
+        macro \
+    }
 #define DEBUG_SI_DMA_TRACE0(str) \
-	if (debugoptions.debug_si_dma) { \
-		TRACE0(str); \
-	}
+    if (debugoptions.debug_si_dma) { \
+        TRACE0(str); \
+    }
 #define DEBUG_SI_DMA_TRACE1(str, arg1) \
-	if (debugoptions.debug_si_dma) { \
-		TRACE1(str, arg1); \
-	}
+    if (debugoptions.debug_si_dma) { \
+        TRACE1(str, arg1); \
+    }
 #else
 #define DEBUG_SI_DMA_MACRO(macro)
 #define DEBUG_SI_DMA_TRACE0(str)
@@ -211,17 +211,17 @@ extern struct DEBUGOPTIONS	debugoptions;
 #endif
 #ifdef DEBUG_PI_DMA
 #define DEBUG_PI_DMA_MACRO(macro) \
-	if (debugoptions.debug_pi_dma) { \
-		macro \
-	}
+    if (debugoptions.debug_pi_dma) { \
+        macro \
+    }
 #define DEBUG_PI_DMA_TRACE0(str) \
-	if (debugoptions.debug_pi_dma) { \
-		TRACE0(str); \
-	}
+    if (debugoptions.debug_pi_dma) { \
+        TRACE0(str); \
+    }
 #define DEBUG_PI_DMA_TRACE1(str, arg1) \
-	if (debugoptions.debug_pi_dma) { \
-		TRACE1(str, arg1); \
-	}
+    if (debugoptions.debug_pi_dma) { \
+        TRACE1(str, arg1); \
+    }
 #else
 #define DEBUG_PI_DMA_MACRO(macro)
 #define DEBUG_PI_DMA_TRACE0(str)
@@ -229,17 +229,17 @@ extern struct DEBUGOPTIONS	debugoptions;
 #endif
 #ifdef DEBUG_SP_DMA
 #define DEBUG_SP_DMA_MACRO(macro) \
-	if (debugoptions.debug_sp_dma) { \
-		macro \
-	}
+    if (debugoptions.debug_sp_dma) { \
+        macro \
+    }
 #define DEBUG_SP_DMA_TRACE0(str) \
-	if (debugoptions.debug_sp_dma) { \
-		TRACE0(str); \
-	}
+    if (debugoptions.debug_sp_dma) { \
+        TRACE0(str); \
+    }
 #define DEBUG_SP_DMA_TRACE1(str, arg1) \
-	if (debugoptions.debug_sp_dma) { \
-		TRACE1(str, arg1); \
-	}
+    if (debugoptions.debug_sp_dma) { \
+        TRACE1(str, arg1); \
+    }
 #else
 #define DEBUG_SP_DMA_MACRO(macro)
 #define DEBUG_SP_DMA_TRACE0(str)
@@ -247,17 +247,17 @@ extern struct DEBUGOPTIONS	debugoptions;
 #endif
 #ifdef DEBUG_SP_TASK
 #define DEBUG_SP_TASK_MACRO(macro) \
-	if (debugoptions.debug_sp_task) { \
-		macro \
-	}
+    if (debugoptions.debug_sp_task) { \
+        macro \
+    }
 #define DEBUG_SP_TASK_TRACE0(str) \
-	if (debugoptions.debug_sp_task) { \
-		TRACE0(str); \
-	}
+    if (debugoptions.debug_sp_task) { \
+        TRACE0(str); \
+    }
 #define DEBUG_SP_TASK_TRACE1(str, arg1) \
-	if (debugoptions.debug_sp_task) { \
-		TRACE1(str, arg1); \
-	}
+    if (debugoptions.debug_sp_task) { \
+        TRACE1(str, arg1); \
+    }
 #else
 #define DEBUG_SP_TASK_MACRO(macro)
 #define DEBUG_SP_TASK_TRACE0(str)
@@ -265,17 +265,17 @@ extern struct DEBUGOPTIONS	debugoptions;
 #endif
 #ifdef DEBUG_SI_TASK
 #define DEBUG_SI_TASK_MACRO(macro) \
-	if (debugoptions.debug_si_task) { \
-		macro \
-	}
+    if (debugoptions.debug_si_task) { \
+        macro \
+    }
 #define DEBUG_SI_TASK_TRACE0(str) \
-	if (debugoptions.debug_si_task) { \
-		TRACE0(str); \
-	}
+    if (debugoptions.debug_si_task) { \
+        TRACE0(str); \
+    }
 #define DEBUG_SI_TASK_TRACE1(str, arg1) \
-	if (debugoptions.debug_si_task) { \
-		TRACE1(str, arg1); \
-	}
+    if (debugoptions.debug_si_task) { \
+        TRACE1(str, arg1); \
+    }
 #else
 #define DEBUG_SI_TASK_MACRO(macro)
 #define DEBUG_SI_TASK_TRACE0(str)
@@ -283,60 +283,60 @@ extern struct DEBUGOPTIONS	debugoptions;
 #endif
 #ifdef DEBUG_COMMON
 #define DEBUG_INTERRUPT_TRACE(othermacro) \
-	if (debugoptions.debug_interrupt) { \
-		othermacro \
-	};
+    if (debugoptions.debug_interrupt) { \
+        othermacro \
+    };
 #define DEBUG_AI_INTERRUPT_TRACE(othermacro) \
-	if (debugoptions.debug_interrupt && debugoptions.debug_ai_interrupt) { \
-		othermacro \
-	};
+    if (debugoptions.debug_interrupt && debugoptions.debug_ai_interrupt) { \
+        othermacro \
+    };
 #define DEBUG_VI_INTERRUPT_TRACE(othermacro) \
-	if (debugoptions.debug_interrupt && debugoptions.debug_vi_interrupt) { \
-		othermacro \
-	};
+    if (debugoptions.debug_interrupt && debugoptions.debug_vi_interrupt) { \
+        othermacro \
+    };
 #define DEBUG_PI_INTERRUPT_TRACE(othermacro) \
-	if (debugoptions.debug_interrupt && debugoptions.debug_pi_interrupt) { \
-		othermacro \
-	};
+    if (debugoptions.debug_interrupt && debugoptions.debug_pi_interrupt) { \
+        othermacro \
+    };
 #define DEBUG_SI_INTERRUPT_TRACE(othermacro) \
-	if (debugoptions.debug_interrupt && debugoptions.debug_si_interrupt) { \
-		othermacro \
-	};
+    if (debugoptions.debug_interrupt && debugoptions.debug_si_interrupt) { \
+        othermacro \
+    };
 #define DEBUG_COMPARE_INTERRUPT_TRACE(othermacro) \
-	if ( \
-		debugoptions.debug_interrupt && \
-		debugoptions.debug_compare_interrupt \
-	) { \
-		othermacro \
-	};
+    if ( \
+        debugoptions.debug_interrupt && \
+        debugoptions.debug_compare_interrupt \
+    ) { \
+        othermacro \
+    };
 #define DEBUG_CPU_COUNTER_TRACE(othermacro) \
-	if (debugoptions.debug_cpu_counter) { \
-		othermacro \
-	};
+    if (debugoptions.debug_cpu_counter) { \
+        othermacro \
+    };
 #define DEBUG_CACHE_TRACE(othermacro) \
-	if (debugoptions.debug_cache) { \
-		othermacro \
-	};
+    if (debugoptions.debug_cache) { \
+        othermacro \
+    };
 #define DEBUG_DYNA_MOD_CODE_TRACE(othermacro) \
-	if (debugoptions.debug_dyna_mod_code) { \
-		othermacro \
-	};
+    if (debugoptions.debug_dyna_mod_code) { \
+        othermacro \
+    };
 #define DEBUG_SRAM_TRACE(othermacro) \
-	if (debugoptions.debug_sram) { \
-		othermacro \
-	};
+    if (debugoptions.debug_sram) { \
+        othermacro \
+    };
 #define DEBUG_FLASHRAM_TRACE(othermacro) \
-	if (debugoptions.debug_sram) { \
-		othermacro \
-	};
+    if (debugoptions.debug_sram) { \
+        othermacro \
+    };
 #define DEBUG_EXCEPTION_TRACE(othermacro) \
-	if (debugoptions.debug_exception_services) { \
-		othermacro \
-	};
+    if (debugoptions.debug_exception_services) { \
+        othermacro \
+    };
 #define DEBUG_CONTROLLER_TRACE(othermacro) \
-	if (debugoptions.debug_si_controller) { \
-		othermacro \
-	};
+    if (debugoptions.debug_si_controller) { \
+        othermacro \
+    };
 #else
 #define DEBUG_INTERRUPT_TRACE(othermacro)
 #define DEBUG_AI_INTERRUPT_TRACE(othermacro)
@@ -353,19 +353,19 @@ extern struct DEBUGOPTIONS	debugoptions;
 #define DEBUG_CONTROLLER_TRACE(othermacro)
 #endif
 #ifdef DEBUG_TLB
-#define TLB_TRACE(macro)	{ if (debugoptions.debug_tlb) { macro } }
+#define TLB_TRACE(macro)    { if (debugoptions.debug_tlb) { macro } }
 #else
 #define TLB_TRACE(macro)
 #endif
 #ifdef DEBUG_TLB_DETAIL
 #define TLB_DETAIL_TRACE(macro) { if (debugoptions.debug_tlb_detail) { macro } }
-#define TLB_EXTRA_TRACE(macro)	{ if (debugoptions.debug_tlb_extra) { macro } }
+#define TLB_EXTRA_TRACE(macro)  { if (debugoptions.debug_tlb_extra) { macro } }
 #else
 #define TLB_DETAIL_TRACE(macro) { }
-#define TLB_EXTRA_TRACE(macro)	{ }
+#define TLB_EXTRA_TRACE(macro)  { }
 #endif
 #ifdef DEBUG_DYNA_CODE_DETECT
-#define CODE_DETECT_TRACE(macro)	{ if (debugoptions.debug_dyna_mod_code) { macro } }
+#define CODE_DETECT_TRACE(macro)    { if (debugoptions.debug_dyna_mod_code) { macro } }
 #else
 #define CODE_DETECT_TRACE(macro)
 #endif
@@ -374,8 +374,8 @@ extern struct DEBUGOPTIONS	debugoptions;
 #else
 #define PROTECT_MEMORY_TRACE(macro)
 #endif
-extern int					debug_opcode;
-extern int					debug_opcode_block;
-extern int					debug_dirty_only;
-extern int					debug_annoying_messages;
+extern int                  debug_opcode;
+extern int                  debug_opcode_block;
+extern int                  debug_dirty_only;
+extern int                  debug_annoying_messages;
 #endif

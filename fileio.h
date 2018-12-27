@@ -26,29 +26,29 @@
 #include "1964ini.h"
 
 /* function declarations */
-BOOL		ReadRomData(char *RomPath);
-long		ReadRomHeader(char *RomPath, INI_ENTRY *ini_entry);
-long		ReadZippedRomHeader(char *RomPath, INI_ENTRY *ini_entry);
-BOOL		ReadZippedRomData(char *RomPath);
-BOOL		ByteSwap(uint32 Size, uint8 *Image);
-int			LoadGNUDistConditions(char *ConditionsBuf);
-void		FileIO_WriteMemPak(int pak_no);
-void		FileIO_LoadMemPak(int pak_no);
-void		FileIO_WriteEEprom(void);
-void		FileIO_LoadEEprom(void);
-void		FileIO_WriteFLASHRAM(int, int, int);
-void		FileIO_ReadFLASHRAM(int, int, int);
-void		FileIO_SaveState(void);
-void		FileIO_LoadState(void);
-void		FileIO_gzSaveState(void);
-void		FileIO_gzLoadState(void);
-void		FileIO_gzSaveStateFile(const char *filename);
-void		FileIO_gzLoadStateFile(const char *filename);
-void		FileIO_ImportPJ64State(const char *filename);
-void		FileIO_ExportPJ64State(const char *filename);
-BOOL		FileIO_Load1964Ini(void);
-BOOL		FileIO_Write1964Ini(void);
-void		SwapRomName(uint8 *name);
+BOOL        ReadRomData(char *RomPath);
+long        ReadRomHeader(char *RomPath, INI_ENTRY *ini_entry);
+long        ReadZippedRomHeader(char *RomPath, INI_ENTRY *ini_entry);
+BOOL        ReadZippedRomData(char *RomPath);
+BOOL        ByteSwap(uint32 Size, uint8 *Image);
+int         LoadGNUDistConditions(char *ConditionsBuf);
+void        FileIO_WriteMemPak(int pak_no);
+void        FileIO_LoadMemPak(int pak_no);
+void        FileIO_WriteEEprom(void);
+void        FileIO_LoadEEprom(void);
+void        FileIO_WriteFLASHRAM(int, int, int);
+void        FileIO_ReadFLASHRAM(int, int, int);
+void        FileIO_SaveState(void);
+void        FileIO_LoadState(void);
+void        FileIO_gzSaveState(void);
+void        FileIO_gzLoadState(void);
+void        FileIO_gzSaveStateFile(const char *filename);
+void        FileIO_gzLoadStateFile(const char *filename);
+void        FileIO_ImportPJ64State(const char *filename);
+void        FileIO_ExportPJ64State(const char *filename);
+BOOL        FileIO_Load1964Ini(void);
+BOOL        FileIO_Write1964Ini(void);
+void        SwapRomName(uint8 *name);
 
 extern BOOL Is_Reading_Rom_File;
 extern BOOL To_Stop_Reading_Rom_File;

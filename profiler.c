@@ -29,13 +29,13 @@
 #include "n64rcp.h"
 #include "win32/windebug.h"
 
-char			*profiler_process_names[] = { "R4300i", "Video", "Audio", "Compiler", "Idle", "RSP", "RDP" };
-uint64			profiler_timer_count[] = { 0, 0, 0, 0, 0, 0, 0 };
+char            *profiler_process_names[] = { "R4300i", "Video", "Audio", "Compiler", "Idle", "RSP", "RDP" };
+uint64          profiler_timer_count[] = { 0, 0, 0, 0, 0, 0, 0 };
 
-static int		process_being_profiling = R4300I_PROF;
-static uint32	start_timer_h, stop_timer_h, start_timer_l, stop_timer_l;
+static int      process_being_profiling = R4300I_PROF;
+static uint32   start_timer_h, stop_timer_h, start_timer_l, stop_timer_l;
 
-BOOL			profiling_started = FALSE;
+BOOL            profiling_started = FALSE;
 
 /*
  =======================================================================================================================
@@ -43,22 +43,22 @@ BOOL			profiling_started = FALSE;
  */
 void start_profiling(int proc)
 {
-	if (profiling_started) {
-		stop_profiling();
-	}
+    if (profiling_started) {
+        stop_profiling();
+    }
 
-	process_being_profiling = proc;
+    process_being_profiling = proc;
 
-	/* start profiler */
-	_asm {
-		pushad
-		rdtsc
-		mov start_timer_h, edx	/* high DWORD */
-		mov start_timer_l, eax	/* low DWORD */
-		popad
-	}
+    /* start profiler */
+    _asm {
+        pushad
+        rdtsc
+        mov start_timer_h, edx  /* high DWORD */
+        mov start_timer_l, eax  /* low DWORD */
+        popad
+    }
 
-	profiling_started = TRUE;
+    profiling_started = TRUE;
 }
 
 /*
@@ -67,22 +67,22 @@ void start_profiling(int proc)
  */
 void stop_profiling(void)
 {
-	/* get current timer */
-	_asm {
-		pushad
-		rdtsc
-		mov stop_timer_h, edx	/* high DWORD */
-		mov stop_timer_l, eax	/* low DWORD */
-		popad
-	}
+    /* get current timer */
+    _asm {
+        pushad
+        rdtsc
+        mov stop_timer_h, edx   /* high DWORD */
+        mov stop_timer_l, eax   /* low DWORD */
+        popad
+    }
 
-	/* calculate timer elapse from the starting timer */
-	profiler_timer_count[process_being_profiling] += (
-		(((uint64) (stop_timer_h - start_timer_h)) * 0x100000000) +
-		stop_timer_l -
-		start_timer_l
-	);
-	profiling_started = FALSE;
+    /* calculate timer elapse from the starting timer */
+    profiler_timer_count[process_being_profiling] += (
+        (((uint64) (stop_timer_h - start_timer_h)) * 0x100000000) +
+        stop_timer_l -
+        start_timer_l
+    );
+    profiling_started = FALSE;
 }
 
 /*
@@ -91,26 +91,26 @@ void stop_profiling(void)
  */
 void format_profiler_result_msg(char *msg)
 {
-	/*~~~~~~~~~~~~~~~~~~~*/
-	uint64	totaltimer = 0;
-	int		i;
-	/*~~~~~~~~~~~~~~~~~~~*/
+    /*~~~~~~~~~~~~~~~~~~~*/
+    uint64  totaltimer = 0;
+    int     i;
+    /*~~~~~~~~~~~~~~~~~~~*/
 
-	for (i = 0; i < MAX_PROF; i++) {
-		totaltimer += profiler_timer_count[i];
-	}
+    for (i = 0; i < MAX_PROF; i++) {
+        totaltimer += profiler_timer_count[i];
+    }
 
-	if (totaltimer == 0)
-		totaltimer = 1;
-	sprintf(
-		msg,
-		"core-%2d%% video-%2d%% audio-%2d%% compiler-%2d%% idle-%2d%%",
-		(uint32) (profiler_timer_count[R4300I_PROF] * 100 / totaltimer),
-		(uint32) (profiler_timer_count[VIDEO_PROF] * 100 / totaltimer),
-		(uint32) (profiler_timer_count[AUDIO_PROF] * 100 / totaltimer),
-		(uint32) (profiler_timer_count[COMPILER_PROF] * 100 / totaltimer),
-		(uint32) (profiler_timer_count[CPU_IDLE_PROF] * 100 / totaltimer)
-	);
+    if (totaltimer == 0)
+        totaltimer = 1;
+    sprintf(
+        msg,
+        "core-%2d%% video-%2d%% audio-%2d%% compiler-%2d%% idle-%2d%%",
+        (uint32) (profiler_timer_count[R4300I_PROF] * 100 / totaltimer),
+        (uint32) (profiler_timer_count[VIDEO_PROF] * 100 / totaltimer),
+        (uint32) (profiler_timer_count[AUDIO_PROF] * 100 / totaltimer),
+        (uint32) (profiler_timer_count[COMPILER_PROF] * 100 / totaltimer),
+        (uint32) (profiler_timer_count[CPU_IDLE_PROF] * 100 / totaltimer)
+    );
 }
 
 /*
@@ -119,11 +119,11 @@ void format_profiler_result_msg(char *msg)
  */
 void reset_profiler(void)
 {
-	/*~~*/
-	int i;
-	/*~~*/
+    /*~~*/
+    int i;
+    /*~~*/
 
-	for (i = 0; i < MAX_PROF; i++) {
-		profiler_timer_count[i] = 0;
-	}
+    for (i = 0; i < MAX_PROF; i++) {
+        profiler_timer_count[i] = 0;
+    }
 }

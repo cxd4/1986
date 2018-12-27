@@ -25,8 +25,8 @@
 
 #include "../plugins.h"
 
-#define GFX_VERSION			0x0102
-#define CONTROLLER_VERSION	0x0100
+#define GFX_VERSION         0x0102
+#define CONTROLLER_VERSION  0x0100
 
 extern void CONTROLLER_CloseDLL(void);
 extern void CONTROLLER_ControllerCommand(int _Control, BYTE *_Command);
@@ -50,8 +50,8 @@ extern void CONTROLLER_Under_Selecting_DllAbout(HWND _hWnd);
 extern void CONTROLLER_Under_Selecting_DllTest(HWND _hWnd);
 extern void (__cdecl *_CONTROLLER_Under_Selecting_DllAbout) (HWND _hWnd);
 extern void (__cdecl *_CONTROLLER_Under_Selecting_DllTest) (HWND _hWnd);
-extern BOOL			LoadControllerPlugin(char *libname);
-extern void			CloseControllerPlugin(void);
+extern BOOL         LoadControllerPlugin(char *libname);
+extern void         CloseControllerPlugin(void);
 
-extern HINSTANCE	hinstControllerPlugin;
+extern HINSTANCE    hinstControllerPlugin;
 #endif
