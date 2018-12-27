@@ -1,0 +1,461 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release - Pentium Pro+|Win32">
+      <Configuration>Release - Pentium Pro+</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release Opcode Debugger|Win32">
+      <Configuration>Release Opcode Debugger</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release with .NET Debugging|Win32">
+      <Configuration>Release with .NET Debugging</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <SccProjectName>
+    </SccProjectName>
+    <SccAuxPath />
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccProvider>
+    </SccProvider>
+    <ProjectGuid>{9B3935DB-768E-497D-A5DA-0C9E52E7998B}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release with .NET Debugging|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v141</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release - Pentium Pro+|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v141</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v141</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Opcode Debugger|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v141</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v141</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release with .NET Debugging|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release - Pentium Pro+|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release Opcode Debugger|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>15.0.28127.55</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>.\obj/Release\</OutDir>
+    <IntDir>.\obj/Release\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Opcode Debugger|Win32'">
+    <OutDir>.\obj/Release_Opcode_Debugger\</OutDir>
+    <IntDir>.\obj/Release_Opcode_Debugger\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>.\obj/Debug\</OutDir>
+    <IntDir>.\obj/Debug\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release - Pentium Pro+|Win32'">
+    <OutDir>Release - Pentium Pro+\</OutDir>
+    <IntDir>Release - Pentium Pro+\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release with .NET Debugging|Win32'">
+    <OutDir>Release with .NET Debugging\</OutDir>
+    <IntDir>Release with .NET Debugging\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DYNAREC;WIN32;NDEBUG;_WINDOWS;ZLIB_DLL;WIN32_LEAN_AND_MEAN;ENABLE_64BIT_FPU;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling />
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <StructMemberAlignment>16Bytes</StructMemberAlignment>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeaderOutputFile>.\obj/Release/1964.pch</PrecompiledHeaderOutputFile>
+      <AssemblerOutput>All</AssemblerOutput>
+      <AssemblerListingLocation>.\obj/Release/</AssemblerListingLocation>
+      <ObjectFileName>.\obj/Release/</ObjectFileName>
+      <ProgramDataBaseFileName>.\obj/Release/</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat />
+      <CallingConvention>FastCall</CallingConvention>
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <Link>
+      <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>ddraw.lib;zlib\zlib.lib;comctl32.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>../Release/1964.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ProgramDatabaseFile>.\obj/Release/1964.pdb</ProgramDatabaseFile>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>.\obj/Release/1964.map</MapFileName>
+      <SubSystem>Windows</SubSystem>
+      <LargeAddressAware />
+      <TerminalServerAware />
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\obj/Release/1964.tlb</TypeLibraryName>
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release Opcode Debugger|Win32'">
+    <ClCompile>
+      <Optimization>MinSpace</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_OPCODE_DEBUGGER;DYNAREC;WIN32;NDEBUG;_WINDOWS;ZLIB_DLL;WIN32_LEAN_AND_MEAN;ENABLE_64BIT_FPU;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeaderOutputFile>.\obj/Release_Opcode_Debugger/1964.pch</PrecompiledHeaderOutputFile>
+      <AssemblerOutput>All</AssemblerOutput>
+      <AssemblerListingLocation>.\obj/Release_Opcode_Debugger/</AssemblerListingLocation>
+      <ObjectFileName>.\obj/Release_Opcode_Debugger/</ObjectFileName>
+      <ProgramDataBaseFileName>.\obj/Release_Opcode_Debugger/</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CallingConvention>FastCall</CallingConvention>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <Link>
+      <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>dsound.lib;zlib\zlib.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>../Release/1964-opcodedebugger.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ProgramDatabaseFile>.\obj/Release_Opcode_Debugger/1964-opcodedebugger.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\obj/Release_Opcode_Debugger/1964.tlb</TypeLibraryName>
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DYNAREC;DYN_DEBUG;WIN32;_WINDOWS;VIDEO;ZIP_SUPPORT;HLE;GRAPHICS_TRACER;ZLIB_DLL;ENABLE_64BIT_FPU;DEBUG_COMMON;WINDEBUG_1964;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <StructMemberAlignment>16Bytes</StructMemberAlignment>
+      <PrecompiledHeader />
+      <PrecompiledHeaderOutputFile>.\obj/Debug/1964.pch</PrecompiledHeaderOutputFile>
+      <AssemblerOutput>All</AssemblerOutput>
+      <AssemblerListingLocation>.\obj/Debug/</AssemblerListingLocation>
+      <ObjectFileName>.\obj/Debug/</ObjectFileName>
+      <ProgramDataBaseFileName>.\obj/Debug/</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <CallingConvention>FastCall</CallingConvention>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <Link>
+      <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>dsound.lib;dxguid.lib;dinput.lib;odbc32.lib;odbccp32.lib;comctl32.lib;opengl32.lib;zlib/zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>../Release/1964dbug.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\obj/Debug/1964dbug.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\obj/Debug/1964.tlb</TypeLibraryName>
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;WINDEBUG_1964;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release - Pentium Pro+|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DYNAREC;WIN32;NDEBUG;_WINDOWS;ZLIB_DLL;WIN32_LEAN_AND_MEAN;ENABLE_64BIT_FPU;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling />
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <StructMemberAlignment>16Bytes</StructMemberAlignment>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeaderOutputFile>.\obj/Release/1964.pch</PrecompiledHeaderOutputFile>
+      <AssemblerOutput>All</AssemblerOutput>
+      <AssemblerListingLocation>.\obj/Release/</AssemblerListingLocation>
+      <ObjectFileName>.\obj/Release/</ObjectFileName>
+      <ProgramDataBaseFileName>.\obj/Release/</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat />
+      <CallingConvention>FastCall</CallingConvention>
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <Link>
+      <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>zlib\zlib.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>../Release/1964.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ProgramDatabaseFile>.\obj/Release/1964.pdb</ProgramDatabaseFile>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>.\obj/Release/1964.map</MapFileName>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\obj/Release/1964.tlb</TypeLibraryName>
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release with .NET Debugging|Win32'">
+    <ClCompile>
+      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>false</OmitFramePointers>
+      <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DYNAREC;WIN32;NDEBUG;_WINDOWS;ZLIB_DLL;WIN32_LEAN_AND_MEAN;ENABLE_64BIT_FPU;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling />
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <StructMemberAlignment>16Bytes</StructMemberAlignment>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeaderOutputFile>.\obj/Release/1964.pch</PrecompiledHeaderOutputFile>
+      <AssemblerOutput>All</AssemblerOutput>
+      <AssemblerListingLocation>.\obj/Release/</AssemblerListingLocation>
+      <ObjectFileName>.\obj/Release/</ObjectFileName>
+      <ProgramDataBaseFileName>.\obj/Release/</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <CallingConvention>FastCall</CallingConvention>
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <Link>
+      <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>ddraw.lib;zlib\zlib.lib;comctl32.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>../Release/1964_Net_Debug.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\obj/Release/1964.pdb</ProgramDatabaseFile>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>.\obj/Release/1964.map</MapFileName>
+      <SubSystem>Windows</SubSystem>
+      <LargeAddressAware />
+      <TerminalServerAware />
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\obj/Release/1964.tlb</TypeLibraryName>
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\1964ini.c" />
+    <ClCompile Include="..\cheatcode.c" />
+    <ClCompile Include="..\compiler.c" />
+    <ClCompile Include="..\DebugR4300i.c" />
+    <ClCompile Include="..\debug_option.c" />
+    <ClCompile Include="..\dma.c" />
+    <ClCompile Include="..\dynaRec\Analyze.c" />
+    <ClCompile Include="..\dynaRec\dynaCOP1.c" />
+    <ClCompile Include="..\dynaRec\dynaCPU.c" />
+    <ClCompile Include="..\dynaRec\dynaLog.c" />
+    <ClCompile Include="..\dynaRec\OpcodeDebugger.c" />
+    <ClCompile Include="..\dynaRec\regcache.c" />
+    <ClCompile Include="..\dynaRec\x86.c" />
+    <ClCompile Include="..\emulator.c">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release with .NET Debugging|Win32'">/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">/Oa %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\fileio.c" />
+    <ClCompile Include="..\FPU.c" />
+    <ClCompile Include="..\gamesave.c" />
+    <ClCompile Include="..\globals.c" />
+    <ClCompile Include="..\hle.c" />
+    <ClCompile Include="..\interrupt.c" />
+    <ClCompile Include="..\iPIF.c" />
+    <ClCompile Include="..\Kaillera\Kaillera.c" />
+    <ClCompile Include="..\memory.c" />
+    <ClCompile Include="..\memory2.c" />
+    <ClCompile Include="..\n64rcp.c" />
+    <ClCompile Include="..\netplay.c" />
+    <ClCompile Include="..\profiler.c" />
+    <ClCompile Include="..\R4300i.c" />
+    <ClCompile Include="..\romlist.c" />
+    <ClCompile Include="..\timer.c" />
+    <ClCompile Include="..\Tlb.c" />
+    <ClCompile Include="..\win32\Dll_Audio.c" />
+    <ClCompile Include="..\win32\Dll_Input.c" />
+    <ClCompile Include="..\win32\DLL_Rsp.c" />
+    <ClCompile Include="..\win32\Dll_Video.c" />
+    <ClCompile Include="..\win32\registry.c" />
+    <ClCompile Include="..\win32\windebug.c" />
+    <ClCompile Include="..\win32\wingui.c" />
+    <ClCompile Include="..\win32\wingui2.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\1964ini.h" />
+    <ClInclude Include="..\cheatcode.h" />
+    <ClInclude Include="..\compiler.h" />
+    <ClInclude Include="..\DbgPrint.h" />
+    <ClInclude Include="..\debug_option.h" />
+    <ClInclude Include="..\dma.h" />
+    <ClInclude Include="..\dynaRec\dynaBranch.h" />
+    <ClInclude Include="..\dynaRec\dynaCOP1.h" />
+    <ClInclude Include="..\dynaRec\dynaCPU.h" />
+    <ClInclude Include="..\dynaRec\dynaCPU_defines.h" />
+    <ClInclude Include="..\dynaRec\dynaHelper.h" />
+    <ClInclude Include="..\dynaRec\dynaLog.h" />
+    <ClInclude Include="..\dynaRec\dynaRec.h" />
+    <ClInclude Include="..\dynaRec\opcodeDebugger.h" />
+    <ClInclude Include="..\dynaRec\regcache.h" />
+    <ClInclude Include="..\dynaRec\x86.h" />
+    <ClInclude Include="..\emulator.h" />
+    <ClInclude Include="..\fileio.h" />
+    <ClInclude Include="..\gamesave.h" />
+    <ClInclude Include="..\Globals.h" />
+    <ClInclude Include="..\hardware.h" />
+    <ClInclude Include="..\hle.h" />
+    <ClInclude Include="..\interrupt.h" />
+    <ClInclude Include="..\iPIF.h" />
+    <ClInclude Include="..\Kaillera\Kaillera.h" />
+    <ClInclude Include="..\memory.h" />
+    <ClInclude Include="..\n64rcp.h" />
+    <ClInclude Include="..\netplay.h" />
+    <ClInclude Include="..\plugins.h" />
+    <ClInclude Include="..\r4300i.h" />
+    <ClInclude Include="..\romlist.h" />
+    <ClInclude Include="..\timer.h" />
+    <ClInclude Include="..\win32\Dll_Audio.h" />
+    <ClInclude Include="..\win32\Dll_Input.h" />
+    <ClInclude Include="..\win32\DLL_Rsp.h" />
+    <ClInclude Include="..\win32\Dll_Video.h" />
+    <ClInclude Include="..\win32\registry.h" />
+    <ClInclude Include="..\win32\resource.h" />
+    <ClInclude Include="..\win32\windebug.h" />
+    <ClInclude Include="..\win32\wingui.h" />
+    <ClInclude Include="..\zlib\unzip.h" />
+    <ClInclude Include="..\zlib\zconf.h" />
+    <ClInclude Include="..\zlib\zlib.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\COPYRIGHT.txt" />
+    <None Include="..\win32\1964.bmp" />
+    <None Include="..\win32\audio.bmp" />
+    <None Include="..\win32\bitmap2.bmp" />
+    <None Include="..\win32\bmp00001.bmp" />
+    <None Include="..\win32\icon2.ico" />
+    <None Include="..\win32\input.bmp" />
+    <None Include="..\win32\logo.bmp" />
+    <None Include="..\win32\rom_open.bmp" />
+    <None Include="..\win32\toolbar1.bmp" />
+    <None Include="..\win32\video.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\win32\wingui.rc">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">win32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release - Pentium Pro+|Win32'">win32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release Opcode Debugger|Win32'">win32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release with .NET Debugging|Win32'">win32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">win32</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\zlib\zlib.lib" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

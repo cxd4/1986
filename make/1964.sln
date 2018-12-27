@@ -1,34 +1,30 @@
-Microsoft Visual Studio Solution File, Format Version 7.00
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "1964", "1964.vcproj", "{9B3935DB-768E-497D-A5DA-0C9E52E7998B}"
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.168
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "1964", "1964.vcxproj", "{9B3935DB-768E-497D-A5DA-0C9E52E7998B}"
 EndProject
 Global
-	GlobalSection(SourceCodeControl) = preSolution
-		SccNumberOfProjects = 1
-		SccProjectUniqueName0 = 1964.vcproj
-		SccProjectName0 = \u0022$/1964\u0022,\u0020RDAAAAAA
-		SccLocalPath0 = .
-		SccProvider0 = MSSCCI:Microsoft\u0020Visual\u0020SourceSafe
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Default = Debug|Default
+		Release Opcode Debugger|Default = Release Opcode Debugger|Default
+		Release with .NET Debugging|Default = Release with .NET Debugging|Default
+		Release|Default = Release|Default
 	EndGlobalSection
-	GlobalSection(SolutionConfiguration) = preSolution
-		ConfigName.0 = Debug
-		ConfigName.1 = Release
-		ConfigName.2 = Release Opcode Debugger
-		ConfigName.3 = Release with .NET Debugging
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9B3935DB-768E-497D-A5DA-0C9E52E7998B}.Debug|Default.ActiveCfg = Debug|Win32
+		{9B3935DB-768E-497D-A5DA-0C9E52E7998B}.Debug|Default.Build.0 = Debug|Win32
+		{9B3935DB-768E-497D-A5DA-0C9E52E7998B}.Release Opcode Debugger|Default.ActiveCfg = Release Opcode Debugger|Win32
+		{9B3935DB-768E-497D-A5DA-0C9E52E7998B}.Release Opcode Debugger|Default.Build.0 = Release Opcode Debugger|Win32
+		{9B3935DB-768E-497D-A5DA-0C9E52E7998B}.Release with .NET Debugging|Default.ActiveCfg = Release with .NET Debugging|Win32
+		{9B3935DB-768E-497D-A5DA-0C9E52E7998B}.Release with .NET Debugging|Default.Build.0 = Release with .NET Debugging|Win32
+		{9B3935DB-768E-497D-A5DA-0C9E52E7998B}.Release|Default.ActiveCfg = Release|Win32
+		{9B3935DB-768E-497D-A5DA-0C9E52E7998B}.Release|Default.Build.0 = Release|Win32
 	EndGlobalSection
-	GlobalSection(ProjectDependencies) = postSolution
-	EndGlobalSection
-	GlobalSection(ProjectConfiguration) = postSolution
-		{9B3935DB-768E-497D-A5DA-0C9E52E7998B}.Debug.ActiveCfg = Debug|Win32
-		{9B3935DB-768E-497D-A5DA-0C9E52E7998B}.Debug.Build.0 = Debug|Win32
-		{9B3935DB-768E-497D-A5DA-0C9E52E7998B}.Release.ActiveCfg = Release|Win32
-		{9B3935DB-768E-497D-A5DA-0C9E52E7998B}.Release.Build.0 = Release|Win32
-		{9B3935DB-768E-497D-A5DA-0C9E52E7998B}.Release Opcode Debugger.ActiveCfg = Release Opcode Debugger|Win32
-		{9B3935DB-768E-497D-A5DA-0C9E52E7998B}.Release Opcode Debugger.Build.0 = Release Opcode Debugger|Win32
-		{9B3935DB-768E-497D-A5DA-0C9E52E7998B}.Release with .NET Debugging.ActiveCfg = Release with .NET Debugging|Win32
-		{9B3935DB-768E-497D-A5DA-0C9E52E7998B}.Release with .NET Debugging.Build.0 = Release with .NET Debugging|Win32
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-	EndGlobalSection
-	GlobalSection(ExtensibilityAddIns) = postSolution
+		SolutionGuid = {F60A580C-FC22-4400-85DE-8A6C7039E54B}
 	EndGlobalSection
 EndGlobal

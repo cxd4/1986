@@ -1,0 +1,312 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="core">
+      <UniqueIdentifier>{a1bd3f75-9d96-4b95-afce-f24486b049bd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="win32">
+      <UniqueIdentifier>{ae0081c3-84b9-4908-9c62-ca16c9c0b970}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="win32\Plugins">
+      <UniqueIdentifier>{a5ac2979-d57b-40f0-9f74-2110ac4270e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="win32\Resource Files">
+      <UniqueIdentifier>{967f7fd1-63ef-404e-881f-ee5edde5f9dc}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+    <Filter Include="Dynarec">
+      <UniqueIdentifier>{5fee07cb-2e59-4a97-a15c-95bc3f29a298}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\1964ini.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DebugR4300i.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FPU.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Kaillera\Kaillera.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\R4300i.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Tlb.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\debug_option.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dma.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulator.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\fileio.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\gamesave.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\globals.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\iPIF.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\interrupt.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\memory.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\memory2.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\n64rcp.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\netplay.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\profiler.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\timer.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\cheatcode.c">
+      <Filter>win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\win32\registry.c">
+      <Filter>win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\romlist.c">
+      <Filter>win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\win32\windebug.c">
+      <Filter>win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\win32\wingui.c">
+      <Filter>win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\win32\wingui2.c">
+      <Filter>win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\win32\DLL_Rsp.c">
+      <Filter>win32\Plugins</Filter>
+    </ClCompile>
+    <ClCompile Include="..\win32\Dll_Audio.c">
+      <Filter>win32\Plugins</Filter>
+    </ClCompile>
+    <ClCompile Include="..\win32\Dll_Input.c">
+      <Filter>win32\Plugins</Filter>
+    </ClCompile>
+    <ClCompile Include="..\win32\Dll_Video.c">
+      <Filter>win32\Plugins</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dynaRec\Analyze.c">
+      <Filter>Dynarec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dynaRec\OpcodeDebugger.c">
+      <Filter>Dynarec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compiler.c">
+      <Filter>Dynarec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dynaRec\dynaCOP1.c">
+      <Filter>Dynarec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dynaRec\dynaCPU.c">
+      <Filter>Dynarec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dynaRec\dynaLog.c">
+      <Filter>Dynarec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hle.c">
+      <Filter>Dynarec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dynaRec\regcache.c">
+      <Filter>Dynarec</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dynaRec\x86.c">
+      <Filter>Dynarec</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\1964ini.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DbgPrint.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Globals.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Kaillera\Kaillera.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\debug_option.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dma.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulator.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\fileio.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gamesave.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hardware.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\iPIF.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\interrupt.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\memory.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\n64rcp.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\netplay.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\r4300i.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\timer.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\zlib\unzip.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\zlib\zconf.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\zlib\zlib.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\cheatcode.h">
+      <Filter>win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\win32\registry.h">
+      <Filter>win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\romlist.h">
+      <Filter>win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\win32\windebug.h">
+      <Filter>win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\win32\wingui.h">
+      <Filter>win32</Filter>
+    </ClInclude>
+    <ClInclude Include="..\win32\DLL_Rsp.h">
+      <Filter>win32\Plugins</Filter>
+    </ClInclude>
+    <ClInclude Include="..\win32\Dll_Audio.h">
+      <Filter>win32\Plugins</Filter>
+    </ClInclude>
+    <ClInclude Include="..\win32\Dll_Input.h">
+      <Filter>win32\Plugins</Filter>
+    </ClInclude>
+    <ClInclude Include="..\win32\Dll_Video.h">
+      <Filter>win32\Plugins</Filter>
+    </ClInclude>
+    <ClInclude Include="..\plugins.h">
+      <Filter>win32\Plugins</Filter>
+    </ClInclude>
+    <ClInclude Include="..\win32\resource.h">
+      <Filter>win32\Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\compiler.h">
+      <Filter>Dynarec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dynaRec\dynaBranch.h">
+      <Filter>Dynarec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dynaRec\dynaCOP1.h">
+      <Filter>Dynarec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dynaRec\dynaCPU.h">
+      <Filter>Dynarec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dynaRec\dynaCPU_defines.h">
+      <Filter>Dynarec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dynaRec\dynaHelper.h">
+      <Filter>Dynarec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dynaRec\dynaLog.h">
+      <Filter>Dynarec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dynaRec\dynaRec.h">
+      <Filter>Dynarec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hle.h">
+      <Filter>Dynarec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dynaRec\opcodeDebugger.h">
+      <Filter>Dynarec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dynaRec\regcache.h">
+      <Filter>Dynarec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dynaRec\x86.h">
+      <Filter>Dynarec</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\win32\1964.bmp">
+      <Filter>win32\Resource Files</Filter>
+    </None>
+    <None Include="..\win32\audio.bmp">
+      <Filter>win32\Resource Files</Filter>
+    </None>
+    <None Include="..\win32\bitmap2.bmp">
+      <Filter>win32\Resource Files</Filter>
+    </None>
+    <None Include="..\win32\bmp00001.bmp">
+      <Filter>win32\Resource Files</Filter>
+    </None>
+    <None Include="..\win32\icon2.ico">
+      <Filter>win32\Resource Files</Filter>
+    </None>
+    <None Include="..\win32\input.bmp">
+      <Filter>win32\Resource Files</Filter>
+    </None>
+    <None Include="..\win32\logo.bmp">
+      <Filter>win32\Resource Files</Filter>
+    </None>
+    <None Include="..\win32\rom_open.bmp">
+      <Filter>win32\Resource Files</Filter>
+    </None>
+    <None Include="..\win32\toolbar1.bmp">
+      <Filter>win32\Resource Files</Filter>
+    </None>
+    <None Include="..\win32\video.bmp">
+      <Filter>win32\Resource Files</Filter>
+    </None>
+    <None Include="..\COPYRIGHT.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\win32\wingui.rc">
+      <Filter>win32\Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\zlib\zlib.lib" />
+  </ItemGroup>
+</Project>
