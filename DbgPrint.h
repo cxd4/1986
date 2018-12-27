@@ -39,8 +39,7 @@ void		DebugPrintPC(uint32 thePC);
  =======================================================================================================================
  */
 #define DBGPRINT_RT_IMM(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%s[%08X],%04Xh", \
 		gHWS_pc, \
@@ -51,8 +50,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_RT_FS_COP0(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%s[%08X],%s", \
 		gHWS_pc, \
@@ -63,8 +61,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_RT_FS_COP1(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%s[%08X],%s", \
 		gHWS_pc, \
@@ -75,8 +72,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_BASE_RT_OFFSET(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%2s[%08X],%04Xh(%s[%08X])", \
 		gHWS_pc, \
@@ -89,8 +85,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_BASE_RT64BIT_OFFSET(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%2s[%8X], %04Xh(%s[%08X])", \
 		gHWS_pc, \
@@ -103,8 +98,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_RS_RT_IMM(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%2s[%08X],%s[%08X],%04Xh", \
 		gHWS_pc, \
@@ -117,8 +111,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_RS_RT_IMMH(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%2s[%08X],%s[%08X],%04Xh", \
 		gHWS_pc, \
@@ -131,8 +124,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_RS_OFF(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%s[%08X],%04Xh", \
 		gHWS_pc, \
@@ -143,8 +135,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_RS_IMM(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%s[%08X],%04Xh", \
 		gHWS_pc, \
@@ -155,8 +146,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_RS_RD(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%s[%08X],%s[%08X]", \
 		gHWS_pc, \
@@ -168,8 +158,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_RS_RT_RD(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%2s[%08X],%s[%08X],%s[%08X]", \
 		gHWS_pc, \
@@ -183,12 +172,10 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_RT_RD_SA(_op_name) \
-	if((RT_FT | SA_FD | RD_FS) == 0) \
+	if((RT_FT | SA_FD | RD_FS) == 0) { \
 		sprintf(op_str, "%08X: NOP", gHWS_pc); \
-	else \
-	{ \
-		sprintf \
-		( \
+	} else { \
+		sprintf( \
 			op_str, \
 			"%08X: %s%2s,%s,%04Xh", \
 			gHWS_pc, \
@@ -200,8 +187,7 @@ void		DebugPrintPC(uint32 thePC);
 	}
 
 #define DBGPRINT_RS_RT(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%s[%08X],%s[%08X]", \
 		gHWS_pc, \
@@ -213,8 +199,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_RD(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%s[%08X]", \
 		gHWS_pc, \
@@ -224,8 +209,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_RS(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%s[%08X]", \
 		gHWS_pc, \
@@ -236,8 +220,7 @@ void		DebugPrintPC(uint32 thePC);
 
 #define DBGPRINT_RS_RT_OFF(_op_name)	DBGPRINT_RS(_op_name)
 #define DBGPRINT_RS_RT_OFF_BRANCH(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%s[%08X],%s[%08X],%04Xh", \
 		gHWS_pc, \
@@ -250,8 +233,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_RS_OFF_BRANCH(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%s[%08X],%04Xh", \
 		gHWS_pc, \
@@ -262,8 +244,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_FPR_OFF_BRANCH(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%04Xh", \
 		gHWS_pc, \
@@ -274,8 +255,7 @@ void		DebugPrintPC(uint32 thePC);
 #define DBGPRINT_INSTR_INDEX(_op_name)	sprintf(op_str, "%08X: %s%08X", gHWS_pc, (uint32) _op_name, instr_index);
 
 #define DBGPRINT_RT_RD_RS(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%2s[%08X],%s[%08X],%s[%08X]", \
 		gHWS_pc, \
@@ -291,8 +271,7 @@ void		DebugPrintPC(uint32 thePC);
 #define DBGPRINT_OPCODE(_op_name)	sprintf(op_str, "%08X: %s", gHWS_pc, (uint32) _op_name);
 
 #define DBGPRINT_FD_FS(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%s,%s", \
 		gHWS_pc, \
@@ -302,8 +281,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_FD_FS_FT(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%s[%08X],%s[%08X],%s[%08X]", \
 		gHWS_pc, \
@@ -317,8 +295,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_BASE_FPR_OFFSET(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%2s[%08X],%04Xh(%s[%08X])", \
 		gHWS_pc, \
@@ -331,8 +308,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_BASE_FPR64BIT_OFFSET(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%2s,%04Xh(%s[%08X])", \
 		gHWS_pc, \
@@ -344,8 +320,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_FPR_FT_FS(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%s,%s", \
 		gHWS_pc, \
@@ -355,8 +330,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_FPR64BIT_FT_FS(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%s,%s", \
 		gHWS_pc, \
@@ -366,8 +340,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_FPR64BIT_FS_FD(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%s,%s", \
 		gHWS_pc, \
@@ -377,8 +350,7 @@ void		DebugPrintPC(uint32 thePC);
 	);
 
 #define DBGPRINT_FPU_FD_FS_FT(_op_name) \
-	sprintf \
-	( \
+	sprintf( \
 		op_str, \
 		"%08X: %s%s,%s,%s", \
 		gHWS_pc, \

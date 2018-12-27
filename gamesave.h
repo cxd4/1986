@@ -31,8 +31,7 @@
 #define FLASHRAM_SIZE	0x20000
 #define FLASHRAM_MASK	0x1FFFF
 
-struct GAMESAVESTATUS
-{
+struct GAMESAVESTATUS {
 	BOOL	EEprom_used;
 	BOOL	EEprom_written;
 	BOOL	Sram_used;
@@ -62,14 +61,12 @@ unsigned __int32				Flashram_Get_Status(uint32 addr);
  =======================================================================================================================
  */
 #define CHECK_FLASHRAM_SW(addr, val) \
-	if(addr == FLASHRAM_COMMAND_REG_ADDR) \
-	{ \
+	if (addr == FLASHRAM_COMMAND_REG_ADDR) { \
 		Flashram_Command(val); \
 		return; \
 	}
 #define CHECK_FLASHRAM_LW(addr) \
-	if((addr & 0xFFFFFFF8) == FLASHRAM_STATUS_REG_WORD1_ADDR) \
-	{ \
+	if ((addr & 0xFFFFFFF8) == FLASHRAM_STATUS_REG_WORD1_ADDR) { \
 		return(Flashram_Get_Status(addr)); \
 	}
 

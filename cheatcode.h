@@ -31,16 +31,14 @@
 
 enum APPLYCHEATMODE { INGAME, BOOTUPONCE, GSBUTTON, ONLYIN1964 };
 
-struct CODENODE_STRUCT
-{
+struct CODENODE_STRUCT {
 	uint32	addr;
 	uint16	val;
 };
 
 typedef struct CODENODE_STRUCT	CHEATCODENODE;
 
-struct CODEGROUP_STRUCT
-{
+struct CODEGROUP_STRUCT {
 	int				country;
 	int				codecount;
 	BOOL			active;

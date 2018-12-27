@@ -104,31 +104,25 @@ __forceinline uint32 DynaFetchInstruction(uint32 pc)
 	/*~~~~~~~~~~~~~*/
 
 	compilerstatus.realpc_fetched = pc;
-	if(NOT_IN_KO_K1_SEG(compilerstatus.realpc_fetched))
-	{
+	if (NOT_IN_KO_K1_SEG(compilerstatus.realpc_fetched)) {
 		compilerstatus.realpc_fetched = TranslateITLBAddress(compilerstatus.realpc_fetched);
-		if(ITLB_Error)
-		{
+		if (ITLB_Error) {
 			return code;
 		}
 	}
 
-	__try
-	{
+	__try {
 		compilerstatus.pcptr = pLOAD_UWORD_PARAM(compilerstatus.realpc_fetched);
 		code = *compilerstatus.pcptr;
 
-		if((compilerstatus.realpc_fetched & 0x1FFFFFFF) < current_rdram_size)
-		{
-			if(currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY)
-			{
+		if ((compilerstatus.realpc_fetched & 0x1FFFFFFF) < current_rdram_size) {
+			if (currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY) {
 				ProtectBlock(compilerstatus.realpc_fetched);
 			}
 
 			* (uint32 *) &RDRAM_Copy[compilerstatus.realpc_fetched & 0x1FFFFFFF] = code;
-			if(currentromoptions.Link_4KB_Blocks != USE4KBLINKBLOCK_YES)
-			{
-				if(sDYN_PC_LOOKUP[compilerstatus.realpc_fetched >> 16] == gMemoryState.dummyAllZero)
+			if (currentromoptions.Link_4KB_Blocks != USE4KBLINKBLOCK_YES) {
+				if (sDYN_PC_LOOKUP[compilerstatus.realpc_fetched >> 16] == gMemoryState.dummyAllZero)
 					UnmappedMemoryExceptionHelper(compilerstatus.realpc_fetched);
 				*(uint32 *)
 					(
@@ -137,10 +131,7 @@ __forceinline uint32 DynaFetchInstruction(uint32 pc)
 					) = 0;
 			}
 		}
-	}
-
-	__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-	{
+	} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		DisplayError("%08X: Dyna PC out of range", pc);
 	}
 
@@ -159,12 +150,10 @@ unsigned __int32 DynaFetchInstruction2(uint32 pc)
 	/*~~~~~~~~~~~~~~~~*/
 
 	compilerstatus.realpc_fetched = savepc;
-	if(NOT_IN_KO_K1_SEG(compilerstatus.realpc_fetched))
-	{
+	if (NOT_IN_KO_K1_SEG(compilerstatus.realpc_fetched)) {
 		ITLB_Error = FALSE;
 		compilerstatus.realpc_fetched = TranslateITLBAddress(compilerstatus.realpc_fetched);
-		if(ITLB_Error)
-		{
+		if (ITLB_Error) {
             DisplayError("Warning, ITLB error happens during Dyna instruction fetch, and this is not the beginning of the block.");
 			TRACE1("ITLB error happens when fetching branch delay slot opcode, pc=%08X", compilerstatus.realpc_fetched);
 			HandleExceptions(TLB_Error_Vector);
@@ -172,11 +161,9 @@ unsigned __int32 DynaFetchInstruction2(uint32 pc)
 			ITLB_Error = FALSE;
 			compilerstatus.realpc_fetched = savepc;
 			compilerstatus.realpc_fetched = TranslateITLBAddress(compilerstatus.realpc_fetched);
-			if(ITLB_Error)
-			{
+			if (ITLB_Error) {
 				DisplayError("Warning, ITLB error happens during Dyna instruction fetch, and this is not the beginning of the block");
-				TRACE1
-				(
+				TRACE1(
 					"Warning, ITLB error happens when fetching branch delay slot opcode the 2nd time, pc=%08X",
 					compilerstatus.realpc_fetched
 				);
@@ -185,10 +172,8 @@ unsigned __int32 DynaFetchInstruction2(uint32 pc)
 				ITLB_Error = FALSE;
 				compilerstatus.realpc_fetched = savepc;
 				compilerstatus.realpc_fetched = TranslateITLBAddress(compilerstatus.realpc_fetched);
-				if(ITLB_Error)
-				{
-					TRACE1
-					(
+				if (ITLB_Error) {
+					TRACE1(
 						"Warning, ITLB error happens when fetching branch delay slot opcode the 3rd time, pc=%08X",
 						compilerstatus.realpc_fetched
 					);
@@ -206,21 +191,17 @@ unsigned __int32 DynaFetchInstruction2(uint32 pc)
 	}
 
 step2:
-	__try
-	{
+	__try {
 		code = LOAD_UWORD_PARAM(compilerstatus.realpc_fetched);
 
-		if((compilerstatus.realpc_fetched & 0x1FFFFFFF) < current_rdram_size)
-		{
-			if(currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY)
-			{
+		if ((compilerstatus.realpc_fetched & 0x1FFFFFFF) < current_rdram_size) {
+			if (currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY) {
 				ProtectBlock(compilerstatus.realpc_fetched);
 			}
 
 			* (uint32 *) &RDRAM_Copy[compilerstatus.realpc_fetched & 0x1FFFFFFF] = code;
-			if(currentromoptions.Link_4KB_Blocks != USE4KBLINKBLOCK_YES)
-			{
-				if(sDYN_PC_LOOKUP[compilerstatus.realpc_fetched >> 16] == gMemoryState.dummyAllZero)
+			if (currentromoptions.Link_4KB_Blocks != USE4KBLINKBLOCK_YES) {
+				if (sDYN_PC_LOOKUP[compilerstatus.realpc_fetched >> 16] == gMemoryState.dummyAllZero)
 					UnmappedMemoryExceptionHelper(compilerstatus.realpc_fetched);
 				*(uint32 *)
 					(
@@ -229,10 +210,7 @@ step2:
 					) = 0;
 			}
 		}
-	}
-
-	__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-	{
+	} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		DisplayError("%08X: Dyna PC out of range", pc);
 	}
 
@@ -257,24 +235,19 @@ uint32 Dyna_Compile_Single_Block(void)
 begin:
 	LOGGING_DYNA(LogDyna("\n\n** Compile Single Block at PC=%08X\n", gHWS_pc));
 
-	if(currentromoptions.Advanced_Block_Analysis == USEBLOCKANALYSIS_YES)
-	{
+	if (currentromoptions.Advanced_Block_Analysis == USEBLOCKANALYSIS_YES) {
 		AnalyzeBlock();
 	}
 
-	if(ITLB_Error)
-	{
+	if (ITLB_Error) {
 		/*
 		 * DisplayError("TLB error happens during compiling, PC=%08X",
 		 * compilerstatus.TempPC);
 		 */
-		if((gHWS_COP0Reg[STATUS] & EXL) == 0)	/* Exception not in exception */
-		{
+		if ((gHWS_COP0Reg[STATUS] & EXL) == 0) {/* Exception not in exception */
 			gHWS_COP0Reg[EPC] = gHWS_pc;
 			gHWS_COP0Reg[STATUS] |= EXL;		/* set EXL = 1 */
-		}
-		else
-		{
+		} else {
 			gHWS_COP0Reg[EPC] = gHWS_pc;
 
 			/* DisplayError("Warning, Exception happens in exception"); */
@@ -292,13 +265,11 @@ begin:
 		Block = (uint8 *) *g_LookupPtr;
 		ITLB_Error = FALSE;
 
-		if(Block != NULL && g_pc_is_rdram) Dyna_Check_Codes();
-		if(Block == NULL)
-		{
+		if (Block != NULL && g_pc_is_rdram)
+			Dyna_Check_Codes();
+		if (Block == NULL) {
 			goto start_compile;
-		}
-		else
-		{
+		} else {
 			compilerstatus.Is_Compiling--;
 			return(uint32) Block;
 		}
@@ -306,7 +277,8 @@ begin:
 
 start_compile:
 	k = 0;
-	if(compilerstatus.Is_Compiling > 1) DisplayError("Compiler is re-entered, cannot support it.");
+	if (compilerstatus.Is_Compiling > 1)
+		DisplayError("Compiler is re-entered, cannot support it.");
 
 	templCodePosition = compilerstatus.lCodePosition;
 	gMultiPass.WriteCode = 0;
@@ -318,8 +290,7 @@ start_compile:
 
 	gMultiPass.PhysAddrAfterMap = compilerstatus.BlockStart;
 
-	if(gMultiPass.UseOnePassOnly == 1)
-	{
+	if (gMultiPass.UseOnePassOnly == 1) {
 		gMultiPass.WriteCode = 1;
 		gMultiPass.WhichPass = COMPILE_ALL;
 	}
@@ -330,7 +301,8 @@ start_compile:
 
 	/* align block to qword */
 	while((compilerstatus.lCodePosition & 0xffffff80) != compilerstatus.lCodePosition) WC8(0x90);
-	if((compilerstatus.lCodePosition - templCodePosition) >= 2) compilerstatus.lCodePosition -= 2;
+	if ((compilerstatus.lCodePosition - templCodePosition) >= 2)
+		compilerstatus.lCodePosition -= 2;
 	compilerstatus.lCodePosition += 2;	/* increase the compilerstatus.lCodePosition by 2 leave two bytes in front of
 										 * the block */
 
@@ -340,19 +312,15 @@ start_compile:
 	/* get instruction */
 	gHWS_code = DynaFetchInstruction(gHWS_pc + (Instruction_Order[k++] << 2));
 
-	if(ITLB_Error)
-	{
+	if (ITLB_Error) {
 		/*
 		 * DisplayError("TLB error happens during compiling, PC=%08X",
 		 * compilerstatus.TempPC);
 		 */
-		if((gHWS_COP0Reg[STATUS] & EXL) == 0)	/* Exception not in exception */
-		{
+		if ((gHWS_COP0Reg[STATUS] & EXL) == 0) {/* Exception not in exception */
 			gHWS_COP0Reg[EPC] = compilerstatus.TempPC;
 			gHWS_COP0Reg[STATUS] |= EXL;		/* set EXL = 1 */
-		}
-		else
-		{
+		} else {
 			DisplayError("Warning, Exception happens in exception");
 			TRACE1("Warning, Exception happens in exception, pc=%08X", compilerstatus.TempPC);
 		}
@@ -369,21 +337,16 @@ start_compile:
 		Block = (uint8 *) *g_LookupPtr;
 		ITLB_Error = FALSE;
 
-		if(Block != NULL && g_pc_is_rdram) Dyna_Check_Codes();
-		if(Block == NULL)
-		{
+		if (Block != NULL && g_pc_is_rdram)
+			Dyna_Check_Codes();
+		if (Block == NULL) {
 			goto begin;					/* redo_compile; */
-		}
-		else
-		{
+		} else {
 			compilerstatus.Is_Compiling--;
 			return(uint32) Block;
 		}
-	}
-	else
-	{
-		if(sDYN_PC_LOOKUP[compilerstatus.realpc_fetched >> 16] == gMemoryState.dummyAllZero)
-		{
+	} else {
+		if (sDYN_PC_LOOKUP[compilerstatus.realpc_fetched >> 16] == gMemoryState.dummyAllZero) {
 			UnmappedMemoryExceptionHelper(compilerstatus.realpc_fetched);
 		}
 
@@ -392,7 +355,8 @@ start_compile:
 		*(uint16 *) (Block - 2) = 0;	/* store block size */
 	}
 
-	if(currentromoptions.Use_Register_Caching == USEREGC_NO) FlushAllRegisters();
+	if (currentromoptions.Use_Register_Caching == USEREGC_NO)
+		FlushAllRegisters();
 
 	DYNA_DEBUG_INSTRUCTION(gHWS_code);
 	DYNA_LOG_INSTRUCTION(gHWS_code);
@@ -410,8 +374,7 @@ start_compile:
 	 * user-disabled.
 	 */
 	gHWS_code = DynaFetchInstruction(gHWS_pc);
-	if(currentromoptions.Use_HLE == USEHLE_YES)
-	{
+	if (currentromoptions.Use_HLE == USEHLE_YES) {
 		/*~~~~~~~~~~~~~~~~*/
 		int OpcodeCount = 1;
 		/*~~~~~~~~~~~~~~~~*/
@@ -420,54 +383,39 @@ start_compile:
 		 * Using HLE £
 		 * DisplayError("Using HLE");
 		 */
-		if(gHWS_pc == 0x80322c20)
-		{
+		if (gHWS_pc == 0x80322c20) {
 			OpcodeCount = 14;
 			X86_CALL((uint32) & osSendMessage);
 			compilerstatus.cp0Counter += (OpcodeCount);
-		}
-		else if(gHWS_pc == 0x803274d0)
-		{
+		} else if (gHWS_pc == 0x803274d0) {
 			OpcodeCount = 6;			/* save jr for the recompile loop */
 			X86_CALL((uint32) & osDisableInt);
 			compilerstatus.cp0Counter += (OpcodeCount);
-		}
-		else if(gHWS_pc == 0x803274f0)
-		{
+		} else if (gHWS_pc == 0x803274f0) {
 			OpcodeCount = 5;
 			X86_CALL((uint32) & osRestoreInt);
 			compilerstatus.cp0Counter += (OpcodeCount);
-		}
-		else if(gHWS_pc == 0x80327c80)
-		{
+		} else if (gHWS_pc == 0x80327c80) {
 			OpcodeCount = 31 /* 24+5 */ ;
 			X86_CALL((uint32) & osEnqueueAndYield);
 			compilerstatus.cp0Counter += (OpcodeCount);
-		}
-
-		/*
-		 * else if (gHWS_pc == 0x80327d68) £
-		 * { £
-		 * OpcodeCount = 0/*+24+5
-		 */
-		else if(gHWS_pc == 0x80327d58)
-		{
+#if 0
+		} else if (gHWS_pc == 0x80327d68) {
+			OpcodeCount = 0 // + 24 + 5
+#endif
+		} else if (gHWS_pc == 0x80327d58) {
 			OpcodeCount = 1;
 			X86_CALL((uint32) & osPopThread);
 			gHWS_pc += (OpcodeCount - 1) << 2;		/* Opcode count - 4 (the first one) */
 			compilerstatus.cp0Counter += (OpcodeCount);
-		}
-		else
-		{
+		} else {
 			dyna_instruction[((unsigned) (gHWS_code >> 26))](&gHardwareState);
 			compilerstatus.cp0Counter++;
 		}
 
 		gHWS_pc += (OpcodeCount - 1) << 2;			/* Opcode count - 4 (the first one) */
 		compilerstatus.cp0Counter += (OpcodeCount); /* times counter factor */
-	}
-	else
-	{
+	} else {
 		/*
 		 * No HLE £
 		 * DisplayError("Not using HLE");
@@ -476,21 +424,17 @@ start_compile:
 		compilerstatus.InstructionCount++;
 	}
 
-	while(compilerstatus.KEEP_RECOMPILING)
-	{
+	while (compilerstatus.KEEP_RECOMPILING) {
 		/* This code is disabled for multipass because it does not work. */
-		if(gMultiPass.UseOnePassOnly == 1)
-		{
+		if (gMultiPass.UseOnePassOnly == 1) {
 			/*
 			 * Need to break out at the end of 4KB block if we are using protected memory or
 			 * we are in TLB mapped address
 			 */
-			if
-			(
-				(gHWS_pc + 4) / 0x1000 != gHWS_pc / 0x1000
-			&&	(NOT_IN_KO_K1_SEG(gHWS_pc) || currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY)
-			)
-			{
+			if (
+				(gHWS_pc + 4) / 0x1000 != gHWS_pc / 0x1000 &&
+				(NOT_IN_KO_K1_SEG(gHWS_pc) || currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY)
+			) {
 				MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &gHWS_pc, gHWS_pc + 4);
 
 				/* end of compiled block */
@@ -510,8 +454,7 @@ start_compile:
 		compilerstatus.InstructionCount++;
 
 		gHWS_code = DynaFetchInstruction(gHWS_pc + (Instruction_Order[k] << 2));
-		if(ITLB_Error)
-		{
+		if (ITLB_Error) {
 			/*
 			 * DisplayError("TLB error happens during compiling, PC=%08X",
 			 * compilerstatus.TempPC); £
@@ -524,7 +467,8 @@ start_compile:
 
 		k++;
 
-		if(currentromoptions.Use_Register_Caching == USEREGC_NO) FlushAllRegisters();
+		if (currentromoptions.Use_Register_Caching == USEREGC_NO)
+			FlushAllRegisters();
 
 		DYNA_DEBUG_INSTRUCTION(gHWS_code);
 
@@ -535,11 +479,9 @@ start_compile:
 	}
 
 #ifdef DEBUG_COMMON
-	if(compilerstatus.InstructionCount > 255)
-	{	/* DisplayError("Compiled Block is too large, size=%d, pc=%08X, end at %08X", cp0Counter+1,
+	if (compilerstatus.InstructionCount > 255) {	/* DisplayError("Compiled Block is too large, size=%d, pc=%08X, end at %08X", cp0Counter+1,
 		 * compilerstatus.TempPC, compilerstatus.TempPC+(cp0Counter+1)*4); */
-		TRACE3
-		(
+		TRACE3(
 			"Compiled Block is too large, size=%d, pc=%08X, end at %08X",
 			compilerstatus.cp0Counter + 1,
 			compilerstatus.TempPC,
@@ -559,11 +501,11 @@ start_compile:
 	DEBUG_PRINT_DYNA_COMPILE_INFO	gHWS_pc = compilerstatus.TempPC;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(compilerstatus.DynaBufferOverError)	/* ok, we have a buffer error, need to refresh the dyna buffer and recompile
-											 * this */
-
-	/* block again. */
-	{
+	if (compilerstatus.DynaBufferOverError) {
+/*
+ * ok, we have a buffer error, need to refresh the dyna buffer and recompile
+ * this block again.
+ */
 		TRACE0("Dyna Buffer Overrun, refresh dyna");
 
 		/* DisplayError("Dyna Buffer Overrun, refresh dyna"); */
@@ -571,13 +513,10 @@ start_compile:
 		gMultiPass.WhichPass = COMPILE_MAP_ONLY;
 		RefreshDynaDuringGamePlay();
 
-		if(currentromoptions.Link_4KB_Blocks == USE4KBLINKBLOCK_YES)
-		{
+		if (currentromoptions.Link_4KB_Blocks == USE4KBLINKBLOCK_YES) {
 			compilerstatus.Is_Compiling--;
 			return 0;
-		}
-		else
-		{
+		} else {
 			compilerstatus.DynaBufferOverError = FALSE;
 			goto begin;
 		}
@@ -585,16 +524,20 @@ start_compile:
 
 	/*
 	 * I am trying to map TLB address also into sDYN_PC_LOOKUP £
-	 * if( NOT_IN_KO_K1_SEG(gHWS_pc) ) { uint32 ptr; if( sDYN_PC_LOOKUP[gHWS_pc>>16]
-	 * == gMemoryState.dummyAllZero ) UnmappedMemoryExceptionHelper(gHWS_pc); ptr
-	 * (uint32)sDYN_PC_LOOKUP[gHWS_pc>>16]; (uint32*)(ptr + (uint16)gHWS_pc) = Block;
+	 * if (NOT_IN_KO_K1_SEG(gHWS_pc)) {
+	 *     uint32 ptr;
+	 *     if (sDYN_PC_LOOKUP[gHWS_pc >> 16] == gMemoryState.dummyAllZero)
+	 *         UnmappedMemoryExceptionHelper(gHWS_pc);
+	 *     ptr
+	 *     (uint32)sDYN_PC_LOOKUP[gHWS_pc >> 16];
+	 *     (uint32*)(ptr + (uint16)gHWS_pc) = Block;
 	 * } £
 	 * Not sure if necessary.
 	 */
 	gMultiPass.WriteCode = 1;
 	gMultiPass.WhichPass = COMPILE_ALL;
 	compilerstatus.Is_Compiling--;
-	return(uint32) Block;
+	return (uint32)Block;
 }
 
 /*
@@ -608,32 +551,28 @@ start_compile:
 void Invalidate4KBlock(uint32 addr, char *opcodename, int type, uint64 newvalue)
 {
 #ifdef DEBUG_COMMON
-	if(addr / 0x1000 == gHWS_pc / 0x1000)
-	{
+	if (addr / 0x1000 == gHWS_pc / 0x1000) {
 		TRACE1("Warning, invalidate the block while PC=%08X is in the block", gHWS_pc);
 	}
 #endif
-	if(IN_KO_K1_SEG(addr))
+	if (IN_KO_K1_SEG(addr)) {
 		addr = addr & 0xDFFFFFFF;
-	else
-	{
+	} else {
 		CODE_DETECT_TRACE(TRACE0("Warning, cannot invalidate a block not in RDRAM"));
 		return;
 	}
 
-	if(addr < 0x80000000 + current_rdram_size)
-	{
+	if (addr < 0x80000000 + current_rdram_size) {
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		uint32	offset = addr - 0x80000000;
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-		switch(type)
-		{
+		switch (type) {
 		case WORDTYPE:
 			{
-				if((uint32) newvalue == *(uint32 *) (RDRAM_Copy + offset))
+				if ((uint32) newvalue == *(uint32 *) (RDRAM_Copy + offset))
 					return;
-				else if(*(uint32 *) (RDRAM_Copy + offset) == DUMMYOPCODE)
+				else if (*(uint32 *) (RDRAM_Copy + offset) == DUMMYOPCODE)
 					return;
 				else
 					*(uint32 *) (RDRAM_Copy + offset) = DUMMYOPCODE;
@@ -641,9 +580,9 @@ void Invalidate4KBlock(uint32 addr, char *opcodename, int type, uint64 newvalue)
 			break;
 		case HWORDTYPE:
 			{
-				if((uint16) newvalue == *(uint16 *) (RDRAM_Copy + offset))
+				if ((uint16) newvalue == *(uint16 *) (RDRAM_Copy + offset))
 					return;
-				else if(*(uint32 *) (RDRAM_Copy + offset) == DUMMYOPCODE)
+				else if (*(uint32 *) (RDRAM_Copy + offset) == DUMMYOPCODE)
 					return;
 				else
 					*(uint32 *) (RDRAM_Copy + offset) = DUMMYOPCODE;
@@ -651,9 +590,9 @@ void Invalidate4KBlock(uint32 addr, char *opcodename, int type, uint64 newvalue)
 			break;
 		case BYTETYPE:
 			{
-				if((uint8) newvalue == *(uint8 *) (RDRAM_Copy + offset))
+				if ((uint8) newvalue == *(uint8 *) (RDRAM_Copy + offset))
 					return;
-				else if(*(uint32 *) (RDRAM_Copy + offset) == DUMMYOPCODE)
+				else if (*(uint32 *) (RDRAM_Copy + offset) == DUMMYOPCODE)
 					return;
 				else
 					*(uint32 *) (RDRAM_Copy + offset) = DUMMYOPCODE;
@@ -665,16 +604,14 @@ void Invalidate4KBlock(uint32 addr, char *opcodename, int type, uint64 newvalue)
 				uint64	dummy = (newvalue >> 32) | (newvalue << 32);
 				/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-				if(dummy == *(uint64 *) (RDRAM_Copy + offset))
+				if (dummy == *(uint64 *) (RDRAM_Copy + offset)) {
 					return;
-				else if
-					(
-						*(uint32 *) (RDRAM_Copy + offset) == DUMMYOPCODE
-					&&	*(uint32 *) (RDRAM_Copy + offset + 4) == DUMMYOPCODE
-					)
+				} else if (
+					*(uint32 *) (RDRAM_Copy + offset) == DUMMYOPCODE &&
+					*(uint32 *) (RDRAM_Copy + offset + 4) == DUMMYOPCODE
+				) {
 					return;
-				else
-				{
+				} else {
 					*(uint32 *) (RDRAM_Copy + offset) = DUMMYOPCODE;
 					*(uint32 *) (RDRAM_Copy + offset + 4) = DUMMYOPCODE;
 				}
@@ -715,9 +652,8 @@ void InvalidateOneBlock(uint32 pc)
 	 * and the old value was used as code, not as data, so we need to invalidate
 	 * the whole 4KB block and unprotect the 4KB block
 	 */
-	for(offset = (pc & 0xFFFFF000); offset < (pc & 0xFFFFF000) + 0x1000; offset += 4)
-	{
-		if(sDYN_PC_LOOKUP[offset >> 16] != gMemoryState.dummyAllZero)
+	for (offset = (pc & 0xFFFFF000); offset < (pc & 0xFFFFF000) + 0x1000; offset += 4) {
+		if (sDYN_PC_LOOKUP[offset >> 16] != gMemoryState.dummyAllZero)
 			*(uint32 *) ((uint8 *) sDYN_PC_LOOKUP[offset >> 16] + (uint16) offset) = 0;
 		else
 			break;
@@ -744,15 +680,12 @@ void Dyna_Code_Check_QWORD(void)
 	register uint32 pc = g_pc_is_rdram;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(*(uint32 *) (RDRAM_Copy + pc) != *(uint32 *) (gMS_RDRAM + pc))
-	{
+	if (*(uint32 *) (RDRAM_Copy + pc) != *(uint32 *) (gMS_RDRAM + pc)) {
 		Block = NULL;
 		DEBUG_DYNA_MOD_CODE_TRACE(TRACE1("Found mod-code at %08x", g_pc_is_rdram));
 		*(uint32 *) ((uint8 *) sDYN_PC_LOOKUP[(pc | 0x80000000) >> 16] + (uint16) pc) = 0;
 		*(uint32 *) (RDRAM_Copy + pc) = *(uint32 *) (gMS_RDRAM + pc);
-	}
-	else if(*(uint32 *) (RDRAM_Copy + pc + 4) != *(uint32 *) (gMS_RDRAM + pc + 4))
-	{
+	} else if (*(uint32 *) (RDRAM_Copy + pc + 4) != *(uint32 *) (gMS_RDRAM + pc + 4)) {
 		Block = NULL;
 		DEBUG_DYNA_MOD_CODE_TRACE(TRACE1("Found mod-code at %08x", g_pc_is_rdram));
 		*(uint32 *) ((uint8 *) sDYN_PC_LOOKUP[((pc + 4) | 0x80000000) >> 16] + (uint16) (pc + 4)) = 0;
@@ -767,8 +700,7 @@ void Dyna_Code_Check_QWORD(void)
  */
 void Dyna_Code_Check_DWORD(void)
 {
-	if(*(uint32 *) (RDRAM_Copy + g_pc_is_rdram) != *(uint32 *) (gMS_RDRAM + g_pc_is_rdram))
-	{
+	if (*(uint32 *) (RDRAM_Copy + g_pc_is_rdram) != *(uint32 *) (gMS_RDRAM + g_pc_is_rdram)) {
 		Block = NULL;
 		DEBUG_DYNA_MOD_CODE_TRACE(TRACE1("Found mod-code at %08x", g_pc_is_rdram));
 		*(uint32 *) (RDRAM_Copy + g_pc_is_rdram) = *(uint32 *) (gMS_RDRAM + g_pc_is_rdram);
@@ -787,14 +719,11 @@ void Dyna_Code_Check_BLOCK(void)
 	uint32			pc = g_pc_is_rdram;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	for(length = *(uint16 *) (Block - 2) - 1; length >= 0; length--, pc += 4)
-	{
-		if(*(uint32 *) (RDRAM_Copy + pc) != *(uint32 *) (gMS_RDRAM + pc))
-		{
+	for (length = *(uint16 *) (Block - 2) - 1; length >= 0; length--, pc += 4) {
+		if (*(uint32 *) (RDRAM_Copy + pc) != *(uint32 *) (gMS_RDRAM + pc)) {
 			Block = NULL;
 			DEBUG_DYNA_MOD_CODE_TRACE(TRACE1("Found mod-code at %08x", g_pc_is_rdram));
-			while(length >= 0)
-			{
+			while (length >= 0) {
 				*(uint32 *) ((uint8 *) sDYN_PC_LOOKUP[(pc | 0x80000000) >> 16] + (uint16) pc) = 0;
 				*(uint32 *) (RDRAM_Copy + pc) = *(uint32 *) (gMS_RDRAM + pc);
 				length--;
@@ -816,30 +745,25 @@ void Dyna_Code_Check_None_Boot(void)
 	register uint32 pc = g_pc_is_rdram;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(*(uint32 *) (RDRAM_Copy + pc) != *(uint32 *) (gMS_RDRAM + pc))
-	{
+	if (*(uint32 *) (RDRAM_Copy + pc) != *(uint32 *) (gMS_RDRAM + pc)) {
 		Block = NULL;
 		DEBUG_DYNA_MOD_CODE_TRACE(TRACE1("Found mod-code at %08x", g_pc_is_rdram));
 
 		/*
-		 * if( currentromoptions.Link_4KB_Blocks == USE4KBLINKBLOCK_YES ) £
-		 * { £
-		 * InvalidateOneBlock(g_pc_is_rdram|0x80000000); £
-		 * } £
+		 * if (currentromoptions.Link_4KB_Blocks == USE4KBLINKBLOCK_YES ) £
+		 *     InvalidateOneBlock(g_pc_is_rdram|0x80000000); £
 		 * else
 		 */
 		{
 			*(uint32 *) ((uint8 *) sDYN_PC_LOOKUP[(pc | 0x80000000) >> 16] + (uint16) pc) = 0;
 			*(uint32 *) (RDRAM_Copy + pc) = *(uint32 *) (gMS_RDRAM + pc);
 		}
-	}
-	else if(*(uint32 *) (RDRAM_Copy + pc + 4) != *(uint32 *) (gMS_RDRAM + pc + 4))
-	{
+	} else if (*(uint32 *) (RDRAM_Copy + pc + 4) != *(uint32 *) (gMS_RDRAM + pc + 4)) {
 		Block = NULL;
 		DEBUG_DYNA_MOD_CODE_TRACE(TRACE1("Found mod-code at %08x", g_pc_is_rdram));
 
 		/*
-		 * if( currentromoptions.Link_4KB_Blocks == USE4KBLINKBLOCK_YES ) £
+		 * if (currentromoptions.Link_4KB_Blocks == USE4KBLINKBLOCK_YES ) £
 		 * { £
 		 * InvalidateOneBlock(g_pc_is_rdram|0x80000000); £
 		 * } £
@@ -851,8 +775,7 @@ void Dyna_Code_Check_None_Boot(void)
 		}
 	}
 
-	if(emustatus.DListCount > 80)	/* yes, we have detect the first self-modify code */
-	{
+	if (emustatus.DListCount > 80) { /* yes, we have detect the first self-modify code */
 		Dyna_Check_Codes = Dyna_Code_Check[emustatus.CodeCheckMethod - 1];
 		TRACE0("Reset the Dyna Code Check Method => None");
 	}
@@ -871,15 +794,12 @@ void Link1(void)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	/* JMP Short */
-	if((offset < 128) || (offset > 0xffffff81))
-	{
+	if ((offset < 128) || (offset > 0xffffff81)) {
 		(*((unsigned _int8 *) (&RecompCode[block_queue_head->jmp_to_target_1_code_addr - 1]))) = 0xEB;
 		(*((unsigned _int8 *) (&RecompCode[block_queue_head->jmp_to_target_1_code_addr]))) = (_int8) offset;
-	}
-	else
-	{	/* JMP Long (Near) */
+	} else { /* JMP Long (Near) */
 		(*((unsigned _int32 *) (&RecompCode[block_queue_head->jmp_to_target_1_code_addr]))) =
-				(uint32) current_block_entry->block_ptr -
+			(uint32) current_block_entry->block_ptr -
 			4 -
 			(uint32) (&RecompCode[block_queue_head->jmp_to_target_1_code_addr]);
 	}
@@ -898,15 +818,12 @@ void Link2(void)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	/* JMP Short */
-	if((offset < 128) || (offset > 0xffffff81))
-	{
+	if ((offset < 128) || (offset > 0xffffff81)) {
 		(*((unsigned _int8 *) (&RecompCode[block_queue_head->jmp_to_target_2_code_addr - 1]))) = 0xEB;
 		(*((unsigned _int8 *) (&RecompCode[block_queue_head->jmp_to_target_2_code_addr]))) = (_int8) offset;
-	}
-	else
-	{	/* JMP Long (Near) */
+	} else { /* JMP Long (Near) */
 		(*((unsigned _int32 *) (&RecompCode[block_queue_head->jmp_to_target_2_code_addr]))) =
-				(uint32) current_block_entry->block_ptr -
+			(uint32) current_block_entry->block_ptr -
 			4 -
 			(uint32) (&RecompCode[block_queue_head->jmp_to_target_2_code_addr]);
 	}
@@ -925,16 +842,12 @@ void LinkPtr(void)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	/* JMP Short */
-	if((offset < 128) || (offset > 0xffffff81))
-	{
+	if ((offset < 128) || (offset > 0xffffff81)) {
 		(*((unsigned _int8 *) (&RecompCode[block_queue_head->jmp_to_target_2_code_addr - 1]))) = 0xEB;
 		(*((unsigned _int8 *) (&RecompCode[block_queue_head->jmp_to_target_2_code_addr]))) = (uint8) offset;
-	}
-
-	/* JMP Long (Near) */
-	else
-	{
-		(*((uint32 *) (&RecompCode[block_queue_head->jmp_to_target_2_code_addr]))) = (uint32) ptr - 4 - (uint32) (&RecompCode[block_queue_head->jmp_to_target_2_code_addr]);
+	} else { /* JMP Long (Near) */
+		(*((uint32 *) (&RecompCode[block_queue_head->jmp_to_target_2_code_addr]))) =
+			(uint32) ptr - 4 - (uint32) (&RecompCode[block_queue_head->jmp_to_target_2_code_addr]);
 	}
 }
 
@@ -968,15 +881,13 @@ redo:
 	/* step1: push the current gHWS_pc into queue */
 	block_queue_head = get_new_block_entry(gHWS_pc);
 
-	while(block_queue_head != NULL)
-	{
+	while (block_queue_head != NULL) {
 		/*
 		 * Step2: Get PC from the queue £
 		 * Step3.1: Check if the block at PC has already been compiled, if, then compile
 		 * it, go to step 4
 		 */
-		if(!block_queue_head->HasBeenCompiled)
-		{
+		if (!block_queue_head->HasBeenCompiled) {
 			/*~~~~~~~~~~~*/
 			uint32	savepc;
 			/*~~~~~~~~~~~*/
@@ -985,18 +896,15 @@ redo:
 			gHWS_pc = current_block_entry->block_pc;
 			savepc = gHWS_pc;
 			current_block_entry->block_ptr = Dyna_Compile_Single_Block();
-			if(compilerstatus.DynaBufferOverError) break;
+			if (compilerstatus.DynaBufferOverError)
+				break;
 
-			if(savepc != gHWS_pc)
-			{
-				if(gHWS_COP0Reg[EPC] == saved_very_1st_pc)
-				{
+			if (savepc != gHWS_pc) {
+				if (gHWS_COP0Reg[EPC] == saved_very_1st_pc) {
 					/* there happens an ITLB error when compiling the 1st block */
 					TRACE1("In compiling 4KB, is there a ITLB happens? pc=%08X", savepc);
 					return current_block_entry->block_ptr;
-				}
-				else
-				{
+				} else {
 					DisplayError("ITLB error happens when compiling 4KB blocks, not at the 1st block");
 				}
 			}
@@ -1010,18 +918,17 @@ redo:
 		}
 
 		/* Check if target_1 block has been compiled */
-		if(block_queue_head->need_target_1)
-		{
+		if (block_queue_head->need_target_1) {
 			/*
 			 * TRACE2("PC=%08X, link to target 1 = %08X", block_queue_head->block_pc,
 			 * block_queue_head->target_1_pc);
 			 */
-			if(!IsBlockCompiled(block_queue_head->target_1_pc))
-			{
+			if (!IsBlockCompiled(block_queue_head->target_1_pc)) {
 				current_block_entry = add_new_block_entry(block_queue_head->target_1_pc);
 				gHWS_pc = current_block_entry->block_pc;
 				current_block_entry->block_ptr = Dyna_Compile_Single_Block();
-				if(compilerstatus.DynaBufferOverError) break;
+				if (compilerstatus.DynaBufferOverError)
+					break;
 
 				/*
 				 * TRACE2("Compiling block PC=%08X, block=%08X", current_block_entry->block_pc,
@@ -1039,9 +946,7 @@ redo:
 				 * DisplayError("Set jmp to pc=%08X, block=%08X", current_block_entry->block_pc,
 				 * current_block_entry->block_ptr);
 				 */
-			}
-			else
-			{
+			} else {
 				/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 				uint32	ptr = GetCompiledBlockPtr(block_queue_head->target_1_pc);
 				/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -1058,18 +963,17 @@ redo:
 		}
 
 		/* Check if target_2 block has been compiled */
-		if(block_queue_head->need_target_2)
-		{
+		if (block_queue_head->need_target_2) {
 			/*
 			 * TRACE2("PC=%08X, link to target 2 = %08X", block_queue_head->block_pc,
 			 * block_queue_head->target_2_pc);
 			 */
-			if(!IsBlockCompiled(block_queue_head->target_2_pc))
-			{
+			if (!IsBlockCompiled(block_queue_head->target_2_pc)) {
 				current_block_entry = add_new_block_entry(block_queue_head->target_2_pc);
 				gHWS_pc = current_block_entry->block_pc;
 				current_block_entry->block_ptr = Dyna_Compile_Single_Block();
-				if(compilerstatus.DynaBufferOverError) break;
+				if (compilerstatus.DynaBufferOverError)
+					break;
 
 				/*
 				 * TRACE2("Compiling block PC=%08X, block=%08X", current_block_entry->block_pc,
@@ -1085,9 +989,7 @@ redo:
 				 * TRACE2("Set jmp to pc=%08X, block=%08X", current_block_entry->block_pc,
 				 * current_block_entry->block_ptr);
 				 */
-			}
-			else
-			{
+			} else {
 				LinkPtr();
 
 				/*
@@ -1114,25 +1016,21 @@ redo:
 	}
 
 	gHWS_pc = saved_very_1st_pc;
-	if(compilerstatus.DynaBufferOverError)
-	{
+	if (compilerstatus.DynaBufferOverError) {
 		compilerstatus.DynaBufferOverError = FALSE;
 		goto redo;
 	}
 
 	maptopc = gHWS_pc;
-	if(NOT_IN_KO_K1_SEG(maptopc))
-	{
+	if (NOT_IN_KO_K1_SEG(maptopc)) {
 		ITLB_Error = FALSE;
 		maptopc = TranslateITLBAddress(maptopc);
-		if(ITLB_Error)
-		{
+		if (ITLB_Error) {
 			/*
 			 * DisplayError("Warning, ITLB error happens after compiling the 4KB block, this
 			 * should never happen, PC=%08X", gHWS_pc);
 			 */
-			TRACE1
-			(
+			TRACE1(
 				"Warning, ITLB error happens after compiling the 4KB block, this should never happen, PC=%08X",
 				gHWS_pc
 			);
@@ -1143,10 +1041,8 @@ redo:
 				int i;
 				/*~~*/
 
-				for(i = 0; i < 0x10000; i++)
-				{
-					if(dynarommap[i] != NULL)
-					{
+				for (i = 0; i < 0x10000; i++) {
+					if (dynarommap[i] != NULL) {
 						memset(dynarommap[i], 0, 0x10000);
 					}
 				}
@@ -1164,8 +1060,7 @@ redo:
 
 	ptr = (uint32 *) ((uint8 *) sDYN_PC_LOOKUP[maptopc >> 16] + (uint16) maptopc);
 	blk = (*ptr);
-	if(!blk)
-	{
+	if (!blk) {
 		TRACE2("Null block, pc=%08X, maptopc=%08X", gHWS_pc, maptopc);
 
 		/*
@@ -1180,8 +1075,7 @@ redo:
 		blk = Dyna_Compile_Single_Block();
 
 		/* I believe ITLB should not happens again */
-		if(ITLB_Error)
-		{
+		if (ITLB_Error) {
 			DisplayError("Warning, ITLB happens again when recompiling a compiled block, strange");
 			ITLB_Error = FALSE;
 		}
@@ -1191,10 +1085,11 @@ redo:
 
 	/* Return the block of the original pc */
 #ifdef DEBUG_COMMON
-	if(blockcount == 0) TRACE3("%d blocks are compiled at pc=%08X(%08X)", blockcount, gHWS_pc, maptopc);
+	if (blockcount == 0)
+		TRACE3("%d blocks are compiled at pc=%08X(%08X)", blockcount, gHWS_pc, maptopc);
 
 	/*
-	 * if( blockcount == 0 ) £
+	 * if (blockcount == 0 ) £
 	 * TRACE0("block count=0");
 	 */
 #endif
@@ -1234,19 +1129,15 @@ BLOCK_ENTRY *add_new_block_entry(uint32 pc)
 	BLOCK_ENTRY *pentry = get_new_block_entry(pc);
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(block_queue_head == NULL)
-	{
+	if (block_queue_head == NULL) {
 		/* Add the new entry as the head of the queue */
 		block_queue_head = pentry;
-	}
-	else
-	{
+	} else {
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		BLOCK_ENTRY *ptemp = block_queue_head;
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-		while(ptemp->next != NULL)
-		{
+		while (ptemp->next != NULL) {
 			ptemp = ptemp->next;
 		}
 
@@ -1264,8 +1155,7 @@ BLOCK_ENTRY *add_new_block_entry(uint32 pc)
  */
 void dequeue_heading_block_entry(void)
 {
-	if(block_queue_head != NULL)
-	{
+	if (block_queue_head != NULL) {
 		/*~~~~~~~~~~~~~~~~*/
 		BLOCK_ENTRY *pentry;
 		/*~~~~~~~~~~~~~~~~*/
@@ -1286,12 +1176,10 @@ BOOL IsBlockCompiled(uint32 pc)
 	uint32	maptopc = pc;
 	/*~~~~~~~~~~~~~~~~~*/
 
-	if(NOT_IN_KO_K1_SEG(maptopc))
-	{
+	if (NOT_IN_KO_K1_SEG(maptopc)) {
 		ITLB_Error = FALSE;
 		maptopc = TranslateITLBAddress(maptopc);
-		if(ITLB_Error)
-		{
+		if (ITLB_Error) {
 			return FALSE;
 		}
 	}
@@ -1309,12 +1197,10 @@ uint32 GetCompiledBlockPtr(uint32 pc)
 	uint32	maptopc = pc;
 	/*~~~~~~~~~~~~~~~~~*/
 
-	if(NOT_IN_KO_K1_SEG(maptopc))
-	{
+	if (NOT_IN_KO_K1_SEG(maptopc)) {
 		ITLB_Error = FALSE;
 		maptopc = TranslateITLBAddress(maptopc);
-		if(ITLB_Error)
-		{
+		if (ITLB_Error) {
 			return 0;
 		}
 	}
@@ -1332,20 +1218,14 @@ uint32 Dyna_Compile_Block(void)
 	uint32	blk;
 	/*~~~~~~~~*/
 
-	DO_PROFILIER_COMPILER if(currentromoptions.Link_4KB_Blocks == USE4KBLINKBLOCK_YES)
-	{
-		if(ITLB_Error)
-		{
+	DO_PROFILIER_COMPILER if (currentromoptions.Link_4KB_Blocks == USE4KBLINKBLOCK_YES) {
+		if (ITLB_Error) {
 			blk = Dyna_Compile_Single_Block();
 			ITLB_Error = FALSE;
-		}
-		else
-		{
+		} else {
 			blk = Dyna_Compile_4KB_Block();
 		}
-	}
-	else
-	{
+	} else {
 		blk = Dyna_Compile_Single_Block();
 		ITLB_Error = FALSE;
 
@@ -1379,20 +1259,18 @@ void Check_And_Invalidate_Compiled_Blocks_By_DMA(uint32 startaddr, uint32 len, c
 	register uint32 endaddr = startaddr + len;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(startaddr <= 0x80000000 || startaddr >= 0x80000000 + current_rdram_size)
-	{
+	if (startaddr <= 0x80000000 || startaddr >= 0x80000000 + current_rdram_size) {
 		return;
 	}
 
-	if(endaddr >= 0x80000000 + current_rdram_size) endaddr = 0x80000000 + current_rdram_size;
+	if (endaddr >= 0x80000000 + current_rdram_size)
+		endaddr = 0x80000000 + current_rdram_size;
 
 	addr &= 0x007FFFFF;
 	endaddr &= 0x00FFFFFF;
 
-	for(; addr < endaddr; addr += 4)
-	{
-		if(*(uint32 *) (RDRAM_Copy + addr) != DUMMYOPCODE)
-		{
+	for (; addr < endaddr; addr += 4) {
+		if (*(uint32 *) (RDRAM_Copy + addr) != DUMMYOPCODE) {
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 			uint32	offset = (addr & 0xFFFFF000) | 0x80000000;
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -1400,10 +1278,9 @@ void Check_And_Invalidate_Compiled_Blocks_By_DMA(uint32 startaddr, uint32 len, c
 			UnprotectBlock(offset);
 			Invalidate4KBlock(offset, op, NOCHECKTYPE, 0);
 			addr = (addr & 0xFFFFF000) + 0x1000;
-			if(addr >= endaddr)
+			if (addr >= endaddr) {
 				break;
-			else
-			{
+			} else {
 				addr -= 4;
 				continue;
 			}

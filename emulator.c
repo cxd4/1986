@@ -82,8 +82,7 @@ void __cdecl MuteTest(void* dummy)
 	//This is enough times to cleanup the azi audio
 	//and enough times to keep jabo directsound 1.5
 	//from crashing. This is a shortcoming of the spec.
-	for (k=0;k<10;k++)
-	{
+	for (k = 0; k < 10; k++) {
 		AUDIO_AiUpdate(TRUE);
 	}
 	AUDIO_AiUpdate(FALSE);
@@ -103,8 +102,7 @@ void Mute()
  */
 void RunEmulator(uint32 core)
 {
-	if(!Rom_Loaded)
-	{
+	if (!Rom_Loaded) {
 		return;
 	}
 
@@ -115,10 +113,9 @@ void RunEmulator(uint32 core)
 #ifndef CRASHABLE
     __try {
 #endif
-    CPUThreadHandle = (HANDLE) _beginthread(StartCPUThread, 0, NULL);
+        CPUThreadHandle = (HANDLE) _beginthread(StartCPUThread, 0, NULL);
 #ifndef CRASHABLE
-    }__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-	{
+    } __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		DisplayError("Emulation stopped. Please restart 1964.exe");
 		emustatus.reason_to_stop = CPUCRASH;	/* Quit like VIDEO plugin crash */
 	}
@@ -133,18 +130,19 @@ void RunEmulator(uint32 core)
  */
 BOOL PauseEmulator(void)
 {
-	//if(emustatus.Emu_Is_Paused) return TRUE;
+#if 0
+	if (emustatus.Emu_Is_Paused)
+		return TRUE;
+#endif
 
-	if(emustatus.exception_entry_count)			/* || ITLB_Error || (gHWS_COP0Reg[STATUS] & EXL) ) */
-	{
+	if (emustatus.exception_entry_count/* || ITLB_Error || (gHWS_COP0Reg[STATUS] & EXL)) */) {
 		/*~~*/
 		int i;
 		/*~~*/
 
-		for(i = 0; i < 100; i++)
-		{
+		for (i = 0; i < 100; i++) {
 			Sleep(1);
-			if(emustatus.exception_entry_count) /* || ITLB_Error || (gHWS_COP0Reg[STATUS] & EXL) ) */
+			if (emustatus.exception_entry_count/* || ITLB_Error || (gHWS_COP0Reg[STATUS] & EXL)) */)
 				continue;
 			else
 				goto step2;
@@ -159,17 +157,16 @@ step2:
 	CPU_Task_To_String(generalmessage);
 	TRACE1("Try to pause, CPU is busy doing: %s", generalmessage);
 
-	while(!emustatus.Emu_Is_Paused && emustatus.Emu_Is_Running)
-	{
+	while (!emustatus.Emu_Is_Paused && emustatus.Emu_Is_Running) {
 		/*~~~~*/
 		MSG msg;
 		/*~~~~*/
 
-		if(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
-		{
-			if(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
-			{
-				if(GetMessage(&msg, NULL, 0, 0)) DispatchMessage(&msg);
+		if (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
+			if (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
+				if (GetMessage(&msg, NULL, 0, 0)) {
+					DispatchMessage(&msg);
+				}
 			}
 		}
 
@@ -195,13 +192,13 @@ step2:
  */
 void ResumeEmulator(int action_after_pause)
 {
-	if(!emustatus.Emu_Is_Paused) return;
+	if (!emustatus.Emu_Is_Paused)
+		return;
 
 	emustatus.action_after_resume = action_after_pause;
 
 	/* Apply the hack codes */
-	if(emuoptions.auto_apply_cheat_code)
-	{
+	if (emuoptions.auto_apply_cheat_code) {
 		CodeList_ApplyAllCode(INGAME);
 #ifdef CHEATCODE_LOCK_MEMORY
 		InitCheatCodeEngineMemoryLock();
@@ -228,17 +225,16 @@ void StopEmulator(void)
 	CPU_Task_To_String(generalmessage);
 	TRACE1("Try to pause, CPU is busy doing: %s", generalmessage);
 
-	while(emustatus.Emu_Is_Running)
-	{
+	while (emustatus.Emu_Is_Running) {
 		/*~~~~*/
 		MSG msg;
 		/*~~~~*/
 
-		if(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
-		{
-			if(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
-			{
-				if(GetMessage(&msg, NULL, 0, 0)) DispatchMessage(&msg);
+		if (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
+			if (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
+				if (GetMessage(&msg, NULL, 0, 0)) {
+					DispatchMessage(&msg);
+				}
 			}
 		}
 
@@ -247,13 +243,11 @@ void StopEmulator(void)
 		Sleep(50);
 	}
 
-	if (!emustatus.Emu_Is_Resetting)
-	{
+	if (!emustatus.Emu_Is_Resetting) {
 		VIDEO_RomClosed();
 		AUDIO_RomClosed();
 		CONTROLLER_RomClosed();
-		if( emuoptions.UsingRspPlugin )
-		{
+		if (emuoptions.UsingRspPlugin) {
 			RSPRomClosed();
 		}
 		netplay_rom_closed();
@@ -267,20 +261,15 @@ void StopEmulator(void)
  */
 void EmulatorSetCore(int core)
 {
-	if(emustatus.Emu_Is_Running)
-	{
-		if(emustatus.cpucore != core)
-		{
-			if(PauseEmulator())
-			{
+	if (emustatus.Emu_Is_Running) {
+		if (emustatus.cpucore != core) {
+			if (PauseEmulator()) {
 				TRACE2("Switch CPU Core to %s, PC=%08X", emulator_type_names[core], gHWS_pc);
 				emustatus.cpucore = core;
 				ResumeEmulator(REFRESH_DYNA_AFTER_PAUSE);
 			}
 		}
-	}
-	else	/* Emulator is not running, then change default CPU core */
-	{
+	} else { /* Emulator is not running, then change default CPU core */
 		defaultoptions.Emulator = core;
 	}
 
@@ -302,14 +291,13 @@ uint32	RDRamSizeHackSavedDWord2 = 0;
 void CloseEmulator(void)
 {
 	Audio_Thread_Keep_Running = FALSE;	/* this will quit the Audio thread */
-	if(currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY) UnprotectAllBlocks();
+	if (currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY)
+		UnprotectAllBlocks();
 
-	if(emustatus.reason_to_stop == VIDEOCRASH || emustatus.reason_to_stop == CPUCRASH)
-	{
+	if (emustatus.reason_to_stop == VIDEOCRASH || emustatus.reason_to_stop == CPUCRASH) {
 		PostMessage(gui.hwnd1964main, WM_COMMAND, ID_ROM_STOP, 0);
 		emustatus.Emu_Keep_Running = TRUE;
-		while(emustatus.Emu_Keep_Running)
-		{
+		while (emustatus.Emu_Keep_Running) {
 			Sleep(50);					/* wait until wingui processing the STOP command */
 		}
 	}
@@ -340,7 +328,7 @@ extern BOOL write_to_rom_flag;
 
 void InitEmu(void)
 {
-	if(GetVersion() < 0x80000000)	/* Windows NT */
+	if (GetVersion() < 0x80000000)	/* Windows NT */
 		SetThreadPriority(CPUThreadHandle, THREAD_PRIORITY_NORMAL);
 	else
 		SetThreadPriority(CPUThreadHandle, THREAD_PRIORITY_HIGHEST);
@@ -370,14 +358,13 @@ void InitEmu(void)
 
 	memcpy(&HeaderDllPass[0], &gMS_ROM_Image[0], 0x40);
 	
-	if (!emustatus.Emu_Is_Resetting)
-	{
+	if (!emustatus.Emu_Is_Resetting) {
 		VIDEO_RomOpen();
 		CONTROLLER_RomOpen();
 		netplay_rom_open();
-	}
-	else
+	} else {
 		emustatus.Emu_Is_Resetting = 0;
+	}
 
 	RefreshDynaDuringGamePlay();
 }
@@ -398,34 +385,29 @@ void N64_Boot(void)
 	IsBooting = TRUE;
 	
 	NeedToApplyRomWriteHack = FALSE;
-	if( strnicmp(currentromoptions.Game_Name, "A Bug's Life", 12) == 0 ||
-		strnicmp(currentromoptions.Game_Name, "Toy Story 2", 11) == 0 )
-	{
+	if (
+		strnicmp(currentromoptions.Game_Name, "A Bug's Life", 12) == 0 ||
+		strnicmp(currentromoptions.Game_Name, "Toy Story 2", 11) == 0
+	) {
 		NeedToApplyRomWriteHack = TRUE;
 		TRACE0("Using Rom Write Hack");
 	}
 
-	while
-	(
-		(emustatus.Emu_Keep_Running && gHWS_pc != bootaddr && (gHWS_pc & 0x00FFFFFF) < 0x2000)
-	||	((uint32) (*Dyna_Check_Codes) == (uint32) Dyna_Code_Check_None_Boot)
-	)
-	{
-		if(emustatus.cpucore == INTERPRETER)
-		{
+	while (
+		(emustatus.Emu_Keep_Running && gHWS_pc != bootaddr && (gHWS_pc & 0x00FFFFFF) < 0x2000) ||
+		((uint32) (*Dyna_Check_Codes) == (uint32) Dyna_Code_Check_None_Boot)
+	) {
+		if (emustatus.cpucore == INTERPRETER) {
 			InterpreterStepCPU();
-		}
-		else
+		} else {
 			RunDynaBlock();
+		}
 
-		if(RDRam_Hacked == 0)
-		{
-			if
-			(
-				(currentromoptions.DMA_Segmentation == USEDMASEG_YES && DMAInProgress)
-			||	(emuoptions.dma_in_segments == FALSE && (MI_INTR_REG_R & MI_INTR_PI))
-			)
-			{
+		if (RDRam_Hacked == 0) {
+			if (
+				(currentromoptions.DMA_Segmentation == USEDMASEG_YES && DMAInProgress) ||
+				(emuoptions.dma_in_segments == FALSE && (MI_INTR_REG_R & MI_INTR_PI))
+			) {
 				RDRam_Hacked = 1;
 
 				RDRamSizeHackSavedDWord1 = *(uint32 *) &gMS_RDRAM[rominfo.RDRam_Size_Hack];
@@ -438,20 +420,19 @@ void N64_Boot(void)
 				 * is written to using the RSP on bootup. The only issue I see is if it £
 				 * affects any other roms?
 				 */
-				if(strncmp(currentromoptions.Game_Name, "DONKEY KONG 64", 14) == 0)
+				if (strncmp(currentromoptions.Game_Name, "DONKEY KONG 64", 14) == 0) {
 				/*
-				 * if( currentromoptions.crc1 == 0xEC58EABF && currentromoptions.crc2 ==
-				 * 0xAD7C7169 ) //DK64
+				 * if (
+				 * 	currentromoptions.crc1 == 0xEC58EABF &&
+				 * 	currentromoptions.crc2 == 0xAD7C7169) // DK64
 				 */
-				{
 					OPCODE_DEBUGGER_EPILOGUE(*(uint32 *) &gMS_RDRAM[0x2FE1C0] = 0xAD170014;)
 				}
 			}
 		}
 	}
 
-	if(emuoptions.auto_apply_cheat_code)
-	{
+	if (emuoptions.auto_apply_cheat_code) {
 		CodeList_ApplyAllCode(BOOTUPONCE);
 		CodeList_ApplyAllCode(INGAME);
 #ifdef CHEATCODE_LOCK_MEMORY
@@ -462,12 +443,9 @@ void N64_Boot(void)
 	emustatus.Emu_Is_Running = FALSE;
 	IsBooting = FALSE;
 
-	if(gHWS_pc == bootaddr)
-	{
+	if (gHWS_pc == bootaddr) {
 		TRACE1("N64 boot successfully, start run from %08X", bootaddr)
-	}
-	else
-	{
+	} else {
 		TRACE1("N64 boot failed, start run from %08X", gHWS_pc)
 	}
 }
@@ -493,39 +471,32 @@ void (__cdecl StartCPUThread) (void *pVoid)
 	N64_Boot();
 
 	emustatus.reason_to_stop = EMURUNNING;
-	DO_PROFILIER_R4300I
-	{
+	DO_PROFILIER_R4300I {
 START_CPU_THREAD:
 		emustatus.Emu_Is_Running = TRUE;
-		switch(emustatus.cpucore)
-		{
+		switch (emustatus.cpucore) {
 		case INTERPRETER:
 			TRACE0("Start Interpreter");
 			RunTheInterpreter();
 			break;
 		case DYNACOMPILER:
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY4
-			if(debug_opcode != 0)
-			{
-                TRACE0("Start RunTheRegCacheWithOpcodeDebugger");
-                RunTheRegCacheWithOpcodeDebugger();
+			if (debug_opcode != 0) {
+				TRACE0("Start RunTheRegCacheWithOpcodeDebugger");
+				RunTheRegCacheWithOpcodeDebugger();
 			}
 			else
 #endif
-				if((uint32) (*Dyna_Check_Codes) == (uint32) Dyna_Code_Check_None)
-				{
+				if ((uint32) (*Dyna_Check_Codes) == (uint32) Dyna_Code_Check_None) {
 					TRACE0("Start RunTheRegCacheNoCheck");
 					RunTheRegCacheNoCheck();
-				}
-				else
-				{
+				} else {
 					TRACE0("Start RunTheRegCacheWithoutOpcodeDebugger");
 					RunTheRegCacheWithoutOpcodeDebugger();
 				}
 			break;
 		}
-		if(emustatus.reason_to_stop == EMUPAUSE)
-		{
+		if (emustatus.reason_to_stop == EMUPAUSE) {
 			/*
 			 * If user is saving state after pausing, need to update the COUNT register here £
 			 * so we can return back to the original timer value £
@@ -551,8 +522,7 @@ START_CPU_THREAD:
 void PauseEmulating(void)
 {
 	emustatus.Emu_Is_Paused = TRUE;
-	while(emustatus.Emu_Keep_Running == FALSE && emustatus.reason_to_stop == EMUPAUSE)
-	{
+	while (emustatus.Emu_Keep_Running == FALSE && emustatus.reason_to_stop == EMUPAUSE) {
 		emustatus.Emu_Is_Paused = TRUE;
 		Sleep(200);
 
@@ -564,13 +534,12 @@ void PauseEmulating(void)
 
 	emustatus.Emu_Is_Paused = FALSE;
 
-	if(emustatus.Emu_Keep_Running)
-	{
+	if (emustatus.Emu_Keep_Running) {
 		Free_Dynarec();
 
-		if(emustatus.action_after_resume == INIT_EMU_AFTER_PAUSE)
+		if (emustatus.action_after_resume == INIT_EMU_AFTER_PAUSE)
 			InitEmu();
-		else if(emustatus.action_after_resume == REFRESH_DYNA_AFTER_PAUSE)
+		else if (emustatus.action_after_resume == REFRESH_DYNA_AFTER_PAUSE)
 			RefreshDynaDuringGamePlay();
 
 		/* else //do nothing */
@@ -594,34 +563,37 @@ _DoOtherTask:
 	gHWS_GPR[0] = 0;
 	INTERPRETER_DEBUG_INSTRUCTION(Instruction);
 
-	if(CPUNeedToCheckException)
-	{
+	if (CPUNeedToCheckException) {
 		gHWS_pc = SetException_Interrupt(gHWS_pc);
-		TRACE3
-		(
+		TRACE3(
 			"Start Exception %d, EPC=%08X, PC=%08X",
 			(gHWS_COP0Reg[CAUSE] & EXCCODE) >> 2,
 			gHWS_COP0Reg[EPC],
 			gHWS_pc
 		) CPUNeedToCheckException = FALSE;
-	}
-	else
-	{
-		switch(CPUdelay)
-		{
-		case 0:		gHWS_pc += 4; break;
-		case 1:		gHWS_pc += 4; CPUdelay = 2; break;
-		default:	gHWS_pc = CPUdelayPC; CPUdelay = 0; if(!emustatus.Emu_Keep_Running) goto out; break;
+	} else {
+		switch (CPUdelay) {
+		case 0:
+			gHWS_pc += 4; break;
+		case 1:
+			gHWS_pc += 4; CPUdelay = 2; break;
+		default:
+			gHWS_pc = CPUdelayPC; CPUdelay = 0;
+			if (!emustatus.Emu_Keep_Running)
+				goto out;
+			break;
 		}
 
-		if(countdown_counter <= 0) Trigger_Timer_Event();
+		if (countdown_counter <= 0)
+			Trigger_Timer_Event();
 	}
 
 	countdown_counter -= VICounterFactors[CounterFactor];
 	goto _DoOtherTask;
 
 out:
-	if(Is_CPU_Doing_Other_Tasks() || CPUdelay != 0) goto _DoOtherTask;
+	if (Is_CPU_Doing_Other_Tasks() || CPUdelay != 0)
+		goto _DoOtherTask;
 }
 
 /*
@@ -641,15 +613,13 @@ void RunTheRegCacheWithoutOpcodeDebugger(void)
 	 */
 
 	__asm mov ebp, HardwareStart
-	while(emustatus.Emu_Keep_Running)
-	{
+	while (emustatus.Emu_Keep_Running) {
 _DoOtherTask:
 		Block = (uint8 *) *g_LookupPtr;
-		if(Block != NULL && g_pc_is_rdram) 
+		if (Block != NULL && g_pc_is_rdram) 
 			Dyna_Check_Codes();
 
-		if(Block == NULL)
-		{
+		if (Block == NULL) {
 			Dyna_Compile_Block();
 		}
 
@@ -657,13 +627,13 @@ _DoOtherTask:
 		DEBUG_PRINT_DYNA_EXECUTION_INFO;
 		__asm call Block;
 		
-		if(countdown_counter > 0)
+		if (countdown_counter > 0)
 			goto _DoOtherTask;
 
 		Trigger_Timer_Event();
 	}
 
-	if( emustatus.reason_to_stop != EMUSTOP && Is_CPU_Doing_Other_Tasks() ) 
+	if (emustatus.reason_to_stop != EMUSTOP && Is_CPU_Doing_Other_Tasks()) 
 		goto _DoOtherTask;
 
 	/* __asm popad //nono. */
@@ -681,11 +651,9 @@ void RunTheRegCacheWithOpcodeDebugger(void)
 	 */
 
 	__asm mov ebp, HardwareStart
-	while(emustatus.Emu_Keep_Running)
-	{
+	while (emustatus.Emu_Keep_Running) {
 _NextBlock:
-		__asm
-		{
+		__asm {
 			mov eax, g_LookupPtr
 			mov eax, [eax]
 			mov Block, eax
@@ -708,12 +676,11 @@ _NextBlock:
 		DEBUG_PRINT_DYNA_EXECUTION_INFO;
 		__asm call Block
 
-		if(debug_opcode!=0)
-		{
-			if(CPUdelay == 1) gHardwareState_Interpreter_Compare.pc += 4;
+		if (debug_opcode != 0) {
+			if (CPUdelay == 1)
+				gHardwareState_Interpreter_Compare.pc += 4;
 
-			if(gHardwareState.pc != CPUdelayPC && CPUdelay != 0)
-			{
+			if (gHardwareState.pc != CPUdelayPC && CPUdelay != 0) {
 				/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 				uint32	Inst;
 				uint32	savedpc = gHardwareState.pc;
@@ -722,8 +689,7 @@ _NextBlock:
 				gHardwareState.pc = gHardwareState_Interpreter_Compare.pc;
 				Inst = FetchInstruction();
 
-				sprintf
-				(
+				sprintf(
 					generalmessage,
 					"Compare Target PC error: pc=%08X, DelayPC=%08X, Before Jump PC=%08X\nDyna:%s\nInterpreter:",
 					savedpc,
@@ -744,13 +710,13 @@ _NextBlock:
 			gHardwareState_Interpreter_Compare.pc = gHardwareState.pc;
 		}
 
-		if(countdown_counter > 0)
+		if (countdown_counter > 0)
 			goto _NextBlock;
 
 		Trigger_Timer_Event();
 	}
 
-	if( emustatus.reason_to_stop != EMUSTOP && Is_CPU_Doing_Other_Tasks() ) 
+	if (emustatus.reason_to_stop != EMUSTOP && Is_CPU_Doing_Other_Tasks()) 
 		goto _NextBlock;
 
 	/* __asm popad //nono. */
@@ -764,11 +730,9 @@ void RunTheRegCacheNoCheck(void)
 {
 	__asm mov ebp, HardwareStart
 
-	while(emustatus.Emu_Keep_Running)
-	{
+	while (emustatus.Emu_Keep_Running) {
 _NextBlock:
-		__asm
-		{
+		__asm {
 l1:			mov eax, g_LookupPtr
 			mov eax, [eax]
 			test eax, eax
@@ -787,7 +751,7 @@ l3 :
 		Trigger_Timer_Event();
 	}
 
-	if( emustatus.reason_to_stop != EMUSTOP && Is_CPU_Doing_Other_Tasks() ) 
+	if (emustatus.reason_to_stop != EMUSTOP && Is_CPU_Doing_Other_Tasks()) 
 		goto _NextBlock;
 }
 
@@ -800,37 +764,27 @@ l3 :
 void CPU_Check_Interrupts(void)
 {
 //	CPUNeedToCheckInterrupt = FALSE;		/* We will not check the second time, only one time */
-	if(emustatus.cpucore == INTERPRETER)	/* intepreter mode */
-	{
-		if
-		(
-			(gHWS_COP0Reg[STATUS] & EXL_OR_ERL /* 0x00000004 */ ) == 0	/* No in another interrupt routine */
-		&&	(
-				(gHWS_COP0Reg[STATUS] & 0x00000001) != 0				/* Interrupts are enabled */
-			&&	((gHWS_COP0Reg[CAUSE] & gHWS_COP0Reg[STATUS] & 0x0000FF00) != 0)
+	if (emustatus.cpucore == INTERPRETER) { /* intepreter mode */
+		if (
+			(gHWS_COP0Reg[STATUS] & EXL_OR_ERL/* 0x00000004 */) == 0 && ( /* No in another interrupt routine */
+				(gHWS_COP0Reg[STATUS] & 0x00000001) != 0 && /* Interrupts are enabled */
+				((gHWS_COP0Reg[CAUSE] & gHWS_COP0Reg[STATUS] & 0x0000FF00) != 0)
 			)
-		)
-		{
+		) {
 			gHWS_pc = SetException_Interrupt(gHWS_pc);
 			CPUNeedToCheckInterrupt = FALSE;
 			DEBUG_INTERRUPT_TRACE(TRACE1("Interrupt is being served, Interrupt=%s", Get_Interrupt_Name()));
 		}
-	}
-	else	/* Dyna mode */
-	{
+	} else { /* Dyna mode */
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY6
-		if(debug_opcode!=0)
-		{
+		if (debug_opcode != 0) {
 			COMPARE_SwitchToInterpretive();
-			if
-			(
-				(gHWS_COP0Reg[STATUS] & EXL_OR_ERL) == 0		/* No in another interrupt routine */
-			&&	(
-					(gHWS_COP0Reg[STATUS] & 0x00000001) != 0	/* Interrupts are enabled */
-				&&	((gHWS_COP0Reg[CAUSE] & gHWS_COP0Reg[STATUS] & 0x0000FF00) != 0)
+			if (
+				(gHWS_COP0Reg[STATUS] & EXL_OR_ERL) == 0 && ( /* Not in another interrupt routine */
+					(gHWS_COP0Reg[STATUS] & 0x00000001) != 0 && /* Interrupts are enabled */
+					((gHWS_COP0Reg[CAUSE] & gHWS_COP0Reg[STATUS] & 0x0000FF00) != 0)
 				)
-			)
-			{
+			) {
 				gHWS_COP0Reg[EPC] = gHWS_pc;
 				gHWS_COP0Reg[STATUS] |= EXL;					/* set EXL = 1 */
 				gHWS_pc = 0x80000180;
@@ -839,15 +793,12 @@ void CPU_Check_Interrupts(void)
 			}
 
 			COMPARE_SwitchToDynarec();
-			if
-			(
-				(gHWS_COP0Reg[STATUS] & EXL_OR_ERL) == 0		/* No in another interrupt routine */
-			&&	(
-					(gHWS_COP0Reg[STATUS] & 0x00000001) != 0	/* Interrupts are enabled */
-				&&	((gHWS_COP0Reg[CAUSE] & gHWS_COP0Reg[STATUS] & 0x0000FF00) != 0)
+			if (
+				(gHWS_COP0Reg[STATUS] & EXL_OR_ERL) == 0 && ( /* No in another interrupt routine */
+					(gHWS_COP0Reg[STATUS] & 0x00000001) != 0 && /* Interrupts are enabled */
+					((gHWS_COP0Reg[CAUSE] & gHWS_COP0Reg[STATUS] & 0x0000FF00) != 0)
 				)
-			)
-			{
+			) {
 				DEBUG_INTERRUPT_TRACE(TRACE1("Interrupt is being served, Interrupt=%s", Get_Interrupt_Name()));
 				rc_Intr_Common();
 				Set_Translate_PC();
@@ -856,15 +807,12 @@ void CPU_Check_Interrupts(void)
 		}
 		else
 #endif
-			if
-			(
-				(gHWS_COP0Reg[STATUS] & EXL_OR_ERL) == 0		/* No in another interrupt routine */
-			&&	(
-					(gHWS_COP0Reg[STATUS] & 0x00000001) != 0	/* Interrupts are enabled */
-				&&	((gHWS_COP0Reg[CAUSE] & gHWS_COP0Reg[STATUS] & 0x0000FF00) != 0)
+			if (
+				(gHWS_COP0Reg[STATUS] & EXL_OR_ERL) == 0 && ( /* No in another interrupt routine */
+					(gHWS_COP0Reg[STATUS] & 0x00000001) != 0 && /* Interrupts are enabled */
+					((gHWS_COP0Reg[CAUSE] & gHWS_COP0Reg[STATUS] & 0x0000FF00) != 0)
 				)
-			)
-			{
+			) {
 				DEBUG_INTERRUPT_TRACE(TRACE1("Interrupt is being served, Interrupt=%s", Get_Interrupt_Name()));
 				rc_Intr_Common();
 				Set_Translate_PC();
@@ -888,21 +836,21 @@ void CPUDoOtherTasks(void)
  */
 void CPU_Task_To_String(char *str)
 {
-	if(!CPUNeedToDoOtherTask)
-	{
+	if (!CPUNeedToDoOtherTask) {
 		strcpy(str, "Nothing");
 		return;
 	}
 
 	str[0] = '\0';
 
-	if(DMAInProgress || CPUNeedToCheckInterrupt)
-	{
-		if(DMAInProgress) strcat(str, " DMA");
-		if(CPUNeedToCheckInterrupt) strcat(str, " Interrupt");
-	}
-	else
+	if (DMAInProgress || CPUNeedToCheckInterrupt) {
+		if (DMAInProgress)
+			 strcat(str, " DMA");
+		if (CPUNeedToCheckInterrupt)
+			strcat(str, " Interrupt");
+	} else {
 		CPUNeedToDoOtherTask = FALSE;
+	}
 }
 
 /*
@@ -912,8 +860,7 @@ void CPU_Task_To_String(char *str)
 void ClearCPUTasks(void)
 {
 	CPUNeedToDoOtherTask = FALSE;
-	if(currentromoptions.DMA_Segmentation == USEDMASEG_YES)
-	{
+	if (currentromoptions.DMA_Segmentation == USEDMASEG_YES) {
 		DMAInProgress = FALSE;
 		PIDMAInProgress = NO_DMA_IN_PROGRESS;
 		SIDMAInProgress = NO_DMA_IN_PROGRESS;
@@ -938,21 +885,16 @@ void InterpreterStepCPU(void)
 	CPU_instruction[_OPCODE_](Instruction);
 	INTERPRETER_DEBUG_INSTRUCTION(Instruction);
 
-	if(CPUNeedToCheckException)
-	{
+	if (CPUNeedToCheckException) {
 		gHWS_pc = SetException_Interrupt(gHWS_pc);
-		TRACE3
-		(
+		TRACE3(
 			"Start Exception %d, EPC=%08X, PC=%08X",
 			(gHWS_COP0Reg[CAUSE] & EXCCODE) >> 2,
 			gHWS_COP0Reg[EPC],
 			gHWS_pc
 		) CPUNeedToCheckException = FALSE;
-	}
-	else
-	{
-		switch(CPUdelay)
-		{
+	} else {
+		switch (CPUdelay) {
 		case 0:		gHWS_pc += 4; break;
 		case 1:		gHWS_pc += 4; CPUdelay = 2; break;
 		default:	gHWS_pc = CPUdelayPC; CPUdelay = 0; break;
@@ -961,8 +903,10 @@ void InterpreterStepCPU(void)
 	gHWS_GPR[0] = 0;
 
 	countdown_counter -= VICounterFactors[CounterFactor];
-	if(countdown_counter <= 0) Trigger_Timer_Event();
-	if(Is_CPU_Doing_Other_Tasks()) CPUDoOtherTasks();
+	if (countdown_counter <= 0)
+		Trigger_Timer_Event();
+	if (Is_CPU_Doing_Other_Tasks())
+		CPUDoOtherTasks();
 }
 
 /*
@@ -973,49 +917,43 @@ void InterpreterStepCPU(void)
  */
 uint32 FetchInstruction(void)
 {
-	if(NOT_IN_KO_K1_SEG(gHWS_pc))
-	{
+	if (NOT_IN_KO_K1_SEG(gHWS_pc)) {
 		/*~~~~~~~~~~~~~~~~~~~~~~~~*/
 		register uint32 translatepc;
 		/*~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 		ITLB_Error = FALSE;
 		translatepc = Direct_TLB_Lookup(gHWS_pc, TLB_INST);
-		if(ITLB_Error)
-		{
-			if((gHWS_COP0Reg[STATUS] & EXL) == 0)	/* Exception not in exception */
-			{
-				if(CPUdelay != 0)					/* are we in branch delay slot? */
-				{	/* yes */
+		if (ITLB_Error) {
+			if ((gHWS_COP0Reg[STATUS] & EXL) == 0) { /* Exception not in exception */
+				if (CPUdelay != 0) { /* are we in branch delay slot? */
+					/* yes */
 					TLB_TRACE(TRACE1("ITLB exception happens in CPU delay slot, pc=%08X", gHWS_pc));
 					gHWS_COP0Reg[CAUSE] |= BD;
 					gHWS_COP0Reg[EPC] = gHWS_pc - 4;
 					CPUdelay = 0;
-				}
-				else
-				{	/* no */
+				} else {
+					/* no */
 					gHWS_COP0Reg[CAUSE] &= NOT_BD;
 					gHWS_COP0Reg[EPC] = gHWS_pc;
 				}
 
 				gHWS_COP0Reg[STATUS] |= EXL;	/* set EXL = 1 */
-			}
-			else
-			{
+			} else {
 				DisplayError("ITLB exception happens in exception");
 			}
 
-			/*
-			 * if( CPUdelay != 0 ) DisplayError("ITLB exception happens in CPU delay slot,
-			 * should never happens");
-			 */
+#if 0
+			if (CPUdelay != 0)
+				DisplayError(
+					"ITLB exception happens in CPU delay slot, should never happen"
+				);
+#endif
 			TLB_TRACE(TRACE1("ITLB exception, PC=%08X", gHWS_pc));
 			gHWS_pc = TLB_Error_Vector;
 			gHWS_COP0Reg[CAUSE] &= NOT_BD;		/* clear BD */
 			return MEM_READ_UWORD(gHWS_pc);
-		}
-		else
-		{
+		} else {
 			return MEM_READ_UWORD(translatepc);
 		}
 	}
@@ -1031,8 +969,7 @@ uint32 FetchInstruction(void)
 void RunDynaBlock(void)
 {
 #ifndef CRASHABLE
-	__try
-	{
+	__try {
 #endif
 
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -1040,20 +977,21 @@ void RunDynaBlock(void)
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 		Block = (uint8 *) *g_LookupPtr;
-		if(Block != NULL && g_pc_is_rdram) Dyna_Check_Codes();
-		if(Block == NULL) { Dyna_Compile_Block(); }
+		if (Block != NULL && g_pc_is_rdram)
+			Dyna_Check_Codes();
+		if (Block == NULL)
+			Dyna_Compile_Block();
 		DEBUG_PRINT_DYNA_EXECUTION_INFO 
 		__asm pushad
 		__asm mov ebp, HardwareStart
 		__asm call Block
 		__asm popad
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY7
-		if(debug_opcode!=0)
-		{
-			if(CPUdelay == 1) gHardwareState_Interpreter_Compare.pc += 4;
+		if (debug_opcode != 0) {
+			if (CPUdelay == 1)
+				gHardwareState_Interpreter_Compare.pc += 4;
 
-			if(gHardwareState.pc != CPUdelayPC && CPUdelay == 1)
-			{
+			if (gHardwareState.pc != CPUdelayPC && CPUdelay == 1) {
 				/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 				uint32	savepc = gHardwareState.pc;
 				uint32	Inst;
@@ -1083,15 +1021,11 @@ void RunDynaBlock(void)
 			gHardwareState_Interpreter_Compare.pc = gHardwareState.pc;
 		}
 #endif
-		if(countdown_counter <= 0) 
-		{
+		if (countdown_counter <= 0) {
 			Trigger_Timer_Event();
 		}
 #ifndef CRASHABLE
-	}
-
-	__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-	{
+	} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		DisplayError("Unknown error happens in DynaRunBlock()");
 		emustatus.reason_to_stop = CPUCRASH;	/* Quit like VIDEO plugin crash */
 	}
@@ -1111,23 +1045,20 @@ void Dyna_Exception_Service_Routine(uint32 vector)
 {
 	emustatus.exception_entry_count++;
 
-	if(emustatus.exception_entry_count < EXCEPTION_MAX_ENTRY)
-	{
+	if (emustatus.exception_entry_count < EXCEPTION_MAX_ENTRY) {
 		/*~~~~~~~~~~~~~~~~~~~~~~~~*/
 		uint8	*SavedBlock = Block;
 		uint32	temppc = gHWS_pc;
 		/*~~~~~~~~~~~~~~~~~~~~~~~~*/
 		int k=0;
 
-		if(emustatus.exception_entry_count == 1) SetStatusBarText(4, "E");
+		if (emustatus.exception_entry_count == 1)
+			SetStatusBarText(4, "E");
 
-		if((gHWS_COP0Reg[STATUS] & EXL) == 0)	/* Exception not in exception code */
-		{
+		if ((gHWS_COP0Reg[STATUS] & EXL) == 0) { /* Exception not in exception code */
 			gHWS_COP0Reg[EPC] = gHWS_pc;
 			gHWS_COP0Reg[STATUS] |= EXL;		/* set EXL = 1 */
-		}
-		else
-		{
+		} else {
 			/*
 			 * If exception is within another exception, service the exception £
 			 * without setting EPC
@@ -1137,8 +1068,7 @@ void Dyna_Exception_Service_Routine(uint32 vector)
 			/* temppc = gHWS_COP0Reg[EPC]; */
 		}
 
-		if(gHWS_COP0Reg[STATUS] & BEV)
-		{
+		if (gHWS_COP0Reg[STATUS] & BEV) {
 			DisplayError("Exception happens during boot.");
 		}
 
@@ -1159,38 +1089,37 @@ void Dyna_Exception_Service_Routine(uint32 vector)
 				)
 		);
 
-		while((temppc != gHWS_pc) && (emustatus.Emu_Keep_Running || emustatus.reason_to_stop == EMUPAUSE))
-		{
+		while (
+			(temppc != gHWS_pc) &&
+			(emustatus.Emu_Keep_Running || emustatus.reason_to_stop == EMUPAUSE)
+		) {
 			int k=0;
 //			error("%08X %08X", temppc, gHWS_pc);
 				/* to disable further interrupts */
 
 #ifdef ENABLE_OPCODE_DEBUGGER
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY8
-			if(debug_opcode != 0 && emustatus.cpucore == DYNACOMPILER)
-			{
-				if(p_gMemoryState == &gMemoryState)
+			if (debug_opcode != 0 && emustatus.cpucore == DYNACOMPILER) {
+				if (p_gMemoryState == &gMemoryState)
 					RunDynaBlock();
 				else
 					break;
-			}
-			else
+			} else
 #endif
 #endif
 
-				if((emustatus.cpucore == INTERPRETER) || (compilerstatus.Is_Compiling > 0))
-				{
+				if ((emustatus.cpucore == INTERPRETER) || (compilerstatus.Is_Compiling > 0)) {
 					InterpreterStepCPU();
-				}
-				else
-				{
+				} else {
 					RunDynaBlock();
 				}
 		}
 
-		if(!emustatus.Emu_Keep_Running && emustatus.reason_to_stop != EMUPAUSE) /* User has stopped emulating, will
-																				 * quit emu thread */
-		{
+		if (!emustatus.Emu_Keep_Running && emustatus.reason_to_stop != EMUPAUSE) {
+/*
+ * User has stopped emulating, will
+ * quit emu thread
+ */
 			AUDIO_RomClosed();
 			CONTROLLER_RomClosed();
 			netplay_rom_closed();
@@ -1202,11 +1131,8 @@ void Dyna_Exception_Service_Routine(uint32 vector)
 		Block = SavedBlock;
 
 		DEBUG_EXCEPTION_TRACE(TRACE0("Finish Exception Service in Dyna"));
-	}
-	else
-	{
-		if(emustatus.exception_entry_count >= EXCEPTION_MAX_ENTRY)
-		{
+	} else {
+		if (emustatus.exception_entry_count >= EXCEPTION_MAX_ENTRY) {
 			DisplayError("Exception service routine reentry exceeds 10 times, skipped");
 		}
 
@@ -1214,7 +1140,8 @@ void Dyna_Exception_Service_Routine(uint32 vector)
 	}
 
 	emustatus.exception_entry_count--;
-	if(emustatus.exception_entry_count == 0) SetStatusBarText(4, emustatus.cpucore == DYNACOMPILER ? "D" : "I");
+	if (emustatus.exception_entry_count == 0)
+		SetStatusBarText(4, emustatus.cpucore == DYNACOMPILER ? "D" : "I");
 }
 
 void DoOthersBeforeSaveState()
@@ -1229,22 +1156,17 @@ void DoOthersAfterLoadState()
 	Set_Check_Interrupt_Timer_Event();
 
 	/* Check FPU usage bit */
-	if(currentromoptions.FPU_Hack == USEFPUHACK_YES )
-	{
-		if( gHWS_COP0Reg[STATUS] & SR_CU1)
-		{
+	if (currentromoptions.FPU_Hack == USEFPUHACK_YES) {
+		if (gHWS_COP0Reg[STATUS] & SR_CU1) {
 			EnableFPUUnusableException();
-		}
-		else
-		{
+		} else {
 			DisableFPUUnusableException();
 		}
 	}
 
 	AUDIO_AiLenChanged();
 
-	if( CoreDoingAIUpdate )
-	{
+	if (CoreDoingAIUpdate) {
 		AUDIO_AiUpdate(FALSE);
 	}
 }

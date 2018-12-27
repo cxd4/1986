@@ -76,12 +76,11 @@ extern unsigned _int8	**TLB_sDWord_ptr;
 #define OPCODE_DEBUGGER_EPILOGUE(x) \
 	{ \
 		int k; \
-		for(k = 0; k <= 1; k++) \
-		{ \
-			if(k == 0 && debug_opcode != 0) COMPARE_SwitchToInterpretive(); \
-			if(k == 1) COMPARE_SwitchToDynarec(); \
+		for (k = 0; k <= 1; k++) { \
+			if (k == 0 && debug_opcode != 0) COMPARE_SwitchToInterpretive(); \
+			if (k == 1) COMPARE_SwitchToDynarec(); \
 			x; \
-			if(debug_opcode != 1) break; \
+			if (debug_opcode != 1) break; \
 		} \
 	}
 #else

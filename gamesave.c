@@ -61,8 +61,7 @@ void Flashram_Init(void)
 void Flashram_Command(unsigned __int32 data)
 {
 	DEBUG_FLASHRAM_TRACE(TRACE1("*** CMD = %08X ***", data));
-	switch(data >> 24)
-	{
+	switch (data >> 24) {
 	case 0x4b:	/* Set Erase Block Mode (128 Byte - aligned ) */
 		DEBUG_FLASHRAM_TRACE(TRACE0("Flash Erase Mode"));
 		FlashRAM_Mode = FLASH_ERASE;
@@ -91,8 +90,7 @@ void Flashram_Command(unsigned __int32 data)
 
 	case 0xD2:
 		{		/* Flash RAM Execute */
-			switch(FlashRAM_Mode)
-			{
+			switch (FlashRAM_Mode) {
 			case FLASH_NOOP:
 				break;
 			case FLASH_ERASE:
@@ -153,31 +151,25 @@ void DMA_Flashram_To_RDRAM(unsigned __int32 rdramaddr, unsigned __int32 flashram
 
 	FileIO_ReadFLASHRAM(0,0,0);
 
-	if(FlashRAM_Mode == FLASH_STATUS)
-	{
+	if (FlashRAM_Mode == FLASH_STATUS) {
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		uint8	*rdramoffset = (uint8 *) &gMS_RDRAM[0] + (rdramaddr & 0x007FFFFF);
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 		memcpy(rdramoffset, &FlashRAM_Status, len);
 		DEBUG_FLASHRAM_TRACE(TRACE0("STATUS"));
-	}
-	else
-	{
+	} else {
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		uint8	*rdramoffset = (uint8 *) &gMS_RDRAM[0] + (rdramaddr & 0x007FFFFF);
 		uint8	*flashramoffset = pLOAD_UBYTE_PARAM_2(0x88000000);
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 		flashramaddr = (flashramaddr & 0x001FFFF) * 2;
-		if(flashramaddr < 0x20000)
-		{
+		if (flashramaddr < 0x20000) {
 			flashramoffset += flashramaddr;
 			memcpy(rdramoffset, flashramoffset, len);
 			DEBUG_FLASHRAM_TRACE(TRACE1("READ: %08X", flashramaddr));
-		}
-		else
-		{
+		} else {
 			DEBUG_FLASHRAM_TRACE(TRACE1("READ: %08X", flashramaddr));
 		}
 	}
@@ -205,38 +197,31 @@ void DMA_RDRAM_To_Flashram(unsigned __int32 rdramaddr, unsigned __int32 flashram
 	 * DEBUG_FLASHRAM_TRACE(TRACE3 ("DMA RDRAM->FlashRAM: %08X, %08X, %i", rdramaddr,
 	 * flashramaddr, len));
 	 */
-	if(gamesave.firstusedsavemedia == 0) gamesave.firstusedsavemedia = FLASHRAM_SAVETYPE;
+	if (gamesave.firstusedsavemedia == 0)
+		gamesave.firstusedsavemedia = FLASHRAM_SAVETYPE;
 
 	FileIO_ReadFLASHRAM(0,0,0);
 
-	if(flashramaddr == 0xA8000000 || flashramaddr == 0x88000000)
-	{
-		if(len == 128)	/* ok, we are writing into flashram write buffer */
-		{
+	if (flashramaddr == 0xA8000000 || flashramaddr == 0x88000000) {
+		if (len == 128)	{ /* ok, we are writing into flashram write buffer */
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 			uint8	*rdramoffset = (uint8 *) &gMS_RDRAM[0] + (rdramaddr & 0x007FFFFF);
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-			DEBUG_FLASHRAM_TRACE
-			(
-				TRACE4
-					(
-						"Value in RDRAM: %08X-%08X-%08X-%08X ...",
-						*(uint32 *) rdramoffset,
-						*(uint32 *) (rdramoffset + 4),
-						*(uint32 *) (rdramoffset + 8),
-						*(uint32 *) (rdramoffset + 12)
-					)
+			DEBUG_FLASHRAM_TRACE(
+				TRACE4(
+					"Value in RDRAM: %08X-%08X-%08X-%08X ...",
+					*(uint32 *) rdramoffset,
+					*(uint32 *) (rdramoffset + 4),
+					*(uint32 *) (rdramoffset + 8),
+					*(uint32 *) (rdramoffset + 12)
+				)
 			);
 			memcpy(&FlashRAM_Buffer[0], rdramoffset, 128);
-		}
-		else
-		{
+		} else {
 			DEBUG_FLASHRAM_TRACE(TRACE1("Warning, Flashram write, len<>128, len=%d", len));
 		}
-	}
-	else
-	{
+	} else {
 		DEBUG_FLASHRAM_TRACE(TRACE1("Warning, Flashram write, addr<>0xA8000000, addr=%8X", flashramaddr));
 	}
 }

@@ -47,8 +47,7 @@ void	COP1_D_instr(uint32 Instruction);
 void	COP1_W_instr(uint32 Instruction);
 void	COP1_L_instr(uint32 Instruction);
 
-void (*CPU_instruction[64]) (uint32 Instruction) =
-{
+void (*CPU_instruction[64]) (uint32 Instruction) = {
 	SPECIAL_instr,	//0
 	REGIMM_instr,	//1
 	r4300i_j,		//2
@@ -115,8 +114,7 @@ void (*CPU_instruction[64]) (uint32 Instruction) =
 	r4300i_sd		//63
 };
 
-void (*SPECIAL_Instruction[64]) (uint32 Instruction) =
-{
+void (*SPECIAL_Instruction[64]) (uint32 Instruction) = {
 	r4300i_sll,		//0
 	UNUSED,			//1
 	r4300i_srl,		//2
@@ -183,8 +181,7 @@ void (*SPECIAL_Instruction[64]) (uint32 Instruction) =
 	r4300i_dsra32	//63
 };
 
-void (*REGIMM_Instruction[32]) (uint32 Instruction) =
-{
+void (*REGIMM_Instruction[32]) (uint32 Instruction) = {
 	r4300i_bltz,
 	r4300i_bgez,
 	r4300i_bltzl,
@@ -219,8 +216,7 @@ void (*REGIMM_Instruction[32]) (uint32 Instruction) =
 	UNUSED
 };
 
-void (*COP0_Instruction[32]) (uint32 Instruction) =
-{
+void (*COP0_Instruction[32]) (uint32 Instruction) = {
 	r4300i_COP0_mfc0,
 	UNUSED,
 	UNUSED,
@@ -255,8 +251,7 @@ void (*COP0_Instruction[32]) (uint32 Instruction) =
 	UNUSED
 };
 
-void (*TLB_Instruction[64]) (uint32 Instruction) =
-{
+void (*TLB_Instruction[64]) (uint32 Instruction) = {
 	UNUSED,				//0
 	r4300i_COP0_tlbr,	//1
 	r4300i_COP0_tlbwi,	//2
@@ -323,8 +318,7 @@ void (*TLB_Instruction[64]) (uint32 Instruction) =
 	UNUSED 				//63
 };
 
-void (*COP1_Instruction[32]) (uint32 Instruction) =
-{
+void (*COP1_Instruction[32]) (uint32 Instruction) = {
 	r4300i_COP1_mfc1,
 	r4300i_COP1_dmfc1,
 	r4300i_COP1_cfc1,
@@ -359,16 +353,14 @@ void (*COP1_Instruction[32]) (uint32 Instruction) =
 	UNUSED
 };
 
-void (*COP1_BC_Instruction[4]) (uint32 Instruction) =
-{
+void (*COP1_BC_Instruction[4]) (uint32 Instruction) = {
 	r4300i_COP1_bc1f,
 	r4300i_COP1_bc1t,
 	r4300i_COP1_bc1fl,
 	r4300i_COP1_bc1tl
 };
 
-void (*COP1_S_Instruction[64]) (uint32 Instruction) =
-{
+void (*COP1_S_Instruction[64]) (uint32 Instruction) = {
 	r4300i_COP1_add_s,
 	r4300i_COP1_sub_s,
 	r4300i_COP1_mul_s,
@@ -435,8 +427,7 @@ void (*COP1_S_Instruction[64]) (uint32 Instruction) =
 	r4300i_C_NGT_S
 };
 
-void (*COP1_D_Instruction[64]) (uint32 Instruction) =
-{
+void (*COP1_D_Instruction[64]) (uint32 Instruction) = {
 	r4300i_COP1_add_d,
 	r4300i_COP1_sub_d,
 	r4300i_COP1_mul_d,
@@ -503,8 +494,7 @@ void (*COP1_D_Instruction[64]) (uint32 Instruction) =
 	r4300i_C_NGT_D
 };
 
-void (*COP1_W_Instruction[64]) (uint32 Instruction) =
-{
+void (*COP1_W_Instruction[64]) (uint32 Instruction) = {
 	UNUSED,
 	UNUSED,
 	UNUSED,
@@ -571,8 +561,7 @@ void (*COP1_W_Instruction[64]) (uint32 Instruction) =
 	UNUSED
 };
 
-void (*COP1_L_Instruction[64]) (uint32 Instruction) =
-{
+void (*COP1_L_Instruction[64]) (uint32 Instruction) = {
 	UNUSED,
 	UNUSED,
 	UNUSED,
@@ -1272,8 +1261,7 @@ void r4300i_sc(uint32 Instruction)
 	uint32	rt_ft = RT_FT;
 	/*~~~~~~~~~~~~~~~~~~*/
 
-	if(gHWS_LLbit)
-	{
+	if (gHWS_LLbit) {
 		/*~~~~~~~~~~~~~*/
 		uint32	QuerAddr;
 		/*~~~~~~~~~~~~~*/
@@ -1295,8 +1283,7 @@ void r4300i_scd(uint32 Instruction)
 	uint32	rt_ft = RT_FT;
 	/*~~~~~~~~~~~~~~~~~~*/
 
-	if(gHWS_LLbit)
-	{
+	if (gHWS_LLbit) {
 		/*~~~~~~~~~~~~~*/
 		uint32	QuerAddr;
 		uint32	*pmem;
@@ -1352,7 +1339,8 @@ void r4300i_mtlo(uint32 Instruction)
  */
 void r4300i_sll(uint32 Instruction)
 {
-	if(RD_FS == 0 && RT_FT == 0 && gRT == 0) return;	/* NOP */
+	if (RD_FS == 0 && RT_FT == 0 && gRT == 0)
+		return; /* NOP */
 
 	/* uLOGICAL_SHIFT(<<, SA_FD); */
 	gRD = (__int64) (__int32) ((uint32) gRT << SA_FD);
@@ -1536,7 +1524,7 @@ void r4300i_dsra32(uint32 Instruction)
  */
 void r4300i_slt(uint32 Instruction)
 {
-	if(gRS < gRT)
+	if (gRS < gRT)
 		gRD = 1;
 	else
 		gRD = 0;
@@ -1548,7 +1536,7 @@ void r4300i_slt(uint32 Instruction)
  */
 void r4300i_sltu(uint32 Instruction)
 {
-	if((uint64) gRS < (uint64) gRT)
+	if ((uint64) gRS < (uint64) gRT)
 		gRD = 1;
 	else
 		gRD = 0;
@@ -1560,7 +1548,7 @@ void r4300i_sltu(uint32 Instruction)
  */
 void r4300i_slti(uint32 Instruction)
 {
-	if(gRS < (_int64) (_int32) (_int16) (uint16) OFFSET_IMMEDIATE)
+	if (gRS < (_int64) (_int32) (_int16) (uint16) OFFSET_IMMEDIATE)
 		gRT = 1;
 	else
 		gRT = 0;
@@ -1572,7 +1560,7 @@ void r4300i_slti(uint32 Instruction)
  */
 void r4300i_sltiu(uint32 Instruction)
 {
-	if((uint64) gRS < (uint64) (_int64) (_int32) (_int16) (uint16) OFFSET_IMMEDIATE)
+	if ((uint64) gRS < (uint64) (_int64) (_int32) (_int16) (uint16) OFFSET_IMMEDIATE)
 		gRT = 1;
 	else
 		gRT = 0;
@@ -1588,8 +1576,7 @@ void	Init_Count_Down_Counters(void);
 
 void r4300i_COP0_mfc0(uint32 Instruction)
 {
-	switch(RD_FS)
-	{
+	switch (RD_FS) {
 	case INDEX:		/* The INDEX Register */
 		TLB_EXTRA_TRACE(TRACE1("Read INDEX: val=%08X", c0FS));
 		break;
@@ -1627,8 +1614,7 @@ void r4300i_COP0_mfc0(uint32 Instruction)
  */
 void r4300i_COP0_mtc0(uint32 Instruction)
 {
-	switch(RD_FS)
-	{
+	switch (RD_FS) {
 	case INDEX:		/* The INDEX Register */
 		/*
 		 * gHWS_COP0Reg[INDEX] = (uint32)gRT & 0x3F; £
@@ -1640,36 +1626,29 @@ void r4300i_COP0_mtc0(uint32 Instruction)
 	case RANDOM:	/* The RANDOM register, read only */
 		return;
 	case CAUSE:		/* The CAUSE register */
-		if(((uint32) gRT & 0x300) != (gHWS_COP0Reg[CAUSE] & 0x300)) /* check software interrupt */
-		{
+		if (((uint32) gRT & 0x300) != (gHWS_COP0Reg[CAUSE] & 0x300)) { /* check software interrupt */
 			gHWS_COP0Reg[CAUSE] = ((uint32) gRT & 0x300) |
 			(gHWS_COP0Reg[CAUSE] &~(0x300));
-			if(((uint32) gRT & 0x300))	/* to generate a software interrupt */
-			{
+			if (((uint32) gRT & 0x300)) {/* to generate a software interrupt */
 				gHWS_COP0Reg[CAUSE] = ((uint32) gRT & 0x300) |
 				(gHWS_COP0Reg[CAUSE] &~(0x300));
 
 				/* CPU will check interrupts at the next cycle */
-				if((gHWS_COP0Reg[CAUSE] & gHWS_COP0Reg[STATUS] & 0x0000FF00))
-				{
+				if ((gHWS_COP0Reg[CAUSE] & gHWS_COP0Reg[STATUS] & 0x0000FF00) != 0) {
 					TRACE1("Software Interrupt at PC = %8X", gHWS_pc);
 					SET_EXCEPTION(EXC_INT);
 					HandleInterrupts(0x80000180);
-				}
-				else
-				{
+				} else {
 					TRACE1("To trigger software Interrupt at PC = %8X, but interrupt is disabled", gHWS_pc);
 				}
-			}
-			else
-			{
+			} else {
 				TRACE1("Software Interrupt is disabled at PC = %8X", gHWS_pc);
 			}
-		}
-		else
-		{
-			gHWS_COP0Reg[CAUSE] = ((uint32) gRT & 0x300) |
-			(gHWS_COP0Reg[CAUSE] &~(0x300));
+		} else {
+			gHWS_COP0Reg[CAUSE] =
+				(uint32) gRT & 0x300) |
+				(gHWS_COP0Reg[CAUSE] &~(0x300))
+			;
 		}
 
 		return;
@@ -1725,19 +1704,16 @@ void r4300i_COP0_mtc0(uint32 Instruction)
 		 * (uint32)gRT); £
 		 * Has FR bit changed ?
 		 */
-		if((gHWS_COP0Reg[STATUS] & 0x04000000) != (gRT & 0x04000000))
-		{
+		if ((gHWS_COP0Reg[STATUS] & 0x04000000) != (gRT & 0x04000000)) {
 			FR_reg_offset = (gRT & 0x04000000) ? 32 : 1;
 		}
 
 		/* Test the exception bit */
-		if((gRT & EXL) == 0 && ((gHWS_COP0Reg[STATUS] & EXL) == 1))
-		{
+		if ((gRT & EXL) == 0 && ((gHWS_COP0Reg[STATUS] & EXL) == 1)) {
 			TRACE3("EXL Bit is cleared at PC = %8X, COMPARE=%8X , PC=0x%08X", gRT, gHWS_COP0Reg[COMPARE], gHWS_pc);
 
 			/* CPU will check interrupts at the next cycle */
-			if((gHWS_COP0Reg[CAUSE] & gHWS_COP0Reg[STATUS] & 0x0000FF00))
-			{
+			if ((gHWS_COP0Reg[CAUSE] & gHWS_COP0Reg[STATUS] & 0x0000FF00)) {
 				CPUNeedToCheckInterrupt = TRUE;
 				CPUNeedToDoOtherTask = TRUE;
 				Set_Check_Interrupt_Timer_Event();
@@ -1745,12 +1721,10 @@ void r4300i_COP0_mtc0(uint32 Instruction)
 		}
 
 		/* Test the IE bit */
-		if(((gRT & IE) == 1) && ((gHWS_COP0Reg[STATUS] & IE) == 0)) /* If enable interrupt */
-		{
+		if (((gRT & IE) == 1) && ((gHWS_COP0Reg[STATUS] & IE) == 0)) { /* If enable interrupt */
 			/* CPU will check interrupts at the next cycle */
 			///TRACE3("Interrupt is enabled at PC = %8X, COMPARE=%8X , PC=0x%08X", gRT, gHWS_COP0Reg[COMPARE], gHWS_pc);
-			if((gHWS_COP0Reg[CAUSE] & gHWS_COP0Reg[STATUS] & 0x0000FF00))
-			{
+			if ((gHWS_COP0Reg[CAUSE] & gHWS_COP0Reg[STATUS] & 0x0000FF00)) {
 				CPUNeedToCheckInterrupt = TRUE;
 				CPUNeedToDoOtherTask = TRUE;
 				Set_Check_Interrupt_Timer_Event();
@@ -1758,20 +1732,15 @@ void r4300i_COP0_mtc0(uint32 Instruction)
 		}
 
 		/* Check FPU usage bit */
-		if(currentromoptions.FPU_Hack == USEFPUHACK_YES && (gRT & SR_CU1) != (gHWS_COP0Reg[STATUS] & SR_CU1))
-		{
-			if(gRT & SR_CU1)
-			{
+		if (currentromoptions.FPU_Hack == USEFPUHACK_YES && (gRT & SR_CU1) != (gHWS_COP0Reg[STATUS] & SR_CU1)) {
+			if (gRT & SR_CU1) {
 				DisableFPUUnusableException();
-			}
-			else
-			{
+			} else {
 				EnableFPUUnusableException();
 			}
 		}
 
-		if((gHWS_COP0Reg[STATUS] & 0xE0) != ((uint32) gRT & 0xE0))
-		{
+		if ((gHWS_COP0Reg[STATUS] & 0xE0) != ((uint32) gRT & 0xE0)) {
 			TRACE2("Changing CPU to %s, STATUS=%08X", ((uint32) gRT & 0xE0) ? "64bit" : "32bit", ((uint32) gRT & 0xE0));
 		}
 
@@ -1800,7 +1769,8 @@ void r4300i_lui(uint32 Instruction)
 void r4300i_do_speedhack(void)
 {
 	/* Before SPEEDHACK, let CPU to finish all other tasks, let DMA, SP Task and so on */
-	if(Is_CPU_Doing_Other_Tasks()) return;
+	if (Is_CPU_Doing_Other_Tasks())
+		return;
 
 	//Count_Down_All
 	countdown_counter = 0;
@@ -1812,13 +1782,11 @@ void r4300i_do_speedhack(void)
  */
 void r4300i_bgez(uint32 Instruction)
 {
-	if(gRS >= 0)
-	{
+	if (gRS >= 0) {
 		R4300I_SPEEDHACK DELAY_SET
-	}
-	else
-	{
-		if(debug_opcode!=0) CPUdelay = 0;
+	} else {
+		if (debug_opcode != 0)
+			CPUdelay = 0;
 	}
 }
 
@@ -1828,13 +1796,11 @@ void r4300i_bgez(uint32 Instruction)
  */
 void r4300i_bgezal(uint32 Instruction)
 {
-	CHECK_RS_EQUAL_RA(RS_BASE_FMT, "BGEZAL") INTERPRETIVE_LINK(RA) if(gRS >= 0)
-	{
+	CHECK_RS_EQUAL_RA(RS_BASE_FMT, "BGEZAL") INTERPRETIVE_LINK(RA) if (gRS >= 0) {
 		R4300I_SPEEDHACK DELAY_SET
-	}
-	else
-	{
-		if(debug_opcode!=0) CPUdelay = 0;
+	} else {
+		if (debug_opcode != 0)
+			CPUdelay = 0;
 	}
 }
 
@@ -1844,13 +1810,11 @@ void r4300i_bgezal(uint32 Instruction)
  */
 void r4300i_bgezall(uint32 Instruction)
 {
-	CHECK_RS_EQUAL_RA(RS_BASE_FMT, "bgezall") INTERPRETIVE_LINK(RA) if(gRS >= 0)
-	{
+	CHECK_RS_EQUAL_RA(RS_BASE_FMT, "bgezall") INTERPRETIVE_LINK(RA) if (gRS >= 0) {
 		R4300I_SPEEDHACK DELAY_SET
-	}
-	else
-	{
-		if(debug_opcode!=0) CPUdelay = 0;
+	} else {
+		if (debug_opcode != 0)
+			CPUdelay = 0;
 		DELAY_SKIP
 	}
 }
@@ -1861,14 +1825,12 @@ void r4300i_bgezall(uint32 Instruction)
  */
 void r4300i_bgezl(uint32 Instruction)
 {
-	if(gRS >= 0)
-	{
+	if (gRS >= 0) {
 		R4300I_SPEEDHACK
 		DELAY_SET
-	}
-	else
-	{
-		if(debug_opcode!=0) CPUdelay = 0;
+	} else {
+		if (debug_opcode != 0)
+			CPUdelay = 0;
 		DELAY_SKIP
 	}
 }
@@ -1879,14 +1841,12 @@ void r4300i_bgezl(uint32 Instruction)
  */
 void r4300i_bltz(uint32 Instruction)
 {
-	if(gRS < 0)
-	{
+	if (gRS < 0) {
 		R4300I_SPEEDHACK
 		DELAY_SET
-	}
-	else
-	{
-		if(debug_opcode!=0) CPUdelay = 0;
+	} else {
+		if (debug_opcode != 0)
+			CPUdelay = 0;
 	}
 }
 
@@ -1898,14 +1858,12 @@ void r4300i_bltzal(uint32 Instruction)
 {
 	CHECK_RS_EQUAL_RA(RS_BASE_FMT, "bltzal")
 	INTERPRETIVE_LINK(RA)
-	if(gRS < 0)
-	{
+	if (gRS < 0) {
 		R4300I_SPEEDHACK
 		DELAY_SET
-	}
-	else
-	{
-		if(debug_opcode!=0) CPUdelay = 0;
+	} else {
+		if (debug_opcode != 0)
+			CPUdelay = 0;
 	}
 }
 
@@ -1917,14 +1875,12 @@ void r4300i_bltzall(uint32 Instruction)
 {
 	CHECK_RS_EQUAL_RA(RS_BASE_FMT, "bltzall")
 	INTERPRETIVE_LINK(RA)
-	if(gRS < 0)
-	{
+	if (gRS < 0) {
 		R4300I_SPEEDHACK
 		DELAY_SET
-	}
-	else
-	{
-		if(debug_opcode!=0) CPUdelay = 0;
+	} else {
+		if (debug_opcode != 0)
+			CPUdelay = 0;
 		DELAY_SKIP
 	}
 }
@@ -1935,14 +1891,12 @@ void r4300i_bltzall(uint32 Instruction)
  */
 void r4300i_bltzl(uint32 Instruction)
 {
-	if(gRS < 0)
-	{
+	if (gRS < 0) {
 		R4300I_SPEEDHACK
 		DELAY_SET
-	}
-	else
-	{
-		if(debug_opcode!=0) CPUdelay = 0;
+	} else {
+		if (debug_opcode != 0)
+			CPUdelay = 0;
 		DELAY_SKIP
 	}
 }
@@ -1953,14 +1907,12 @@ void r4300i_bltzl(uint32 Instruction)
  */
 void r4300i_bgtz(uint32 Instruction)
 {
-	if(gRS > 0)
-	{
+	if (gRS > 0) {
 		R4300I_SPEEDHACK
 		DELAY_SET
-	}
-	else
-	{
-		if(debug_opcode!=0) CPUdelay = 0;
+	} else {
+		if (debug_opcode != 0)
+			CPUdelay = 0;
 	}
 }
 
@@ -1970,14 +1922,12 @@ void r4300i_bgtz(uint32 Instruction)
  */
 void r4300i_bgtzl(uint32 Instruction)
 {
-	if(gRS > 0)
-	{
+	if (gRS > 0) {
 		R4300I_SPEEDHACK
 		DELAY_SET
-	}
-	else
-	{
-		if(debug_opcode!=0) CPUdelay = 0;
+	} else {
+		if (debug_opcode != 0)
+			CPUdelay = 0;
 		DELAY_SKIP
 	}
 }
@@ -1988,14 +1938,12 @@ void r4300i_bgtzl(uint32 Instruction)
  */
 void r4300i_blez(uint32 Instruction)
 {
-	if(gRS <= 0)
-	{
+	if (gRS <= 0) {
 		R4300I_SPEEDHACK
 		DELAY_SET
-	}
-	else
-	{
-		if(debug_opcode!=0) CPUdelay = 0;
+	} else {
+		if (debug_opcode != 0)
+			CPUdelay = 0;
 	}
 }
 
@@ -2005,14 +1953,12 @@ void r4300i_blez(uint32 Instruction)
  */
 void r4300i_blezl(uint32 Instruction)
 {
-	if(gRS <= 0)
-	{
+	if (gRS <= 0) {
 		R4300I_SPEEDHACK
 		DELAY_SET
-	}
-	else
-	{
-		if(debug_opcode!=0) CPUdelay = 0;
+	} else {
+		if (debug_opcode != 0)
+			CPUdelay = 0;
 		DELAY_SKIP
 	}
 }
@@ -2023,13 +1969,12 @@ void r4300i_blezl(uint32 Instruction)
  */
 void r4300i_bne(uint32 Instruction)
 {
-	if((uint64) gRS != (uint64) gRT)
-	{
+	if ((uint64) gRS != (uint64) gRT) {
 		R4300I_SPEEDHACK
 		DELAY_SET
-	}
-	else if(debug_opcode!=0)
+	} else if (debug_opcode != 0) {
 		CPUdelay = 0;
+	}
 }
 
 /*
@@ -2038,14 +1983,12 @@ void r4300i_bne(uint32 Instruction)
  */
 void r4300i_bnel(uint32 Instruction)
 {
-	if((uint64) gRS != (uint64) gRT)
-	{
+	if ((uint64) gRS != (uint64) gRT) {
 		R4300I_SPEEDHACK
 		DELAY_SET
-	}
-	else
-	{
-		if(debug_opcode!=0) CPUdelay = 0;
+	} else {
+		if (debug_opcode != 0)
+			CPUdelay = 0;
 		DELAY_SKIP
 	}
 }
@@ -2056,14 +1999,12 @@ void r4300i_bnel(uint32 Instruction)
  */
 void r4300i_beql(uint32 Instruction)
 {
-	if((uint64) gRS == (uint64) gRT)
-	{
+	if ((uint64) gRS == (uint64) gRT) {
 		R4300I_SPEEDHACK
 		DELAY_SET
-	}
-	else
-	{
-		if(debug_opcode!=0) CPUdelay = 0;
+	} else {
+		if (debug_opcode != 0)
+			CPUdelay = 0;
 		DELAY_SKIP
 	}
 }
@@ -2074,14 +2015,12 @@ void r4300i_beql(uint32 Instruction)
  */
 void r4300i_beq(uint32 Instruction)
 {
-	if((uint64) gRS == (uint64) gRT)
-	{
+	if ((uint64) gRS == (uint64) gRT) {
 		R4300I_SPEEDHACK
 		DELAY_SET
-	}
-	else
-	{
-		if(debug_opcode!=0) CPUdelay = 0;
+	} else {
+		if (debug_opcode != 0)
+			CPUdelay = 0;
 	}
 }
 
@@ -2096,8 +2035,7 @@ void r4300i_div(uint32 Instruction)
 	__int32 RTReg = (__int32) gRT;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(RTReg != 0)
-	{
+	if (RTReg != 0) {
 		gHWS_GPR[__LO] = (__int64) (__int32) (RSReg / RTReg);
 		gHWS_GPR[__HI] = (__int64) (__int32) (RSReg % RTReg);
 	}
@@ -2116,8 +2054,7 @@ void r4300i_divu(uint32 Instruction)
 	uint32	RTReg = (uint32) gRT;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(RTReg != 0)
-	{
+	if (RTReg != 0) {
 		gHWS_GPR[__LO] = (__int64) (__int32) (RSReg / RTReg);
 		gHWS_GPR[__HI] = (__int64) (__int32) (RSReg % RTReg);
 	}
@@ -2136,12 +2073,9 @@ void r4300i_ddiv(uint32 Instruction)
 	__int64 RTReg = (__int64) gRT;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(RTReg != 0)	/* Divide by zero */
-	{
-		gHWS_GPR[__LO] = RSReg /
-		RTReg;
-		gHWS_GPR[__HI] = RSReg %
-		RTReg;
+	if (RTReg != 0) { /* Divide by zero */
+		gHWS_GPR[__LO] = RSReg / RTReg;
+		gHWS_GPR[__HI] = RSReg % RTReg;
 	}
 
 	SAVE_OP_COUNTER_INCREASE_INTERPRETER(PCLOCKDDIV);
@@ -2158,12 +2092,9 @@ void r4300i_ddivu(uint32 Instruction)
 	uint64	RTReg = (uint64) gRT;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(RTReg != 0)
-	{
-		gHWS_GPR[__LO] = RSReg /
-		RTReg;
-		gHWS_GPR[__HI] = RSReg %
-		RTReg;
+	if (RTReg != 0) {
+		gHWS_GPR[__LO] = RSReg / RTReg;
+		gHWS_GPR[__HI] = RSReg % RTReg;
 	}
 
 	SAVE_OP_COUNTER_INCREASE_INTERPRETER(PCLOCKDDIVU);
@@ -2179,8 +2110,7 @@ void r4300i_mult(uint32 Instruction)
 	_int64	result;
 	/*~~~~~~~~~~~*/
 
-	result = (_int64) (_int32) gRS *
-	(_int64) (_int32) gRT;
+	result = (_int64) (_int32) gRS * (_int64) (_int32) gRT;
 	gHWS_GPR[__LO] = (__int64) (__int32) result;
 	gHWS_GPR[__HI] = (__int64) (__int32) (((uint64) result) >> 32);
 
@@ -2197,8 +2127,7 @@ void r4300i_multu(uint32 Instruction)
 	uint64	result;
 	/*~~~~~~~~~~~*/
 
-	result = (uint64) (uint32) gRS *
-	(uint64) (uint32) gRT;
+	result = (uint64) (uint32) gRS * (uint64) (uint32) gRT;
 	gHWS_GPR[__LO] = (__int64) (__int32) result;
 	gHWS_GPR[__HI] = (__int64) (__int32) (((uint64) result) >> 32);
 
@@ -2233,9 +2162,14 @@ void r4300i_dmultu (uint32 Instruction)
 	a = *((uint32 *) &gHWS_GPR[rs] + 1);
 	c = *((uint32 *) &gHWS_GPR[rt] + 1);
 
-	__asm
-	{
-		/* mov eax, b mov edx, d mul edx mov dword ptr [glo],eax mov dword ptr [glo+4],edx */
+	__asm {
+/*
+mov eax, b
+mov edx, d
+mul edx
+mov dword ptr [glo], eax
+mov dword ptr [glo+4], edx
+*/
 	}
 	MULT_X86(b, d)
 	STORE_X86(glo)
@@ -2267,14 +2201,12 @@ void r4300i_dmult(uint32 Instruction)
 	v1 = gRS;
 	v2 = gRT;
 
-	if(v1 < 0)
-	{
+	if (v1 < 0) {
 		v1 = -v1;
 		sgn = 1;
 	}
 
-	if(v2 < 0)
-	{
+	if (v2 < 0) {
 		v2 = -v2;
 		sgn = !sgn;
 	}
@@ -2284,8 +2216,7 @@ void r4300i_dmult(uint32 Instruction)
 	c = (uint32) (v2 >> 32);
 	d = (uint32) v2;
 
-	__asm
-	{
+	__asm {
 	}
 
 	MULT_X86(b, d);
@@ -2296,12 +2227,12 @@ void r4300i_dmult(uint32 Instruction)
 	ADD_CARRY_X86(glo, ghi);
 	MULT_X86(a, d);
 	ADD_CARRY_X86(glo, ghi);
-	if(sgn) /* neg */
-	{
+	if (sgn) { /* neg */
 		glo = ~glo;
 		ghi = ~ghi;
 		glo += 1;
-		if(glo == 0) ghi += 1;
+		if (glo == 0)
+			ghi += 1;
 	}
 
 	gHWS_GPR[__LO] = glo;
@@ -2325,22 +2256,27 @@ void r4300i_dmultu(uint32 Instruction)
 
 	t1 = gRS;
 	t2 = gRT;
-	hh = ((__int64) (t1 >> 32) & 0x0ffffffff) *
-	((__int64) (t2 >> 32) & 0x0ffffffff);
-	hl = (__int64) (t1 & 0x0ffffffff) *
-	((__int64) (t2 >> 32) & 0x0ffffffff);
-	lh = ((__int64) (t1 >> 32) & 0x0ffffffff) *
-	(__int64) (t2 & 0x0ffffffff);
-	ll = ((__int64) (t1 & 0x0ffffffff) * (__int64) (t2 & 0x0ffffffff));
+	hh =
+		((__int64) (t1 >> 32) & 0x0ffffffff) *
+		((__int64) (t2 >> 32) & 0x0ffffffff);
+	hl =
+		(__int64) (t1 & 0x0ffffffff) *
+		((__int64) (t2 >> 32) & 0x0ffffffff);
+	lh =
+		((__int64) (t1 >> 32) & 0x0ffffffff) *
+		(__int64) (t2 & 0x0ffffffff);
+	ll =
+		((__int64) (t1 & 0x0ffffffff) *
+		(__int64) (t2 & 0x0ffffffff));
 
-	gHWS_GPR[__LO] = ((hl + lh) << 32) +
-	ll;
+	gHWS_GPR[__LO] = ((hl + lh) << 32) + ll;
 
-	b = (((hl + lh) + (ll >> 32)) & 0x0100000000) >>
-	32;
+	b = (((hl + lh) + (ll >> 32)) & 0x0100000000) >> 32;
 
-	gHWS_GPR[__HI] = (unsigned __int64) hh +
-	((signed __int64) (unsigned __int32) (hl >> 32) + (signed __int64) (unsigned __int32) (lh >> 32) + b);
+	gHWS_GPR[__HI] =
+		(unsigned __int64) hh +
+		((signed __int64) (unsigned __int32) (hl >> 32) + (signed __int64) (unsigned __int32) (lh >> 32) + b)
+	;
 
 	SAVE_OP_COUNTER_INCREASE_INTERPRETER(PCLOCKDMULTU);
 }
@@ -2359,42 +2295,42 @@ void r4300i_dmult(uint32 Instruction)
 
 	t1 = gRS;
 	t2 = gRT;
-	if(t1 < 0)
-	{
+	if (t1 < 0) {
 		sgn ^= 1;
 		t1 = -t1;
 	}
 
-	if(t2 < 0)
-	{
+	if (t2 < 0) {
 		sgn ^= 1;
 		t2 = -t2;
 	}
 
-	hh = ((__int64) (t1 >> 32) & 0x0ffffffff) *
-	((__int64) (t2 >> 32) & 0x0ffffffff);
-	hl = (__int64) (t1 & 0x0ffffffff) *
-	((__int64) (t2 >> 32) & 0x0ffffffff);
-	lh = ((__int64) (t1 >> 32) & 0x0ffffffff) *
-	(__int64) (t2 & 0x0ffffffff);
-	ll = ((__int64) (t1 & 0x0ffffffff) * (__int64) (t2 & 0x0ffffffff));
+	hh =
+		((__int64) (t1 >> 32) & 0x0ffffffff) *
+		((__int64) (t2 >> 32) & 0x0ffffffff);
+	hl =
+		(__int64) (t1 & 0x0ffffffff) *
+		((__int64) (t2 >> 32) & 0x0ffffffff);
+	lh =
+		((__int64) (t1 >> 32) & 0x0ffffffff) *
+		(__int64) (t2 & 0x0ffffffff);
+	ll =
+		((__int64) (t1 & 0x0ffffffff) * (__int64) (t2 & 0x0ffffffff));
 
-	gHWS_GPR[__LO] = ((hl + lh) << 32) +
-	ll;
+	gHWS_GPR[__LO] = ((hl + lh) << 32) + ll;
 
-	b = (((hl + lh) + (ll >> 32)) & 0x0100000000) >>
-	32;
+	b = (((hl + lh) + (ll >> 32)) & 0x0100000000) >> 32;
 
-	gHWS_GPR[__HI] = (unsigned __int64) hh +
-	((signed __int64) (unsigned __int32) (hl >> 32) + (signed __int64) (unsigned __int32) (lh >> 32) + b);
+	gHWS_GPR[__HI] =
+		(unsigned __int64) hh +
+		((signed __int64) (unsigned __int32) (hl >> 32) + (signed __int64) (unsigned __int32) (lh >> 32) + b)
+	;
 
 	b = (gHWS_GPR[__LO] >= 0) ? 1 : 0;
 
-	if(sgn != 0)
-	{
+	if (sgn != 0) {
 		gHWS_GPR[__LO] = -gHWS_GPR[__LO];
-		gHWS_GPR[__HI] = -gHWS_GPR[__HI] +
-		b;
+		gHWS_GPR[__HI] = -gHWS_GPR[__HI] + b;
 	}
 
 	SAVE_OP_COUNTER_INCREASE_INTERPRETER(PCLOCKDMULT);
@@ -2418,12 +2354,12 @@ void r4300i_jal(uint32 Instruction)
 void r4300i_jalr(uint32 Instruction)
 {
 #ifdef DEBUG_COMMON
-	if(RD_FS == RS_BASE_FMT) DisplayError("In JALR, RD==RS");
+	if (RD_FS == RS_BASE_FMT)
+		DisplayError("In JALR, RD==RS");
 #endif
 	INTERPRETIVE_LINK(RD_FS) CPUdelay = 1;
 #ifdef DEBUG_COMMON
-	if(gRS & 0x3)
-	{
+	if (gRS & 0x3) {
 		DisplayError("Warning, JALR, the target address is not aligned");
 	}
 #endif
@@ -2439,8 +2375,7 @@ void r4300i_jr(uint32 Instruction)
 	CPUdelay = 1;
 
 #ifdef DEBUG_COMMON
-	if(gRS & 0x3)
-	{
+	if (gRS & 0x3) {
 		DisplayError("Warning, JR, the target address is not aligned");
 	}
 #endif
@@ -2455,21 +2390,16 @@ void r4300i_j(uint32 Instruction)
 {
 	CPUdelay = 1;
 	CPUdelayPC = INSTR_INDEX;
-	if(gHWS_pc == CPUdelayPC)
-	{
-		if(NOT_IN_KO_K1_SEG(gHWS_pc))
-		{
+	if (gHWS_pc == CPUdelayPC) {
+		if (NOT_IN_KO_K1_SEG(gHWS_pc)) {
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-			uint32	temppc = TranslateITLBAddress(gHWS_pc);
+			uint32 temppc = TranslateITLBAddress(gHWS_pc);
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-			if(MEM_READ_UWORD(temppc + 4) == 0)
-			{
+			if (MEM_READ_UWORD(temppc + 4) == 0) {
 				r4300i_do_speedhack();
 			}
-		}
-		else if(MEM_READ_UWORD(gHWS_pc + 4) == 0)
-		{
+		} else if (MEM_READ_UWORD(gHWS_pc + 4) == 0) {
 			r4300i_do_speedhack();
 		}
 	}
@@ -2490,8 +2420,7 @@ void r4300i_lw(uint32 Instruction)
 	CHECKING_ADDR_ALIGNMENT(QuerAddr, 0x3, "LW", EXC_RADE) gHWS_GPR[rt_ft] = MEM_READ_SWORD(QuerAddr);
 
 #ifdef CPU_CORE_CHECK_R0
-	if(rt_ft == 0 && gHWS_GPR[rt_ft] != 0)
-	{
+	if (rt_ft == 0 && gHWS_GPR[rt_ft] != 0) {
 		TRACE0("R0 != 0 after LW");
 	}
 #endif
@@ -2537,8 +2466,7 @@ void r4300i_lwl(uint32 Instruction)
 
 	LoadWord1 = MEM_READ_UWORD(vAddr);
 
-	switch(QuerAddr & 3)
-	{
+	switch (QuerAddr & 3) {
 	case 0:
 		gHWS_GPR[rt_ft] = (_int64) (_int32) LoadWord1;
 		break;
@@ -2569,8 +2497,7 @@ void r4300i_lwr(uint32 Instruction)
 
 	LoadWord1 = MEM_READ_UWORD(vAddr);
 
-	switch(QuerAddr & 3)
-	{
+	switch (QuerAddr & 3) {
 	case 3:
 		gHWS_GPR[rt_ft] = (_int64) (_int32) LoadWord1;
 		break;
@@ -2600,12 +2527,15 @@ void r4300i_swl(uint32 Instruction)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	LoadWord1 = MEM_READ_UWORD(vAddr);
-	switch(QuerAddr & 3)
-	{
-	case 0: LoadWord1 = (uint32) gHWS_GPR[rt_ft]; break;
-	case 1: LoadWord1 = (uint32) (LoadWord1 & 0xff000000) | ((uint32) gHWS_GPR[rt_ft] >> 8); break;
-	case 2: LoadWord1 = (uint32) (LoadWord1 & 0xffff0000) | ((uint32) gHWS_GPR[rt_ft] >> 16); break;
-	case 3: LoadWord1 = (uint32) (LoadWord1 & 0xffffff00) | ((uint32) gHWS_GPR[rt_ft] >> 24); break;
+	switch (QuerAddr & 3) {
+	case 0:
+		LoadWord1 = (uint32) gHWS_GPR[rt_ft]; break;
+	case 1:
+		LoadWord1 = (uint32) (LoadWord1 & 0xff000000) | ((uint32) gHWS_GPR[rt_ft] >> 8); break;
+	case 2:
+		LoadWord1 = (uint32) (LoadWord1 & 0xffff0000) | ((uint32) gHWS_GPR[rt_ft] >> 16); break;
+	case 3:
+		LoadWord1 = (uint32) (LoadWord1 & 0xffffff00) | ((uint32) gHWS_GPR[rt_ft] >> 24); break;
 	}
 	{
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -2639,12 +2569,15 @@ void r4300i_swr(uint32 Instruction)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	LoadWord1 = MEM_READ_UWORD(vAddr);
-	switch(QuerAddr & 3)
-	{
-	case 3: LoadWord1 = (uint32) gHWS_GPR[rt_ft]; break;
-	case 2: LoadWord1 = (uint32) ((LoadWord1 & 0x000000FF) | ((uint32) gHWS_GPR[rt_ft] << 8)); break;
-	case 1: LoadWord1 = (uint32) ((LoadWord1 & 0x0000FFFF) | ((uint32) gHWS_GPR[rt_ft] << 16)); break;
-	case 0: LoadWord1 = (uint32) ((LoadWord1 & 0x00FFFFFF) | ((uint32) gHWS_GPR[rt_ft] << 24)); break;
+	switch (QuerAddr & 3) {
+	case 3:
+		LoadWord1 = (uint32) gHWS_GPR[rt_ft]; break;
+	case 2:
+		LoadWord1 = (uint32) ((LoadWord1 & 0x000000FF) | ((uint32) gHWS_GPR[rt_ft] << 8)); break;
+	case 1:
+		LoadWord1 = (uint32) ((LoadWord1 & 0x0000FFFF) | ((uint32) gHWS_GPR[rt_ft] << 16)); break;
+	case 0:
+		LoadWord1 = (uint32) ((LoadWord1 & 0x00FFFFFF) | ((uint32) gHWS_GPR[rt_ft] << 24)); break;
 	}
 	{
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -2677,19 +2610,28 @@ void r4300i_ldl(uint32 Instruction)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	tempdword = (uint64) MEM_READ_UWORD((QuerAddr & 0xFFFFFFF8));
-	tempdword = (tempdword << 32) |
-	MEM_READ_UWORD(((QuerAddr & 0xFFFFFFF8) + 4));
+	tempdword =
+		(tempdword << 32) |
+		MEM_READ_UWORD(((QuerAddr & 0xFFFFFFF8) + 4))
+	;
 
-	switch(QuerAddr % 8)
-	{
-	case 0: gHWS_GPR[rt_ft] = tempdword; break;
-	case 1: gHWS_GPR[rt_ft] = ((gHWS_GPR[rt_ft] & 0x00000000000000FF) | (tempdword << 8)); break;
-	case 2: gHWS_GPR[rt_ft] = ((gHWS_GPR[rt_ft] & 0x000000000000FFFF) | (tempdword << 16)); break;
-	case 3: gHWS_GPR[rt_ft] = ((gHWS_GPR[rt_ft] & 0x0000000000FFFFFF) | (tempdword << 24)); break;
-	case 4: gHWS_GPR[rt_ft] = ((gHWS_GPR[rt_ft] & 0x00000000FFFFFFFF) | (tempdword << 32)); break;
-	case 5: gHWS_GPR[rt_ft] = ((gHWS_GPR[rt_ft] & 0x000000FFFFFFFFFF) | (tempdword << 40)); break;
-	case 6: gHWS_GPR[rt_ft] = ((gHWS_GPR[rt_ft] & 0x0000FFFFFFFFFFFF) | (tempdword << 48)); break;
-	case 7: gHWS_GPR[rt_ft] = ((gHWS_GPR[rt_ft] & 0x00FFFFFFFFFFFFFF) | (tempdword << 56)); break;
+	switch (QuerAddr % 8) {
+	case 0:
+		gHWS_GPR[rt_ft] = tempdword; break;
+	case 1:
+		gHWS_GPR[rt_ft] = ((gHWS_GPR[rt_ft] & 0x00000000000000FF) | (tempdword << 8)); break;
+	case 2:
+		gHWS_GPR[rt_ft] = ((gHWS_GPR[rt_ft] & 0x000000000000FFFF) | (tempdword << 16)); break;
+	case 3:
+		gHWS_GPR[rt_ft] = ((gHWS_GPR[rt_ft] & 0x0000000000FFFFFF) | (tempdword << 24)); break;
+	case 4:
+		gHWS_GPR[rt_ft] = ((gHWS_GPR[rt_ft] & 0x00000000FFFFFFFF) | (tempdword << 32)); break;
+	case 5:
+		gHWS_GPR[rt_ft] = ((gHWS_GPR[rt_ft] & 0x000000FFFFFFFFFF) | (tempdword << 40)); break;
+	case 6:
+		gHWS_GPR[rt_ft] = ((gHWS_GPR[rt_ft] & 0x0000FFFFFFFFFFFF) | (tempdword << 48)); break;
+	case 7:
+		gHWS_GPR[rt_ft] = ((gHWS_GPR[rt_ft] & 0x00FFFFFFFFFFFFFF) | (tempdword << 56)); break;
 	}
 }
 
@@ -2706,19 +2648,28 @@ void r4300i_ldr(uint32 Instruction)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	tempdword = (uint64) MEM_READ_UWORD((QuerAddr & 0xFFFFFFF8));
-	tempdword = (tempdword << 32) |
-	MEM_READ_UWORD(((QuerAddr & 0xFFFFFFF8) + 4));
+	tempdword =
+		(tempdword << 32) |
+		MEM_READ_UWORD(((QuerAddr & 0xFFFFFFF8) + 4))
+	;
 
-	switch(QuerAddr % 8)
-	{
-	case 0: gHWS_GPR[rt_ft] = (gHWS_GPR[rt_ft] & 0xFFFFFFFFFFFFFF00) | (tempdword >> 56); break;
-	case 1: gHWS_GPR[rt_ft] = (gHWS_GPR[rt_ft] & 0xFFFFFFFFFFFF0000) | (tempdword >> 48); break;
-	case 2: gHWS_GPR[rt_ft] = (gHWS_GPR[rt_ft] & 0xFFFFFFFFFF000000) | (tempdword >> 40); break;
-	case 3: gHWS_GPR[rt_ft] = (gHWS_GPR[rt_ft] & 0xFFFFFFFF00000000) | (tempdword >> 32); break;
-	case 4: gHWS_GPR[rt_ft] = (gHWS_GPR[rt_ft] & 0xFFFFFF0000000000) | (tempdword >> 24); break;
-	case 5: gHWS_GPR[rt_ft] = (gHWS_GPR[rt_ft] & 0xFFFF000000000000) | (tempdword >> 16); break;
-	case 6: gHWS_GPR[rt_ft] = (gHWS_GPR[rt_ft] & 0xFF00000000000000) | (tempdword >> 8); break;
-	case 7: gHWS_GPR[rt_ft] = tempdword; break;
+	switch (QuerAddr % 8) {
+	case 0:
+		gHWS_GPR[rt_ft] = (gHWS_GPR[rt_ft] & 0xFFFFFFFFFFFFFF00) | (tempdword >> 56); break;
+	case 1:
+		gHWS_GPR[rt_ft] = (gHWS_GPR[rt_ft] & 0xFFFFFFFFFFFF0000) | (tempdword >> 48); break;
+	case 2:
+		gHWS_GPR[rt_ft] = (gHWS_GPR[rt_ft] & 0xFFFFFFFFFF000000) | (tempdword >> 40); break;
+	case 3:
+		gHWS_GPR[rt_ft] = (gHWS_GPR[rt_ft] & 0xFFFFFFFF00000000) | (tempdword >> 32); break;
+	case 4:
+		gHWS_GPR[rt_ft] = (gHWS_GPR[rt_ft] & 0xFFFFFF0000000000) | (tempdword >> 24); break;
+	case 5:
+		gHWS_GPR[rt_ft] = (gHWS_GPR[rt_ft] & 0xFFFF000000000000) | (tempdword >> 16); break;
+	case 6:
+		gHWS_GPR[rt_ft] = (gHWS_GPR[rt_ft] & 0xFF00000000000000) | (tempdword >> 8); break;
+	case 7:
+		gHWS_GPR[rt_ft] = tempdword; break;
 	}
 }
 
@@ -2735,18 +2686,27 @@ void r4300i_sdl(uint32 Instruction)
 	STORE_TLB_FUN	tempdword = (uint64) MEM_READ_UWORD((QuerAddr & 0xFFFFFFF8));
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	tempdword = (tempdword << 32) |
-	MEM_READ_UWORD(((QuerAddr & 0xFFFFFFF8) + 4));
-	switch(QuerAddr % 8)
-	{
-	case 0: tempdword = grt; break;
-	case 1: tempdword = (tempdword & 0xFF00000000000000) | (grt >> 8); break;
-	case 2: tempdword = (tempdword & 0xFFFF000000000000) | (grt >> 16); break;
-	case 3: tempdword = (tempdword & 0xFFFFFF0000000000) | (grt >> 24); break;
-	case 4: tempdword = (tempdword & 0xFFFFFFFF00000000) | (grt >> 32); break;
-	case 5: tempdword = (tempdword & 0xFFFFFFFFFF000000) | (grt >> 40); break;
-	case 6: tempdword = (tempdword & 0xFFFFFFFFFFFF0000) | (grt >> 48); break;
-	case 7: tempdword = (tempdword & 0xFFFFFFFFFFFFFF00) | (grt >> 56); break;
+	tempdword =
+		(tempdword << 32) |
+		MEM_READ_UWORD(((QuerAddr & 0xFFFFFFF8) + 4))
+	;
+	switch (QuerAddr % 8) {
+	case 0:
+		tempdword = grt; break;
+	case 1:
+		tempdword = (tempdword & 0xFF00000000000000) | (grt >> 8); break;
+	case 2:
+		tempdword = (tempdword & 0xFFFF000000000000) | (grt >> 16); break;
+	case 3:
+		tempdword = (tempdword & 0xFFFFFF0000000000) | (grt >> 24); break;
+	case 4:
+		tempdword = (tempdword & 0xFFFFFFFF00000000) | (grt >> 32); break;
+	case 5:
+		tempdword = (tempdword & 0xFFFFFFFFFF000000) | (grt >> 40); break;
+	case 6:
+		tempdword = (tempdword & 0xFFFFFFFFFFFF0000) | (grt >> 48); break;
+	case 7:
+		tempdword = (tempdword & 0xFFFFFFFFFFFFFF00) | (grt >> 56); break;
 	}
 	{
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -2774,18 +2734,27 @@ void r4300i_sdr(uint32 Instruction)
 	STORE_TLB_FUN	tempdword = (uint64) MEM_READ_UWORD((QuerAddr & 0xFFFFFFF8));
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	tempdword = (tempdword << 32) |
-	MEM_READ_UWORD(((QuerAddr & 0xFFFFFFF8) + 4));
-	switch(QuerAddr % 8)
-	{
-	case 0: tempdword = (tempdword & 0x00FFFFFFFFFFFFFF) | (grt << 56); break;
-	case 1: tempdword = (tempdword & 0x0000FFFFFFFFFFFF) | (grt << 48); break;
-	case 2: tempdword = (tempdword & 0x000000FFFFFFFFFF) | (grt << 40); break;
-	case 3: tempdword = (tempdword & 0x00000000FFFFFFFF) | (grt << 32); break;
-	case 4: tempdword = (tempdword & 0x0000000000FFFFFF) | (grt << 24); break;
-	case 5: tempdword = (tempdword & 0x000000000000FFFF) | (grt << 16); break;
-	case 6: tempdword = (tempdword & 0x00000000000000FF) | (grt << 8); break;
-	case 7: tempdword = grt; break;
+	tempdword =
+		(tempdword << 32) |
+		MEM_READ_UWORD(((QuerAddr & 0xFFFFFFF8) + 4))
+	;
+	switch (QuerAddr % 8) {
+	case 0:
+		tempdword = (tempdword & 0x00FFFFFFFFFFFFFF) | (grt << 56); break;
+	case 1:
+		tempdword = (tempdword & 0x0000FFFFFFFFFFFF) | (grt << 48); break;
+	case 2:
+		tempdword = (tempdword & 0x000000FFFFFFFFFF) | (grt << 40); break;
+	case 3:
+		tempdword = (tempdword & 0x00000000FFFFFFFF) | (grt << 32); break;
+	case 4:
+		tempdword = (tempdword & 0x0000000000FFFFFF) | (grt << 24); break;
+	case 5:
+		tempdword = (tempdword & 0x000000000000FFFF) | (grt << 16); break;
+	case 6:
+		tempdword = (tempdword & 0x00000000000000FF) | (grt << 8); break;
+	case 7:
+		tempdword = grt; break;
 	}
 	{
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -2812,8 +2781,7 @@ void r4300i_Init(void)
 {
 	r4300i_InitHardware(&gHardwareState);
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY2
-	if(debug_opcode!=0)
-	{
+	if (debug_opcode != 0) {
 		r4300i_InitHardware(&gHardwareState_Interpreter_Compare);
 		r4300i_InitHardware(&gHardwareState_Flushed_Dynarec_Compare);
 	}
@@ -2828,8 +2796,7 @@ void r4300i_Reset(void)
 {
 	r4300i_ResetMemory(&gMemoryState);
 
-	if(debug_opcode!=0)
-	{
+	if (debug_opcode != 0) {
 		r4300i_ResetMemory(&gMemoryState_Interpreter_Compare);
 	}
 }
@@ -3036,8 +3003,7 @@ void r4300i_BootHelper(HardwareState *gHWState, MemoryState *gMemoryState)
 
 	bootaddr = *(uint32 *) (gMemoryState->ROM_Image + 8) & 0x007FFFFF;
 	memcpy(gMemoryState->RDRAM + bootaddr, gMemoryState->ROM_Image + 0x1000, 0x400000 - bootaddr);
-	gHWState->pc = 0x80000000 +
-	bootaddr;
+	gHWState->pc = 0x80000000 + bootaddr;
 }
 
 /*
@@ -3047,9 +3013,12 @@ void r4300i_BootHelper(HardwareState *gHWState, MemoryState *gMemoryState)
 void r4300i_ResetMemory(MemoryState *gMemoryState)
 {
 	memset(gMemoryState->RDRAM, 0, MEMORY_SIZE_RDRAM);
-	if(current_rdram_size == MEMORY_SIZE_WITH_EXPANSION) memset(gMemoryState->ExRDRAM, 0, MEMORY_SIZE_EXRDRAM);
+	if (current_rdram_size == MEMORY_SIZE_WITH_EXPANSION)
+		memset(gMemoryState->ExRDRAM, 0, MEMORY_SIZE_EXRDRAM);
 
-	/* memset(gMemoryState->RDREG, 0, MEMORY_SIZE_RDREG ); */
+#if 0
+	memset(gMemoryState->RDREG, 0, MEMORY_SIZE_RDREG);
+#endif
 	memset(gMemoryState->ramRegs0, 0, MEMORY_SIZE_RAMREGS0);
 	memset(gMemoryState->ramRegs4, 0, MEMORY_SIZE_RAMREGS4);
 	memset(gMemoryState->ramRegs8, 0, MEMORY_SIZE_RAMREGS8);
@@ -3098,13 +3067,13 @@ _int32 Check_LW(uint32 QuerAddr)
 	_int32			tempGPR;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if((QuerAddr & 0xFF000000) == 0x84000000) QuerAddr |= 0xA0000000;
+	if ((QuerAddr & 0xFF000000) == 0x84000000)
+		QuerAddr |= 0xA0000000;
 
 	if (currentromoptions.Save_Type == FLASHRAM_SAVETYPE)
 		CHECK_FLASHRAM_LW(QuerAddr);
 
-	switch(QuerAddr)
-	{
+	switch (QuerAddr) {
 	/* AI_LEN_REG */
 	case 0xA4500004:
 		AI_LEN_REG = AUDIO_AiReadLength();
@@ -3128,15 +3097,16 @@ _int32 Check_LW(uint32 QuerAddr)
 	/* VI_CURRENT_REG */
 	case 0xA4400010:
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY3
-		if(debug_opcode != 1 || p_gMemoryState != &gMemoryState)
-		{
+		if (debug_opcode != 1 || p_gMemoryState != &gMemoryState) {
 			Count_Down(VI_COUNTER_INC_PER_LINE);
 		}
 
 #else
 		Count_Down(VI_COUNTER_INC_PER_LINE);
 #endif
-		VI_CURRENT_REG = (Get_VIcounter() / VI_COUNTER_INC_PER_LINE + VI_INTR_REG) % (max_vi_lines + 1);
+		VI_CURRENT_REG =
+			(Get_VIcounter() / VI_COUNTER_INC_PER_LINE + VI_INTR_REG) %
+			(max_vi_lines + 1);
 		tempGPR = VI_CURRENT_REG & 0xFFFFFFFE + vi_field_number;
 
 		/* TRACE1("VI CURRENT_REG is read, val=%08X", VI_CURRENT_REG); */
@@ -3144,7 +3114,7 @@ _int32 Check_LW(uint32 QuerAddr)
 
 	/* SI_STATUS_REG */
 	case 0xA4800018:
-		if(MI_INTR_REG_R & MI_INTR_SI)	/* This is necessary, but not very necessary */
+		if (MI_INTR_REG_R & MI_INTR_SI)	/* This is necessary, but not very necessary */
 			SI_STATUS_REG |= SI_STATUS_INTERRUPT;
 		else
 			SI_STATUS_REG &= ~SI_STATUS_INTERRUPT;
@@ -3152,13 +3122,9 @@ _int32 Check_LW(uint32 QuerAddr)
 		break;
 
 	default:
-		__try
-		{
+		__try {
 			tempGPR = LOAD_SWORD_PARAM_2(QuerAddr);
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 			tempGPR = 0;
 			DISPLAY_ADDRESS_ERROR(QuerAddr, "LW");
 		}
@@ -3169,7 +3135,7 @@ _int32 Check_LW(uint32 QuerAddr)
 	DebugIO(QuerAddr, "Read", tempGPR);
 #endif
 
-	return(tempGPR);
+	return (tempGPR);
 }
 
 uint32	max_vi_lines;
@@ -3188,28 +3154,24 @@ void Check_SW(uint32 QuerAddr, uint32 rt_ft)
 {
 	RTVal = (uint32) gHWS_GPR[rt_ft];
 
-	if((QuerAddr & 0xFF000000) == 0x84000000) QuerAddr |= 0xA0000000;
+	if ((QuerAddr & 0xFF000000) == 0x84000000)
+		QuerAddr |= 0xA0000000;
 
 	if (currentromoptions.Save_Type == FLASHRAM_SAVETYPE)
-	if(QuerAddr >= 0xA8000000 && QuerAddr < 0xA8020000)
-	{
-		if(QuerAddr == FLASHRAM_COMMAND_REG_ADDR)
-		{
-			Flashram_Command(RTVal);
-			return;
+		if (QuerAddr >= 0xA8000000 && QuerAddr < 0xA8020000) {
+			if (QuerAddr == FLASHRAM_COMMAND_REG_ADDR) {
+				Flashram_Command(RTVal);
+				return;
+			} else {
+				SW_Flashram(QuerAddr, RTVal);
+				return;
+			}
 		}
-		else
-		{
-			SW_Flashram(QuerAddr, RTVal);
-			return;
-		}
-	}
 
 #ifdef DEBUG_IO
 	DebugIO(QuerAddr, "Write", RTVal);
 #endif
-	switch(QuerAddr)
-	{
+	switch (QuerAddr) {
 	/* MI_MODE_REG_ADDR */case 0xA4300000:
 		WriteMI_ModeReg(RTVal);
 		break;
@@ -3217,8 +3179,7 @@ void Check_SW(uint32 QuerAddr, uint32 rt_ft)
 		Handle_MI(RTVal);
 		break;
 	/* VI_STATUS_REG */case 0xA4400000:
-		if(VI_STATUS_REG != RTVal)
-		{
+		if (VI_STATUS_REG != RTVal) {
 			VI_STATUS_REG = RTVal;
 			VIDEO_ViStatusChanged();
 		}
@@ -3233,8 +3194,7 @@ void Check_SW(uint32 QuerAddr, uint32 rt_ft)
 		Set_VI_Counter_By_VSYNC();
 		break;
 	/* VI_ORIGIN_REG */case 0xA4400004:
-		if(VI_ORIGIN_REG != RTVal)
-		{
+		if (VI_ORIGIN_REG != RTVal) {
 			VI_ORIGIN_REG = RTVal;
 			VIDEO_UpdateScreen();
 		}
@@ -3255,35 +3215,30 @@ void Check_SW(uint32 QuerAddr, uint32 rt_ft)
 		break;
 	/* AI_DACRATE_REG */case 0xA4500010:
 		AI_DACRATE_REG = RTVal;
-		if(rominfo.TV_System == TV_SYSTEM_NTSC)
+		if (rominfo.TV_System == TV_SYSTEM_NTSC)
 			AUDIO_AiDacrateChanged(0);
 		else
 			AUDIO_AiDacrateChanged(1);
 		break;
 
 	/* PI_STATUS_REG */case 0xA4600010:
-		if(RTVal & PI_STATUS_CLR_INTR)
-		{
+		if (RTVal & PI_STATUS_CLR_INTR) {
 			Clear_MIInterrupt(NOT_MI_INTR_PI);
 		}
 
-		if(RTVal & PI_STATUS_RESET)
-		{
+		if (RTVal & PI_STATUS_RESET) {
 			/*
 			 * - When PIC is reset, if PIC happens to be busy, an interrupt will be generated
 			 * as PIC returns to idle. Otherwise, no interrupt will be generated and PIC
 			 * remains idle.
 			 */
-			if(PI_STATUS_REG & PI_STATUS_DMA_IO_BUSY)	/* is PI busy */
-			{
+			if (PI_STATUS_REG & PI_STATUS_DMA_IO_BUSY) { /* is PI busy */
 				/* Reset the PIC */
 				PI_STATUS_REG = 0;
 
 				/* Reset finished, set PI Interrupt */
 				Trigger_PIInterrupt();
-			}
-			else
-			{
+			} else {
 				/* Reset the PIC */
 				PI_STATUS_REG = 0;
 			}
@@ -3335,8 +3290,7 @@ void Check_SW(uint32 QuerAddr, uint32 rt_ft)
 		DMA_MemCopy_SI_To_DRAM();
 		break;
 	/* VI_WIDTH_REG */case 0xA4400008:
-		if(VI_WIDTH_REG != RTVal)
-		{
+		if (VI_WIDTH_REG != RTVal) {
 			VI_WIDTH_REG = RTVal;
 			VIDEO_ViWidthChanged();
 		}
@@ -3347,22 +3301,17 @@ void Check_SW(uint32 QuerAddr, uint32 rt_ft)
 		DEBUG_AUDIO_MACRO(TRACE3("%08X: Play %d bytes of audio at %08X", gHWS_pc, AI_LEN_REG, AI_DRAM_ADDR_REG));
 		DO_PROFILIER_AUDIO;
 		AUDIO_AiLenChanged();
-		if( CoreDoingAIUpdate )
-		{
+		if (CoreDoingAIUpdate) {
 			AUDIO_AiUpdate(FALSE);
 		}
-		
+
 		DO_PROFILIER_R4300I;
 		break;
 
 	default:
-		__try
-		{
+		__try {
 			LOAD_UWORD_PARAM_2(QuerAddr) = RTVal;
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 			DISPLAY_ADDRESS_ERROR(QuerAddr, "SW");
 		}
 		break;

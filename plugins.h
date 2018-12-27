@@ -14,8 +14,7 @@
 #define PLUGIN_TYPE_AUDIO		3
 #define PLUGIN_TYPE_CONTROLLER	4
 
-typedef struct
-{
+typedef struct {
 	uint16	Version;
 	uint16	Type;
 	char	Name[100];
@@ -24,8 +23,7 @@ typedef struct
 	int		MemoryBswaped;
 } PLUGIN_INFO;
 
-typedef struct
-{
+typedef struct {
 	HWND	hWnd;
 	HWND	hStatusBar;
 	int		MemoryBswaped;
@@ -70,8 +68,7 @@ GFX_INFO;
 #define TV_SYSTEM_PAL		0
 #define TV_SYSTEM_MPAL		0
 
-typedef struct
-{
+typedef struct {
 	HWND		hwnd;
 	HINSTANCE	hinst;
 	BOOL		MemoryBswaped;	/* If this is set to TRUE, then the memory has been pre bswapped on a dword (32 bits)
@@ -100,18 +97,15 @@ AUDIO_INFO;
 #define PLUGIN_RUMBLE_PAK	3	/* not implemeted for non raw data */
 #define PLUGIN_TANSFER_PAK	4	/* not implemeted for non raw data */
 
-typedef struct
-{
+typedef struct {
 	BOOL	Present;
 	BOOL	RawData;
 	int		Plugin;
 } CONTROL;
 
-typedef union
-{
+typedef union {
 	DWORD	Value;
-	struct
-	{
+	struct {
 		unsigned	R_DPAD : 1;
 		unsigned	L_DPAD : 1;
 		unsigned	D_DPAD : 1;

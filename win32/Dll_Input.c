@@ -54,21 +54,18 @@ void (__cdecl *_CONTROLLER_Under_Selecting_DllTest) (HWND) = NULL;
  */
 BOOL LoadControllerPlugin(char *libname)
 {
-	if(hinstControllerPlugin != NULL)
-	{
+	if (hinstControllerPlugin != NULL) {
 		CloseControllerPlugin();
 	}
 
 	/* Load the input plugin DLL */
 	hinstControllerPlugin = LoadLibrary(libname);
 
-	if(hinstControllerPlugin != NULL)	/* Check if DLL is loaded successfully */
-	{
+	if (hinstControllerPlugin != NULL) { /* Check if DLL is loaded successfully */
 		/* Get function address _CONTROLLER_GetDllInfo */
 		_CONTROLLER_GetDllInfo = (void(__cdecl *) (PLUGIN_INFO *)) GetProcAddress(hinstControllerPlugin, "GetDllInfo");
 
-		if(_CONTROLLER_GetDllInfo)		/* Is there the function _CONTROLLER_GetDllInfo in the Input plugin DLL */
-		{
+		if (_CONTROLLER_GetDllInfo) { /* Is there the function _CONTROLLER_GetDllInfo in the Input plugin DLL */
 			/*~~~~~~~~~~~~~~~~~~~~*/
 			PLUGIN_INFO Plugin_Info;
 			/*~~~~~~~~~~~~~~~~~~~~*/
@@ -77,10 +74,8 @@ BOOL LoadControllerPlugin(char *libname)
 
 			_CONTROLLER_GetDllInfo(&Plugin_Info);
 
-			if(Plugin_Info.Type == PLUGIN_TYPE_CONTROLLER)
-			{
-				if(Plugin_Info.Version == CONTROLLER_VERSION)
-				{
+			if (Plugin_Info.Type == PLUGIN_TYPE_CONTROLLER) {
+				if (Plugin_Info.Version == CONTROLLER_VERSION) {
 					_CONTROLLER_CloseDLL = (void(__cdecl *) (void)) GetProcAddress(hinstControllerPlugin, "CloseDLL");
 					_CONTROLLER_ControllerCommand = (void(__cdecl *) (int Control, BYTE *Command)) GetProcAddress
 						(
@@ -138,19 +133,16 @@ BOOL LoadControllerPlugin(char *libname)
  */
 void CloseControllerPlugin(void)
 {
-	if(_CONTROLLER_RomClosed)
-	{
+	if (_CONTROLLER_RomClosed) {
 		_CONTROLLER_RomClosed();
 	}
 
-	if(_CONTROLLER_CloseDLL)
-	{
+	if (_CONTROLLER_CloseDLL) {
 		_CONTROLLER_CloseDLL();
 	}
 
-	/* if(_CONTROLLER_RomClosed) { _CONTROLLER_RomClosed(); } */
-	if(hinstControllerPlugin)
-	{
+	/* if (_CONTROLLER_RomClosed) { _CONTROLLER_RomClosed(); } */
+	if (hinstControllerPlugin) {
 		FreeLibrary(hinstControllerPlugin);
 	}
 
@@ -177,15 +169,10 @@ void CloseControllerPlugin(void)
  */
 void CONTROLLER_CloseDLL(void)
 {
-	if(_CONTROLLER_CloseDLL != NULL)
-	{
-		__try
-		{
+	if (_CONTROLLER_CloseDLL != NULL) {
+		__try {
 			_CONTROLLER_CloseDLL();
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		}
 	}
 }
@@ -196,15 +183,10 @@ void CONTROLLER_CloseDLL(void)
  */
 void CONTROLLER_ControllerCommand(int _Control, BYTE *_Command)
 {
-	if(_CONTROLLER_ControllerCommand != NULL)
-	{
-		__try
-		{
+	if (_CONTROLLER_ControllerCommand != NULL) {
+		__try {
 			_CONTROLLER_ControllerCommand(_Control, _Command);
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		}
 	}
 }
@@ -215,15 +197,10 @@ void CONTROLLER_ControllerCommand(int _Control, BYTE *_Command)
  */
 void CONTROLLER_DllAbout(HWND _hWnd)
 {
-	if(_CONTROLLER_DllAbout != NULL)
-	{
-		__try
-		{
+	if (_CONTROLLER_DllAbout != NULL) {
+		__try {
 			_CONTROLLER_DllAbout(_hWnd);
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		}
 	}
 }
@@ -234,15 +211,10 @@ void CONTROLLER_DllAbout(HWND _hWnd)
  */
 void CONTROLLER_DllConfig(HWND _hWnd)
 {
-	if(_CONTROLLER_DllConfig != NULL)
-	{
-		__try
-		{
+	if (_CONTROLLER_DllConfig != NULL) {
+		__try {
 			_CONTROLLER_DllConfig(_hWnd);
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		}
 	}
 }
@@ -253,15 +225,10 @@ void CONTROLLER_DllConfig(HWND _hWnd)
  */
 void CONTROLLER_DllTest(HWND _hWnd)
 {
-	if(_CONTROLLER_DllTest != NULL)
-	{
-		__try
-		{
+	if (_CONTROLLER_DllTest != NULL) {
+		__try {
 			_CONTROLLER_DllTest(_hWnd);
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		}
 	}
 }
@@ -272,15 +239,10 @@ void CONTROLLER_DllTest(HWND _hWnd)
  */
 void CONTROLLER_GetDllInfo(PLUGIN_INFO *_plugin)
 {
-	if(_CONTROLLER_GetDllInfo != NULL)
-	{
-		__try
-		{
+	if (_CONTROLLER_GetDllInfo != NULL) {
+		__try {
 			_CONTROLLER_GetDllInfo(_plugin);
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		}
 	}
 }
@@ -291,15 +253,10 @@ void CONTROLLER_GetDllInfo(PLUGIN_INFO *_plugin)
  */
 void CONTROLLER_GetKeys(int _Control, BUTTONS *_Keys)
 {
-	if(_CONTROLLER_GetKeys != NULL)
-	{
-		__try
-		{
+	if (_CONTROLLER_GetKeys != NULL) {
+		__try {
 			_CONTROLLER_GetKeys(_Control, _Keys);
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		}
 	}
 }
@@ -310,15 +267,10 @@ void CONTROLLER_GetKeys(int _Control, BUTTONS *_Keys)
  */
 void CONTROLLER_InitiateControllers(HWND _hMainWindow, CONTROL _Controls[4])
 {
-	if(_CONTROLLER_InitiateControllers != NULL)
-	{
-		__try
-		{
+	if (_CONTROLLER_InitiateControllers != NULL) {
+		__try {
 			_CONTROLLER_InitiateControllers(_hMainWindow, _Controls);
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		}
 	}
 
@@ -326,7 +278,7 @@ void CONTROLLER_InitiateControllers(HWND _hMainWindow, CONTROL _Controls[4])
 	 * Add mempak support in 1964 by configure the control 4 as mempak £
 	 * no matter if the control plugin support it or not
 	 */
-	if(_Controls[0].Plugin == PLUGIN_NONE) _Controls[0].Plugin = PLUGIN_MEMPAK;
+	if (_Controls[0].Plugin == PLUGIN_NONE) _Controls[0].Plugin = PLUGIN_MEMPAK;
 
 	/*
 	 * Controls[1].Present = FALSE; £
@@ -341,15 +293,10 @@ void CONTROLLER_InitiateControllers(HWND _hMainWindow, CONTROL _Controls[4])
  */
 void CONTROLLER_ReadController(int _Control, BYTE *_Command)
 {
-	if(_CONTROLLER_ReadController != NULL)
-	{
-		__try
-		{
+	if (_CONTROLLER_ReadController != NULL) {
+		__try {
 			_CONTROLLER_ReadController(_Control, _Command);
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		}
 	}
 }
@@ -360,15 +307,10 @@ void CONTROLLER_ReadController(int _Control, BYTE *_Command)
  */
 void CONTROLLER_RomClosed(void)
 {
-	if(_CONTROLLER_RomClosed != NULL)
-	{
-		__try
-		{
+	if (_CONTROLLER_RomClosed != NULL) {
+		__try {
 			_CONTROLLER_RomClosed();
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		}
 	}
 }
@@ -379,15 +321,10 @@ void CONTROLLER_RomClosed(void)
  */
 void CONTROLLER_RomOpen(void)
 {
-	if(_CONTROLLER_RomOpen != NULL)
-	{
-		__try
-		{
+	if (_CONTROLLER_RomOpen != NULL) {
+		__try {
 			_CONTROLLER_RomOpen();
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		}
 	}
 }
@@ -398,15 +335,10 @@ void CONTROLLER_RomOpen(void)
  */
 void CONTROLLER_WM_KeyDown(WPARAM _wParam, LPARAM _lParam)
 {
-	if(_CONTROLLER_WM_KeyDown != NULL)
-	{
-		__try
-		{
+	if (_CONTROLLER_WM_KeyDown != NULL) {
+		__try {
 			_CONTROLLER_WM_KeyDown(_wParam, _lParam);
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		}
 	}
 }
@@ -417,15 +349,10 @@ void CONTROLLER_WM_KeyDown(WPARAM _wParam, LPARAM _lParam)
  */
 void CONTROLLER_WM_KeyUp(WPARAM _wParam, LPARAM _lParam)
 {
-	if(_CONTROLLER_WM_KeyUp != NULL)
-	{
-		__try
-		{
+	if (_CONTROLLER_WM_KeyUp != NULL) {
+		__try {
 			_CONTROLLER_WM_KeyUp(_wParam, _lParam);
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		}
 	}
 }
@@ -437,15 +364,10 @@ void CONTROLLER_WM_KeyUp(WPARAM _wParam, LPARAM _lParam)
  */
 void CONTROLLER_Under_Selecting_DllAbout(HWND _hWnd)
 {
-	if(_CONTROLLER_Under_Selecting_DllAbout != NULL)
-	{
-		__try
-		{
+	if (_CONTROLLER_Under_Selecting_DllAbout != NULL) {
+		__try {
 			_CONTROLLER_Under_Selecting_DllAbout(_hWnd);
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		}
 	}
 }
@@ -456,15 +378,10 @@ void CONTROLLER_Under_Selecting_DllAbout(HWND _hWnd)
  */
 void CONTROLLER_Under_Selecting_DllTest(HWND _hWnd)
 {
-	if(_CONTROLLER_Under_Selecting_DllTest != NULL)
-	{
-		__try
-		{
+	if (_CONTROLLER_Under_Selecting_DllTest != NULL) {
+		__try {
 			_CONTROLLER_Under_Selecting_DllTest(_hWnd);
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		}
 	}
 }

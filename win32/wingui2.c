@@ -51,8 +51,7 @@
 void CountryCodeToCountryName_and_TVSystem(int countrycode, char *countryname, int *tvsystem)
 {
 	//Keep Country Name < 10 characters!
-	switch(countrycode)
-	{
+	switch (countrycode) {
 	/* Demo */
 	case 0:
 		*tvsystem = TV_SYSTEM_NTSC;
@@ -235,8 +234,7 @@ char	critical_msg_buffer[32 * 1024]; /* 32KB */
  */
 void __cdecl DisplayCriticalMessage(char *Message, ...)
 {
-	if(guioptions.show_critical_msg_window)
-	{
+	if (guioptions.show_critical_msg_window) {
 		/*~~~~~~~~~~~~~*/
 		char	Msg[400];
 		va_list ap;
@@ -246,8 +244,7 @@ void __cdecl DisplayCriticalMessage(char *Message, ...)
 		vsprintf(Msg, Message, ap);
 		va_end(ap);
 
-		if(strlen(critical_msg_buffer) + strlen(Msg) + 2 < 32 * 1024)
-		{
+		if (strlen(critical_msg_buffer) + strlen(Msg) + 2 < 32 * 1024) {
 			strcat(critical_msg_buffer, Msg);
 			strcat(critical_msg_buffer, "\t\n");
 			SendDlgItemMessage
@@ -281,8 +278,7 @@ void __cdecl DisplayError(char *Message, ...)
 	vsprintf(Msg, Message, ap);
 	va_end(ap);
 
-	if(guistatus.IsFullScreen == 0)
-	{
+	if (guistatus.IsFullScreen == 0) {
 //		MessageBox(NULL, Msg, "Error", MB_OK | MB_ICONINFORMATION);
 	}
 
@@ -313,7 +309,7 @@ BOOL __cdecl DisplayError_AskIfContinue(char *Message, ...)
 	strcat(Msg, "\nDo you want to continue emulation ?");
 
 	val = MessageBox(NULL, Msg, "Error", MB_YESNO | MB_ICONINFORMATION | MB_SYSTEMMODAL);
-	if(val == IDYES)
+	if (val == IDYES)
 		return TRUE;
 	else
 		return FALSE;
@@ -331,13 +327,11 @@ void UpdateCIC(void)
 	int		i;
 	/*~~~~~~~~~~~~~~~~*/
 
-	for(i = 0; i < 0xFC0; i++)
-	{
+	for (i = 0; i < 0xFC0; i++) {
 		CIC_CRC = CIC_CRC + (uint8) gMemoryState.ROM_Image[0x40 + i];
 	}
 
-	switch(CIC_CRC)
-	{
+	switch (CIC_CRC) {
 	/* CIC-NUS-6101 (starfox) */
 	case 0x33a27:
 	case 0x3421e:
@@ -420,21 +414,17 @@ void UpdateCIC(void)
  */
 LRESULT APIENTRY CriticalMessageDialog(HWND hDlg, unsigned message, WORD wParam, LONG lParam)
 {
-	switch(message)
-	{
+	switch (message) {
 	case WM_INITDIALOG:
 		return(TRUE);
 	case WM_COMMAND:
-		if(wParam == IDOK)
-		{
+		if (wParam == IDOK) {
 			guioptions.show_critical_msg_window = 0;
 			EndDialog(hDlg, TRUE);
 			gui.hCriticalMsgWnd = NULL;
 			SetActiveWindow(gui.hwnd1964main);
 			return(TRUE);
-		}
-		else if(wParam == ID_CLEAR_MESSAGE)
-		{
+		} else if (wParam == ID_CLEAR_MESSAGE) {
 			SendDlgItemMessage(hDlg, IDC_CRITICAL_MESSAGE_TEXTBOX, WM_SETTEXT, 0, (LPARAM) "");
 			critical_msg_buffer[0] = '\0';	/* clear the critical message buffer */
 		}
@@ -463,8 +453,7 @@ void LoadPlugins(int type)
 	SetDefaultOptions();
 	GetPluginDir(StartPath);
 
-	if( type == LOAD_ALL_PLUGIN || type == LOAD_RSP_PLUGIN )
-	{
+	if (type == LOAD_ALL_PLUGIN || type == LOAD_RSP_PLUGIN) {
 		SetStatusBarText(0, "Loading RSP Plugin ...");
 
 		/* Set RSP plugin path */
@@ -473,15 +462,12 @@ void LoadPlugins(int type)
 		strcat(InputPath, gRegSettings.RSPPlugin);
 
 		/* Load RSP plugin DLL */
-		if(LoadRSPPlugin(InputPath) == FALSE)
-		{
+		if (LoadRSPPlugin(InputPath) == FALSE) {
 			CloseRSPPlugin();
 			rsp_plugin_is_loaded = FALSE;
 			emuoptions.UsingRspPlugin = FALSE;
 			EnableMenuItem(gui.hMenu1964main, ID_RSP_CONFIG, MF_GRAYED);
-		}
-		else
-		{
+		} else {
 			rsp_plugin_is_loaded = TRUE;
 		}
 
@@ -489,26 +475,21 @@ void LoadPlugins(int type)
 		InitializeRSP();
 	}
 
-	if(type == LOAD_ALL_PLUGIN || type == LOAD_VIDEO_PLUGIN)
-	{
+	if (type == LOAD_ALL_PLUGIN || type == LOAD_VIDEO_PLUGIN) {
 		strcpy(VideoPath, StartPath);
 
 		SetStatusBarText(0, "Loading Video Plugin ...");
 
 		/* Set Video plugin path */
-		if(strcmp(gRegSettings.VideoPlugin, "") == 0)
-		{
+		if (strcmp(gRegSettings.VideoPlugin, "") == 0) {
 			strcpy(gRegSettings.VideoPlugin, "1964ogl.dll");
 			strcat(VideoPath, gRegSettings.VideoPlugin);
-		}
-		else
-		{
+		} else {
 			strcat(VideoPath, gRegSettings.VideoPlugin);
 		}
 
 		/* Load Video plugin */
-		if(LoadVideoPlugin(VideoPath) == FALSE)
-		{
+		if (LoadVideoPlugin(VideoPath) == FALSE) {
 			DisplayError("Cannot load video plugin, check the file path or the plugin directory setting");
 			strcpy(gRegSettings.VideoPlugin, "");
 			WriteConfiguration();
@@ -517,35 +498,27 @@ void LoadPlugins(int type)
 
 		strcpy(generalmessage, gRegSettings.VideoPlugin);
 		_strlwr(generalmessage);					/* convert to lower case */
-		if(strstr(generalmessage, "gl") > 0)		/* Check if the plugin is opengl plugin */
-		{
+		if (strstr(generalmessage, "gl") > 0) { /* Check if the plugin is opengl plugin */
 			guioptions.ok_to_pause_at_menu = FALSE; /* We should not pause game by menu if using opengl plugin */
-		}
-		else
-		{
+		} else {
 			guioptions.ok_to_pause_at_menu = TRUE;	/* if using D3D or other plugins, we can do it. */
 		}
 	}
 
-	if(type == LOAD_ALL_PLUGIN || type == LOAD_INPUT_PLUGIN)
-	{
+	if (type == LOAD_ALL_PLUGIN || type == LOAD_INPUT_PLUGIN) {
 		SetStatusBarText(0, "Loading Input Plugin ...");
 
 		/* Set Input plugin path */
 		strcpy(InputPath, StartPath);
-		if(strcmp(gRegSettings.InputPlugin, "") == 0)
-		{
+		if (strcmp(gRegSettings.InputPlugin, "") == 0) {
 			strcpy(gRegSettings.InputPlugin, "Basic Keyboard Plugin.dll");
 			strcat(InputPath, gRegSettings.InputPlugin);
-		}
-		else
-		{
+		} else {
 			strcat(InputPath, gRegSettings.InputPlugin);
 		}
 
 		/* Load Input plugin DLL */
-		if(LoadControllerPlugin(InputPath) == FALSE)
-		{
+		if (LoadControllerPlugin(InputPath) == FALSE) {
 			DisplayError("Cannot load controller plugin, check the file path or the plugin directory setting");
 			strcpy(gRegSettings.InputPlugin, "");
 			WriteConfiguration();
@@ -560,63 +533,57 @@ void LoadPlugins(int type)
 		CONTROLLER_InitiateControllers(gui.hwnd1964main, Controls);
 	}
 
-	if(type == LOAD_ALL_PLUGIN || type == LOAD_AUDIO_PLUGIN)
-	{
+	if (type == LOAD_ALL_PLUGIN || type == LOAD_AUDIO_PLUGIN) {
 		SetStatusBarText(0, "Loading Audio Plugin ...");
 
 		/* Set path for the Audio plugin */
 		strcpy(AudioPath, StartPath);
-		if(strcmp(gRegSettings.AudioPlugin, "") == 0)
-		{
+		if (strcmp(gRegSettings.AudioPlugin, "") == 0) {
 			strcpy(gRegSettings.AudioPlugin, "AudioHLE.dll");
 			strcat(AudioPath, gRegSettings.AudioPlugin);
-		}
-		else
-		{
+		} else {
 			strcat(AudioPath, gRegSettings.AudioPlugin);
 		}
 
 		Audio_Is_Initialized = 0;
 		Audio = 0;
-		if(LoadAudioPlugin(AudioPath) == TRUE)
-		{
+		if (LoadAudioPlugin(AudioPath) == TRUE) {
 			Audio = 1;
 		}
 
-		if(_AUDIO_Initialize != NULL)
-		{
-			if(AUDIO_Initialize(Audio_Info) == TRUE)
-			{
+		if (_AUDIO_Initialize != NULL) {
+			if (AUDIO_Initialize(Audio_Info) == TRUE) {
 				Audio = 1;
 				Audio_Is_Initialized = 1;
-			}
-			else
-			{
+			} else {
 				Audio = 0;
 				Audio_Is_Initialized = 0;
 			}
 		}
 
-		if (Audio_Is_Initialized)
-		{
+		if (Audio_Is_Initialized) {
 			HRESULT hr;
 
 			__try {
-				    if ( FAILED( hr = DirectSoundCreate( NULL, &lpds, NULL ) ) ) {
+				    if (FAILED(hr = DirectSoundCreate(NULL, &lpds, NULL))) {
 						Audio = 0;
 					}
-				    if ( lpds ) {
+				    if (lpds) {
 						IDirectSound_Release(lpds);
 					}
 				}
-			__except(NULL, EXCEPTION_EXECUTE_HANDLER){
+			__except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 				Audio = 0;
-				__try { if ( lpds ) IDirectSound_Release(lpds);}__except(NULL, EXCEPTION_EXECUTE_HANDLER){}
+				__try {
+					if (lpds) {
+						IDirectSound_Release(lpds);
+					}
+				} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
+				}
 			}
 		}
 
-		if(Audio == 0)
-		{
+		if (Audio == 0) {
 			DisplayError("Cannot load audio plugin, check the file path or the plugin directory setting");
 			CloseAudioPlugin();
 			strcpy(gRegSettings.AudioPlugin, "");
@@ -628,14 +595,12 @@ void LoadPlugins(int type)
 		}
 	}
 
-	if(type == LOAD_ALL_PLUGIN || type == LOAD_VIDEO_PLUGIN)
-	{
+	if (type == LOAD_ALL_PLUGIN || type == LOAD_VIDEO_PLUGIN) {
 		SetStatusBarText(0, "Init Video Plugin ...");
 		InitPluginData();
 		ShowWindow(gui.hwnd1964main, SW_HIDE);
 		VIDEO_InitiateGFX(Gfx_Info);
-		MoveWindow
-		(
+		MoveWindow(
 			gui.hwnd1964main,
 			guistatus.window_position.left,
 			guistatus.window_position.top,
@@ -643,7 +608,8 @@ void LoadPlugins(int type)
 			guistatus.clientheight,
 			TRUE
 		);
-		if(guistatus.WindowIsMaximized) ShowWindow(gui.hwnd1964main, SW_SHOWMAXIMIZED);
+		if (guistatus.WindowIsMaximized)
+			ShowWindow(gui.hwnd1964main, SW_SHOWMAXIMIZED);
 		ShowWindow(gui.hwnd1964main, SW_SHOW);
 
 		/* VIDEO_RomOpen(); */
@@ -699,8 +665,7 @@ LRESULT APIENTRY PluginsDialog(HWND hDlg, unsigned message, WORD wParam, LONG lP
 	strcpy(SearchPath, StartPath);
 	strcat(SearchPath, "*.dll");
 
-	switch(message)
-	{
+	switch (message) {
 	case WM_INITDIALOG:
 		{
 			/*~~~~~~~~~~~~~~~~*/
@@ -713,9 +678,8 @@ LRESULT APIENTRY PluginsDialog(HWND hDlg, unsigned message, WORD wParam, LONG lP
 
 			FindFirst = FindFirstFile(SearchPath, &libaa);
 
-			if(FindFirst == INVALID_HANDLE_VALUE)
-			{
-				return(TRUE);
+			if (FindFirst == INVALID_HANDLE_VALUE) {
+				return (TRUE);
 			}
 
 			/* Reset combo boxes content */
@@ -724,8 +688,7 @@ LRESULT APIENTRY PluginsDialog(HWND hDlg, unsigned message, WORD wParam, LONG lP
 			SendDlgItemMessage(hDlg, IDC_COMBO_AUDIO, CB_RESETCONTENT, 0, 0);
 
 			/* Populate combo boxes with Plugin Info */
-			while(KeepLooping)
-			{
+			while (KeepLooping) {
 				strcpy(PluginName, StartPath);
 				strcat(PluginName, libaa.cFileName);
 
@@ -733,33 +696,28 @@ LRESULT APIENTRY PluginsDialog(HWND hDlg, unsigned message, WORD wParam, LONG lP
 
 				GetDllInfo = (void(__cdecl *) (PLUGIN_INFO *)) GetProcAddress(hinstLib, "GetDllInfo");
 
-				__try
-				{
+				__try {
 					GetDllInfo(&Plugin_Info);
-				}
-
-				__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-				{
+				} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 					goto skipdll;
 				};
 
-				switch(Plugin_Info.Type)
-				{
+				switch (Plugin_Info.Type) {
 				case PLUGIN_TYPE_GFX:
 					index = SendDlgItemMessage(hDlg, IDC_COMBO_VIDEO, CB_ADDSTRING, 0, (LPARAM) Plugin_Info.Name);
-					if(_stricmp(libaa.cFileName, gRegSettings.VideoPlugin) == 0)
+					if (_stricmp(libaa.cFileName, gRegSettings.VideoPlugin) == 0)
 						SendDlgItemMessage(hDlg, IDC_COMBO_VIDEO, CB_SETCURSEL, (WPARAM) index, (LPARAM) 0);
 					break;
 
 				case PLUGIN_TYPE_CONTROLLER:
 					index = SendDlgItemMessage(hDlg, IDC_COMBO_INPUT, CB_ADDSTRING, 0, (LPARAM) Plugin_Info.Name);
-					if(_stricmp(libaa.cFileName, gRegSettings.InputPlugin) == 0)
+					if (_stricmp(libaa.cFileName, gRegSettings.InputPlugin) == 0)
 						SendDlgItemMessage(hDlg, IDC_COMBO_INPUT, CB_SETCURSEL, (WPARAM) index, (LPARAM) 0);
 					break;
 
 				case PLUGIN_TYPE_AUDIO:
 					index = SendDlgItemMessage(hDlg, IDC_COMBO_AUDIO, CB_ADDSTRING, 0, (LPARAM) Plugin_Info.Name);
-					if(_stricmp(libaa.cFileName, gRegSettings.AudioPlugin) == 0)
+					if (_stricmp(libaa.cFileName, gRegSettings.AudioPlugin) == 0)
 						SendDlgItemMessage(hDlg, IDC_COMBO_AUDIO, CB_SETCURSEL, (WPARAM) index, (LPARAM) 0);
 					break;
 				case PLUGIN_TYPE_RSP:
@@ -784,20 +742,14 @@ skipdll:
 		}
 
 		rsp_checkbox = GetDlgItem(hDlg, IDC_USE_RSP_PLUGIN);
-		if( FoundRSPDll == TRUE )
-		{
+		if (FoundRSPDll == TRUE) {
 			EnableWindow(rsp_checkbox, TRUE);
-			if( emuoptions.UsingRspPlugin == TRUE )
-			{
+			if (emuoptions.UsingRspPlugin == TRUE) {
 				SendMessage(rsp_checkbox, BM_SETCHECK, (WPARAM)TRUE, (LPARAM)NULL);
-			}
-			else
-			{
+			} else {
 				SendMessage(rsp_checkbox, BM_SETCHECK, (WPARAM)FALSE, (LPARAM)NULL);
 			}
-		}
-		else
-		{
+		} else {
 			SendMessage(rsp_checkbox, BM_SETCHECK, (WPARAM)FALSE, (LPARAM)NULL);
 			EnableWindow(rsp_checkbox, FALSE);
 		}
@@ -806,8 +758,7 @@ skipdll:
 
 	case WM_COMMAND:
 		{
-			switch(wParam)
-			{
+			switch (wParam) {
 			case IDOK:
 				{
 					/*~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -819,8 +770,7 @@ skipdll:
 
 					emuoptions.UsingRspPlugin = SendDlgItemMessage(hDlg, IDC_USE_RSP_PLUGIN, BM_GETCHECK, (WPARAM)NULL, (LPARAM)NULL);
 
-					if(strcmp(gRegSettings.VideoPlugin, temp_video_plugin) != 0)
-					{
+					if (strcmp(gRegSettings.VideoPlugin, temp_video_plugin) != 0) {
 						strcpy(gRegSettings.VideoPlugin, temp_video_plugin);
 						CloseVideoPlugin();
 						LoadPlugins(LOAD_VIDEO_PLUGIN);
@@ -829,16 +779,14 @@ skipdll:
 						is_changed = TRUE;
 					}
 
-					if(strcmp(gRegSettings.AudioPlugin, temp_audio_plugin) != 0)
-					{
+					if (strcmp(gRegSettings.AudioPlugin, temp_audio_plugin) != 0) {
 						strcpy(gRegSettings.AudioPlugin, temp_audio_plugin);
 						CloseAudioPlugin();
 						LoadPlugins(LOAD_AUDIO_PLUGIN);
 						is_changed = TRUE;
 					}
 
-					if(strcmp(gRegSettings.InputPlugin, temp_input_plugin) != 0)
-					{
+					if (strcmp(gRegSettings.InputPlugin, temp_input_plugin) != 0) {
 						strcpy(gRegSettings.InputPlugin, temp_input_plugin);
 						CloseControllerPlugin();
 						LoadPlugins(LOAD_INPUT_PLUGIN);
@@ -846,7 +794,8 @@ skipdll:
 						is_changed = TRUE;
 					}
 
-					if(is_changed) WriteConfiguration();
+					if (is_changed)
+						WriteConfiguration();
 					return(TRUE);
 				}
 
@@ -891,19 +840,16 @@ skipdll:
 			}
 
 		case CBN_SELCHANGE:
-			switch(LOWORD(wParam))
-			{
+			switch (LOWORD(wParam)) {
 			case IDC_COMBO_VIDEO:
 				/* Video */
-				__try
-				{
+				__try {
 					FreeLibrary(hinstLib);
 					ComboItemNum = SendDlgItemMessage(hDlg, IDC_COMBO_VIDEO, CB_GETCURSEL, 0, 0);
 
 					bDONE = 0;
 					FindFirst = FindFirstFile(SearchPath, &libaa);
-					while(bDONE == 0)
-					{
+					while (bDONE == 0) {
 						strcpy(PluginName, StartPath);
 						strcat(PluginName, libaa.cFileName);
 
@@ -911,18 +857,13 @@ skipdll:
 						hinstLib = LoadLibrary(PluginName);
 
 						GetDllInfo = (void(__cdecl *) (PLUGIN_INFO *)) GetProcAddress(hinstLib, "GetDllInfo");
-						__try
-						{
+						__try {
 							GetDllInfo(&Plugin_Info);
-						}
-
-						__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-						{
+						} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 							goto _skipPlugin3;
 						}
 
-						switch(Plugin_Info.Type)
-						{
+						switch (Plugin_Info.Type) {
 						case PLUGIN_TYPE_GFX:
 							_VIDEO_Under_Selecting_Test = (void(__cdecl *) (HWND)) GetProcAddress(hinstLib, "DllTest");
 							_VIDEO_Under_Selecting_About = (void(__cdecl *) (HWND)) GetProcAddress
@@ -936,7 +877,7 @@ skipdll:
 						}
 
 _skipPlugin3:
-						if(h > ComboItemNum)
+						if (h > ComboItemNum)
 							bDONE = 1;
 						else
 							FindNextFile(FindFirst, &libaa);
@@ -946,44 +887,34 @@ _skipPlugin3:
 
 					bDONE = 0;
 					strcpy(temp_video_plugin, libaa.cFileName);
-				}
-
-				__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-				{
+				} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 					DisplayError("Video Plugin Error");
 
 					/* No plugins of this type..do nothing */
 				}
 				break;
 			case IDC_COMBO_AUDIO:
-				__try
-				{
+				__try {
 					/* Audio */
 					FreeLibrary(hinstLib);
 					ComboItemNum = SendDlgItemMessage(hDlg, IDC_COMBO_AUDIO, CB_GETCURSEL, 0, 0);
 					FindFirst = FindFirstFile(SearchPath, &libaa);
 					bDONE = 0;
 
-					while(bDONE == 0)
-					{
+					while (bDONE == 0) {
 						strcpy(PluginName, StartPath);
 						strcat(PluginName, libaa.cFileName);
 
 						FreeLibrary(hinstLib);
 						hinstLib = LoadLibrary(PluginName);
 						GetDllInfo = (void(__cdecl *) (PLUGIN_INFO *)) GetProcAddress(hinstLib, "GetDllInfo");
-						__try
-						{
+						__try {
 							GetDllInfo(&Plugin_Info);
-						}
-
-						__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-						{
+						} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 							goto _skipPlugin0;
 						}
 
-						switch(Plugin_Info.Type)
-						{
+						switch (Plugin_Info.Type) {
 						case PLUGIN_TYPE_AUDIO:
 							_AUDIO_Under_Selecting_Test = (void(__cdecl *) (HWND)) GetProcAddress(hinstLib, "DllTest");
 							_AUDIO_Under_Selecting_About = (void(__cdecl *) (HWND)) GetProcAddress
@@ -997,7 +928,7 @@ _skipPlugin3:
 						}
 
 _skipPlugin0:
-						if(j > ComboItemNum)
+						if (j > ComboItemNum)
 							bDONE = 1;
 						else
 							FindNextFile(FindFirst, &libaa);
@@ -1007,10 +938,7 @@ _skipPlugin0:
 
 					bDONE = 0;
 					strcpy(temp_audio_plugin, libaa.cFileName);
-				}
-
-				__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-				{
+				} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 					DisplayError("Audio Plugin Error");
 
 					/* No plugins of this type..do nothing */
@@ -1018,33 +946,26 @@ _skipPlugin0:
 				break;
 			case IDC_COMBO_INPUT:
 				/* Input */
-				__try
-				{
+				__try {
 					FreeLibrary(hinstLib);
 					ComboItemNum = SendDlgItemMessage(hDlg, IDC_COMBO_INPUT, CB_GETCURSEL, 0, 0);
 					FindFirst = FindFirstFile(SearchPath, &libaa);
 					bDONE = 0;
 
-					while(bDONE == 0)
-					{
+					while (bDONE == 0) {
 						strcpy(PluginName, StartPath);
 						strcat(PluginName, libaa.cFileName);
 						FreeLibrary(hinstLib);
 						hinstLib = LoadLibrary(PluginName);
 						GetDllInfo = (void(__cdecl *) (PLUGIN_INFO *)) GetProcAddress(hinstLib, "GetDllInfo");
 
-						__try
-						{
+						__try {
 							GetDllInfo(&Plugin_Info);
-						}
-
-						__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-						{
+						} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 							goto _skipPlugin1;
 						}
 
-						switch(Plugin_Info.Type)
-						{
+						switch (Plugin_Info.Type) {
 						case PLUGIN_TYPE_CONTROLLER:
 							_CONTROLLER_Under_Selecting_DllAbout = (void(__cdecl *) (HWND)) GetProcAddress
 								(
@@ -1061,7 +982,7 @@ _skipPlugin0:
 						}
 
 _skipPlugin1:
-						if(i > ComboItemNum)
+						if (i > ComboItemNum)
 							bDONE = 1;
 						else
 							FindNextFile(FindFirst, &libaa);
@@ -1071,10 +992,7 @@ _skipPlugin1:
 					}
 
 					strcpy(temp_input_plugin, libaa.cFileName);
-				}
-
-				__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-				{
+				} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 					/* No plugins of this type..do nothing */
 				}
 				break;
@@ -1109,24 +1027,21 @@ LRESULT APIENTRY ConditionsDialog(HWND hDlg, unsigned message, WORD wParam, LONG
 	char	Conditions[11201];
 	/*~~~~~~~~~~~~~~~~~~~~~~*/
 
-	switch(message)
-	{
+	switch (message) {
 	case WM_INITDIALOG:
 		/* LoadString(gui.hInst, IDS_REDIST0, temp_buf, 4096); */
 		LoadGNUDistConditions(Conditions);
 		SetDlgItemText(hDlg, IDC_EDIT0, Conditions);
 		return(TRUE);
-
 	case WM_COMMAND:
-		if(wParam == IDOK || wParam == IDCANCEL)
-		{
+		if (wParam == IDOK || wParam == IDCANCEL) {
 			EndDialog(hDlg, TRUE);
 			return(TRUE);
 		}
 		break;
 	}
 
-	return(FALSE);
+	return (FALSE);
 }
 
 /*
@@ -1135,11 +1050,15 @@ LRESULT APIENTRY ConditionsDialog(HWND hDlg, unsigned message, WORD wParam, LONG
  */
 LRESULT APIENTRY About(HWND hDlg, unsigned message, WORD wParam, LONG lParam)
 {
-	switch(message)
-	{
-	case WM_INITDIALOG: return(TRUE);
-
-	case WM_COMMAND:	if(wParam == IDOK || wParam == IDCANCEL){ EndDialog(hDlg, TRUE); return(TRUE); }break;
+	switch (message) {
+	case WM_INITDIALOG:
+		return(TRUE);
+	case WM_COMMAND:
+		if (wParam == IDOK || wParam == IDCANCEL) {
+			EndDialog(hDlg, TRUE);
+			return(TRUE);
+		}
+		break;
 	}
 
 	return(FALSE);
@@ -1150,14 +1069,11 @@ char cmdLineParameterBuf[250] = {0};
 void SaveCmdLineParameter(char *cmdline)
 {
 	strcpy(cmdLineParameterBuf, cmdline);
-	if( strlen(cmdLineParameterBuf) > 0 )
-	{
+	if (strlen(cmdLineParameterBuf) > 0) {
 		int i;
 		int len = strlen(cmdLineParameterBuf);
-		for( i=0; i<len; i++ )
-		{
-			if( isupper(cmdLineParameterBuf[i]) )
-			{
+		for (i = 0; i < len; i++) {
+			if (isupper(cmdLineParameterBuf[i])) {
 				cmdLineParameterBuf[i] = tolower(cmdLineParameterBuf[i]);
 			}
 		}
@@ -1187,14 +1103,12 @@ void GetCmdLineParameter(CmdLineParameterType arg, char *buf)
 	char *ptr1;
 	char *ptr2 = buf;
 
-	if( arg >= CMDLINE_MAX_NUMBER || strstr(cmdLineParameterBuf,CmdLineArgFlags[arg])==NULL )
-	{
+	if (arg >= CMDLINE_MAX_NUMBER || strstr(cmdLineParameterBuf,CmdLineArgFlags[arg]) == NULL) {
 		buf[0] = 0;
 		return;
 	}
 	
-	if( arg == CMDLINE_FULL_SCREEN_FLAG )
-	{
+	if (arg == CMDLINE_FULL_SCREEN_FLAG) {
 		strcpy(buf, "1");
 		return;
 	}
@@ -1202,13 +1116,11 @@ void GetCmdLineParameter(CmdLineParameterType arg, char *buf)
 	ptr1 = strstr(cmdLineParameterBuf,CmdLineArgFlags[arg]);
 	
 	ptr1 += 2;	//Skip the flag
-	while( *ptr1 != 0 && isspace(*ptr1) )
-	{
+	while (*ptr1 != 0 && isspace(*ptr1)) {
 		ptr1++;	//skip all spaces
 	}
 
-	while( !isspace(*ptr1) && *ptr1 != 0)
-	{
+	while (!isspace(*ptr1) && *ptr1 != 0) {
 		*ptr2++ = *ptr1++;
 	};
 	*ptr2 = 0;

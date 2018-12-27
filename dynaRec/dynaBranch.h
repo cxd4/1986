@@ -48,44 +48,36 @@ extern uint32	g_pc_is_rdram;
 enum { JUMP_TYPE_INDIRECT, JUMP_TYPE_DIRECT, JUMP_TYPE_BREAKOUT };
 
 #define _OPCODE_DEBUG_BRANCH_(x) \
-	if(debug_opcode!=0) \
-	{ \
+	if (debug_opcode != 0) { \
 		MOV_ImmToMemory(1, ModRM_disp32, (uint32) & gHardwareState_Interpreter_Compare.pc, reg->pc); \
 		_SAFTY_CPU_(x) \
 	}
 
 #define SET_TARGET_1_LINK(pc, target) \
-	if(currentromoptions.Link_4KB_Blocks == USE4KBLINKBLOCK_YES) \
-	{ \
-		if(IsTargetPcInTheSame4KB(pc, target)) \
-		{ \
+	if (currentromoptions.Link_4KB_Blocks == USE4KBLINKBLOCK_YES) { \
+		if (IsTargetPcInTheSame4KB(pc, target)) { \
 			current_block_entry->need_target_1 = TRUE; \
 			current_block_entry->target_1_pc = (target); \
 		} \
 	}
 
 #define SET_TARGET_2_LINK(pc, target) \
-	if(currentromoptions.Link_4KB_Blocks == USE4KBLINKBLOCK_YES) \
-	{ \
-		if(IsTargetPcInTheSame4KB(pc, target)) \
-		{ \
+	if (currentromoptions.Link_4KB_Blocks == USE4KBLINKBLOCK_YES) { \
+		if (IsTargetPcInTheSame4KB(pc, target)) { \
 			current_block_entry->need_target_2 = TRUE; \
 			current_block_entry->target_2_pc = (target); \
 		} \
 	}
 
-#define SPEED_HACK	if(__I == -1) \
-	{ \
-		if(compilerstatus.pcptr[1] == 0) \
-		{ \
+#define SPEED_HACK	if (__I == -1) { \
+		if (compilerstatus.pcptr[1] == 0) { \
 			PushMap(); \
 			X86_CALL((_u32) DoSpeedHack); \
 			PopMap(); \
 		} \
 	}
 
-#define J_SPEED_HACK	if((reg->pc == aValue) && compilerstatus.pcptr[1] == 0) \
-	{ \
+#define J_SPEED_HACK	if ((reg->pc == aValue) && compilerstatus.pcptr[1] == 0) { \
 		/* MOV_ImmToMemory(1, ModRM_disp32, (_u32)&gHWS_COP0Reg[COUNT], max_vi_count); */ \
 		PushMap(); \
 		X86_CALL((_u32) DoSpeedHack); \
@@ -113,8 +105,7 @@ void Compile_Slot_And_Interrupts(_u32 pc, uint32 targetpc, uint32 DoLink, uint32
 	_u8 op;
 	/*~~~*/
 
-	if(CompilingSlot)
-	{
+	if (CompilingSlot) {
 		TRACE1("Warning, Branch in branch delay slot PC=%08X", gHWS_pc);
 
 		/*
@@ -130,8 +121,7 @@ void Compile_Slot_And_Interrupts(_u32 pc, uint32 targetpc, uint32 DoLink, uint32
 	memcpy(Tempx86reg, x86reg, sizeof(x86reg));
 
 	/* Add by Rice. 2001-08-11 */
-	if(currentromoptions.Use_Register_Caching == USEREGC_NO)
-	{
+	if (currentromoptions.Use_Register_Caching == USEREGC_NO) {
 		FlushAllRegisters();
 	}
 
@@ -169,8 +159,7 @@ void Compile_Slot_Jump(_u32 pc)
 	_u8 op;
 	/*~~~*/
 
-	if(CompilingSlot)
-	{
+	if (CompilingSlot) {
 		DisplayError("Branch in branch delay slot PC=%08X", gHWS_pc);
 		TRACE1("Branch in branch delay slot PC=%08X", gHWS_pc);
 
@@ -180,7 +169,8 @@ void Compile_Slot_Jump(_u32 pc)
 	CompilingSlot = TRUE;
 
 	/* Add by Rice. 2001-08-11 */
-	if(currentromoptions.Use_Register_Caching == USEREGC_NO) FlushAllRegisters();
+	if (currentromoptions.Use_Register_Caching == USEREGC_NO)
+		FlushAllRegisters();
 
 	LOGGING_DYNA(LogDyna("** Compile Delay Slot\n", pc));
 	{
@@ -219,12 +209,9 @@ void Interrupts(uint32 JumpType, uint32 targetpc, uint32 DoLink, uint32 LinkVal)
 	uint32	viCounter;
 	/*~~~~~~~~~~~~~~*/
 
-	if(JumpType == JUMP_TYPE_BREAKOUT)
-	{
+	if (JumpType == JUMP_TYPE_BREAKOUT) {
 		viCounter = (compilerstatus.cp0Counter * VICounterFactors[CounterFactor]);
-	}
-	else	/* taken branches have a 3 cycle penalty */
-	{
+	} else { /* taken branches have a 3 cycle penalty */
 		viCounter = (compilerstatus.cp0Counter * VICounterFactors[CounterFactor]);
 	}
 
@@ -233,46 +220,36 @@ void Interrupts(uint32 JumpType, uint32 targetpc, uint32 DoLink, uint32 LinkVal)
 	FlushAllRegisters();
 
 	/* BugFix: can't store the link val to memory until GPR[31] has been flushed! */
-	if(DoLink)
-	{
+	if (DoLink) {
 		MOV_ImmToMemory(1, ModRM_disp8_EBP, (31 - 16) << 3, (_s32) LinkVal);
-		if(currentromoptions.Assume_32bit != ASSUME_32BIT_YES)
+		if (currentromoptions.Assume_32bit != ASSUME_32BIT_YES)
 			MOV_ImmToMemory(1, ModRM_disp8_EBP, 4 + ((31 - 16) << 3), (_s32) (((__int32) LinkVal) >> 31));
 	}
 
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY23
-	if((debug_opcode!=0) && debug_opcode_block == 1)
-	{
+	if ((debug_opcode != 0) && debug_opcode_block == 1) {
 		MOV_ImmToReg(1, Reg_ECX, 0);
 		MOV_ImmToReg(1, Reg_EAX, (uint32) & CompareStates);
 		CALL_Reg(Reg_EAX);
 	}
 #endif
-	if(JumpType == JUMP_TYPE_BREAKOUT)
-	{
+	if (JumpType == JUMP_TYPE_BREAKOUT) {
 		compilerstatus.KEEP_RECOMPILING = FALSE;
 	}
 
-	if(JumpType == JUMP_TYPE_INDIRECT)
-	{
+	if (JumpType == JUMP_TYPE_INDIRECT) {
 		SUB_ImmToMemory((_u32) & countdown_counter, viCounter);
 		TLB_TRANSLATE_PC_INDIRECT();
 		RET();
-	}
-	else if(currentromoptions.Link_4KB_Blocks != USE4KBLINKBLOCK_YES)
-	{
+	} else if (currentromoptions.Link_4KB_Blocks != USE4KBLINKBLOCK_YES) {
 		SUB_ImmToMemory((_u32) & countdown_counter, viCounter);
 		MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &gHWS_pc, targetpc);
 		TLB_TRANSLATE_PC(targetpc);
 		RET();
-	}
-	else
-	{
-		if(JumpType == JUMP_TYPE_DIRECT)		/* may need to link target 1 */
-		{
+	} else {
+		if (JumpType == JUMP_TYPE_DIRECT) { /* may need to link target 1 */
 			SET_TARGET_1_LINK(compilerstatus.TempPC, targetpc);
-			if(current_block_entry->need_target_1)
-			{
+			if (current_block_entry->need_target_1) {
 				SUB_ImmToMemory((_u32) & countdown_counter, viCounter);
 				CMP_MemoryWithImm(1, (uint32) & countdown_counter, 0);
 				Jcc_auto(CC_LE, 95);			/* jmp true */
@@ -284,20 +261,15 @@ void Interrupts(uint32 JumpType, uint32 targetpc, uint32 DoLink, uint32 LinkVal)
 				MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &gHWS_pc, targetpc);
 				TLB_TRANSLATE_PC(targetpc);
 				RET();
-			}
-			else
-			{
+			} else {
 				SUB_ImmToMemory((_u32) & countdown_counter, viCounter);
 				MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &gHWS_pc, targetpc);
 				TLB_TRANSLATE_PC(targetpc);
 				RET();
 			}
-		}
-		else	/* JumpType == JUMP_TYPE_BREAKOUT, may need to link target 2 */
-		{
+		} else { /* JumpType == JUMP_TYPE_BREAKOUT, may need to link target 2 */
 			SET_TARGET_2_LINK(compilerstatus.TempPC, targetpc);
-			if(current_block_entry->need_target_2)
-			{
+			if (current_block_entry->need_target_2) {
 				SUB_ImmToMemory((_u32) & countdown_counter, viCounter);
 				CMP_MemoryWithImm(1, (uint32) & countdown_counter, 0);
 
@@ -309,9 +281,7 @@ void Interrupts(uint32 JumpType, uint32 targetpc, uint32 DoLink, uint32 LinkVal)
 				MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &gHWS_pc, targetpc);
 				TLB_TRANSLATE_PC(targetpc);
 				RET();
-			}
-			else
-			{
+			} else {
 				SUB_ImmToMemory((_u32) & countdown_counter, viCounter);
 				MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &gHWS_pc, targetpc);
 				TLB_TRANSLATE_PC(targetpc);
@@ -320,8 +290,7 @@ void Interrupts(uint32 JumpType, uint32 targetpc, uint32 DoLink, uint32 LinkVal)
 		}
 	}
 
-	if(CompilingSlot)
-	{
+	if (CompilingSlot) {
 		DisplayError("Ok, CompilingSlot is still TRUE when finishing compiling the block, PC=%08X", gHWS_pc);
 	}
 }
@@ -352,7 +321,7 @@ void dyna4300i_bne(OP_PARAMS)
 	int		tempRTIs32bit = 0;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	CHECK_OPCODE_PASS if(gMultiPass.WhichPass == COMPILE_OPCODES_ONLY) MessageBox(NULL, "Bad", 0, 0);
+	CHECK_OPCODE_PASS if (gMultiPass.WhichPass == COMPILE_OPCODES_ONLY) MessageBox(NULL, "Bad", 0, 0);
 	SetRdRsRt64bit(PASS_PARAMS);
 
 	compilerstatus.cp0Counter += 1;
@@ -363,21 +332,15 @@ void dyna4300i_bne(OP_PARAMS)
 	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
 	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
 
-	if(xRS->mips_reg == xRT->mips_reg)
-	{
+	if (xRS->mips_reg == xRT->mips_reg) {
 		/* false */
 		Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 		return;
-	}
-	else if((ConstMap[xRS->mips_reg].IsMapped == 1) && (ConstMap[xRT->mips_reg].IsMapped == 1))
-	{
-		if(ConstMap[xRS->mips_reg].value == ConstMap[xRT->mips_reg].value)
-		{
+	} else if ((ConstMap[xRS->mips_reg].IsMapped == 1) && (ConstMap[xRT->mips_reg].IsMapped == 1)) {
+		if (ConstMap[xRS->mips_reg].value == ConstMap[xRT->mips_reg].value) {
 			/* false */
 			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
-		}
-		else
-		{
+		} else {
 			/* true */
 			SPEED_HACK reg->pc += 4;
 			FlushAllRegisters();
@@ -387,8 +350,7 @@ void dyna4300i_bne(OP_PARAMS)
 		return;
 	}
 
-	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
-	{
+	if ((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES)) {
 		Is32bit = 1;
 		xRS->Is32bit = 1;
 		xRT->Is32bit = 1;
@@ -401,18 +363,19 @@ void dyna4300i_bne(OP_PARAMS)
 _Redo:
 	templCodePosition = compilerstatus.lCodePosition;
 
-	if(!Is32bit)
-	{
+	if (!Is32bit) {
 		Jcc_auto(CC_NE, 90);					/* jmp true */
 		CMP_Reg1WithReg2(1, xRS->HiWordLoc, xRT->HiWordLoc);
 	}
 
-	if(IsNear == 1) Jcc_Near_auto(CC_E, 91);	/* jmp false */
+	if (IsNear == 1)
+		Jcc_Near_auto(CC_E, 91);	/* jmp false */
 	else
 		Jcc_auto(CC_E, 91);						/* jmp false */
 
 	/* true */
-	if(!Is32bit) SetTarget(90);
+	if (!Is32bit)
+		SetTarget(90);
 
 	SPEED_HACK reg->pc += 4;
 
@@ -420,8 +383,7 @@ _Redo:
 
 	/* false */
 	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
-	if((wPosition > 120) && (IsNear == 0))
-	{
+	if ((wPosition > 120) && (IsNear == 0)) {
 		compilerstatus.lCodePosition = templCodePosition;
 		reg->pc -= 4;
 
@@ -430,12 +392,9 @@ _Redo:
 		goto _Redo;
 	}
 
-	if(IsNear == 0)
-	{
+	if (IsNear == 0) {
 		SetTarget(91);
-	}
-	else
-	{
+	} else {
 		SetNearTarget(91);
 	}
 
@@ -462,71 +421,55 @@ void dyna4300i_beq(OP_PARAMS)
 
 	aValue = (reg->pc + 4 + (__I << 2));
 
-	if((CheckIs32Bit(__RT) && CheckIs32Bit(__RS)) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
-	{
+	if ((CheckIs32Bit(__RT) && CheckIs32Bit(__RS)) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES)) {
 		xRS->Is32bit = 1;
 		xRT->Is32bit = 1;
 		Use32bit = 1;
 	}
 
-	if(xRS->mips_reg == xRT->mips_reg)
-	{
+	if (xRS->mips_reg == xRT->mips_reg) {
 		/* true */
 		SPEED_HACK reg->pc += 4;
 		FlushAllRegisters();
 		Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
 		return;
-	}
-	else if((ConstMap[xRS->mips_reg].IsMapped == 1) && (ConstMap[xRT->mips_reg].IsMapped == 1))
-	{
-		if(ConstMap[xRS->mips_reg].value == ConstMap[xRT->mips_reg].value)
-		{
+	} else if ((ConstMap[xRS->mips_reg].IsMapped == 1) && (ConstMap[xRT->mips_reg].IsMapped == 1)) {
+		if (ConstMap[xRS->mips_reg].value == ConstMap[xRT->mips_reg].value) {
 			/* true */
 			SPEED_HACK reg->pc += 4;
 			FlushAllRegisters();
 			Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
-		}
-		else
-		{
+		} else {
 			/* false */
 			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 		}
 
 		return;
-	}
-	else if(ConstMap[xRS->mips_reg].IsMapped == 1)
-	{
+	} else if (ConstMap[xRS->mips_reg].IsMapped == 1) {
 		MapRT;
 		CMP_RegWithImm(1, xRT->x86reg, ConstMap[xRS->mips_reg].value);
 		Jcc_Near_auto(CC_NE, 91);		/* jmp false */
 
-		if(!Use32bit)
-		{
+		if (!Use32bit) {
 			CMP_RegWithImm(1, xRT->HiWordLoc, ((__int32) ConstMap[xRS->mips_reg].value >> 31));
 			Jcc_Near_auto(CC_NE, 93);	/* jmp false */
 		}
-	}
-	else if(ConstMap[xRT->mips_reg].IsMapped == 1)
-	{
+	} else if (ConstMap[xRT->mips_reg].IsMapped == 1) {
 		MapRS;
 		CMP_RegWithImm(1, xRS->x86reg, ConstMap[xRT->mips_reg].value);
 		Jcc_Near_auto(CC_NE, 91);		/* jmp false */
 
-		if(!Use32bit)
-		{
+		if (!Use32bit) {
 			CMP_RegWithImm(1, xRS->HiWordLoc, ((__int32) ConstMap[xRT->mips_reg].value >> 31));
 			Jcc_Near_auto(CC_NE, 93);	/* jmp false */
 		}
-	}
-	else if(xRS->mips_reg != xRT->mips_reg)
-	{
+	} else if (xRS->mips_reg != xRT->mips_reg) {
 		MapRS;
 		MapRT;
 		CMP_Reg1WithReg2(1, xRS->x86reg, xRT->x86reg);
 		Jcc_Near_auto(CC_NE, 91);		/* jmp false */
 
-		if(!Use32bit)
-		{
+		if (!Use32bit) {
 			CMP_Reg1WithReg2(1, xRS->HiWordLoc, xRT->HiWordLoc);
 			Jcc_Near_auto(CC_NE, 93);	/* jmp false */
 		}
@@ -540,7 +483,8 @@ void dyna4300i_beq(OP_PARAMS)
 	/* false */
 	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
 	SetNearTarget(91);
-	if(!Use32bit) SetNearTarget(93);
+	if (!Use32bit)
+		SetNearTarget(93);
 	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 }
 
@@ -565,25 +509,19 @@ void dyna4300i_beql(OP_PARAMS)
 
 	aValue = (reg->pc + 4 + (__I << 2));
 
-	if(xRS->mips_reg == xRT->mips_reg)
-	{
+	if (xRS->mips_reg == xRT->mips_reg) {
 		/* true */
 		SPEED_HACK reg->pc += 4;
 		FlushAllRegisters();
 		Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
 		return;
-	}
-	else if((ConstMap[xRS->mips_reg].IsMapped == 1) && (ConstMap[xRT->mips_reg].IsMapped == 1))
-	{
-		if(ConstMap[xRS->mips_reg].value == ConstMap[xRT->mips_reg].value)
-		{
+	} else if ((ConstMap[xRS->mips_reg].IsMapped == 1) && (ConstMap[xRT->mips_reg].IsMapped == 1)) {
+		if (ConstMap[xRS->mips_reg].value == ConstMap[xRT->mips_reg].value) {
 			/* true */
 			SPEED_HACK reg->pc += 4;
 			FlushAllRegisters();
 			Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
-		}
-		else
-		{
+		} else {
 			/* false */
 			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 		}
@@ -591,46 +529,37 @@ void dyna4300i_beql(OP_PARAMS)
 		return;
 	}
 
-	if((CheckIs32Bit(__RT) && CheckIs32Bit(__RS)) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
-	{
+	if ((CheckIs32Bit(__RT) && CheckIs32Bit(__RS)) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES)) {
 		xRS->Is32bit = 1;
 		xRT->Is32bit = 1;
 		Use32bit = 1;
 	}
 
-	if(ConstMap[xRS->mips_reg].IsMapped == 1)
-	{
+	if (ConstMap[xRS->mips_reg].IsMapped == 1) {
 		MapRT;
 		CMP_RegWithImm(1, xRT->x86reg, ConstMap[xRS->mips_reg].value);
 		Jcc_Near_auto(CC_NE, 91);		/* jmp false */
 
-		if(!Use32bit)
-		{
+		if (!Use32bit) {
 			CMP_RegWithImm(1, xRT->HiWordLoc, ((__int32) ConstMap[xRS->mips_reg].value >> 31));
 			Jcc_Near_auto(CC_NE, 93);	/* jmp false */
 		}
-	}
-	else if(ConstMap[xRT->mips_reg].IsMapped == 1)
-	{
+	} else if (ConstMap[xRT->mips_reg].IsMapped == 1) {
 		MapRS;
 		CMP_RegWithImm(1, xRS->x86reg, ConstMap[xRT->mips_reg].value);
 		Jcc_Near_auto(CC_NE, 91);		/* jmp false */
 
-		if(!Use32bit)
-		{
+		if (!Use32bit) {
 			CMP_RegWithImm(1, xRS->HiWordLoc, ((__int32) ConstMap[xRT->mips_reg].value >> 31));
 			Jcc_Near_auto(CC_NE, 93);	/* jmp false */
 		}
-	}
-	else if(xRS->mips_reg != xRT->mips_reg)
-	{
+	} else if (xRS->mips_reg != xRT->mips_reg) {
 		MapRS;
 		MapRT;
 		CMP_Reg1WithReg2(1, xRS->x86reg, xRT->x86reg);
 		Jcc_Near_auto(CC_NE, 91);		/* jmp false */
 
-		if(!Use32bit)
-		{
+		if (!Use32bit) {
 			CMP_Reg1WithReg2(1, xRS->HiWordLoc, xRT->HiWordLoc);
 			Jcc_Near_auto(CC_NE, 93);	/* jmp false */
 		}
@@ -648,8 +577,10 @@ void dyna4300i_beql(OP_PARAMS)
 	 * DisplayError("%08X: beq: Code %d bytes is too large for a short jump. Must be
 	 * <= 127 bytes.", reg->pc-4, wPosition);
 	 */
-	if(!NoTest) SetNearTarget(91);
-	if(!Use32bit) SetNearTarget(93);
+	if (!NoTest)
+		SetNearTarget(91);
+	if (!Use32bit)
+		SetNearTarget(93);
 	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 }
 
@@ -669,7 +600,8 @@ void dyna4300i_bnel(OP_PARAMS)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	CHECK_OPCODE_PASS;
-	if(gMultiPass.WhichPass == COMPILE_OPCODES_ONLY) MessageBox(NULL, "Bad", 0, 0);
+	if (gMultiPass.WhichPass == COMPILE_OPCODES_ONLY)
+		MessageBox(NULL, "Bad", 0, 0);
 
 	compilerstatus.cp0Counter += 1;
 	SetRdRsRt64bit(PASS_PARAMS);
@@ -677,21 +609,15 @@ void dyna4300i_bnel(OP_PARAMS)
 
 	aValue = (reg->pc + 4 + (__I << 2));
 
-	if(xRS->mips_reg == xRT->mips_reg)
-	{
+	if (xRS->mips_reg == xRT->mips_reg) {
 		/* false */
 		Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 		return;
-	}
-	else if((ConstMap[xRS->mips_reg].IsMapped == 1) && (ConstMap[xRT->mips_reg].IsMapped == 1))
-	{
-		if(ConstMap[xRS->mips_reg].value == ConstMap[xRT->mips_reg].value)
-		{
+	} else if ((ConstMap[xRS->mips_reg].IsMapped == 1) && (ConstMap[xRT->mips_reg].IsMapped == 1)) {
+		if (ConstMap[xRS->mips_reg].value == ConstMap[xRT->mips_reg].value) {
 			/* false */
 			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
-		}
-		else
-		{
+		} else {
 			/* true */
 			SPEED_HACK reg->pc += 4;
 			FlushAllRegisters();
@@ -703,8 +629,7 @@ void dyna4300i_bnel(OP_PARAMS)
 
 	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
 	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
-	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
-	{
+	if ((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES)) {
 		Is32bit = 1;
 		xRS->Is32bit = 1;
 		xRT->Is32bit = 1;
@@ -717,18 +642,19 @@ void dyna4300i_bnel(OP_PARAMS)
 _Redo:
 	templCodePosition = compilerstatus.lCodePosition;
 
-	if(!Is32bit)
-	{
+	if (!Is32bit) {
 		Jcc_auto(CC_NE, 90);	/* jmp true */
 		CMP_Reg1WithReg2(1, xRS->HiWordLoc, xRT->HiWordLoc);
 	}
 
-	if(IsNear == 1) Jcc_Near_auto(CC_E, 91);	/* jmp false */
+	if (IsNear == 1)
+		Jcc_Near_auto(CC_E, 91);	/* jmp false */
 	else
 		Jcc_auto(CC_E, 91);						/* jmp false */
 
 	/* true */
-	if(!Is32bit) SetTarget(90);
+	if (!Is32bit)
+		SetTarget(90);
 
 	SPEED_HACK reg->pc += 4;
 
@@ -736,8 +662,7 @@ _Redo:
 
 	/* false */
 	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
-	if((wPosition > 120) && (IsNear == 0))
-	{
+	if ((wPosition > 120) && (IsNear == 0)) {
 		compilerstatus.lCodePosition = templCodePosition;
 		reg->pc -= 4;
 
@@ -746,12 +671,9 @@ _Redo:
 		goto _Redo;
 	}
 
-	if(IsNear == 0)
-	{
+	if (IsNear == 0) {
 		SetTarget(91);
-	}
-	else
-	{
+	} else {
 		SetNearTarget(91);
 	}
 
@@ -786,8 +708,7 @@ void dyna4300i_blez(OP_PARAMS)
 	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
 	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
 
-	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
-	{
+	if ((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES)) {
 		Use32bit = 1;
 		xRS->Is32bit = 1;
 		xRT->Is32bit = 1;
@@ -795,17 +716,13 @@ void dyna4300i_blez(OP_PARAMS)
 
 	aValue = (reg->pc + 4 + (__I << 2));
 
-	if(ConstMap[xRS->mips_reg].IsMapped == 1)
-	{
-		if((_int32) ConstMap[xRS->mips_reg].value <= 0)
-		{
+	if (ConstMap[xRS->mips_reg].IsMapped == 1) {
+		if ((_int32) ConstMap[xRS->mips_reg].value <= 0) {
 			/* true */
 			SPEED_HACK reg->pc += 4;
 			FlushAllRegisters();
 			Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
-		}
-		else
-		{
+		} else {
 			/* false */
 			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 		}
@@ -815,40 +732,38 @@ void dyna4300i_blez(OP_PARAMS)
 
 	MapRS;
 
-	if(!Use32bit)
-	{
+	if (!Use32bit) {
 		CMP_RegWithShort(1, xRS->HiWordLoc, 0);
 		templCodePosition64 = compilerstatus.lCodePosition;
 _Redo64:
-		__asm
-		{
+		__asm {
 			pushad
 		}
 
-		if(IsNear == 1) Jcc_Near_auto(CC_G, 91);	/* jmp false */
+		if (IsNear == 1)
+			Jcc_Near_auto(CC_G, 91);	/* jmp false */
 		else
 			Jcc_auto(CC_G, 91);						/* jmp false */
 		Jcc_auto(CC_L, 90); /* jmp true */
 
 		CMP_RegWithShort(1, xRS->x86reg, 0);
-		if(IsNear == 1) Jcc_Near_auto(CC_A, 93);	/* jmp false */
+		if (IsNear == 1)
+			Jcc_Near_auto(CC_A, 93);	/* jmp false */
 		else
 			Jcc_auto(CC_A, 93);						/* jmp false */
 
 		/* true */
 		SetTarget(90);
-	}
-	else
-	{
+	} else {
 		CMP_RegWithShort(1, xRS->x86reg, 0);
 		templCodePosition32 = compilerstatus.lCodePosition;
 _Redo32:
-		__asm
-		{
+		__asm {
 			pushad
 		}
 
-		if(IsNear == 1) Jcc_Near_auto(CC_G, 91);	/* jmp false */
+		if (IsNear == 1)
+			Jcc_Near_auto(CC_G, 91);	/* jmp false */
 		else
 			Jcc_auto(CC_G, 91);						/* jmp false */
 	}
@@ -858,38 +773,31 @@ _Redo32:
 	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
 
 	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
-	if((wPosition > 120) && (IsNear == 0))
-	{
+	if ((wPosition > 120) && (IsNear == 0)) {
 		reg->pc -= 4;
 
 		/* Rewrite the code as a near jump. Short jump won't cut it. */
 		IsNear = 1;
-		if(!Use32bit)
-		{
+		if (!Use32bit) {
 			compilerstatus.lCodePosition = templCodePosition64;
 
 			__asm popad __asm jmp _Redo64
-		}
-		else
-		{
+		} else {
 			compilerstatus.lCodePosition = templCodePosition32;
 			__asm popad __asm jmp _Redo32
 		}
-	}
-	else
-	{
+	} else {
 		__asm popad
 
 		/* false */
-		if(IsNear == 0)
-		{
+		if (IsNear == 0) {
 			SetTarget(91);
-			if(!Use32bit) SetTarget(93);
-		}
-		else
-		{
+			if (!Use32bit)
+				SetTarget(93);
+		} else {
 			SetNearTarget(91);
-			if(!Use32bit) SetNearTarget(93);
+			if (!Use32bit)
+				SetNearTarget(93);
 		}
 	}
 
@@ -920,8 +828,7 @@ void dyna4300i_blezl(OP_PARAMS)
 	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
 	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
 
-	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
-	{
+	if ((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES)) {
 		Use32bit = 1;
 		xRS->Is32bit = 1;
 		xRT->Is32bit = 1;
@@ -929,17 +836,13 @@ void dyna4300i_blezl(OP_PARAMS)
 
 	aValue = (reg->pc + 4 + (__I << 2));
 
-	if(ConstMap[xRS->mips_reg].IsMapped == 1)
-	{
-		if((_int32) ConstMap[xRS->mips_reg].value <= 0) /* <--bug fix here */
-		{
+	if (ConstMap[xRS->mips_reg].IsMapped == 1) {
+		if ((_int32) ConstMap[xRS->mips_reg].value <= 0) /* <--bug fix here */ {
 			/* true */
 			SPEED_HACK reg->pc += 4;
 			FlushAllRegisters();
 			Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
-		}
-		else
-		{
+		} else {
 			/* false */
 			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 		}
@@ -949,30 +852,30 @@ void dyna4300i_blezl(OP_PARAMS)
 
 	MapRS;
 
-	if(!Use32bit)
-	{
+	if (!Use32bit) {
 		CMP_RegWithShort(1, xRS->HiWordLoc, 0);
 _Redo64:
 		templCodePosition64 = compilerstatus.lCodePosition;
-		if(IsNear) Jcc_Near_auto(CC_G, 91);				/* jmp false */
+		if (IsNear)
+			Jcc_Near_auto(CC_G, 91);				/* jmp false */
 		else
 			Jcc_auto(CC_G, 91);						/* jmp false */
 		Jcc_auto(CC_L, 90);							/* jmp true */
 
 		CMP_RegWithShort(1, xRS->x86reg, 0);
-		if(IsNear == 1) Jcc_Near_auto(CC_A, 93);	/* jmp false */
+		if (IsNear == 1)
+			Jcc_Near_auto(CC_A, 93);	/* jmp false */
 		else
 			Jcc_auto(CC_A, 93);						/* jmp false */
 
 		/* true */
 		SetTarget(90);
-	}
-	else
-	{
+	} else {
 		CMP_RegWithShort(1, xRS->x86reg, 0);
 _Redo32:
 		templCodePosition32 = compilerstatus.lCodePosition;
-		if(IsNear == 1) Jcc_Near_auto(CC_G, 91);	/* jmp false */
+		if (IsNear == 1)
+			Jcc_Near_auto(CC_G, 91);	/* jmp false */
 		else
 			Jcc_auto(CC_G, 91);						/* jmp false */
 	}
@@ -981,34 +884,29 @@ _Redo32:
 	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
 
 	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
-	if((wPosition > 120) && (IsNear == 0))
-	{
+	if ((wPosition > 120) && (IsNear == 0)) {
 		reg->pc -= 4;
 
 		/* Rewrite the code as a near jump. Short jump won't cut it. */
 		IsNear = 1;
-		if(!Use32bit)
-		{
+		if (!Use32bit) {
 			compilerstatus.lCodePosition = templCodePosition64;
 			goto _Redo64;
-		}
-		else
-		{
+		} else {
 			compilerstatus.lCodePosition = templCodePosition32;
 			goto _Redo32;
 		}
 	}
 
 	/* false */
-	if(IsNear == 0)
-	{
+	if (IsNear == 0) {
 		SetTarget(91);
-		if(!Use32bit) SetTarget(93);
-	}
-	else
-	{
+		if (!Use32bit)
+			SetTarget(93);
+	} else {
 		SetNearTarget(91);
-		if(!Use32bit) SetNearTarget(93);
+		if (!Use32bit)
+			SetNearTarget(93);
 	}
 
 	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
@@ -1038,8 +936,7 @@ void dyna4300i_bgtz(OP_PARAMS)
 
 	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
 	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
-	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
-	{
+	if ((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES)) {
 		Use32bit = 1;
 		xRS->Is32bit = 1;
 		xRT->Is32bit = 1;
@@ -1047,17 +944,13 @@ void dyna4300i_bgtz(OP_PARAMS)
 
 	aValue = (reg->pc + 4 + (__I << 2));
 
-	if(ConstMap[xRS->mips_reg].IsMapped == 1)
-	{
-		if((_int32) ConstMap[xRS->mips_reg].value > 0)
-		{
+	if (ConstMap[xRS->mips_reg].IsMapped == 1) {
+		if ((_int32) ConstMap[xRS->mips_reg].value > 0) {
 			/* true */
 			SPEED_HACK reg->pc += 4;
 			FlushAllRegisters();
 			Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
-		}
-		else
-		{
+		} else {
 			/* false */
 			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 		}
@@ -1067,27 +960,27 @@ void dyna4300i_bgtz(OP_PARAMS)
 
 	MapRS;
 
-	if(!Use32bit)
-	{
+	if (!Use32bit) {
 		CMP_RegWithShort(1, xRS->HiWordLoc, 0);
 _Redo64:
 		templCodePosition64 = compilerstatus.lCodePosition;
 
-		if(IsNear == 1) Jcc_Near_auto(CC_L, 91);	/* jmp false */
+		if (IsNear == 1)
+			Jcc_Near_auto(CC_L, 91);	/* jmp false */
 		else
 			Jcc_auto(CC_L, 91);						/* jmp false */
 		Jcc_auto(CC_G, 90); /* jmp true */
 		CMP_RegWithShort(1, xRS->x86reg, 0);
-		if(IsNear == 1) Jcc_Near_auto(CC_BE, 93);	/* jmp false2 */
+		if (IsNear == 1)
+			Jcc_Near_auto(CC_BE, 93);	/* jmp false2 */
 		else
 			Jcc_auto(CC_BE, 93);					/* jmp false2 */
-	}
-	else
-	{
+	} else {
 		CMP_RegWithShort(1, xRS->x86reg, 0);
 _Redo32:
 		templCodePosition32 = compilerstatus.lCodePosition;
-		if(IsNear == 1) Jcc_Near_auto(CC_LE, 91);	/* jmp false2 */
+		if (IsNear == 1)
+			Jcc_Near_auto(CC_LE, 91);	/* jmp false2 */
 		else
 			Jcc_auto(CC_LE, 91);					/* jmp false2 */
 	}
@@ -1096,40 +989,36 @@ _Redo32:
 	 * £
 	 * delay Slot
 	 */
-	if(!Use32bit) SetTarget(90);
+	if (!Use32bit)
+		SetTarget(90);
 
 	SPEED_HACK reg->pc += 4;
 	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
 
 	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
-	if((wPosition > 120) && (IsNear == 0))
-	{
+	if ((wPosition > 120) && (IsNear == 0)) {
 		reg->pc -= 4;
 
 		/* Rewrite the code as a near jump. Short jump won't cut it. */
 		IsNear = 1;
-		if(!Use32bit)
-		{
+		if (!Use32bit) {
 			compilerstatus.lCodePosition = templCodePosition64;
 			goto _Redo64;
-		}
-		else
-		{
+		} else {
 			compilerstatus.lCodePosition = templCodePosition32;
 			goto _Redo32;
 		}
 	}
 
 	/* false */
-	if(IsNear == 0)
-	{
+	if (IsNear == 0) {
 		SetTarget(91);
-		if(!Use32bit) SetTarget(93);
-	}
-	else
-	{
+		if (!Use32bit)
+			SetTarget(93);
+	} else {
 		SetNearTarget(91);
-		if(!Use32bit) SetNearTarget(93);
+		if (!Use32bit)
+			SetNearTarget(93);
 	}
 
 	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
@@ -1159,8 +1048,7 @@ void dyna4300i_bgtzl(OP_PARAMS)
 
 	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
 	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
-	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
-	{
+	if ((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES)) {
 		Use32bit = 1;
 		xRS->Is32bit = 1;
 		xRT->Is32bit = 1;
@@ -1173,27 +1061,27 @@ void dyna4300i_bgtzl(OP_PARAMS)
 
 	MapRS;
 
-	if(!Use32bit)
-	{
+	if (!Use32bit) {
 		CMP_RegWithShort(1, xRS->HiWordLoc, 0);
 _Redo64:
 		templCodePosition64 = compilerstatus.lCodePosition;
 
-		if(IsNear == 1) Jcc_Near_auto(CC_L, 91);	/* jmp false */
+		if (IsNear == 1)
+			Jcc_Near_auto(CC_L, 91);	/* jmp false */
 		else
 			Jcc_auto(CC_L, 91);						/* jmp false */
 		Jcc_auto(CC_G, 90); /* jmp true */
 		CMP_RegWithShort(1, xRS->x86reg, 0);
-		if(IsNear == 1) Jcc_Near_auto(CC_BE, 93);	/* jmp false2 */
+		if (IsNear == 1)
+			Jcc_Near_auto(CC_BE, 93);	/* jmp false2 */
 		else
 			Jcc_auto(CC_BE, 93);					/* jmp false2 */
-	}
-	else
-	{
+	} else {
 		CMP_RegWithShort(1, xRS->x86reg, 0);
 _Redo32:
 		templCodePosition32 = compilerstatus.lCodePosition;
-		if(IsNear == 1) Jcc_Near_auto(CC_LE, 91);	/* jmp false2 */
+		if (IsNear == 1)
+			Jcc_Near_auto(CC_LE, 91);	/* jmp false2 */
 		else
 			Jcc_auto(CC_LE, 91);					/* jmp false2 */
 	}
@@ -1202,40 +1090,36 @@ _Redo32:
 	 * £
 	 * delay Slot
 	 */
-	if(!Use32bit) SetTarget(90);
+	if (!Use32bit)
+		SetTarget(90);
 
 	SPEED_HACK reg->pc += 4;
 	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
 
 	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
-	if((wPosition > 120) && (IsNear == 0))
-	{
+	if ((wPosition > 120) && (IsNear == 0)) {
 		reg->pc -= 4;
 
 		/* Rewrite the code as a near jump. Short jump won't cut it. */
 		IsNear = 1;
-		if(!Use32bit)
-		{
+		if (!Use32bit) {
 			compilerstatus.lCodePosition = templCodePosition64;
 			goto _Redo64;
-		}
-		else
-		{
+		} else {
 			compilerstatus.lCodePosition = templCodePosition32;
 			goto _Redo32;
 		}
 	}
 
 	/* false */
-	if(IsNear == 0)
-	{
+	if (IsNear == 0) {
 		SetTarget(91);
-		if(!Use32bit) SetTarget(93);
-	}
-	else
-	{
+		if (!Use32bit)
+			SetTarget(93);
+	} else {
 		SetNearTarget(91);
-		if(!Use32bit) SetNearTarget(93);
+		if (!Use32bit)
+			SetNearTarget(93);
 	}
 
 	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
@@ -1264,8 +1148,7 @@ void dyna4300i_regimm_bltz(OP_PARAMS)
 
 	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
 	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
-	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
-	{
+	if ((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES)) {
 		Use32bit = 1;
 		xRS->Is32bit = 1;
 		xRT->Is32bit = 1;
@@ -1273,17 +1156,13 @@ void dyna4300i_regimm_bltz(OP_PARAMS)
 
 	aValue = (reg->pc + 4 + (__I << 2));
 
-	if(ConstMap[xRS->mips_reg].IsMapped == 1)
-	{
-		if((_int32) ConstMap[xRS->mips_reg].value < 0)
-		{
+	if (ConstMap[xRS->mips_reg].IsMapped == 1) {
+		if ((_int32) ConstMap[xRS->mips_reg].value < 0) {
 			/* true */
 			SPEED_HACK reg->pc += 4;
 			FlushAllRegisters();
 			Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
-		}
-		else
-		{
+		} else {
 			/* false */
 			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 		}
@@ -1292,13 +1171,14 @@ void dyna4300i_regimm_bltz(OP_PARAMS)
 	}
 
 	MapRS;
-	if(!Use32bit)
+	if (!Use32bit)
 		CMP_RegWithShort(1, xRS->HiWordLoc, 0);
 	else
 		CMP_RegWithShort(1, xRS->x86reg, 0);
 _Redo:
 	templCodePosition = compilerstatus.lCodePosition;
-	if(IsNear == 1) Jcc_Near_auto(CC_GE, 91);	/* jmp false */
+	if (IsNear == 1)
+		Jcc_Near_auto(CC_GE, 91);	/* jmp false */
 	else
 		Jcc_auto(CC_GE, 91);
 
@@ -1306,8 +1186,7 @@ _Redo:
 	SPEED_HACK reg->pc += 4;
 	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
 	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
-	if((wPosition > 120) && (IsNear == 0))
-	{
+	if ((wPosition > 120) && (IsNear == 0)) {
 		reg->pc -= 4;
 
 		/* Rewrite the code as a near jump. Short jump won't cut it. */
@@ -1316,7 +1195,7 @@ _Redo:
 		goto _Redo;
 	}
 
-	if(IsNear == 1)
+	if (IsNear == 1)
 		SetNearTarget(91);
 	else
 		SetTarget(91);
@@ -1346,8 +1225,7 @@ void dyna4300i_regimm_bltzl(OP_PARAMS)
 
 	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
 	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
-	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
-	{
+	if ((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES)) {
 		Use32bit = 1;
 		xRS->Is32bit = 1;
 		xRT->Is32bit = 1;
@@ -1356,13 +1234,14 @@ void dyna4300i_regimm_bltzl(OP_PARAMS)
 	aValue = (reg->pc + 4 + (__I << 2));
 
 	MapRS;
-	if(!Use32bit)
+	if (!Use32bit)
 		CMP_RegWithShort(1, xRS->HiWordLoc, 0);
 	else
 		CMP_RegWithShort(1, xRS->x86reg, 0);
 _Redo:
 	templCodePosition = compilerstatus.lCodePosition;
-	if(IsNear == 1) Jcc_Near_auto(CC_GE, 91);	/* jmp false */
+	if (IsNear == 1)
+		Jcc_Near_auto(CC_GE, 91);	/* jmp false */
 	else
 		Jcc_auto(CC_GE, 91);
 
@@ -1370,8 +1249,7 @@ _Redo:
 	SPEED_HACK reg->pc += 4;
 	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
 	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
-	if((wPosition > 120) && (IsNear == 0))
-	{
+	if ((wPosition > 120) && (IsNear == 0)) {
 		reg->pc -= 4;
 
 		/* Rewrite the code as a near jump. Short jump won't cut it. */
@@ -1380,7 +1258,7 @@ _Redo:
 		goto _Redo;
 	}
 
-	if(IsNear == 1)
+	if (IsNear == 1)
 		SetNearTarget(91);
 	else
 		SetTarget(91);
@@ -1412,8 +1290,7 @@ void dyna4300i_regimm_bgez(OP_PARAMS)
 
 	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
 	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
-	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
-	{
+	if ((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES)) {
 		Use32bit = 1;
 		xRS->Is32bit = 1;
 		xRT->Is32bit = 1;
@@ -1421,17 +1298,13 @@ void dyna4300i_regimm_bgez(OP_PARAMS)
 
 	aValue = (reg->pc + 4 + (__I << 2));
 
-	if(ConstMap[xRS->mips_reg].IsMapped == 1)
-	{
-		if((_int32) ConstMap[xRS->mips_reg].value >= 0)
-		{
+	if (ConstMap[xRS->mips_reg].IsMapped == 1) {
+		if ((_int32) ConstMap[xRS->mips_reg].value >= 0) {
 			/* true */
 			SPEED_HACK reg->pc += 4;
 			FlushAllRegisters();
 			Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
-		}
-		else
-		{
+		} else {
 			/* false */
 			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 		}
@@ -1440,30 +1313,28 @@ void dyna4300i_regimm_bgez(OP_PARAMS)
 	}
 
 	MapRS;
-	if(!Use32bit)
-	{
+	if (!Use32bit) {
 		CMP_RegWithShort(1, xRS->HiWordLoc, 0);
 _Redo64:
 		templCodePosition64 = compilerstatus.lCodePosition;
 
-		if(IsNear == 1)
+		if (IsNear == 1)
 			Jcc_Near_auto(CC_L, 91);
 		else
 			Jcc_auto(CC_L, 91);
 		Jcc_auto(CC_G, 90);
 
 		CMP_RegWithShort(1, xRS->x86reg, 0);
-		if(IsNear == 1)
+		if (IsNear == 1)
 			Jcc_Near_auto(CC_B, 93);
 		else
 			Jcc_auto(CC_B, 93);
-	}
-	else
-	{
+	} else {
 		CMP_RegWithShort(1, xRS->x86reg, 0);
 _Redo32:
 		templCodePosition32 = compilerstatus.lCodePosition;
-		if(IsNear == 1) Jcc_Near_auto(CC_L, 91);	/* jmp false2 */
+		if (IsNear == 1)
+			Jcc_Near_auto(CC_L, 91);	/* jmp false2 */
 		else
 			Jcc_auto(CC_L, 91);						/* jmp false2 */
 	}
@@ -1472,38 +1343,34 @@ _Redo32:
 	 * BRANCH_MACRO(CC_L, CC_G, CC_B) £
 	 * delay Slot
 	 */
-	if(!Use32bit) SetTarget(90);
+	if (!Use32bit)
+		SetTarget(90);
 	SPEED_HACK reg->pc += 4;
 	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
 
 	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
-	if((wPosition > 120) && (IsNear == 0))
-	{
+	if ((wPosition > 120) && (IsNear == 0)) {
 		reg->pc -= 4;
 
 		/* Rewrite the code as a near jump. Short jump won't cut it. */
 		IsNear = 1;
-		if(!Use32bit)
-		{
+		if (!Use32bit) {
 			compilerstatus.lCodePosition = templCodePosition64;
 			goto _Redo64;
-		}
-		else
-		{
+		} else {
 			compilerstatus.lCodePosition = templCodePosition32;
 			goto _Redo32;
 		}
 	}
 
-	if(IsNear == 0)
-	{
+	if (IsNear == 0) {
 		SetTarget(91);
-		if(!Use32bit) SetTarget(93);
-	}
-	else
-	{
+		if (!Use32bit)
+			SetTarget(93);
+	} else {
 		SetNearTarget(91);
-		if(!Use32bit) SetNearTarget(93);
+		if (!Use32bit)
+			SetNearTarget(93);
 	}
 
 	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
@@ -1533,8 +1400,7 @@ void dyna4300i_regimm_bgezl(OP_PARAMS)
 
 	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
 	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
-	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
-	{
+	if ((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES)) {
 		Use32bit = 1;
 		xRS->Is32bit = 1;
 		xRT->Is32bit = 1;
@@ -1542,17 +1408,13 @@ void dyna4300i_regimm_bgezl(OP_PARAMS)
 
 	aValue = (reg->pc + 4 + (__I << 2));
 
-	if(ConstMap[xRS->mips_reg].IsMapped == 1)
-	{
-		if((_int32) ConstMap[xRS->mips_reg].value >= 0)
-		{
+	if (ConstMap[xRS->mips_reg].IsMapped == 1) {
+		if ((_int32) ConstMap[xRS->mips_reg].value >= 0) {
 			/* true */
 			SPEED_HACK reg->pc += 4;
 			FlushAllRegisters();
 			Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
-		}
-		else
-		{
+		} else {
 			/* false */
 			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
 		}
@@ -1561,30 +1423,28 @@ void dyna4300i_regimm_bgezl(OP_PARAMS)
 	}
 
 	MapRS;
-	if(!Use32bit)
-	{
+	if (!Use32bit) {
 		CMP_RegWithShort(1, xRS->HiWordLoc, 0);
 _Redo64:
 		templCodePosition64 = compilerstatus.lCodePosition;
 
-		if(IsNear == 1)
+		if (IsNear == 1)
 			Jcc_Near_auto(CC_L, 91);
 		else
 			Jcc_auto(CC_L, 91);
 		Jcc_auto(CC_G, 90);
 
 		CMP_RegWithShort(1, xRS->x86reg, 0);
-		if(IsNear == 1)
+		if (IsNear == 1)
 			Jcc_Near_auto(CC_B, 93);
 		else
 			Jcc_auto(CC_B, 93);
-	}
-	else
-	{
+	} else {
 		CMP_RegWithShort(1, xRS->x86reg, 0);
 _Redo32:
 		templCodePosition32 = compilerstatus.lCodePosition;
-		if(IsNear == 1) Jcc_Near_auto(CC_L, 91);	/* jmp false2 */
+		if (IsNear == 1)
+			Jcc_Near_auto(CC_L, 91);	/* jmp false2 */
 		else
 			Jcc_auto(CC_L, 91);						/* jmp false2 */
 	}
@@ -1593,38 +1453,34 @@ _Redo32:
 	 * BRANCH_MACRO(CC_L, CC_G, CC_B) £
 	 * delay Slot
 	 */
-	if(!Use32bit) SetTarget(90);
+	if (!Use32bit)
+		SetTarget(90);
 	SPEED_HACK reg->pc += 4;
 	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_NO, 0);
 
 	wPosition = compilerstatus.lCodePosition - JumpTargets[91];
-	if((wPosition > 120) && (IsNear == 0))
-	{
+	if ((wPosition > 120) && (IsNear == 0)) {
 		reg->pc -= 4;
 
 		/* Rewrite the code as a near jump. Short jump won't cut it. */
 		IsNear = 1;
-		if(!Use32bit)
-		{
+		if (!Use32bit) {
 			compilerstatus.lCodePosition = templCodePosition64;
 			goto _Redo64;
-		}
-		else
-		{
+		} else {
 			compilerstatus.lCodePosition = templCodePosition32;
 			goto _Redo32;
 		}
 	}
 
-	if(IsNear == 0)
-	{
+	if (IsNear == 0) {
 		SetTarget(91);
-		if(!Use32bit) SetTarget(93);
-	}
-	else
-	{
+		if (!Use32bit)
+			SetTarget(93);
+	} else {
 		SetNearTarget(91);
-		if(!Use32bit) SetNearTarget(93);
+		if (!Use32bit)
+			SetNearTarget(93);
 	}
 
 	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_NO, 0);
@@ -1653,8 +1509,7 @@ void dyna4300i_regimm_bgezal(OP_PARAMS)
 	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
 	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
 
-	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
-	{
+	if ((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES)) {
 		Use32bit = 1;
 		xRS->Is32bit = 1;
 		xRT->Is32bit = 1;
@@ -1662,17 +1517,13 @@ void dyna4300i_regimm_bgezal(OP_PARAMS)
 
 	aValue = (reg->pc + 4 + (__I << 2));
 
-	if(ConstMap[xRS->mips_reg].IsMapped == 1)
-	{
-		if((_int32) ConstMap[xRS->mips_reg].value >= 0)
-		{
+	if (ConstMap[xRS->mips_reg].IsMapped == 1) {
+		if ((_int32) ConstMap[xRS->mips_reg].value >= 0) {
 			/* true */
 			SPEED_HACK reg->pc += 4;
 			FlushAllRegisters();
 			Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_YES, LinkVal);
-		}
-		else
-		{
+		} else {
 			/* false */
 			Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_YES, LinkVal);
 		}
@@ -1681,28 +1532,27 @@ void dyna4300i_regimm_bgezal(OP_PARAMS)
 	}
 
 	MapRS;
-	if(!Use32bit)
-	{
+	if (!Use32bit) {
 		CMP_RegWithShort(1, xRS->HiWordLoc, 0);
 		Jcc_Near_auto(CC_L, 91);
 		Jcc_auto(CC_G, 90);
 
 		CMP_RegWithShort(1, xRS->x86reg, 0);
 		Jcc_Near_auto(CC_B, 93);
-	}
-	else
-	{
+	} else {
 		CMP_RegWithShort(1, xRS->x86reg, 0);
 		Jcc_Near_auto(CC_L, 91);	/* jmp false */
 	}
 
 	/* delay Slot */
-	if(!Use32bit) SetTarget(90);
+	if (!Use32bit)
+		SetTarget(90);
 	SPEED_HACK reg->pc += 4;
 	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_YES, LinkVal);
 
 	SetNearTarget(91);
-	if(!Use32bit) SetNearTarget(93);
+	if (!Use32bit)
+		SetNearTarget(93);
 	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_YES, LinkVal);
 }
 
@@ -1729,8 +1579,7 @@ void dyna4300i_regimm_bgezall(OP_PARAMS)
 	tempRSIs32bit = CheckIs32Bit(xRS->mips_reg);
 	tempRTIs32bit = CheckIs32Bit(xRT->mips_reg);
 
-	if((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES))
-	{
+	if ((tempRSIs32bit && tempRTIs32bit) || (currentromoptions.Assume_32bit == ASSUME_32BIT_YES)) {
 		Use32bit = 1;
 		xRS->Is32bit = 1;
 		xRT->Is32bit = 1;
@@ -1739,28 +1588,27 @@ void dyna4300i_regimm_bgezall(OP_PARAMS)
 	aValue = (reg->pc + 4 + (__I << 2));
 
 	MapRS;
-	if(!Use32bit)
-	{
+	if (!Use32bit) {
 		CMP_RegWithShort(1, xRS->HiWordLoc, 0);
 		Jcc_Near_auto(CC_L, 91);
 		Jcc_auto(CC_G, 90);
 
 		CMP_RegWithShort(1, xRS->x86reg, 0);
 		Jcc_Near_auto(CC_B, 93);
-	}
-	else
-	{
+	} else {
 		CMP_RegWithShort(1, xRS->x86reg, 0);
 		Jcc_Near_auto(CC_L, 91);	/* jmp false */
 	}
 
 	/* delay Slot */
-	if(!Use32bit) SetTarget(90);
+	if (!Use32bit)
+		SetTarget(90);
 	SPEED_HACK reg->pc += 4;
 	Compile_Slot_And_Interrupts(reg->pc, aValue, LINK_YES, LinkVal);
 
 	SetNearTarget(91);
-	if(!Use32bit) SetNearTarget(93);
+	if (!Use32bit)
+		SetNearTarget(93);
 	Interrupts(JUMP_TYPE_BREAKOUT, tempPC + 4, LINK_YES, LinkVal);
 }
 
@@ -1837,14 +1685,12 @@ extern void LogSomething(void);
  */
 void tempyness(void)
 {
-	__asm
-	{
+	__asm {
 		pushad
 	}
 
 	LogSomething();
-	__asm
-	{
+	__asm {
 		popad
 	}
 }
@@ -2070,21 +1916,17 @@ void dyna4300i_special_jalr(OP_PARAMS)
 	compilerstatus.cp0Counter += 1;
 	_OPCODE_DEBUG_BRANCH_(r4300i_jalr)
 #ifdef DEBUG_COMMON
-	if(__RD == __RS)
-	{
+	if (__RD == __RS) {
 		DisplayError("In JALR, __RD == __RS");
 	}
 #endif
 	aValue = ((reg->pc & 0xf0000000) | (____T << 2));
 
 	FlushAllRegisters();
-	if(__RD < 16)
-	{
+	if (__RD < 16) {
 		MOV_ImmToMemory(1, ModRM_disp8_EBP, (-128 + ((__RD) << 3)), (reg->pc + 8));
 		MOV_ImmToMemory(1, ModRM_disp8_EBP, (-124 + ((__RD) << 3)), ((_int32) (reg->pc + 8)) >> 31);
-	}
-	else
-	{
+	} else {
 		MOV_ImmToMemory(1, ModRM_disp8_EBP, ((__RD) - 16) << 3, (reg->pc + 8));
 		MOV_ImmToMemory(1, ModRM_disp8_EBP, 4 + (((__RD) - 16) << 3), ((_int32) (reg->pc + 8)) >> 31);
 	}

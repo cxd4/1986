@@ -103,111 +103,82 @@ extern unsigned char	*RecompCode;
  =======================================================================================================================
  */
 #define ItIsARegisterNotToUse(k)	((k == Reg_EBP) || (k == Reg_ESP) || (x86reg[k].mips_reg == 100))
-#define LoadGPR_LO(k) \
-	{ \
-		if(x86reg[k].mips_reg == 0) \
-			XOR_Reg2ToReg1(1, (_u8) k, (_u8) k); \
-		else \
-		{ \
-			FetchEBP_Params(x86reg[k].mips_reg); \
-			MOV_MemoryToReg(1, (uint8) k, x86params.ModRM, x86params.Address); \
-		} \
-	}
+#define LoadGPR_LO(k) { \
+	if (x86reg[k].mips_reg == 0) { \
+		XOR_Reg2ToReg1(1, (_u8) k, (_u8) k); \
+	} else { \
+		FetchEBP_Params(x86reg[k].mips_reg); \
+		MOV_MemoryToReg(1, (uint8) k, x86params.ModRM, x86params.Address); \
+	} \
+}
 
-#define StoreGPR_LO(k) \
-	{ \
-		if(x86reg[k].mips_reg == 0); \
-		else \
-		{ \
-			FetchEBP_Params(x86reg[k].mips_reg); \
-			MOV_RegToMemory(1, k, x86params.ModRM, x86params.Address); \
-		} \
-	}
+#define StoreGPR_LO(k) { \
+	if (x86reg[k].mips_reg == 0) { \
+	} else { \
+		FetchEBP_Params(x86reg[k].mips_reg); \
+		MOV_RegToMemory(1, k, x86params.ModRM, x86params.Address); \
+	} \
+}
 
 #define LoadGPR_HI(k) \
-	if(currentromoptions.Assume_32bit == ASSUME_32BIT_NO) \
-	{ \
-		if(x86reg[k].mips_reg == 0) \
+	if (currentromoptions.Assume_32bit == ASSUME_32BIT_NO) { \
+		if (x86reg[k].mips_reg == 0) { \
 			XOR_Reg2ToReg1(1, (_u8) x86reg[k].HiWordLoc, (_u8) x86reg[k].HiWordLoc); \
-		else \
-		{ \
+		} else { \
 			FetchEBP_Params(x86reg[k].mips_reg); \
 			MOV_MemoryToReg(1, (uint8) x86reg[k].HiWordLoc, x86params.ModRM, 4 + x86params.Address); \
 		} \
-	} \
-	else \
-	{ \
+	} else { \
 		MOV_Reg2ToReg1(1, x86reg[k].HiWordLoc, (uint8) k); \
 		SAR_RegByImm(1, x86reg[k].HiWordLoc, 31); \
 	}
 
-#define StoreGPR_HI(k) \
-	{ \
-		if(x86reg[k].mips_reg == 0); \
-		else \
-		{ \
-			FetchEBP_Params(x86reg[k].mips_reg); \
-			MOV_RegToMemory(1, (uint8) x86reg[k].HiWordLoc, x86params.ModRM, 4 + x86params.Address); \
-		} \
-	}
+#define StoreGPR_HI(k) { \
+	if (x86reg[k].mips_reg == 0) { \
+	} else { \
+		FetchEBP_Params(x86reg[k].mips_reg); \
+		MOV_RegToMemory(1, (uint8) x86reg[k].HiWordLoc, x86params.ModRM, 4 + x86params.Address); \
+	} \
+}
 
-#define StoreImm_LO(k) \
-	{ \
-		if(k < 16) \
-		{ \
-			MOV_ImmToMemory(1, ModRM_disp8_EBP, (-128 + (k << 3)), i); \
-		} \
-		else if(k < 32) \
-		{ \
-			MOV_ImmToMemory(1, ModRM_disp8_EBP, ((k - 16) << 3), i); \
-		} \
-		else \
-			MOV_ImmToMemory(1, ModRM_disp32_EBP, ((k - 16) << 3), i); \
-	}
+#define StoreImm_LO(k) { \
+	if (k < 16) { \
+		MOV_ImmToMemory(1, ModRM_disp8_EBP, (-128 + (k << 3)), i); \
+	} else if (k < 32) { \
+		MOV_ImmToMemory(1, ModRM_disp8_EBP, ((k - 16) << 3), i); \
+	} else { \
+		MOV_ImmToMemory(1, ModRM_disp32_EBP, ((k - 16) << 3), i); \
+	} \
+}
 
 #define StoreImm_HI(k) \
-	if(currentromoptions.Assume_32bit == ASSUME_32BIT_NO) \
-	{ \
-		if(k < 16) \
-		{ \
+	if (currentromoptions.Assume_32bit == ASSUME_32BIT_NO) { \
+		if (k < 16) { \
 			MOV_ImmToMemory(1, ModRM_disp8_EBP, (-124 + (k << 3)), i); \
-		} \
-		else if(k < 32) \
-		{ \
+		} else if (k < 32) { \
 			MOV_ImmToMemory(1, ModRM_disp8_EBP, 4 + ((k - 16) << 3), i); \
-		} \
-		else \
-		{ \
+		} else { \
 			MOV_ImmToMemory(1, ModRM_disp32_EBP, 4 + ((k - 16) << 3), i); \
 		} \
 	}
 
-#define LoadFPR_LO(k) \
-	{ \
-		if(k < 16) \
-		{ \
-			FLD(0, ModRM_disp8_EBP, (-64 + (k << 2))); \
-		} \
-		else if(k < 32) \
-		{ \
-			FLD(0, ModRM_disp8_EBP, ((k - 16) << 2)); \
-		} \
-	}
+#define LoadFPR_LO(k) { \
+	if (k < 16) { \
+		FLD(0, ModRM_disp8_EBP, (-64 + (k << 2))); \
+	} else if (k < 32) { \
+		FLD(0, ModRM_disp8_EBP, ((k - 16) << 2)); \
+	} \
+}
 
-#define StoreFPR_LO(k) \
-	{ \
-		if(k < 16) \
-		{ \
-			FSTP(0, ModRM_disp8_EBP, (-64 + (k << 2))); \
-		} \
-		else if(k < 32) \
-		{ \
-			FSTP(0, ModRM_disp8_EBP, ((k - 16) << 2)); \
-		}\
-	}
+#define StoreFPR_LO(k) { \
+	if (k < 16) { \
+		FSTP(0, ModRM_disp8_EBP, (-64 + (k << 2))); \
+	} else if (k < 32) { \
+		FSTP(0, ModRM_disp8_EBP, ((k - 16) << 2)); \
+	}\
+}
 
-typedef struct	x86regtyp
-{
+typedef struct	x86regtyp {
 	uint32	BirthDate;
 	_int8	HiWordLoc;
 	_int8	Is32bit;
@@ -223,15 +194,13 @@ typedef struct	x86regtyp
     Keeps status of constants
  -----------------------------------------------------------------------------------------------------------------------
  */
-typedef struct	MapConstant
-{
+typedef struct	MapConstant {
 	_int32	value;
 	_int32	IsMapped;
 	uint32	FinalAddressUsedAt; /* Analysis: at what PC the last Mips reg (rd,rs, or rt) is */
 } MapConstant;
 
-typedef struct	x86paramstyp
-{
+typedef struct	x86paramstyp {
 	unsigned __int32	Address;
 	unsigned char		ModRM;
 } x86paramstyp;
@@ -242,9 +211,8 @@ x86paramstyp	x86params;
     Keeps status of registers stored to memory
  -----------------------------------------------------------------------------------------------------------------------
  */
-typedef struct	FlushedMap
-{
-	uint32	Is32bit;
+typedef struct FlushedMap {
+	uint32 Is32bit;
 } FlushedMap;
 
 uint32		ThisYear;
@@ -253,20 +221,18 @@ MapConstant ConstMap[NUM_CONSTS];
 /*
  * Multi-Pass definitions £
  */
-#define CHECK_OPCODE_PASS	if(gMultiPass.WhichPass == COMPILE_MAP_ONLY) \
-	{ \
-		SwitchToOpcodePass(); \
-		return; \
-	} \
-	{ \
-		gMultiPass.WhichPass = COMPILE_ALL; \
-		gMultiPass.WriteCode = 1; \
-	}
+#define CHECK_OPCODE_PASS	if (gMultiPass.WhichPass == COMPILE_MAP_ONLY) { \
+	SwitchToOpcodePass(); \
+	return; \
+} \
+{ \
+	gMultiPass.WhichPass = COMPILE_ALL; \
+	gMultiPass.WriteCode = 1; \
+}
 
 enum PASSTYPE { COMPILE_MAP_ONLY, COMPILE_OPCODES_ONLY, COMPILE_ALL };
 
-typedef struct MultiPass
-{
+typedef struct MultiPass {
 	int UseOnePassOnly;		/* Make this a rom option. default option will be yes (1). */
 	int WhichPass;			/* Mapping pass or opcode pass */
 	int WriteCode;			/* Whether or not we write code on this pass */
@@ -288,7 +254,7 @@ MultiPass	gMultiPass;
 #define __SA		(((_u8) (reg->code >> 6)) & 0x1f)
 #define __F			((_u8) (reg->code) & 0x3f)
 
-/* define __I ( (_s32)(_s16)reg->code ) */
+/* define __I ((_s32)(_s16)reg->code) */
 #define __I			((_s32) (_s16) (reg->code & 0xFFFF))
 #define __O			(reg->pc + 4 + (__I << 2))
 #define ____T		(reg->code & 0x3ffffff)
@@ -342,45 +308,37 @@ void		Calculate_ModRM_Byte_Via_Slash_Digit(int SlashDigit);
     instructions when feasible.
  =======================================================================================================================
  */
-#define MapRS_To(xDst, Use32bit, LoadAndExecute_Function) \
-	{ \
-		if(((CheckWhereIsMipsReg(xRS->mips_reg)) == -1) && (ConstMap[xRS->mips_reg].FinalAddressUsedAt <= gHWS_pc)) \
-		{ \
-			FetchEBP_Params(xRS->mips_reg); \
+#define MapRS_To(xDst, Use32bit, LoadAndExecute_Function) { \
+	if (((CheckWhereIsMipsReg(xRS->mips_reg)) == -1) && (ConstMap[xRS->mips_reg].FinalAddressUsedAt <= gHWS_pc)) { \
+		FetchEBP_Params(xRS->mips_reg); \
  \
-			/* memory to register */ \
-			LoadAndExecute_Function(1, xDst->x86reg, x86params.ModRM, x86params.Address); \
-			if(!Use32bit) LoadAndExecute_Function(1, xDst->HiWordLoc, x86params.ModRM, 4 + x86params.Address); \
-		} \
-		else \
-		{ \
-			MapRS \
+		/* memory to register */ \
+		LoadAndExecute_Function(1, xDst->x86reg, x86params.ModRM, x86params.Address); \
+		if (!Use32bit) LoadAndExecute_Function(1, xDst->HiWordLoc, x86params.ModRM, 4 + x86params.Address); \
+	} else { \
+		MapRS \
  \
-			/* register to register */ \
-			LoadAndExecute_Function(1, xDst->x86reg, (uint8) (0xC0 | xRS->x86reg), 0); \
-			if(!Use32bit) LoadAndExecute_Function(1, xDst->HiWordLoc, (uint8) (0xC0 | xRS->HiWordLoc), 0); \
-		} \
-	}
+		/* register to register */ \
+		LoadAndExecute_Function(1, xDst->x86reg, (uint8) (0xC0 | xRS->x86reg), 0); \
+		if (!Use32bit) LoadAndExecute_Function(1, xDst->HiWordLoc, (uint8) (0xC0 | xRS->HiWordLoc), 0); \
+	} \
+}
 
-#define MapRT_To(xDst, Use32bit, LoadAndExecute_Function) \
-	{ \
-		if(((CheckWhereIsMipsReg(xRT->mips_reg)) == -1) && (ConstMap[xRT->mips_reg].FinalAddressUsedAt <= gHWS_pc)) \
-		{ \
-			FetchEBP_Params(xRT->mips_reg); \
+#define MapRT_To(xDst, Use32bit, LoadAndExecute_Function) { \
+	if (((CheckWhereIsMipsReg(xRT->mips_reg)) == -1) && (ConstMap[xRT->mips_reg].FinalAddressUsedAt <= gHWS_pc)) { \
+		FetchEBP_Params(xRT->mips_reg); \
  \
-			/* memory to register */ \
-			LoadAndExecute_Function(1, xDst->x86reg, x86params.ModRM, x86params.Address); \
-			if(!Use32bit) LoadAndExecute_Function(1, xDst->HiWordLoc, x86params.ModRM, 4 + x86params.Address); \
-		} \
-		else \
-		{ \
-			MapRT \
+		/* memory to register */ \
+		LoadAndExecute_Function(1, xDst->x86reg, x86params.ModRM, x86params.Address); \
+		if (!Use32bit) LoadAndExecute_Function(1, xDst->HiWordLoc, x86params.ModRM, 4 + x86params.Address); \
+	} else { \
+		MapRT \
  \
-			/* register to register */ \
-			LoadAndExecute_Function(1, xDst->x86reg, (uint8) (0xC0 | xRT->x86reg), 0); \
-			if(!Use32bit) LoadAndExecute_Function(1, xDst->HiWordLoc, (uint8) (0xC0 | xRT->HiWordLoc), 0); \
-		} \
-	}
+		/* register to register */ \
+		LoadAndExecute_Function(1, xDst->x86reg, (uint8) (0xC0 | xRT->x86reg), 0); \
+		if (!Use32bit) LoadAndExecute_Function(1, xDst->HiWordLoc, (uint8) (0xC0 | xRT->HiWordLoc), 0); \
+	} \
+}
 
 #define NEGATE(REG)			{ XOR_ShortToReg(1, (_u8) REG->x86reg, 0xFF); INC_Reg(1, (_u8) REG->x86reg); }
 

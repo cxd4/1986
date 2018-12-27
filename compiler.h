@@ -26,8 +26,7 @@
 #include <windows.h>
 #include "debug_option.h"
 
-struct BLOCK_ENTRY_STRUCT
-{
+struct BLOCK_ENTRY_STRUCT {
 	BOOL						HasBeenCompiled;
 	uint32						block_ptr;
 	uint32						block_pc;
@@ -40,8 +39,7 @@ struct BLOCK_ENTRY_STRUCT
 	struct BLOCK_ENTRY_STRUCT	*next;
 };
 
-struct CompilerStatus
-{
+struct CompilerStatus {
 	uint32			TempPC;
 	BOOL			DynaBufferOverError;
 	uint32			cp0Counter;

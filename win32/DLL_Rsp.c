@@ -21,13 +21,13 @@
 #include "wingui.h"
 
 /********** RSP DLL: Functions *********************/
-void	(__cdecl *_RSPCloseDLL)			( void ) = NULL;
-void	(__cdecl *_RSPDllAbout)			( HWND hWnd ) = NULL;
-void	(__cdecl *_RSPDllConfig)		( HWND hWnd ) = NULL;
-void	(__cdecl *_RSPRomClosed)		( void ) = NULL;
-DWORD	(__cdecl *_DoRspCycles)			( DWORD ) = NULL;
-void	(__cdecl *_InitiateRSP_1_0)		( RSP_INFO_1_0 rspinfo, DWORD * cycles) = NULL;
-void	(__cdecl *_InitiateRSP_1_1)		( RSP_INFO_1_1 rspinfo, DWORD * cycles) = NULL;
+void	(__cdecl *_RSPCloseDLL)			(void) = NULL;
+void	(__cdecl *_RSPDllAbout)			(HWND hWnd) = NULL;
+void	(__cdecl *_RSPDllConfig)		(HWND hWnd) = NULL;
+void	(__cdecl *_RSPRomClosed)		(void) = NULL;
+DWORD	(__cdecl *_DoRspCycles)			(DWORD) = NULL;
+void	(__cdecl *_InitiateRSP_1_0)		(RSP_INFO_1_0 rspinfo, DWORD * cycles) = NULL;
+void	(__cdecl *_InitiateRSP_1_1)		(RSP_INFO_1_1 rspinfo, DWORD * cycles) = NULL;
 void	(__cdecl *_RSP_GetDllInfo)		(PLUGIN_INFO *) = NULL;
 
 
@@ -72,53 +72,52 @@ void __cdecl RspCheckInterrupts(void)
 // Wrapper functions from the RSP Plugin
 // ----------------------------------------------------------------------------
 //
-void RSPCloseDLL( void )
+void RSPCloseDLL(void)
 {
-	if( _RSPCloseDLL )
+	if (_RSPCloseDLL)
 		_RSPCloseDLL();
 }
 
-void RSPDllAbout( HWND hWnd )
+void RSPDllAbout(HWND hWnd)
 {
-	if( _RSPDllAbout )
+	if (_RSPDllAbout)
 		_RSPDllAbout(hWnd);
 }
 
-void RSPDllConfig( HWND hWnd )
+void RSPDllConfig(HWND hWnd)
 {
-	if( _RSPDllConfig )
+	if (_RSPDllConfig)
 		_RSPDllConfig(hWnd);
 }
 
-void RSPRomClosed( void )
+void RSPRomClosed(void)
 {
-	if( _RSPRomClosed )
+	if (_RSPRomClosed)
 		_RSPRomClosed();
 }
-DWORD DoRspCycles( DWORD cycles )
+DWORD DoRspCycles(DWORD cycles)
 {
-	if( _DoRspCycles )
-	{
+	if (_DoRspCycles) {
 		DWORD retval;
 		DWORD sp_pc_save = SP_PC_REG;
 		SP_PC_REG &= 0xFFC;
 		retval = _DoRspCycles(cycles);
 		SP_PC_REG = sp_pc_save;
 		return retval;
-	}
-	else
+	} else {
 		return 0;
+	}
 }
 
-void InitiateRSP_1_0( RSP_INFO_1_0 rspinfo, DWORD * cycles)
+void InitiateRSP_1_0(RSP_INFO_1_0 rspinfo, DWORD * cycles)
 {
-	if( _InitiateRSP_1_0 )
-		_InitiateRSP_1_0(rspinfo, cycles );
+	if (_InitiateRSP_1_0)
+		_InitiateRSP_1_0(rspinfo, cycles);
 }
-void InitiateRSP_1_1( RSP_INFO_1_1 rspinfo, DWORD * cycles)
+void InitiateRSP_1_1(RSP_INFO_1_1 rspinfo, DWORD * cycles)
 {
-	if( _InitiateRSP_1_1 )
-		_InitiateRSP_1_1(rspinfo, cycles );
+	if (_InitiateRSP_1_1)
+		_InitiateRSP_1_1(rspinfo, cycles);
 }
 
 //
@@ -192,12 +191,9 @@ void InitializeRSP (void)
 	RspInfo10.DPC__TMEM_REG = &DPC_TMEM_REG;
 	RspInfo11.DPC__TMEM_REG = &DPC_TMEM_REG;
 	
-	if (RSPVersion == 0x0100) 
-	{ 
+	if (RSPVersion == 0x0100)  { 
 		InitiateRSP_1_0(RspInfo10, &RspTaskValue); 
-	}
-	else
-	{ 
+	} else { 
 		InitiateRSP_1_1(RspInfo11, &RspTaskValue); 
 	}
 #ifndef _DEBUG
@@ -210,64 +206,54 @@ BOOL LoadRSPPlugin(char * libname)
 	PLUGIN_INFO RSPPluginInfo;
 
 	hRSPHandle = LoadLibrary(libname);
-	if (hRSPHandle == NULL) 
-	{  
+	if (hRSPHandle == NULL)  {  
 		return FALSE; 
 	}
 
-	_RSP_GetDllInfo = (void (__cdecl *)(PLUGIN_INFO *))GetProcAddress( hRSPHandle, "GetDllInfo" );
-	if( _RSP_GetDllInfo == NULL) 
-	{ 
+	_RSP_GetDllInfo = (void (__cdecl *)(PLUGIN_INFO *))GetProcAddress(hRSPHandle, "GetDllInfo");
+	if (_RSP_GetDllInfo == NULL) { 
 		return FALSE; 
 	}
 
 	_RSP_GetDllInfo(&RSPPluginInfo);
 	RSPVersion = RSPPluginInfo.Version;
 
-	if(RSPPluginInfo.Type == PLUGIN_TYPE_RSP) /* Check if this is a video plugin */
-	{
-		if (RSPVersion == 1) 
-		{ 
+	if (RSPPluginInfo.Type == PLUGIN_TYPE_RSP) { /* Check if this is a video plugin */
+		if (RSPVersion == 1)  { 
 			RSPVersion = 0x0100; 
 		}
 
 		if (RSPVersion == 0x100) {
-			_InitiateRSP_1_0 = (void (__cdecl *)(RSP_INFO_1_0,DWORD *))GetProcAddress( hRSPHandle, "InitiateRSP" );
-		}
-		else
-		{
-			_InitiateRSP_1_1 = (void (__cdecl *)(RSP_INFO_1_1,DWORD *))GetProcAddress( hRSPHandle, "InitiateRSP" );
+			_InitiateRSP_1_0 = (void (__cdecl *)(RSP_INFO_1_0,DWORD *))GetProcAddress(hRSPHandle, "InitiateRSP");
+		} else {
+			_InitiateRSP_1_1 = (void (__cdecl *)(RSP_INFO_1_1,DWORD *))GetProcAddress(hRSPHandle, "InitiateRSP");
 		}
 
-		_DoRspCycles = (DWORD (__cdecl *)(DWORD))GetProcAddress( hRSPHandle, "DoRspCycles" );
-		_RSPRomClosed = (void (__cdecl *)(void))GetProcAddress( hRSPHandle, "RomClosed" );
-		_RSPCloseDLL = (void (__cdecl *)(void))GetProcAddress( hRSPHandle, "CloseDLL" );
-		_RSPDllConfig = (void (__cdecl *)(HWND))GetProcAddress( hRSPHandle, "DllConfig" );
-		_RSPDllAbout = (void (__cdecl *)(HWND))GetProcAddress( hRSPHandle, "DllAbout" );
+		_DoRspCycles = (DWORD (__cdecl *)(DWORD))GetProcAddress(hRSPHandle, "DoRspCycles");
+		_RSPRomClosed = (void (__cdecl *)(void))GetProcAddress(hRSPHandle, "RomClosed");
+		_RSPCloseDLL = (void (__cdecl *)(void))GetProcAddress(hRSPHandle, "CloseDLL");
+		_RSPDllConfig = (void (__cdecl *)(HWND))GetProcAddress(hRSPHandle, "DllConfig");
+		_RSPDllAbout = (void (__cdecl *)(HWND))GetProcAddress(hRSPHandle, "DllAbout");
 
-		if( _DoRspCycles == NULL	||
+		if (
+			_DoRspCycles == NULL	||
 			_RSPRomClosed == NULL	||
 			_RSPCloseDLL == NULL	||
 			_RSPDllConfig == NULL	||
-			( _InitiateRSP_1_0 == NULL && _InitiateRSP_1_1 == NULL ) )
-		{
+			(_InitiateRSP_1_0 == NULL && _InitiateRSP_1_1 == NULL)
+		) {
 			return FALSE;
-		}
-		else
-		{
+		} else {
 			return TRUE;
 		}
-	}
-	else
-	{
+	} else {
 		return FALSE;
 	}
 }
 
-void CloseRSPPlugin (void) 
+void CloseRSPPlugin(void)
 {
-	if (hRSPHandle != NULL) 
-	{ 
+	if (hRSPHandle != NULL) { 
 		RSPCloseDLL(); 
 		FreeLibrary(hRSPHandle);
 		hRSPHandle = NULL;

@@ -108,22 +108,19 @@ void FastPIMemoryCopy(void)
 	unsigned register __int32	source; /* = PIDMASourceMemory+PIDMASourceAddress; */
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(PIDMAInProgress == DMA_PI_WRITE && currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY)
-	{
+	if (PIDMAInProgress == DMA_PI_WRITE && currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY) {
 		Check_And_Invalidate_Compiled_Blocks_By_DMA(PIDMATargetAddress, PIDMALength, "PIDMA");
 	}
 	
 	target = (uint32) PMEM_READ_UWORD(PIDMATargetAddress);
 	source = (uint32) PMEM_READ_UWORD(PIDMASourceAddress);
 	
-	if((target & 3) == 0 && (source & 3) == 0 && (PIDMALength & 3) == 0)		/* DWORD align */
-	{
+	if ((target & 3) == 0 && (source & 3) == 0 && (PIDMALength & 3) == 0) { /* DWORD align */
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		int i = -(((__int32) PIDMALength) >> 2);
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-		__asm
-		{
+		__asm {
 			pushad
 			mov eax, i
 			mov edx, target
@@ -141,21 +138,14 @@ _Label :
 _Label2 :
 			popad
 		}
-	}
-
-	else if((target & 1) == 0 && (source & 1) == 0 && (PIDMALength & 1) == 0)	/* WORD align */
-	{
-		for(i = -(((__int32) PIDMALength) >> 1); i < 0; i++)
-		{
+	} else if ((target & 1) == 0 && (source & 1) == 0 && (PIDMALength & 1) == 0) { /* WORD align */
+		for (i = -(((__int32) PIDMALength) >> 1); i < 0; i++) {
 			*(uint16 *) (target ^ 2) = *(uint16 *) (source ^ 2);
 			target += 2;
 			source += 2;
 		}
-	}
-	else	/* not align */
-	{
-		for(i = -(__int32) PIDMALength; i < 0; i++) 
-		{
+	} else { /* not align */
+		for (i = -(__int32) PIDMALength; i < 0; i++) {
 			*(uint8 *) (target++ ^ 0x3) = *(uint8 *) (source++ ^ 0x3);
 		}
 	}
@@ -178,35 +168,28 @@ void DMA_PI_MemCopy_From_DRAM_To_Cart(void)
 	DEBUG_PI_DMA_MACRO(
 		TRACE4( "%08X: PI Copy RDRAM to CART  %d bytes %08X to %08X", gHWS_pc, PIDMALength, PIDMASourceAddress, PIDMATargetAddress);
 
-		if(PI_DRAM_ADDR_REG & 0x7)
-		{
+		if (PI_DRAM_ADDR_REG & 0x7) {
 			DisplayError("Warning, PI DMA, address does not align as requirement. RDRAM ADDR = %08X", PI_DRAM_ADDR_REG);
 		}
 
-		if((PIDMALength & 0x1) || (PI_CART_ADDR_REG & 0x1))
-		{
-			DisplayError
-				(
-					"Warning, PI DMA, need half word swap. RDRAM ADDR = %08X, CART ADDR=%08X, Len=%X",
-					PI_DRAM_ADDR_REG,
-					PI_CART_ADDR_REG,
-					PIDMALength
-				);
+		if ((PIDMALength & 0x1) || (PI_CART_ADDR_REG & 0x1)) {
+			DisplayError(
+				"Warning, PI DMA, need half word swap. RDRAM ADDR = %08X, CART ADDR=%08X, Len=%X",
+				PI_DRAM_ADDR_REG,
+				PI_CART_ADDR_REG,
+				PIDMALength
+			);
 		}
 	);
 
 	DEBUG_SRAM_TRACE(TRACE3( "SRAM/FLASHRAM or CART Write, %08X bytes %08X to %08X", PIDMALength, PIDMASourceAddress, PIDMATargetAddress));
 
-	if((PI_CART_ADDR_REG & 0x1F000000) == MEMORY_START_C2A2)	/* Flashram PI DMA read */
-	{
+	if ((PI_CART_ADDR_REG & 0x1F000000) == MEMORY_START_C2A2) { /* Flashram PI DMA read */
 		/* Tell flashram about this DMA event */
-		if(currentromoptions.Save_Type == FLASHRAM_SAVETYPE || gamesave.firstusedsavemedia == FLASHRAM_SAVETYPE)
-		{
+		if (currentromoptions.Save_Type == FLASHRAM_SAVETYPE || gamesave.firstusedsavemedia == FLASHRAM_SAVETYPE) {
 			/* No delay for Flashram DMA read */
 			DMA_RDRAM_To_Flashram(PIDMASourceAddress, PIDMATargetAddress, PIDMALength);
-		}
-		else
-		{
+		} else {
 			//FileIO_ReadFLASHRAM();
 			PIDMAInProgress = DMA_PI_READ;
 			//FastPIMemoryCopy();
@@ -218,29 +201,21 @@ void DMA_PI_MemCopy_From_DRAM_To_Cart(void)
 		return;
 	}
 
-	if(currentromoptions.DMA_Segmentation == USEDMASEG_YES && debug_opcode == 0	)
-	{
+	if (currentromoptions.DMA_Segmentation == USEDMASEG_YES && debug_opcode == 0) {
 		/* Setup DMA transfer in segments */
 		PIDMAInProgress = DMA_PI_READ;
 		DMAInProgress = TRUE;
 		CPUNeedToDoOtherTask = TRUE;
 
 		/* PI_STATUS_REG |= PI_STATUS_DMA_BUSY; // Set PI status register DMA busy */
-		PI_STATUS_REG |= PI_STATUS_DMA_IO_BUSY;					/* Set PI status register DMA busy */
+		PI_STATUS_REG |= PI_STATUS_DMA_IO_BUSY; /* Set PI status register DMA busy */
 		Set_PIDMA_Timer_Event(PIDMALength);
-	}
-	else
-	{
+	} else {
 		PIDMAInProgress = DMA_PI_READ;
-		__try
-		{
+		__try {
 			FastPIMemoryCopy();
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
-			TRACE3
-			(
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
+			TRACE3(
 				"Bad PI DMA: Source=%08X, Target=%08X. Len=%08X",
 				PIDMASourceAddress,
 				PIDMATargetAddress,
@@ -281,8 +256,7 @@ void DMA_PI_MemCopy_From_Cart_To_DRAM(void)
 			)
 	);
 
-	if(len & 0x1)
-	{
+	if (len & 0x1) {
 		TRACE4( "%08X: PI Copy CART to RDRAM %db from %08X to %08X", gHWS_pc, len, pi_cart_addr_reg|0xA0000000, pi_dram_addr_reg);
 		TRACE0("Warning, PI DMA, odd length");
 
@@ -291,32 +265,22 @@ void DMA_PI_MemCopy_From_Cart_To_DRAM(void)
 	}
 
 #ifdef DEBUG_COMMON
-	if(pi_dram_addr_reg & 0x7)
-	{
+	if (pi_dram_addr_reg & 0x7) {
 		TRACE1("Warning, PI DMA, address does not align as requirement. RDRAM ADDR = %08X", pi_dram_addr_reg);
 	}
 
-	if(pi_cart_addr_reg & 0x1)
-	{
+	if (pi_cart_addr_reg & 0x1) {
 		TRACE0("Warning, PI DMA, odd CARD address");
 	}
 
-	if(debugoptions.debug_sram)
-	{
-		if((pi_cart_addr_reg & 0x1F000000) == MEMORY_START_C2A1)
-		{
+	if (debugoptions.debug_sram) {
+		if ((pi_cart_addr_reg & 0x1F000000) == MEMORY_START_C2A1) {
 			TRACE0("Copy C2A1 (0x05000000) to RDRAM")
-		}
-		else if((pi_cart_addr_reg & 0x1F000000) == MEMORY_START_C1A1)
-		{
+		} else if ((pi_cart_addr_reg & 0x1F000000) == MEMORY_START_C1A1) {
 			TRACE0("Copy C1A1 (0x06000000) to RDRAM")
-		}
-		else if((pi_cart_addr_reg & 0x1F000000) == MEMORY_START_C2A2)
-		{
+		} else if ((pi_cart_addr_reg & 0x1F000000) == MEMORY_START_C2A2) {
 			TRACE3("DMA Flashram to RDRAM %d byte from %08X to %08X", len, PI_CART_ADDR_REG, PI_DRAM_ADDR_REG)
-		}
-		else if((pi_cart_addr_reg & 0x1FF00000) == MEMORY_START_C1A3)
-		{
+		} else if ((pi_cart_addr_reg & 0x1FF00000) == MEMORY_START_C1A3) {
 			TRACE0("Copy C1A3 (0x1FD00000) to RDRAM")
 		}
 	}
@@ -325,8 +289,7 @@ void DMA_PI_MemCopy_From_Cart_To_DRAM(void)
 	PIDMASourceAddress = pi_cart_addr_reg;
 	PIDMATargetAddress = pi_dram_addr_reg;
 
-	if(((PIDMATargetAddress & 0x1FFFFFFF) + len) > current_rdram_size)
-	{
+	if (((PIDMATargetAddress & 0x1FFFFFFF) + len) > current_rdram_size) {
 		DisplayError("Bad PI DMA address, PI DMA skipped");
 		Trigger_PIInterrupt();
 		return;
@@ -338,16 +301,13 @@ void DMA_PI_MemCopy_From_Cart_To_DRAM(void)
 	/*
 	** Self-Modify code detection
 	*/
-	if
-	(
-		emustatus.cpucore == DYNACOMPILER
-	&&	(
-			currentromoptions.Code_Check == CODE_CHECK_MEMORY_QWORD_AND_DMA
-		||	currentromoptions.Code_Check == CODE_CHECK_MEMORY_BLOCK_AND_DMA
-		||	currentromoptions.Code_Check == CODE_CHECK_DMA_ONLY
+	if (
+		emustatus.cpucore == DYNACOMPILER && (
+			currentromoptions.Code_Check == CODE_CHECK_MEMORY_QWORD_AND_DMA ||
+			currentromoptions.Code_Check == CODE_CHECK_MEMORY_BLOCK_AND_DMA ||
+			currentromoptions.Code_Check == CODE_CHECK_DMA_ONLY
 		)
-	)
-	{
+	) {
 		/* Clear Dynacomplied code */
 		{
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -359,71 +319,52 @@ void DMA_PI_MemCopy_From_Cart_To_DRAM(void)
 			i += (addr % 4);
 			addr += (addr % 4);
 
-			for(; i < 0; i += 4, addr += 4)
-			{
+			for (; i < 0; i += 4, addr += 4) {
 L1:
-				if(sDYN_PC_LOOKUP[((uint16) (addr >> 16))] != gMemoryState.dummyAllZero)
-				{
+				if (sDYN_PC_LOOKUP[((uint16) (addr >> 16))] != gMemoryState.dummyAllZero) {
 					/* Need to clear the Dyna marks in dynarommap, how to do it? */
-					if(*(uint32 *) (RDRAM_Copy + (addr & 0x007FFFFF)) != DUMMYOPCODE)
-					{
+					if (*(uint32 *) (RDRAM_Copy + (addr & 0x007FFFFF)) != DUMMYOPCODE) {
 						*(uint32 *) ((uint8 *) sDYN_PC_LOOKUP[((uint16) (addr >> 16))] + (uint16) addr) = 0;
 					}
-				}
-				else
-				{
+				} else {
 					/* exception only happens at 0x10000 boundary or at the beginning */
-					if(addr % 0x10000 == 0)
-					{
-						if(i + 0x10000 < 0)
-						{
+					if (addr % 0x10000 == 0) {
+						if (i + 0x10000 < 0) {
 							i += 0x10000;
 							addr += 0x10000;
 							goto L1;
-						}
-						else
+						} else {
 							break;
-					}
-					else if(i + addr % 0x10000 < 0)
-					{
+					} else if (i + addr % 0x10000 < 0) {
 						i += addr %
 						0x10000;
 						addr += (addr / 0x10000 + 1) *
 						0x10000;
 						goto L1;
-					}
-					else
+					} else {
 						break;
+					}
 				}
 			}
 		}
 	}
 
 	/* Check SRAM and/or FLASHRAM DMA Operation */
-	if((pi_cart_addr_reg & 0x1F000000) == MEMORY_START_C2A2)	/* Flashram PI DMA read */
-	{
-		if(currentromoptions.Save_Type == FLASHRAM_SAVETYPE || gamesave.firstusedsavemedia == FLASHRAM_SAVETYPE)
-		{
+	if ((pi_cart_addr_reg & 0x1F000000) == MEMORY_START_C2A2) { /* Flashram PI DMA read */
+		if (currentromoptions.Save_Type == FLASHRAM_SAVETYPE || gamesave.firstusedsavemedia == FLASHRAM_SAVETYPE) {
 			/*
 			 * No timing delay for flashram DMA write
 			 * Tell flashram about this DMA event
 			 */
 			DMA_Flashram_To_RDRAM(PIDMATargetAddress, PIDMASourceAddress, PIDMALength);
-		}
-		else
-		{
+		} else {
 			FileIO_ReadFLASHRAM(PIDMASourceAddress, PIDMATargetAddress, PIDMALength);
 			PIDMAInProgress = DMA_PI_WRITE;
 
-/*			__try
-			{
+/*			__try {
 				FastPIMemoryCopy();
-			}
-
-			__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-			{
-				TRACE3
-				(
+			} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
+				TRACE3(
 					"Bad PI DMA: Source=%08X, Target=%08X. Len=%08X",
 					PIDMASourceAddress,
 					PIDMATargetAddress,
@@ -439,12 +380,12 @@ L1:
 	}
 
 	/*
-	 * else if( ((PIDMASourceAddress&0x0FFFFFFF)+len) > gAllocationLength ) { len
-	 * gAllocationLength - (PIDMASourceAddress&0x0FFFFFFF); PIDMALength = len;
+	 * else if (((PIDMASourceAddress&0x0FFFFFFF)+len) > gAllocationLength) {
+	 * lengAllocationLength - (PIDMASourceAddress&0x0FFFFFFF);
+	 * PIDMALength = len;
 	 * TRACE1("Warning, DMA length is too long, trimmed, len=%d", len); }
 	 */
-	if(currentromoptions.DMA_Segmentation == USEDMASEG_YES && debug_opcode == 0)
-	{
+	if (currentromoptions.DMA_Segmentation == USEDMASEG_YES && debug_opcode == 0) {
 		/* Setup DMA transfer in segments */
 		PIDMAInProgress = DMA_PI_WRITE;
 		DMAInProgress = TRUE;
@@ -453,19 +394,12 @@ L1:
 		/* PI_STATUS_REG |= PI_STATUS_DMA_BUSY; */
 		PI_STATUS_REG |= PI_STATUS_DMA_IO_BUSY;
 		Set_PIDMA_Timer_Event(PIDMALength);
-	}
-	else
-	{
+	} else {
 		PIDMAInProgress = DMA_PI_WRITE;
-		__try
-		{
+		__try {
 			FastPIMemoryCopy();
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
-			TRACE3
-			(
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
+			TRACE3(
 				"Bad PI DMA: Source=%08X, Target=%08X. Len=%08X",
 				PIDMASourceAddress,
 				PIDMATargetAddress,
@@ -494,22 +428,19 @@ void DMA_MemCopy_DRAM_To_SP(int WasCalledByRSP)
 
 #ifdef DEBUG_COMMON
 	/* Check Half Word Alignment */
-	if(SP_DRAM_ADDR_REG & 0x7)
-	{
+	if (SP_DRAM_ADDR_REG & 0x7) {
 		/*
 		 * DisplayError("Warning, SP DMA, address does not align as requirement. RDRAM
 		 * ADDR = %08X", SPDMASourceAddress);
 		 */
-		TRACE2
-		(
+		TRACE2(
 			"Warning, SP DMA, address does not align as requirement, RDRAM ADDR = %08X, SP_MEM_ADDR_REG=%08X",
 			SP_DRAM_ADDR_REG,
 			SP_MEM_ADDR_REG
 		);
 	}
 
-	if(SP_MEM_ADDR_REG & 0x3)
-	{
+	if (SP_MEM_ADDR_REG & 0x3) {
 		/*
 		 * DisplayError("Warning, SP DMA, needs half word swap. RDRAM ADDR = %08X,
 		 * SP_MEM_ADDR_REG=%08X", SPDMASourceAddress, SPDMATargetAddress);
@@ -525,8 +456,7 @@ void DMA_MemCopy_DRAM_To_SP(int WasCalledByRSP)
 	SPDMALength = (SP_RD_LEN_REG & 0x00000FFF) +
 	1;	/* SP_RD_LEN_REG bit [0-11] is length to transfer */
 
-	if((currentromoptions.DMA_Segmentation == USEDMASEG_YES) && (!WasCalledByRSP))
-	{
+	if ((currentromoptions.DMA_Segmentation == USEDMASEG_YES) && (!WasCalledByRSP)) {
 		DEBUG_SP_DMA_TRACE0("SP DMA Starting");
 
 		/* Setup DMA transfer in segments */
@@ -550,11 +480,8 @@ void DMA_MemCopy_DRAM_To_SP(int WasCalledByRSP)
 		DMA_SP_Transfer_Target_Begin_Address = SPDMATargetAddress;
 		DMA_SP_Transfer_Count = (SP_RD_LEN_REG >> 12) & 0x000000FF; /* Bit [12-19] is for count */
 		Set_SPDMA_Timer_Event(SPDMALength);
-	}
-	else
-	{
-		__try
-		{
+	} else {
+		__try {
 //			//ignore IMEM for speed (if not using low-level RSP)
 //			if ((emuoptions.UsingRspPlugin == FALSE) && (sp_mem_addr_reg & 0x00001000))
 //				;
@@ -565,10 +492,7 @@ void DMA_MemCopy_DRAM_To_SP(int WasCalledByRSP)
 				&gMS_RDRAM[SP_DRAM_ADDR_REG & 0x00FFFFFF],
 				SPDMALength
 			);
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 			DisplayError("Bad SP DMA copy");
 		}
 
@@ -599,28 +523,24 @@ void DMA_MemCopy_SP_to_DRAM(int WasCalledByRSP)
 	/*~~~~~~~~~~~~*/
 
 #ifdef DEBUG_SP_DMA
-	if(debugoptions.debug_sp_dma)
-	{
+	if (debugoptions.debug_sp_dma) {
 		TRACE3("SP DMA Write %d bytes from %08X to %08X", SP_WR_LEN_REG + 1, SP_MEM_ADDR_REG, SP_DRAM_ADDR_REG);
 	}
 
 	/* Check Half Word Alignment */
-	if(SP_DRAM_ADDR_REG & 0x7)
-	{
+	if (SP_DRAM_ADDR_REG & 0x7) {
 		/*
 		 * DisplayError("Warning, SP DMA, address does not align as required. RDRAM
 		 * ADDR = %08X", SP_DRAM_ADDR_REG);
 		 */
-		TRACE2
-		(
+		TRACE2(
 			"Warning, SP DMA, address does not align as requirementRDRAM ADDR = %08X, SP_MEM_ADDR_REG=%08X",
 			SP_DRAM_ADDR_REG,
 			SP_MEM_ADDR_REG
 		);
 	}
 
-	if(SP_MEM_ADDR_REG & 0x3)
-	{
+	if (SP_MEM_ADDR_REG & 0x3) {
 		/*
 		 * DisplayError("Warning, SP DMA, need half word swap. RDRAM ADDR = %08X,
 		 * SP_MEM_ADDR_REG=%08X", SP_DRAM_ADDR_REG, SP_MEM_ADDR_REG);
@@ -635,8 +555,7 @@ void DMA_MemCopy_SP_to_DRAM(int WasCalledByRSP)
 #endif
 	SPDMALength = (SP_WR_LEN_REG & 0x00000FFF) + 1;	/* SP_RD_LEN_REG bit [0-11] is length to transfer */
 
-	if((currentromoptions.DMA_Segmentation == USEDMASEG_YES) && (!WasCalledByRSP))
-	{
+	if ((currentromoptions.DMA_Segmentation == USEDMASEG_YES) && (!WasCalledByRSP)) {
 		DEBUG_SP_DMA_TRACE0("SP DMA Starting");
 
 		/* Setup DMA transfer in segments */
@@ -657,9 +576,7 @@ void DMA_MemCopy_SP_to_DRAM(int WasCalledByRSP)
 		DMA_SP_Transfer_Target_Begin_Address = SPDMATargetAddress;
 		DMA_SP_Transfer_Count = (SP_RD_LEN_REG >> 12) & 0x000000FF; /* Bit [12-19] is for count */
 		Set_SPDMA_Timer_Event(SPDMALength);
-	}
-	else
-	{
+	} else {
 		segment = (uint16) (SP_MEM_ADDR_REG >> 16);
 
 		memcpy
@@ -698,8 +615,7 @@ void Do_DMA_MemCopy_SI_To_DRAM(void)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	/* Check Half Word Alignment */
-	if(SI_DRAM_ADDR_REG & 0x7)
-	{
+	if (SI_DRAM_ADDR_REG & 0x7) {
 		TRACE1("Warning, SI DMA is skipped, address does not align. RDRAM ADDR = %08X", SI_DRAM_ADDR_REG);
 
 		/* Skip this DMA */
@@ -711,8 +627,7 @@ void Do_DMA_MemCopy_SI_To_DRAM(void)
 
 	DEBUG_SI_DMA_TRACE0("Doing actual SI DMA Read");
 
-	if(currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY)
-	{
+	if (currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY) {
 		Check_And_Invalidate_Compiled_Blocks_By_DMA(si_dram_addr_reg | 0x80000000, 64, "SIDMA");
 	}
 
@@ -721,8 +636,7 @@ void Do_DMA_MemCopy_SI_To_DRAM(void)
 	PIF_RAM_PHYS_addr = (uint32) (&gMS_PIF[PIF_RAM_PHYS]);	/* From */
 	RDRAM_addr = (uint32) & gMS_RDRAM[0];					/* To */
 
-	_asm
-	{
+	_asm {
 		mov edi, RDRAM_addr
 		add edi, si_dram_addr_reg
 		mov ecx, PIF_RAM_PHYS_addr
@@ -781,8 +695,7 @@ void Do_DMA_MemCopy_SI_To_DRAM(void)
  */
 void DMA_MemCopy_SI_To_DRAM(void)
 {
-	if(currentromoptions.DMA_Segmentation == USEDMASEG_YES && debug_opcode == 0)
-	{
+	if (currentromoptions.DMA_Segmentation == USEDMASEG_YES && debug_opcode == 0) {
 		DEBUG_SI_DMA_TRACE0("SI DMA Read Start");
 
 		DMAInProgress = TRUE;
@@ -796,9 +709,7 @@ void DMA_MemCopy_SI_To_DRAM(void)
 		/* Set SI DMA Busy */
 		SI_STATUS_REG |= SI_STATUS_DMA_BUSY;
 		Set_SIDMA_Timer_Event(64);
-	}
-	else
-	{
+	} else {
 		Do_DMA_MemCopy_SI_To_DRAM();
 	}
 }
@@ -817,8 +728,7 @@ void Do_DMA_MemCopy_DRAM_to_SI(void)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	/* Check Half Word Alignment */
-	if(SI_DRAM_ADDR_REG & 0x7)
-	{
+	if (SI_DRAM_ADDR_REG & 0x7) {
 		TRACE1("Warning, SI DMA is skipped, address does not align. RDRAM ADDR = %08X", SI_DRAM_ADDR_REG);
 
 		/* Skip this DMA */
@@ -831,8 +741,7 @@ void Do_DMA_MemCopy_DRAM_to_SI(void)
 
 	PIF_RAM_PHYS_addr = (uint32) (&gMS_PIF[PIF_RAM_PHYS]);
 	RDRAM_addr = (uint32) & gMS_RDRAM[0];
-	_asm
-	{
+	_asm {
 		mov edi, PIF_RAM_PHYS_addr	/* PifRamPos */
 		mov ecx, RDRAM_addr
 		add ecx, si_dram_addr_reg
@@ -892,8 +801,7 @@ void Do_DMA_MemCopy_DRAM_to_SI(void)
  */
 void DMA_MemCopy_DRAM_to_SI(void)
 {
-	if(currentromoptions.DMA_Segmentation == USEDMASEG_YES && debug_opcode == 0)
-	{
+	if (currentromoptions.DMA_Segmentation == USEDMASEG_YES && debug_opcode == 0) {
 		DEBUG_SI_DMA_TRACE0("SI DMA Write Start");
 
 		/* Setup DMA transfer in segments */
@@ -907,9 +815,7 @@ void DMA_MemCopy_DRAM_to_SI(void)
 		/* Set SI DMA Busy */
 		SI_STATUS_REG |= SI_STATUS_DMA_BUSY;
 		Set_SIDMA_Timer_Event(64);
-	}
-	else
-	{
+	} else {
 		Do_DMA_MemCopy_DRAM_to_SI();
 	}
 }
@@ -948,13 +854,9 @@ void DoDMASegment(void)
  */
 void DoPIDMASegment(void)
 {
-	__try
-	{
+	__try {
 		FastPIMemoryCopy();
-	}
-
-	__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-	{
+	} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		TRACE3("Bad PI DMA: Source=%08X, Target=%08X. Len=%08X", PIDMASourceAddress, PIDMATargetAddress, PIDMALength)
 	}
 
@@ -975,20 +877,14 @@ void DoPIDMASegment(void)
 void DoSPDMASegment(void)
 {
 	/* PI DMA Transfer finished */
-	__try
-	{
-		if(SPDMAInProgress == DMA_SP_WRITE)
-		{
-			
-			memcpy
-			(
+	__try {
+		if (SPDMAInProgress == DMA_SP_WRITE) {
+			memcpy(
 				&gMS_RDRAM[SP_DRAM_ADDR_REG & 0x00FFFFFF],
 				&gMS_SP_MEM[(SP_MEM_ADDR_REG & 0x1FFF) >> 2],
 				(SP_WR_LEN_REG) + 1
 			);
-		}
-		else
-		{
+		} else {
 //			//ignore IMEM for speed (if not using low-level RSP)
 //			if ((emuoptions.UsingRspPlugin == FALSE) && (SP_MEM_ADDR_REG & 0x00001000))
 //			{
@@ -996,17 +892,13 @@ void DoSPDMASegment(void)
 //			}
 //			else
 						
-			memcpy
-			(
+			memcpy(
 				&gMS_SP_MEM[(SP_MEM_ADDR_REG & 0x1FFF) >> 2],
 				&gMS_RDRAM[SP_DRAM_ADDR_REG & 0x00FFFFFF],
 				SPDMALength
 			);
 		}
-	}
-
-	__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-	{
+	} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		DisplayError("Bad SP DMA copy");
 	}
 
@@ -1031,15 +923,12 @@ void DoSPDMASegment(void)
 void DoSIDMASegment(void)
 {
 	SI_DRAM_ADDR_REG = saved_si_dram_addr_reg;
-	if(SIDMAInProgress == DMA_SI_READ)
-	{
+	if (SIDMAInProgress == DMA_SI_READ) {
 		Do_DMA_MemCopy_DRAM_to_SI();
 		DEBUG_SI_DMA_TRACE0("SI DMA Read Finished");
 		SI_STATUS_REG |= SI_STATUS_RD_BUSY; /* Set SI is busy doing IO */
 		Set_SI_IO_Timer_Event(SI_IO_DELAY); /* this value is important, cannot be too large */
-	}
-	else	/* SIDMAInProgress == DMA_SI_WRITE */
-	{
+	} else { /* SIDMAInProgress == DMA_SI_WRITE */
 		Do_DMA_MemCopy_SI_To_DRAM();
 		DEBUG_SI_DMA_TRACE0("SI DMA Write Finished");
 	}
@@ -1055,7 +944,8 @@ void DoSIDMASegment(void)
  */
 void DynDoDMASegment(void)
 {
-	if(DMAInProgress) DoDMASegment();
+	if (DMAInProgress)
+		DoDMASegment();
 }
 
 /*

@@ -12,8 +12,7 @@
  =======================================================================================================================
  */
 
-typedef struct
-{
+typedef struct {
 	unsigned __int16	max_player;
 	unsigned __int16	DLL_Version;
 	char				DLL_Name[50];
@@ -29,7 +28,7 @@ typedef enum {
 	REMOTE_PLAYER_DISCONECTED ,
 } PlayerStatus ;
 
-typedef enum{
+typedef enum {
 	NETPLAY_OPTIONS,
 	NETPLAY_USER_MANAGEMENT,
 	NETPLAY_NETWORK_MANAGEMENT,

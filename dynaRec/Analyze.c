@@ -27,8 +27,7 @@
 #include "../Compiler.h"
 #include "regcache.h"
 
-typedef enum
-{
+typedef enum {
 	I		= 1,	/* Immediate type. Uses rs, rt */
 	R,				/* Register type. */
 	B,				/* Branch type. Terminator. */
@@ -381,11 +380,11 @@ void Reorder_Instructions_In_Block(void)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	/* return; */
-	if(ITLB_Error) return;
+	if (ITLB_Error)
+		return;
 
 	memset(Instruction_Order, 0, sizeof(Instruction_Order));			/* Todo: memset only by previous block size!. */
-	for(k = 0; !EndOfBlock; gHWS_pc += 4, k++)
-	{
+	for (k = 0; !EndOfBlock; gHWS_pc += 4, k++) {
 		/* level1: */
 		Instruction[0] = DynaFetchInstruction2(gHWS_pc + (Instruction_Order[k] << 2));
 		Instruction_Format[0] = Get_Instruction_Format[Instruction[0] >> 26](Instruction[0]);
@@ -394,23 +393,17 @@ void Reorder_Instructions_In_Block(void)
 		rd[1] = 101;
 		rd[2] = 102;
 
-		switch(Instruction_Format[0])
-		{
+		switch (Instruction_Format[0]) {
 		case R:
 		case I:
 		case SH:
-			if(Instruction_Format[0] == I)
-			{
+			if (Instruction_Format[0] == I) {
 				rt[0] = Get_RT_FT(Instruction[0]);						/* Target */
 				rs[0] = Get_RS_BASE_FMT(Instruction[0]);				/* Source */
-			}
-			else if(Instruction_Format[0] == SH)
-			{
+			} else if (Instruction_Format[0] == SH) {
 				rt[0] = Get_RD_FS(Instruction[0]);						/* Target */
 				rs[0] = Get_RT_FT(Instruction[0]);						/* Source */
-			}
-			else if(Instruction_Format[0] == R)
-			{
+			} else if (Instruction_Format[0] == R) {
 				rt[0] = Get_RD_FS(Instruction[0]);						/* Target */
 				rs[0] = Get_RS_BASE_FMT(Instruction[0]);				/* Source */
 				rd[0] = Get_RT_FT(Instruction[0]);						/* Operand2 */
@@ -419,52 +412,40 @@ void Reorder_Instructions_In_Block(void)
 			/* level2: */
 			Instruction[1] = DynaFetchInstruction2(gHWS_pc + 4 + (Instruction_Order[k + 1] << 2));
 			Instruction_Format[1] = Get_Instruction_Format[Instruction[1] >> 26](Instruction[1]);
-			switch(Instruction_Format[1])
-			{
+			switch (Instruction_Format[1]) {
 			case R:
 			case I:
 			case SH:
-				if(Instruction_Format[1] == I)
-				{
+				if (Instruction_Format[1] == I) {
 					rt[1] = Get_RT_FT(Instruction[1]);					/* Target */
 					rs[1] = Get_RS_BASE_FMT(Instruction[1]);			/* Source */
-				}
-				else if(Instruction_Format[1] == SH)
-				{
+				} else if (Instruction_Format[1] == SH) {
 					rt[1] = Get_RD_FS(Instruction[1]);					/* Target */
 					rs[1] = Get_RT_FT(Instruction[1]);					/* Source */
-				}
-				else if(Instruction_Format[1] == R)
-				{
+				} else if (Instruction_Format[1] == R) {
 					rt[1] = Get_RD_FS(Instruction[1]);					/* Target */
 					rs[1] = Get_RS_BASE_FMT(Instruction[1]);			/* Source */
 					rd[1] = Get_RT_FT(Instruction[1]);					/* Operand2 */
 				}
 
-				if(rt[0] != rt[1]) Unoptimized |= NOT_PAIRED;
+				if (rt[0] != rt[1])
+					Unoptimized |= NOT_PAIRED;
 
-				if(Unoptimized)
-				{
+				if (Unoptimized) {
 					/* level3: */
 					Instruction[2] = DynaFetchInstruction2(gHWS_pc + 8 + (Instruction_Order[k + 2] << 2));
 					Instruction_Format[2] = Get_Instruction_Format[Instruction[2] >> 26](Instruction[2]);
-					switch(Instruction_Format[2])
-					{
+					switch (Instruction_Format[2]) {
 					case I:
 					case SH:
 					case R:
-						if(Instruction_Format[2] == I)
-						{
+						if (Instruction_Format[2] == I) {
 							rt[2] = Get_RT_FT(Instruction[2]);			/* Target */
 							rs[2] = Get_RS_BASE_FMT(Instruction[2]);	/* Source */
-						}
-						else if(Instruction_Format[2] == SH)
-						{
+						} else if (Instruction_Format[2] == SH) {
 							rt[2] = Get_RD_FS(Instruction[2]);			/* Target */
 							rs[2] = Get_RT_FT(Instruction[2]);			/* Source */
-						}
-						else if(Instruction_Format[2] == R)
-						{
+						} else if (Instruction_Format[2] == R) {
 							rt[2] = Get_RD_FS(Instruction[2]);			/* Target */
 							rs[2] = Get_RS_BASE_FMT(Instruction[2]);	/* Source */
 							rd[2] = Get_RT_FT(Instruction[2]);			/* Operand2 */
@@ -475,19 +456,17 @@ void Reorder_Instructions_In_Block(void)
 						 * Check for no conflict in previous instruction(s)
 						 */
 						{
-							if
-							(
-								(rt[2] == rt[0])
-							&&	(rd[2] != rd[1])
-							&&	(rd[2] != rs[1])
-							&&	(rd[2] != rt[1])
-							&&	(rs[2] != rd[1])
-							&&	(rs[2] != rt[1])
-							&&	(rt[2] != rd[1])
-							&&	(rt[2] != rs[1])
-							&&	(rt[2] != rt[1])
-							)
-							{
+							if (
+								(rt[2] == rt[0]) &&
+								(rd[2] != rd[1]) &&
+								(rd[2] != rs[1]) &&
+								(rd[2] != rt[1]) &&
+								(rs[2] != rd[1]) &&
+								(rs[2] != rt[1]) &&
+								(rt[2] != rd[1]) &&
+								(rt[2] != rs[1]) &&
+								(rt[2] != rt[1])
+							) {
 								/* swap. */
 								Instruction_Order[k + 2] = Instruction_Order[k + 1] - 1;
 								Instruction_Order[k + 1] += 1;
@@ -534,20 +513,19 @@ void AnalyzeBlock(void)
 	_int32	k;
 	/*~~~~~~~~~~~~~~~~~~~~~*/
 
-	for(k = 33; k >= 0; k--)
-	{
+	for (k = 33; k >= 0; k--) {
 		ConstMap[k].FinalAddressUsedAt = 0xffffffff;
 	}
 
-	if(ITLB_Error) return;
+	if (ITLB_Error)
+		return;
 
 //	/*
 //	 * Rice: This is still in development, but you can uncomment the next line to try
 //	 * it out. It's cool. So far only a few games work with it (somewhat).
 //	 Reorder_Instructions_In_Block();
 //	 */
-	while(!EndOfBlock)
-	{
+	while (!EndOfBlock) {
 		/*~~~~~~~*/
 		int opcode;
 		/*~~~~~~~*/
@@ -555,121 +533,86 @@ void AnalyzeBlock(void)
 _start:
 		Instruction = DynaFetchInstruction2(gHWS_pc);
 		opcode = _OPCODE_;
-		if((opcode >= 4) && (opcode <= 7))						/* beq, bne, blez, bgtz */
-		{
+		if ((opcode >= 4) && (opcode <= 7)) { /* beq, bne, blez, bgtz */
 			/* it is assumed that more times than not, delay slots will be executed. */
-			if(!EndOfBlock)
-			{
+			if (!EndOfBlock) {
 				ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
 				ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
 				gHWS_pc += 4;
 				EndOfBlock = 1;
 				goto _start;
 			}
-		}
-		else if((opcode >= 20) && (opcode <= 23))				/* beql, bnel, blezl, bgtzl */
-		{
+		} else if ((opcode >= 20) && (opcode <= 23)) { /* beql, bnel, blezl, bgtzl */
 			/* it is assumed that more times than not, delay slots will be executed. */
-			if(!EndOfBlock)
-			{
+			if (!EndOfBlock) {
 				ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
 				ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
 				gHWS_pc += 4;
 				EndOfBlock = 1;
 				goto _start;
 			}
-		}
-		else if((opcode == 2) || (opcode == 3))
-		{
+		} else if ((opcode == 2) || (opcode == 3)) {
 			/* delay slots always executed. */
-			if(!EndOfBlock)
-			{
+			if (!EndOfBlock) {
 				gHWS_pc += 4;
 				EndOfBlock = 1;
 				goto _start;
 			}
-		}
-		else if(opcode == 15)
+		} else if (opcode == 15) {
 			ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
-		else if(opcode >= 32 && opcode <= 49)					/* load/stores */
-		{
+		} else if (opcode >= 32 && opcode <= 49) { /* load/stores */
 			ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
 			ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
-		}
-		else if(opcode >= 52 && opcode <= 63)					/* load/stores */
-		{
+		} else if (opcode >= 52 && opcode <= 63) { /* load/stores */
 			ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
 			ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
-		}
-		else if(opcode >= 8 && opcode < 15)						/* imm type */
-		{
+		} else if (opcode >= 8 && opcode < 15) { /* imm type */
 			ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
 			ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
-		}
-		else if(opcode == 17)									/* COP1 */
-		{
+		} else if (opcode == 17) { /* COP1 */
 			/* do nothing */
-		}
-		else
-		{
-			switch(opcode)
-			{
+		} else {
+			switch (opcode) {
 			case 0:
 				fmt = Instruction & 0x1f;
-				if((fmt >= 40) && (fmt <= 47))					/* gates */
-				{
+				if ((fmt >= 40) && (fmt <= 47)) { /* gates */
 					ConstMap[RD_FS].FinalAddressUsedAt = gHWS_pc;
 					ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
 					ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
-				}
-				else if((fmt == 0) || (fmt == 2) || (fmt == 3)) /* sll, srl, sra */
-				{
-					if(Instruction != 0)
-					{
+				} else if ((fmt == 0) || (fmt == 2) || (fmt == 3)) { /* sll, srl, sra */
+					if (Instruction != 0) {
 						ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
 						ConstMap[RD_FS].FinalAddressUsedAt = gHWS_pc;
 					}
-				}
-				else if((fmt == 4) || (fmt == 6) || (fmt == 7)) /* sllv, srlv, srav */
-				{
+				} else if ((fmt == 4) || (fmt == 6) || (fmt == 7)) { /* sllv, srlv, srav */
 					ConstMap[RD_FS].FinalAddressUsedAt = gHWS_pc;
 					ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
 					ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
-				}
-				else if((fmt == 25)||(fmt==26)||(fmt==29)||(fmt==31)) /* div, divu, dmultu, ddivu*/
-				{
+				} else if ((fmt == 25) || (fmt == 26) || (fmt == 29) || (fmt == 31)) { /* div, divu, dmultu, ddivu*/
 					ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
 					ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
-				}
-
-				else if((fmt == 18)) /* mflo */
-				{
+				} else if ((fmt == 18)) { /* mflo */
 					ConstMap[RD_FS].FinalAddressUsedAt = gHWS_pc;
 					ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
-				}
-				
-				else if ((fmt==10)||(fmt==11)||(fmt==5)||(fmt==1))
-				{
+				} else if ((fmt == 10) || (fmt == 11) || (fmt == 5) || (fmt == 1)) {
 					//unused. do nothing.
-				}
-				else if ((fmt==8)||(fmt==9)) //jal, jalr
-				{
-					if(EndOfBlock) break;
+				} else if ((fmt == 8) || (fmt == 9)) { //jal, jalr
+					if (EndOfBlock)
+						break;
 					ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
 					gHWS_pc += 4;
 					EndOfBlock = 1;
 					goto _start;
 					break;
-				}
-				else
-				{
+				} else {
 					//error("%d", fmt);
 					goto _invalidate;
 				}
 				break;
 			case 1: /* Regimm Instructions */
 				/* it is assumed that more times than not, delay slots will be executed. */
-				if(EndOfBlock) break;
+				if (EndOfBlock)
+					break;
 				ConstMap[RS_BASE_FMT].FinalAddressUsedAt = gHWS_pc;
 				ConstMap[RT_FT].FinalAddressUsedAt = gHWS_pc;
 				gHWS_pc += 4;
@@ -689,9 +632,8 @@ _start:
 			default:
 _invalidate:
 				/* DisplayError("%d %d", opcode, fmt); */
-				if(!EndOfBlock)
-					for(k = 33; k >= 0; k--)
-					{
+				if (!EndOfBlock)
+					for (k = 33; k >= 0; k--) {
 						ConstMap[k].FinalAddressUsedAt = 0xFFFFFFFF;
 					}
 

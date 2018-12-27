@@ -57,8 +57,7 @@ struct GUISTATUS	guistatus;
 
 int					ActiveApp;
 
-unsigned int		cfmenulist[8] =
-{
+unsigned int cfmenulist[8] = {
 	ID_CF_CF1,
 	ID_CF_CF2,
 	ID_CF_CF3,
@@ -69,8 +68,7 @@ unsigned int		cfmenulist[8] =
 	ID_CF_CF8
 };
 
-unsigned int		codecheckmenulist[8] =
-{
+unsigned int codecheckmenulist[8] = {
 	ID_CPU_DYNACODECHECKING_NOCHECK,
 	ID_CPU_DYNACODECHECKING_DMA,
 	ID_CPU_DYNACODECHECKING_DWORD,
@@ -132,47 +130,33 @@ void					DisableNetplayMemu();
  */
 void CALLBACK TimerProc(HWND hwnd, UINT uMsg, UINT idEvent, DWORD dwTime)
 {
-	if(Rom_Loaded)
-	{
-		if(emustatus.Emu_Is_Running)
-		{
-			if(!emustatus.Emu_Is_Paused)
-			{
-				if(GetVersion() < 0x80000000)	/* Windows NT */
-				{
+	if (Rom_Loaded) {
+		if (emustatus.Emu_Is_Running) {
+			if (!emustatus.Emu_Is_Paused) {
+				if (GetVersion() < 0x80000000) { /* Windows NT */
 					vips = (vips * 0.5f + 0.5f * viCountePerSecond);
-				}
-				else
-				{
+				} else {
 					vips = (vips * 0.8f + 0.2f * viCountePerSecond);
 				}
 
-				if(vips >= 100.0)
-				{
+				if (vips >= 100.0) {
 					sprintf(generalmessage, "%3d VI/s", (int) vips);
-				}
-				else
-				{
+				} else {
 					sprintf(generalmessage, "%3.1f VI/s", vips);
 				}
 
 				viCountePerSecond = 0;
 				QueryPerformanceCounter(&LastSecondTime);
 
-				if( guistatus.IsFullScreen == FALSE )
-				{
+				if (guistatus.IsFullScreen == FALSE) {
 					SetStatusBarText(1, generalmessage);
 
-					if(guioptions.display_profiler_status)
-					{
+					if (guioptions.display_profiler_status) {
 						format_profiler_result_msg(generalmessage);
 						reset_profiler();
 						SetStatusBarText(0, generalmessage);
-					}
-					else if(guioptions.display_detail_status)
-					{
-						sprintf
-							(
+					} else if (guioptions.display_detail_status) {
+						sprintf(
 							generalmessage,
 							"PC=%08x, DList=%d, AList=%d, PI=%d, Cont=%d",
 							gHWS_pc,
@@ -186,8 +170,7 @@ void CALLBACK TimerProc(HWND hwnd, UINT uMsg, UINT idEvent, DWORD dwTime)
 				}
 
 				/* Apply the hack codes */
-				if(emuoptions.auto_apply_cheat_code)
-				{
+				if (emuoptions.auto_apply_cheat_code) {
 #ifndef CHEATCODE_LOCK_MEMORY
 					CodeList_ApplyAllCode(INGAME);
 #endif
@@ -199,17 +182,15 @@ void CALLBACK TimerProc(HWND hwnd, UINT uMsg, UINT idEvent, DWORD dwTime)
 
 LRESULT APIENTRY PropertyPagesProc(HWND hDlg, unsigned message, WORD wParam, LONG lParam)
 {
-	switch(message)
-	{
+	switch (message) {
 	case WM_INITDIALOG:
-		return(TRUE);
+		return (TRUE);
 	
 	case WM_NOTIFY:
 		{
 		LPNMHDR lpnm = (LPNMHDR) lParam;
 
-        switch (lpnm->code)
-            {
+        switch (lpnm->code) {
 			case PSN_APPLY:
 				EndDialog(lpnm->hwndFrom, TRUE);
 				break;
@@ -221,7 +202,7 @@ LRESULT APIENTRY PropertyPagesProc(HWND hDlg, unsigned message, WORD wParam, LON
 			}
 		}
 	}
-	return(FALSE);
+	return (FALSE);
 }
 
 
@@ -298,7 +279,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmd
 	MSG msg;
 	/*~~~~*/
 
-	if(hPrevInstance) return FALSE;
+	if (hPrevInstance)
+		return FALSE;
 	SaveCmdLineParameter(lpszCmdLine);
 
 	gui.szBaseWindowTitle = "1964 0.8.5";
@@ -332,8 +314,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmd
 	ReadConfiguration();			/* System registry settings */
 
 	gui.hwnd1964main = InitWin98UI(hInstance, nCmdShow);
-	if(gui.hwnd1964main == NULL)
-	{
+	if (gui.hwnd1964main == NULL) {
 		DisplayError("Could not get a windows handle.");
 		exit(1);
 	}
@@ -345,8 +326,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmd
 		Loading Netplay DLL, this must be done after loading the controller DLL because
 		netplay DLL will be using the controller DLL
 	*/
-	if( load_netplay_dll() == FALSE )
-	{
+	if (load_netplay_dll() == FALSE) {
 		DisableNetplayMemu();
 	}
 
@@ -355,12 +335,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmd
 	DeleteMenu(gui.hMenu1964main, ID_OPCODEDEBUGGER_BLOCK_ONLY, MF_BYCOMMAND);
 	DeleteMenu(gui.hMenu1964main, ID_DIRTYONLY, MF_BYCOMMAND);
 #else
-	if(debug_opcode!=0)
-	{
+	if (debug_opcode != 0) {
 		CheckMenuItem(gui.hMenu1964main, ID_OPCODEDEBUGGER, MF_CHECKED);
-	}
-	else
-	{
+	} else {
 		CheckMenuItem(gui.hMenu1964main, ID_OPCODEDEBUGGER, MF_UNCHECKED);
 	}
 #endif
@@ -400,8 +377,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmd
 	ShowWindow(gui.hwnd1964main, SW_SHOW);
 	UpdateWindow(gui.hwnd1964main);
 	
-	if(guistatus.WindowIsMaximized)
-	{
+	if (guistatus.WindowIsMaximized) {
 		ShowWindow(gui.hwnd1964main, SW_SHOWMAXIMIZED);
 	}
 	
@@ -409,20 +385,14 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmd
 	r4300i_Init();
 	timer = SetTimer(gui.hwnd1964main, 1, 1000, TimerProc);
 
-/*	if( emuoptions.UsingRspPlugin )
-	{
+/*	if (emuoptions.UsingRspPlugin) {
 		EnableMenuItem(gui.hMenu1964main, ID_RSP_CONFIG, MF_ENABLED);
-	}
-	else
-	{
+	} else {
 		EnableMenuItem(gui.hMenu1964main, ID_RSP_CONFIG, MF_GRAYED);
 	}
 */	
-	if( StartGameByCommandLine() )
-	{
-	}
-	else
-	{
+	if (StartGameByCommandLine()) {
+	} else {
 		NeedFreshromListAfterStop = FALSE;
 		NewRomList_ListViewChangeWindowRect();
 		DockStatusBar();
@@ -435,10 +405,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmd
 	}
 	guistatus.block_menu = FALSE;	/* allow menu commands */
 
-	if(guioptions.show_critical_msg_window)
-	{
-		if(gui.hCriticalMsgWnd == NULL)
-		{
+	if (guioptions.show_critical_msg_window) {
+		if (gui.hCriticalMsgWnd == NULL) {
 			gui.hCriticalMsgWnd = CreateDialog(gui.hInst, "CRITICAL_MESSAGE", NULL, (DLGPROC) CriticalMessageDialog);
 			SetActiveWindow(gui.hwnd1964main);
 		}
@@ -449,16 +417,12 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmd
 
 
 _HOPPITY:
-	if(GetMessage(&msg, NULL, 0, 0))
-	{
-		if(!TranslateAccelerator(gui.hwnd1964main, gui.hAccTable, &msg))
-		{
+	if (GetMessage(&msg, NULL, 0, 0)) {
+		if (!TranslateAccelerator(gui.hwnd1964main, gui.hAccTable, &msg)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-	}
-	else
-	{
+	} else {
 		return msg.wParam;
 	}
 
@@ -507,16 +471,16 @@ HWND InitWin98UI(HANDLE hInstance, int nCmdShow)
 
 	ShowWindow(gui.hToolBar, SW_SHOW);
 
-	if(gui.hwnd1964main == NULL)
-	{
+	if (gui.hwnd1964main == NULL) {
 		MessageBox(NULL, "CreateWindow() failed: Cannot create a window.", "Error", MB_OK);
-		return(NULL);
+		return (NULL);
 	}
 
 	gui.hAccTable = LoadAccelerators(gui.hInst, (LPCTSTR) WINGUI_ACC);
 	gui.hMenu1964main = GetMenu(gui.hwnd1964main);
 
-	if(!IsKailleraDllLoaded()) EnableMenuItem(gui.hMenu1964main, ID_KAILLERA_MODE, MF_GRAYED);
+	if (!IsKailleraDllLoaded())
+		EnableMenuItem(gui.hMenu1964main, ID_KAILLERA_MODE, MF_GRAYED);
 
 	return gui.hwnd1964main;
 }
@@ -526,11 +490,10 @@ void ProcessMenuCommand(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int PlayButtonState; //For pause/Play	
 	
-	if(guistatus.block_menu)
+	if (guistatus.block_menu)
 			return; /* ok, all menu commands are blocked */
 
-		switch(LOWORD(wParam))
-		{
+		switch (LOWORD(wParam)) {
 		case ID_ROM_STOP:
 		case ID_BUTTON_STOP:
 			CloseROM();
@@ -544,12 +507,9 @@ void ProcessMenuCommand(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_ROM_PAUSE:
 			ChangeButtonState(ID_BUTTON_PAUSE);
 			PlayButtonState = ChangeButtonState(ID_BUTTON_PLAY);
-			if((PlayButtonState &0x01) != TBSTATE_CHECKED)
-			{
+			if ((PlayButtonState &0x01) != TBSTATE_CHECKED) {
 				PauseEmulator();
-			}
-			else
-			{
+			} else {
 				ResumeEmulator(DO_NOTHING_AFTER_PAUSE);
 			}
 			break;
@@ -651,16 +611,13 @@ void ProcessMenuCommand(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_FILE_CHEAT:
 			if (!guistatus.IsFullScreen)
-			if(emustatus.Emu_Is_Running)
-			{
+			if (emustatus.Emu_Is_Running) {
 				PauseEmulator();
 				//SuspendThread(CPUThreadHandle);
 				DialogBox(gui.hInst, "CHEAT_HACK", hWnd, (DLGPROC) CheatAndHackDialog);
 				//ResumeThread(CPUThreadHandle);
 				ResumeEmulator(DO_NOTHING_AFTER_PAUSE);
-			}
-			else
-			{
+			} else {
 				CodeList_ReadCode(romlist[selected_rom_index]->pinientry->Game_Name);
 				DialogBox(gui.hInst, "CHEAT_HACK", hWnd, (DLGPROC) CheatAndHackDialog);
 			}
@@ -673,61 +630,50 @@ void ProcessMenuCommand(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			CodeList_ApplyAllCode(GSBUTTON);
 			break;
 		case ID_CPU_AUDIOSYNC:
-			if(emuoptions.SyncVI)
-			{
+			if (emuoptions.SyncVI) {
 				CheckMenuItem(gui.hMenu1964main, ID_CPU_AUDIOSYNC, MF_UNCHECKED);
 				emuoptions.SyncVI = FALSE;
-			}
-			else
-			{
+			} else {
 				CheckMenuItem(gui.hMenu1964main, ID_CPU_AUDIOSYNC, MF_CHECKED);
 				emuoptions.SyncVI = TRUE;
 			}
 			break;
 
 		case ID_VIDEO_CONFIG:
-			if (!guistatus.IsFullScreen)
-			{
-				if(emustatus.Emu_Is_Running)
-			{
-				/* SuspendThread(CPUThreadHandle); */
-				VIDEO_DllConfig(hWnd);
+			if (!guistatus.IsFullScreen) {
+				if (emustatus.Emu_Is_Running) {
+					/* SuspendThread(CPUThreadHandle); */
+					VIDEO_DllConfig(hWnd);
 
-				/* ResumeThread(CPUThreadHandle); */
-			}
-			else
-			{
-				VIDEO_DllConfig(hWnd);
-				NewRomList_ListViewChangeWindowRect();
-			}
+					/* ResumeThread(CPUThreadHandle); */
+				} else {
+					VIDEO_DllConfig(hWnd);
+					NewRomList_ListViewChangeWindowRect();
+				}
 
-			DockStatusBar();
+				DockStatusBar();
 			}
 			break;
 		case ID_AUD_CONFIG:
-			if (!guistatus.IsFullScreen)
-			if(emustatus.Emu_Is_Running)
-			{
+			if (guistatus.IsFullScreen)
+				  break;
+			if (emustatus.Emu_Is_Running) {
 				SuspendThread(CPUThreadHandle);
 				AUDIO_DllConfig(hWnd);
 				ResumeThread(CPUThreadHandle);
-			}
-			else
-			{
+			} else {
 				AUDIO_DllConfig(hWnd);
 			}
 			break;
 		case ID_DI_CONFIG:
-			if (!guistatus.IsFullScreen)
-			if(emustatus.Emu_Is_Running)
-			{
+			if (guistatus.IsFullScreen)
+				 break;
+			if (emustatus.Emu_Is_Running) {
 				/* SuspendThread(CPUThreadHandle); */
 				CONTROLLER_DllConfig(hWnd);
 
 				/* ResumeThread(CPUThreadHandle); */
-			}
-			else
-			{
+			} else {
 				CONTROLLER_DllConfig(hWnd);
 			}
 			break;
@@ -803,10 +749,8 @@ void ProcessMenuCommand(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_BUTTON_FULL_SCREEN:
 		case IDM_FULLSCREEN:
-			if(emustatus.Emu_Is_Running)
-			{
-				if(PauseEmulator())
-				{
+			if (emustatus.Emu_Is_Running) {
+				if (PauseEmulator()) {
 					VIDEO_ChangeWindow(guistatus.IsFullScreen);
 					ResumeEmulator(DO_NOTHING_AFTER_PAUSE);
 				}
@@ -837,8 +781,7 @@ void ProcessMenuCommand(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			DisplayError("Help contents");
 			break;
 		case ID_ABOUT_WARRANTY:
-			if (!guistatus.IsFullScreen)
-			{
+			if (!guistatus.IsFullScreen) {
 				LoadString(gui.hInst, IDS_WARRANTY_SEC11, WarrantyPart1, 700);
 				LoadString(gui.hInst, IDS_WARRANTY_SEC12, WarrantyPart2, 700);
 				MessageBox(gui.hwnd1964main, WarrantyPart1, "NO WARRANTY", MB_OK);
@@ -945,8 +888,7 @@ void ProcessToolTips(LPARAM lParam)
 
     // Specify the resource identifier of the descriptive 
     // text for the given button. 
-    switch (lpttt->hdr.idFrom) 
-	{ 
+    switch (lpttt->hdr.idFrom) { 
 		case ID_BUTTON_OPEN_ROM:
 			lpttt->lpszText = MAKEINTRESOURCE(ID_BUTTON_OPEN_ROM); 
 			break;
@@ -995,8 +937,7 @@ void OnWindowSize(WPARAM wParam)
 	RECT rcRomList;
 	RECT rcToolBar;
 
-	if(gui.hToolBar != NULL)
-	{
+	if (gui.hToolBar != NULL) {
 		RECT rcMainWnd;
 
 		GetClientRect(gui.hToolBar, &rcToolBar);
@@ -1006,11 +947,9 @@ void OnWindowSize(WPARAM wParam)
 
 	GetWindowRect(gui.hStatusBar, &rcStatusBar);
 
-	if (gui.hwndRomList != NULL)
-	{
+	if (gui.hwndRomList != NULL) {
 		GetClientRect(gui.hwnd1964main, &rcRomList);
-		if(gui.hToolBar != NULL)
-		{
+		if (gui.hToolBar != NULL) {
 			rcRomList.top += (rcToolBar.bottom - rcToolBar.top - 1);
 			rcRomList.bottom -= (rcToolBar.bottom - rcToolBar.top - 1);
 		}
@@ -1021,17 +960,12 @@ void OnWindowSize(WPARAM wParam)
 
 	DockStatusBar();
 
-	if(wParam == SIZE_MAXIMIZED && !guistatus.window_is_maximized)
-	{
+	if (wParam == SIZE_MAXIMIZED && !guistatus.window_is_maximized) {
 		guistatus.window_is_maximized = TRUE;
 		DockStatusBar();
-	}
-    else if(wParam == SIZE_MINIMIZED && !guistatus.window_is_minimized)
-	{
+	} else if (wParam == SIZE_MINIMIZED && !guistatus.window_is_minimized) {
 		guistatus.window_is_minimized = TRUE;
-	}
-	else if(guistatus.window_is_maximized || guistatus.window_is_minimized)
-	{
+	} else if (guistatus.window_is_maximized || guistatus.window_is_minimized) {
 		DockStatusBar();
 	}
 }
@@ -1061,8 +995,7 @@ void ProcessKeyboardInput(UINT message, WPARAM wParam, LPARAM lParam)
     }
 
 	ctrlkey = GetKeyState(VK_CONTROL) & 0xFF000000;
-	switch(wParam)
-	{
+	switch (wParam) {
 	case VK_F5:
 		SaveState();
 	break;
@@ -1073,11 +1006,10 @@ void ProcessKeyboardInput(UINT message, WPARAM wParam, LPARAM lParam)
 	
 	case VK_F4:
 	case VK_ESCAPE:
-		if (guistatus.IsFullScreen)
-		if(emustatus.Emu_Is_Running)
-		{
-			if(PauseEmulator())
-			{
+		if (!guistatus.IsFullScreen)
+			break;
+		if (emustatus.Emu_Is_Running) {
+			if (PauseEmulator()) {
 				VIDEO_ChangeWindow(guistatus.IsFullScreen);
 				ResumeEmulator(DO_NOTHING_AFTER_PAUSE);
 			}
@@ -1096,8 +1028,7 @@ void ProcessKeyboardInput(UINT message, WPARAM wParam, LPARAM lParam)
 	case 0x37:
 	case 0x38:
 	case 0x39:
-		if(!ctrlkey)
-		{
+		if (!ctrlkey) {
 			StateSetNumber(wParam - 0x30);
 		}
 	break;
@@ -1122,31 +1053,30 @@ long FAR PASCAL MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	static int			MenuCausedPause = FALSE;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	switch(message)
-	{
+	switch (message) {
 	case WM_ACTIVATE:
-		if(guioptions.pause_at_inactive)
-		{
+		if (guioptions.pause_at_inactive) {
 			BOOL	minimize = (BOOL) HIWORD(wParam);
 
-			switch(LOWORD(wParam))
-			{
+			switch (LOWORD(wParam)) {
 			case WA_ACTIVE:
 			case WA_CLICKACTIVE:
-				if( emustatus.Emu_Is_Running && 
+				if (
+				    emustatus.Emu_Is_Running && 
 				    emustatus.Emu_Is_Paused  &&
-				    gamepausebyinactive )
-				{
+				    gamepausebyinactive
+				) {
 					Resume();
 					gamepausebyinactive = FALSE;
 				}
 			break;
 			
 			case WA_INACTIVE:
-				if( minimize && 
+				if (
+				    minimize && 
 				    emustatus.Emu_Is_Running &&
-				    emustatus.Emu_Is_Paused == FALSE )
-				{
+				    emustatus.Emu_Is_Paused == FALSE
+				) {
 					Pause();
 					gamepausebyinactive = TRUE;
 				}
@@ -1169,8 +1099,7 @@ long FAR PASCAL MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	break;
 
 	case WM_MOVE:
-		if(emustatus.Emu_Is_Running)
-		{
+		if (emustatus.Emu_Is_Running) {
 			/*~~~~~~~~~~~*/
 			int xPos, yPos;
 			/*~~~~~~~~~~~*/
@@ -1203,27 +1132,19 @@ long FAR PASCAL MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	break;
 
 	case WM_NOTIFY:
-		switch (((LPNMHDR) lParam)->code) 
-		{ 
+		switch (((LPNMHDR) lParam)->code) { 
 		    case TTN_GETDISPINFO: 
                 ProcessToolTips(lParam);
 				break;
 		}
-		if(((LPNMHDR) lParam)->hwndFrom == gui.hwndRomList)
-		{
+		if (((LPNMHDR) lParam)->hwndFrom == gui.hwndRomList) {
 			OnNotifyRomList(hWnd, message, wParam, lParam);
-		}
-		else if(((LPNMHDR) lParam)->hwndFrom == gui.hStatusBar )
-		{
+		} else if (((LPNMHDR) lParam)->hwndFrom == gui.hStatusBar) {
 			OnNotifyStatusBar(hWnd, message, wParam, lParam);
-		}
-		else if(((LPNMHDR) lParam)->hwndFrom == ListView_GetHeader(gui.hwndRomList) )
-		{
+		} else if (((LPNMHDR) lParam)->hwndFrom == ListView_GetHeader(gui.hwndRomList)) {
 			OnNotifyRomListHeader(hWnd, message, wParam, lParam);
-		}
-		else
-		{
-			return(DefWindowProc(hWnd, message, wParam, lParam));
+		} else {
+			return (DefWindowProc(hWnd, message, wParam, lParam));
 		}
 	break;
 
@@ -1234,9 +1155,8 @@ long FAR PASCAL MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	case WM_ENTERMENULOOP:
 		/* To pause game when user enter the menu bar */
 		MenuCausedPause = emustatus.Emu_Is_Paused;
-		if(guioptions.ok_to_pause_at_menu)
-			if(emustatus.Emu_Is_Running && !emustatus.Emu_Is_Paused )
-			{
+		if (guioptions.ok_to_pause_at_menu)
+			if (emustatus.Emu_Is_Running && !emustatus.Emu_Is_Paused) {
 				PauseEmulator();
 
 			}
@@ -1245,9 +1165,8 @@ long FAR PASCAL MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 
 	case WM_EXITMENULOOP:
 		/* To resume game when user leaves the menu bar */
-		if(guioptions.ok_to_pause_at_menu)
-			if(emustatus.Emu_Is_Running && !MenuCausedPause )
-			{
+		if (guioptions.ok_to_pause_at_menu)
+			if (emustatus.Emu_Is_Running && !MenuCausedPause) {
 				ResumeEmulator(DO_NOTHING_AFTER_PAUSE);
 			}
 	break;
@@ -1258,8 +1177,7 @@ long FAR PASCAL MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	break;
 
 	case WM_POWERBROADCAST:
-		switch( wParam )
-		{
+		switch (wParam) {
 #ifndef PBT_APMQUERYSUSPEND
 #define PBT_APMQUERYSUSPEND 0x0000
 #endif
@@ -1281,11 +1199,10 @@ long FAR PASCAL MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	break;
 
 	case WM_SYSCOMMAND:
-		switch (wParam) 
-		{
+		switch (wParam)  {
 		case SC_SCREENSAVE:
 		case SC_MONITORPOWER:
-			if(emustatus.Emu_Is_Running)
+			if (emustatus.Emu_Is_Running)
 				return 1;	//Disable screen saver
 		case SC_MOVE:
 		case SC_SIZE:
@@ -1294,12 +1211,12 @@ long FAR PASCAL MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 			if (guistatus.IsFullScreen)
 				return 1;
 		default:
-			return(DefWindowProc(hWnd, message, wParam, lParam));
+			return (DefWindowProc(hWnd, message, wParam, lParam));
 		}
 	break;
 	}
 	
-	return(DefWindowProc(hWnd, message, wParam, lParam));
+	return (DefWindowProc(hWnd, message, wParam, lParam));
 }
 
 /*
@@ -1308,9 +1225,9 @@ long FAR PASCAL MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
  */
 void Pause(void)
 {
-//	if(emustatus.Emu_Is_Running)
+//	if (emustatus.Emu_Is_Running)
 //	{
-//		if(!emustatus.Emu_Is_Paused)
+//		if (!emustatus.Emu_Is_Paused)
 //		{
 			PauseEmulator();
 //		}
@@ -1329,8 +1246,7 @@ void Pause(void)
  */
 void Resume(void)
 {
-	if(emustatus.Emu_Is_Running && emustatus.Emu_Is_Paused)
-	{
+	if (emustatus.Emu_Is_Running && emustatus.Emu_Is_Paused) {
 		ResumeEmulator(DO_NOTHING_AFTER_PAUSE);
 	}
 }
@@ -1343,13 +1259,12 @@ void AfterStop(void);
  */
 void KillCPUThread(void)
 {
-	if(emustatus.Emu_Is_Running)
-	{
+	if (emustatus.Emu_Is_Running) {
 		SuspendThread(CPUThreadHandle);
 		TerminateThread(CPUThreadHandle, 1);
 		CloseHandle(CPUThreadHandle);
 
-		if(currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY) UnprotectAllBlocks();
+		if (currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY) UnprotectAllBlocks();
 
 		AUDIO_RomClosed();
 		CONTROLLER_RomClosed();
@@ -1385,31 +1300,25 @@ void Play(BOOL WithFullScreen)
 	int core;
 	/*~~~~~*/
 
-	if(Rom_Loaded)
-	{
-		if(emustatus.Emu_Is_Running) 
-		{
+	if (Rom_Loaded) {
+		if (emustatus.Emu_Is_Running) {
 			Stop();
 		}
 
 		PrepareBeforePlay(guistatus.IsFullScreen);
 
 		core = currentromoptions.Emulator;
-		if(core == DYNACOMPILER)
-		{					/* Dynarec */
+		if (core == DYNACOMPILER) { /* Dynarec */
 			CheckMenuItem(gui.hMenu1964main, ID_INTERPRETER, MF_UNCHECKED);
 			CheckMenuItem(gui.hMenu1964main, ID_DYNAMICCOMPILER, MF_CHECKED);
 			emustatus.cpucore = DYNACOMPILER;
-		}
-		else
-		{					/* Interpreter */
+		} else { /* Interpreter */
 			CheckMenuItem(gui.hMenu1964main, ID_INTERPRETER, MF_CHECKED);
 			CheckMenuItem(gui.hMenu1964main, ID_DYNAMICCOMPILER, MF_UNCHECKED);
 			emustatus.cpucore = INTERPRETER;
 		}
 
-		if ((GFX_PluginRECT.UseThis == TRUE) && (emustatus.Emu_Is_Resetting == FALSE))
-		{
+		if ((GFX_PluginRECT.UseThis == TRUE) && (emustatus.Emu_Is_Resetting == FALSE)) {
 			RECT Rect;
 
 			GetWindowRect(gui.hwnd1964main, &Rect);
@@ -1435,16 +1344,13 @@ void Play(BOOL WithFullScreen)
 		EnableMenuItem(gui.hMenu1964main, IDM_PLUGINS, MF_GRAYED);
 		EnableButton(ID_BUTTON_SETUP_PLUGINS, FALSE);
 
-		if(Kaillera_Is_Running == FALSE)
-		{
+		if (Kaillera_Is_Running == FALSE) {
 			EnableMenuItem(gui.hMenu1964main, ID_ROM_PAUSE, MF_ENABLED);
 			EnableRadioButtons(TRUE);
 			CheckButton(ID_BUTTON_PLAY, TRUE);
 			EnableMenuItem(gui.hMenu1964main, ID_ROM_STOP, MF_ENABLED);
 			EnableStateMenu();
-		}
-		else
-		{
+		} else {
 			EnableMenuItem(gui.hMenu1964main, ID_FILE_CHEAT, MF_GRAYED);
 			EnableMenuItem(gui.hMenu1964main, ID_CLOSEROM, MF_GRAYED);
 			EnableMenuItem(gui.hMenu1964main, ID_ROM_START, MF_GRAYED);
@@ -1454,22 +1360,17 @@ void Play(BOOL WithFullScreen)
 			/* EnableMenuItem(gui.hMenu1964main, ID_ROM_STOP, MF_GRAYED); */
 		}
 
-		if(GfxPluginVersion == 0x0103)
-		{
+		if (GfxPluginVersion == 0x0103) {
 			EnableMenuItem(gui.hMenu1964main, ID_PLUGINS_SCREENSHOTS, MF_ENABLED);
-		}
-		else
-		{
+		} else {
 			EnableMenuItem(gui.hMenu1964main, ID_PLUGINS_SCREENSHOTS, MF_GRAYED);
 		}
 
 		sprintf(generalmessage, "%s - Running", gui.szWindowTitle);
 		SetWindowText(gui.hwnd1964main, generalmessage);
-		//if(emuoptions.auto_full_screen)
-		if(WithFullScreen && (emustatus.Emu_Is_Resetting == 0))
-		{
-			if(guistatus.IsFullScreen == 0)
-			{
+		//if (emuoptions.auto_full_screen)
+		if (WithFullScreen && (emustatus.Emu_Is_Resetting == 0)) {
+			if (guistatus.IsFullScreen == 0) {
 				VIDEO_ChangeWindow(guistatus.IsFullScreen);
 			}
 		}
@@ -1484,28 +1385,22 @@ void Play(BOOL WithFullScreen)
  */
 void Stop()
 {
-	if(emustatus.Emu_Is_Running)
-	{
-		if(Kaillera_Is_Running == TRUE)
-		{
+	if (emustatus.Emu_Is_Running) {
+		if (Kaillera_Is_Running == TRUE) {
 			Kaillera_Is_Running = FALSE;
 			kailleraEndGame();
 		}
 
 		StopEmulator();
 
-		if (emustatus.Emu_Is_Resetting == 0)
-		{
-			if(guistatus.IsFullScreen)
-			{
+		if (emustatus.Emu_Is_Resetting == 0) {
+			if (guistatus.IsFullScreen) {
 				VIDEO_ChangeWindow(guistatus.IsFullScreen);
 			}
 			ShowCursor(TRUE);
 			AfterStop();
 		}
-	}
-	else if(Is_Reading_Rom_File)
-	{
+	} else if (Is_Reading_Rom_File) {
 		To_Stop_Reading_Rom_File = TRUE;
 	}
 }
@@ -1525,8 +1420,7 @@ int WINAPI kailleraGameCallback(char *game, int player, int numplayers)
 	Kaillera_Players = numplayers;
 	Kaillera_Counter = 0;
 
-	for(i = 0; i < romlist_count; i++)
-	{
+	for (i = 0; i < romlist_count; i++) {
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		char			szRom[50];
 		ROMLIST_ENTRY	*entry = romlist[i];
@@ -1542,8 +1436,7 @@ int WINAPI kailleraGameCallback(char *game, int player, int numplayers)
 			entry->pinientry->countrycode
 		);
 
-		if(strcmp(szRom, game) == 0)
-		{
+		if (strcmp(szRom, game) == 0) {
 			RomListOpenRom(i, 1);
 		}
 	}
@@ -1585,17 +1478,14 @@ char	szKailleraNamedRoms[50 * MAX_ROMLIST];
  */
 void RomListGetGoodRomNameToDisplay(char *buf, int index)
 {
-	switch( romlistNameToDisplay )
-	{
+	switch (romlistNameToDisplay) {
 	case ROMLIST_DISPLAY_ALTER_NAME:
-		if(strlen(romlist[index]->pinientry->Alt_Title) > 1)
-		{
+		if (strlen(romlist[index]->pinientry->Alt_Title) > 1) {
 			strcpy(buf, romlist[index]->pinientry->Alt_Title);
 			break;
 		}
 	case ROMLIST_DISPLAY_INTERNAL_NAME:
-		if(InternalNameIsValid(romlist[index]->pinientry->Game_Name))
-		{
+		if (InternalNameIsValid(romlist[index]->pinientry->Game_Name)) {
 			strcpy(buf, romlist[index]->pinientry->Game_Name);
 			break;
 		}		
@@ -1641,8 +1531,7 @@ void KailleraPlay(void)
 	romlist_sort_method = saved_romlist_sort_method;
 
 
-	for(i = 0; i < romlist_count; i++)
-	{
+	for (i = 0; i < romlist_count; i++) {
 		char			szRom[50];
 		char			szAlt[50];
 		ROMLIST_ENTRY	*entry = romlist[i];
@@ -1702,12 +1591,10 @@ void CloseROM(void)
 
 	GetWindowPlacement(gui.hwnd1964main, &placement);
 	
-	if(emustatus.Emu_Is_Running)
-	{
+	if (emustatus.Emu_Is_Running) {
 		Stop();
 
-		if (placement.showCmd == SW_SHOWMAXIMIZED)
-		{
+		if (placement.showCmd == SW_SHOWMAXIMIZED) {
 			guistatus.WindowIsMaximized = TRUE;
 			ShowWindow(gui.hwnd1964main, SW_SHOWNORMAL);
 			ShowWindow(gui.hwnd1964main, SW_SHOWMAXIMIZED);
@@ -1749,13 +1636,11 @@ void CloseROM(void)
  */
 void OpenROM(void)
 {
-	if(Rom_Loaded) 
-	{
+	if (Rom_Loaded) {
 		CloseROM();
 	}
 
-	if(WinLoadRom() == TRUE)	/* If the user opened a rom, */
-	{
+	if (WinLoadRom() == TRUE) { /* If the user opened a rom, */
 		EnableMenuItem(gui.hMenu1964main, ID_ROM_START, MF_ENABLED);
 		EnableRadioButtons(TRUE);
 		EnableMenuItem(gui.hMenu1964main, ID_CLOSEROM, MF_ENABLED);
@@ -1764,9 +1649,7 @@ void OpenROM(void)
 		EnableMenuItem(gui.hMenu1964main, ID_FILE_CHEAT, MF_ENABLED);
 
 		Play(emuoptions.auto_full_screen); /* autoplay */
-	}
-	else
-	{
+	} else {
 		EnableButton(ID_BUTTON_OPEN_ROM, TRUE);
 		EnableMenuItem(gui.hMenu1964main, ID_OPENROM, MF_ENABLED);
 		EnableButton(ID_BUTTON_SETUP_PLUGINS, TRUE);
@@ -1804,22 +1687,19 @@ BOOL WinLoadRom(void)
 	ofn.lpstrDefExt = "TXT";
 	ofn.Flags = OFN_HIDEREADONLY;
 
-	if(!GetOpenFileName((LPOPENFILENAME) & ofn))
-	{
+	if (!GetOpenFileName((LPOPENFILENAME) & ofn)) {
 		return FALSE;
 	}
 
 	_getcwd(directories.rom_directory_to_use, MAX_PATH);
-	if ( strcmp(directories.last_rom_directory, directories.rom_directory_to_use) != 0)
-	{ 
+	if (strcmp(directories.last_rom_directory, directories.rom_directory_to_use) != 0) { 
 		NeedFreshromListAfterStop = TRUE;
 	}
 	strcpy(directories.last_rom_directory, directories.rom_directory_to_use);
 
 	WriteConfiguration();
 
-	if(WinLoadRomStep2(szFileName))
-	{
+	if (WinLoadRomStep2(szFileName)) {
 		/*~~~~~~~~~~~~~~~~~*/
 		INI_ENTRY	*pentry;
 		long		filesize;
@@ -1836,9 +1716,7 @@ BOOL WinLoadRom(void)
 		CodeList_ReadCode(rominfo.name);
 		RefreshRecentGameMenus(szFileName);
 		return TRUE;
-	}
-	else
-	{
+	} else {
 		return FALSE;
 	}
 }
@@ -1852,8 +1730,7 @@ BOOL WinLoadRomStep2(char *szFileName)
 	lstrcpy(gui.szWindowTitle, gui.szBaseWindowTitle);
 	lstrcat(gui.szWindowTitle, " - ");
 	
-	if(ReadRomData(szFileName) == FALSE) 
-	{
+	if (ReadRomData(szFileName) == FALSE)  {
 		Rom_Loaded = FALSE;
 		return FALSE;
 	}
@@ -1881,13 +1758,11 @@ BOOL StartGameByCommandLine()
 {
 	char szFileName[300];
 	GetCmdLineParameter(CMDLINE_GAME_FILENAME, szFileName);
-	if( strlen(szFileName) == 0 )
-	{
+	if (strlen(szFileName) == 0) {
 		return FALSE;
 	}
 
-	if(WinLoadRomStep2(szFileName))
-	{
+	if (WinLoadRomStep2(szFileName)) {
 		/*~~~~~~~~~~~~~~~~~*/
 		INI_ENTRY	*pentry;
 		long		filesize;
@@ -1913,19 +1788,14 @@ BOOL StartGameByCommandLine()
 		EnableMenuItem(gui.hMenu1964main, ID_FILE_CHEAT, MF_ENABLED);
 		
 		GetCmdLineParameter(CMDLINE_FULL_SCREEN_FLAG, tempstr);
-		if( strlen(tempstr) > 0 )
-		{
+		if (strlen(tempstr) > 0) {
 			Play(TRUE);
-		}
-		else
-		{
+		} else {
 			Play(emuoptions.auto_full_screen); /* autoplay */
 		}
 
 		return TRUE;
-	}
-	else
-	{
+	} else {
 		return FALSE;
 	}
 	
@@ -1937,12 +1807,11 @@ BOOL StartGameByCommandLine()
  */
 void OpenRecentGame(int id)
 {
-	if(emustatus.Emu_Is_Running) return;
+	if (emustatus.Emu_Is_Running)
+		return;
 
-	if(id >= 0 && id < 8)
-	{
-		if(WinLoadRomStep2(recent_game_lists[id]))
-		{
+	if (id >= 0 && id < 8) {
+		if (WinLoadRomStep2(recent_game_lists[id])) {
 			/*~~~~~~~~~~~~~~~~~*/
 			INI_ENTRY	*pentry;
 			long		filesize;
@@ -1979,21 +1848,16 @@ void OpenRecentGame(int id)
  */
 void SaveState(void)
 {
-	if(Rom_Loaded)
-	{
-		if(emustatus.Emu_Is_Running)
-		{
-			if(PauseEmulator())
-			{
+	if (Rom_Loaded) {
+		if (emustatus.Emu_Is_Running) {
+			if (PauseEmulator()) {
 				sprintf(generalmessage, "%s - Saving State %d", gui.szWindowTitle, StateFileNumber);
 				SetStatusBarText(0, generalmessage);
 
 				FileIO_gzSaveState();
 				ResumeEmulator(DO_NOTHING_AFTER_PAUSE);
 			}
-		}
-		else
-		{
+		} else {
 			sprintf(generalmessage, "%s - Saving State %d", gui.szWindowTitle, StateFileNumber);
 			SetStatusBarText(0, generalmessage);
 
@@ -2012,21 +1876,16 @@ void LoadState(void)
 	int was_running = FALSE;
 	/*~~~~~~~~~~~~~~~~~~~~*/
 
-	if(Rom_Loaded)
-	{
-		if(emustatus.Emu_Is_Running)
-		{
-			if(PauseEmulator())
-			{
+	if (Rom_Loaded) {
+		if (emustatus.Emu_Is_Running) {
+			if (PauseEmulator()) {
 				sprintf(generalmessage, "%s - Loading State %d", gui.szWindowTitle, StateFileNumber);
 				SetStatusBarText(0, generalmessage);
 				FileIO_gzLoadState();
 				Init_Count_Down_Counters();
 				ResumeEmulator(REFRESH_DYNA_AFTER_PAUSE);
 			}
-		}
-		else
-		{
+		} else {
 			sprintf(generalmessage, "%s - Loading State %d", gui.szWindowTitle, StateFileNumber);
 			SetStatusBarText(0, generalmessage);
 			FileIO_gzLoadState();
@@ -2091,8 +1950,7 @@ void EnableStateMenu(void)
 	EnableMenuItem(gui.hMenu1964main, ID_CPU_IMPORTPJ64STATE, MF_ENABLED);
 	EnableMenuItem(gui.hMenu1964main, ID_CPU_EXPORTPJ64STATE, MF_ENABLED);
 
-	for(i = 0; i < 10; i++)
-	{
+	for (i = 0; i < 10; i++) {
 		EnableMenuItem(gui.hMenu1964main, statesavemenulist[i], MF_ENABLED);
 		EnableMenuItem(gui.hMenu1964main, stateloadmenulist[i], MF_ENABLED);
 	}
@@ -2113,8 +1971,7 @@ void DisableStateMenu(void)
 	EnableMenuItem(gui.hMenu1964main, ID_CPU_IMPORTPJ64STATE, MF_GRAYED);
 	EnableMenuItem(gui.hMenu1964main, ID_CPU_EXPORTPJ64STATE, MF_GRAYED);
 
-	for(i = 0; i < 10; i++)
-	{
+	for (i = 0; i < 10; i++) {
 		EnableMenuItem(gui.hMenu1964main, statesavemenulist[i], MF_GRAYED);
 		EnableMenuItem(gui.hMenu1964main, stateloadmenulist[i], MF_GRAYED);
 	}
@@ -2130,12 +1987,10 @@ void SaveStateByNumber(WPARAM wparam)
 	int i;
 	/*~~*/
 
-	for(i = 0; i < 10; i++)
-	{
+	for (i = 0; i < 10; i++) {
 		CheckMenuItem(gui.hMenu1964main, statesavemenulist[i], MF_UNCHECKED);
 		CheckMenuItem(gui.hMenu1964main, stateloadmenulist[i], MF_UNCHECKED);
-		if(statesavemenulist[i] == wparam)
-		{
+		if (statesavemenulist[i] == wparam) {
 			StateFileNumber = i;
 			CheckMenuItem(gui.hMenu1964main, statesavemenulist[i], MF_CHECKED);
 			CheckMenuItem(gui.hMenu1964main, stateloadmenulist[i], MF_CHECKED);
@@ -2155,12 +2010,10 @@ void LoadStateByNumber(WPARAM wparam)
 	int i;
 	/*~~*/
 
-	for(i = 0; i < 10; i++)
-	{
+	for (i = 0; i < 10; i++) {
 		CheckMenuItem(gui.hMenu1964main, statesavemenulist[i], MF_UNCHECKED);
 		CheckMenuItem(gui.hMenu1964main, stateloadmenulist[i], MF_UNCHECKED);
-		if(stateloadmenulist[i] == wparam)
-		{
+		if (stateloadmenulist[i] == wparam) {
 			StateFileNumber = i;
 			CheckMenuItem(gui.hMenu1964main, statesavemenulist[i], MF_CHECKED);
 			CheckMenuItem(gui.hMenu1964main, stateloadmenulist[i], MF_CHECKED);
@@ -2176,11 +2029,11 @@ void LoadStateByNumber(WPARAM wparam)
  */
 void SaveStateByDialog(int format)
 {
-	if(!Rom_Loaded) return;
-	if(!PauseEmulator())
+	if (!Rom_Loaded)
 		return;
-	else
-	{
+	if (!PauseEmulator())
+		return;
+	else {
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		OPENFILENAME	ofn;
 		char			szFileName[MAXFILENAME];
@@ -2196,7 +2049,7 @@ void SaveStateByDialog(int format)
 
 		ofn.lStructSize = sizeof(OPENFILENAME);
 		ofn.hwndOwner = gui.hwnd1964main;
-		if(format == SAVE_STATE_1964_FORMAT)
+		if (format == SAVE_STATE_1964_FORMAT)
 			ofn.lpstrFilter = "1964 State File (*.sav?)\0*.SAV?\0All Files (*.*)\0*.*\0";
 		else
 			ofn.lpstrFilter = "Project 64 State File (*.pj?)\0*.PJ;*.PJ?\0All Files (*.*)\0*.*\0";
@@ -2212,15 +2065,15 @@ void SaveStateByDialog(int format)
 		ofn.lpstrDefExt = "";
 		ofn.Flags = OFN_ENABLESIZING | OFN_HIDEREADONLY;
 
-		if(GetSaveFileName((LPOPENFILENAME) & ofn))
-		{
-			if(format == SAVE_STATE_1964_FORMAT)
+		if (GetSaveFileName((LPOPENFILENAME) & ofn)) {
+			if (format == SAVE_STATE_1964_FORMAT)
 				FileIO_gzSaveStateFile(szFileName);
 			else
 				FileIO_ExportPJ64State(szFileName);
 		}
 
-		if(emustatus.Emu_Is_Running) ResumeEmulator(DO_NOTHING_AFTER_PAUSE);
+		if (emustatus.Emu_Is_Running)
+			ResumeEmulator(DO_NOTHING_AFTER_PAUSE);
 	}
 }
 
@@ -2230,11 +2083,11 @@ void SaveStateByDialog(int format)
  */
 void LoadStateByDialog(int format)
 {
-	if(!Rom_Loaded) return;
-	if(!PauseEmulator())
+	if (!Rom_Loaded)
 		return;
-	else
-	{
+	if (!PauseEmulator())
+		return;
+	else {
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		OPENFILENAME	ofn;
 		char			szFileName[MAXFILENAME];
@@ -2250,7 +2103,7 @@ void LoadStateByDialog(int format)
 
 		ofn.lStructSize = sizeof(OPENFILENAME);
 		ofn.hwndOwner = gui.hwnd1964main;
-		if(format == SAVE_STATE_1964_FORMAT)
+		if (format == SAVE_STATE_1964_FORMAT)
 			ofn.lpstrFilter = "1964 State File (*.sav?)\0*.SAV?\0All Files (*.*)\0*.*\0";
 		else
 			ofn.lpstrFilter = "Project 64 State File (*.pj?)\0*.PJ;*.PJ?\0All Files (*.*)\0*.*\0";
@@ -2266,15 +2119,15 @@ void LoadStateByDialog(int format)
 		ofn.lpstrDefExt = "";
 		ofn.Flags = OFN_ENABLESIZING | OFN_HIDEREADONLY;
 
-		if(GetOpenFileName((LPOPENFILENAME) & ofn))
-		{
-			if(format == SAVE_STATE_1964_FORMAT)
+		if (GetOpenFileName((LPOPENFILENAME) & ofn)) {
+			if (format == SAVE_STATE_1964_FORMAT)
 				FileIO_gzLoadStateFile(szFileName);
 			else
 				FileIO_ImportPJ64State(szFileName);
 		}
 
-		if(emustatus.Emu_Is_Running) ResumeEmulator(REFRESH_DYNA_AFTER_PAUSE);
+		if (emustatus.Emu_Is_Running)
+			ResumeEmulator(REFRESH_DYNA_AFTER_PAUSE);
 	}
 }
 
@@ -2298,10 +2151,8 @@ BOOL SelectDirectory(char *title, char buffer[MAX_PATH])
 	bi.lpfn = NULL;
 	bi.lParam = 0;
 
-	if((pidl = SHBrowseForFolder(&bi)) != NULL)
-	{
-		if(SHGetPathFromIDList(pidl, buffer))
-		{
+	if ((pidl = SHBrowseForFolder(&bi)) != NULL) {
+		if (SHGetPathFromIDList(pidl, buffer)) {
 			return TRUE;
 		}
 	}
@@ -2319,10 +2170,10 @@ void ChangeDirectory(void)
 	char	path[MAX_PATH];
 	/*~~~~~~~~~~~~~~~~~~~*/
 
-	if(emustatus.Emu_Is_Running) return;
+	if (emustatus.Emu_Is_Running)
+		return;
 
-	if(SelectDirectory("Select a ROM folder", path))
-	{
+	if (SelectDirectory("Select a ROM folder", path)) {
 		strcpy(directories.rom_directory_to_use, path);
 		strcpy(directories.last_rom_directory, path);
 		WriteConfiguration();
@@ -2342,10 +2193,10 @@ void ChangeDirectory(void)
  */
 void ChangeToRecentDirectory(int id)
 {
-	if(emustatus.Emu_Is_Running) return;
+	if (emustatus.Emu_Is_Running)
+		return;
 
-	if(id >= 0 && id < MAX_RECENT_ROM_DIR)
-	{
+	if (id >= 0 && id < MAX_RECENT_ROM_DIR) {
 		strcpy(generalmessage, recent_rom_directory_lists[id]);
 		strcpy(directories.rom_directory_to_use, generalmessage);
 		strcpy(directories.last_rom_directory, generalmessage);
@@ -2370,43 +2221,37 @@ LRESULT APIENTRY DefaultOptionsDialog(HWND hDlg, unsigned message, WORD wParam, 
 	int i;
 	/*~~*/
 
-	switch(message)
-	{
+	switch (message) {
 	case WM_INITDIALOG:
-		SendDlgItemMessage
-		(
+		SendDlgItemMessage(
 			hDlg,
 			IDC_DEFAULTOPTIONS_EXPANSIONPAK,
 			BM_SETCHECK,
 			defaultoptions.RDRAM_Size == RDRAMSIZE_8MB ? BST_CHECKED : BST_UNCHECKED,
 			0
 		);
-		SendDlgItemMessage
-		(
+		SendDlgItemMessage(
 			hDlg,
 			IDC_DEFAULTOPTIONS_USETLB,
 			BM_SETCHECK,
 			defaultoptions.Use_TLB == USETLB_YES ? BST_CHECKED : BST_UNCHECKED,
 			0
 		);
-		SendDlgItemMessage
-		(
+		SendDlgItemMessage(
 			hDlg,
 			IDC_DEFAULTOPTIONS_DMASEGMENTATION,
 			BM_SETCHECK,
 			emuoptions.dma_in_segments == USEDMASEG_YES ? BST_CHECKED : BST_UNCHECKED,
 			0
 		);
-		SendDlgItemMessage
-		(
+		SendDlgItemMessage(
 			hDlg,
 			IDC_DEFAULTOPTIONS_REGC,
 			BM_SETCHECK,
 			defaultoptions.Use_Register_Caching == USEREGC_YES ? BST_CHECKED : BST_UNCHECKED,
 			0
 		);
-		SendDlgItemMessage
-		(
+		SendDlgItemMessage(
 			hDlg,
 			IDC_DEFAULTOPTIONS_FPUHACK,
 			BM_SETCHECK,
@@ -2415,70 +2260,62 @@ LRESULT APIENTRY DefaultOptionsDialog(HWND hDlg, unsigned message, WORD wParam, 
 		);
 
 		SendDlgItemMessage(hDlg, IDC_DEFAULTOPTIONS_SAVETYPE, CB_RESETCONTENT, 0, 0);
-		for(i = 1; i < 7; i++)
-		{
+		for (i = 1; i < 7; i++) {
 			SendDlgItemMessage(hDlg, IDC_DEFAULTOPTIONS_SAVETYPE, CB_INSERTSTRING, i - 1, (LPARAM) save_type_names[i]);
-			if(i == defaultoptions.Save_Type)
+			if (i == defaultoptions.Save_Type)
 				SendDlgItemMessage(hDlg, IDC_DEFAULTOPTIONS_SAVETYPE, CB_SETCURSEL, i - 1, 0);
 		}
 
 		SendDlgItemMessage(hDlg, IDC_DEFAULTOPTIONS_CODECHECK, CB_RESETCONTENT, 0, 0);
-		for(i = 1; i < 9; i++)
-		{
-			SendDlgItemMessage
-			(
+		for (i = 1; i < 9; i++) {
+			SendDlgItemMessage(
 				hDlg,
 				IDC_DEFAULTOPTIONS_CODECHECK,
 				CB_INSERTSTRING,
 				i - 1,
 				(LPARAM) codecheck_type_names[i]
 			);
-			if(i == defaultoptions.Code_Check)
+			if (i == defaultoptions.Code_Check)
 				SendDlgItemMessage(hDlg, IDC_DEFAULTOPTIONS_CODECHECK, CB_SETCURSEL, i - 1, 0);
 		}
 
 		SendDlgItemMessage(hDlg, IDC_DEFAULTOPTIONS_MAXVISPEED, CB_RESETCONTENT, 0, 0);
-		for(i = 1; i < 5; i++)
-		{
-			SendDlgItemMessage
-			(
+		for (i = 1; i < 5; i++) {
+			SendDlgItemMessage(
 				hDlg,
 				IDC_DEFAULTOPTIONS_MAXVISPEED,
 				CB_INSERTSTRING,
 				i - 1,
 				(LPARAM) maxfps_type_names[i]
 			);
-			if(i == defaultoptions.Max_FPS)
+			if (i == defaultoptions.Max_FPS)
 				SendDlgItemMessage(hDlg, IDC_DEFAULTOPTIONS_MAXVISPEED, CB_SETCURSEL, i - 1, 0);
 		}
 
 		SendDlgItemMessage(hDlg, IDC_DEFAULTOPTIONS_EEPROMSIZE, CB_RESETCONTENT, 0, 0);
-		for(i = 1; i < 4; i++)
-		{
-			SendDlgItemMessage
-			(
+		for (i = 1; i < 4; i++) {
+			SendDlgItemMessage(
 				hDlg,
 				IDC_DEFAULTOPTIONS_EEPROMSIZE,
 				CB_INSERTSTRING,
 				i - 1,
 				(LPARAM) eepromsize_type_names[i]
 			);
-			if(i == defaultoptions.Eeprom_size)
+			if (i == defaultoptions.Eeprom_size)
 				SendDlgItemMessage(hDlg, IDC_DEFAULTOPTIONS_EEPROMSIZE, CB_SETCURSEL, i - 1, 0);
 		}
 
-		return(TRUE);
+		return (TRUE);
 
 	case WM_COMMAND:
-		switch(wParam)
-		{
+		switch (wParam) {
 		case IDOK:
 			{
 				/* Read option setting from dialog */
 				defaultoptions.RDRAM_Size =
 					(SendDlgItemMessage(hDlg, IDC_DEFAULTOPTIONS_EXPANSIONPAK, BM_GETCHECK, 0, 0) == BST_CHECKED) +
 					1;
-				if(!emustatus.Emu_Is_Running)
+				if (!emustatus.Emu_Is_Running)
 					SetStatusBarText(3, defaultoptions.RDRAM_Size == RDRAMSIZE_4MB ? "4MB" : "8MB");
 				defaultoptions.Save_Type = SendDlgItemMessage(hDlg, IDC_DEFAULTOPTIONS_SAVETYPE, CB_GETCURSEL, 0, 0) + 1;
 				defaultoptions.Code_Check = SendDlgItemMessage(hDlg, IDC_DEFAULTOPTIONS_CODECHECK, CB_GETCURSEL, 0, 0) + 1;
@@ -2502,18 +2339,18 @@ LRESULT APIENTRY DefaultOptionsDialog(HWND hDlg, unsigned message, WORD wParam, 
 				defaultoptions.DMA_Segmentation = emuoptions.dma_in_segments;
 
 				EndDialog(hDlg, TRUE);
-				return(TRUE);
+				return (TRUE);
 			}
 
 		case IDCANCEL:
 			{
 				EndDialog(hDlg, TRUE);
-				return(TRUE);
+				return (TRUE);
 			}
 		}
 	}
 
-	return(FALSE);
+	return (FALSE);
 }
 
 /*
@@ -2526,8 +2363,7 @@ LRESULT APIENTRY OptionsDialog(HWND hDlg, unsigned message, WORD wParam, LONG lP
 	char	path[MAX_PATH];
 	/*~~~~~~~~~~~~~~~~~~~*/
 
-	switch(message)
-	{
+	switch (message) {
 	case WM_INITDIALOG:
 		SendDlgItemMessage
 		(
@@ -2647,28 +2483,24 @@ LRESULT APIENTRY OptionsDialog(HWND hDlg, unsigned message, WORD wParam, LONG lP
 		SetDlgItemText(hDlg, IDC_DEFAULTOPTIONS_SAVEDIRECTORY, user_set_save_directory);
 		SetDlgItemText(hDlg, IDC_DEFAULTOPTIONS_PLUGINDIRECTORY, user_set_plugin_directory);
 
-		return(TRUE);
+		return (TRUE);
 
 	case WM_COMMAND:
-		switch(wParam)
-		{
+		switch (wParam) {
 		case IDC_DEFAULTOPTIONS_BUTTON_SAVEDIR:
-			if(SelectDirectory("Selecting Game Save Directory", path))
-			{
+			if (SelectDirectory("Selecting Game Save Directory", path)) {
 				strcat(path, "\\");
 				SetDlgItemText(hDlg, IDC_DEFAULTOPTIONS_SAVEDIRECTORY, path);
 			}
 			break;
 		case IDC_DEFAULTOPTIONS_BUTTON_PLUGINDIR:
-			if(SelectDirectory("Selecting Plugin Directory", path))
-			{
+			if (SelectDirectory("Selecting Plugin Directory", path)) {
 				strcat(path, "\\");
 				SetDlgItemText(hDlg, IDC_DEFAULTOPTIONS_PLUGINDIRECTORY, path);
 			}
 			break;
 		case IDC_DEFAULTOPTIONS_BUTTON_ROMDIR:
-			if(SelectDirectory("Selecting Default ROM Directory", path))
-			{
+			if (SelectDirectory("Selecting Default ROM Directory", path)) {
 				strcat(path, "\\");
 				SetDlgItemText(hDlg, IDC_DEFAULTOPTIONS_ROMDIRECTORY, path);
 			}
@@ -2682,119 +2514,96 @@ LRESULT APIENTRY OptionsDialog(HWND hDlg, unsigned message, WORD wParam, LONG lP
 				guioptions.pause_at_menu = (SendDlgItemMessage(hDlg, IDC_DEFAULTOPTIOS_PAUSEONMENU, BM_GETCHECK, 0, 0) == BST_CHECKED);
 				guioptions.pause_at_inactive = (SendDlgItemMessage(hDlg, IDC_DEFAULTOPTIONS_PAUSEWHENINACTIVE, BM_GETCHECK, 0, 0) == BST_CHECKED);
 
-				if
-				(
+				if (
 					guioptions.show_expert_user_menu !=
 						(SendDlgItemMessage(hDlg, IDC_EXPERT_MODE, BM_GETCHECK, 0, 0) == BST_CHECKED)
-				)
-				{
+				) {
 					guioptions.show_expert_user_menu = 1 - guioptions.show_expert_user_menu;
-					if(guioptions.show_expert_user_menu)
+					if (guioptions.show_expert_user_menu) {
 						RegenerateAdvancedUserMenus();
-					else
-					{
+					} else {
 						DeleteAdvancedUserMenus();
 					}
 				}
 
-				if
-				(
+				if (
 					guioptions.show_recent_rom_directory_list !=
 						(SendDlgItemMessage(hDlg, IDC_ENABLE_DIRECTORY_LIST, BM_GETCHECK, 0, 0) == BST_CHECKED)
-				)
-				{
+				) {
 					guioptions.show_recent_rom_directory_list = 1 - guioptions.show_recent_rom_directory_list;
-					if(guioptions.show_recent_rom_directory_list)
+					if (guioptions.show_recent_rom_directory_list) {
 						RegerateRecentRomDirectoryMenus();
-					else
-					{
+					} else {
 						DeleteRecentRomDirectoryMenus();
 					}
 				}
 
-				if
-				(
+				if (
 					guioptions.show_recent_game_list !=
 						(SendDlgItemMessage(hDlg, IDC_ENABLE_GAME_LIST, BM_GETCHECK, 0, 0) == BST_CHECKED)
-				)
-				{
+				) {
 					guioptions.show_recent_game_list = 1 - guioptions.show_recent_game_list;
-					if(guioptions.show_recent_game_list)
+					if (guioptions.show_recent_game_list) {
 						RegerateRecentGameMenus();
-					else
-					{
+					} else {
 						DeleteRecentGameMenus();
 					}
 				}
 
-				if
-				(
+				if (
 					guioptions.show_state_selector_menu !=
 						(SendDlgItemMessage(hDlg, IDC_ENABLE_STATE_MENU, BM_GETCHECK, 0, 0) == BST_CHECKED)
-				)
-				{
+				) {
 					guioptions.show_state_selector_menu = 1 - guioptions.show_state_selector_menu;
-					if(guioptions.show_state_selector_menu)
+					if (guioptions.show_state_selector_menu) {
 						RegenerateStateSelectorMenus();
-					else
-					{
+					} else {
 						DeleteStateSelectorMenus();
 					}
 				}
 
-				if
-				(
+				if (
 					guioptions.show_critical_msg_window !=
 						(SendDlgItemMessage(hDlg, IDC_OPTION_ERROR_WINDOW, BM_GETCHECK, 0, 0) == BST_CHECKED)
-				)
-				{
+				) {
 					guioptions.show_critical_msg_window = 1 - guioptions.show_critical_msg_window;
-					if(guioptions.show_critical_msg_window)
-					{
-						if(gui.hCriticalMsgWnd == NULL)
-						{
-							gui.hCriticalMsgWnd = CreateDialog
-								(
-									gui.hInst,
-									"CRITICAL_MESSAGE",
-									NULL,
-									(DLGPROC) CriticalMessageDialog
-								);
+					if (guioptions.show_critical_msg_window) {
+						if (gui.hCriticalMsgWnd == NULL) {
+							gui.hCriticalMsgWnd = CreateDialog(
+								gui.hInst,
+								"CRITICAL_MESSAGE",
+								NULL,
+								(DLGPROC) CriticalMessageDialog
+							);
 							SetActiveWindow(gui.hwnd1964main);
 						}
-					}
-					else
-					{
-						if(gui.hCriticalMsgWnd != NULL)
-						{
+					} else {
+						if (gui.hCriticalMsgWnd != NULL) {
 							DestroyWindow(gui.hCriticalMsgWnd);
 							gui.hCriticalMsgWnd = NULL;
 						}
 					}
 				}
 
-				if(	guioptions.display_romlist !=(SendDlgItemMessage(hDlg, IDC_OPTION_ROMBROWSER, BM_GETCHECK, 0, 0) == BST_CHECKED))
-				{
+				if (guioptions.display_romlist != (SendDlgItemMessage(hDlg, IDC_OPTION_ROMBROWSER, BM_GETCHECK, 0, 0) == BST_CHECKED)) {
 					guioptions.display_romlist = 1 - guioptions.display_romlist;
 					EndDialog(hDlg, TRUE);
 					SendMessage(gui.hwnd1964main, WM_COMMAND, ID_FILE_FRESHROMLIST, 0);
-					return(TRUE);
+					return (TRUE);
 				}
 
 				guioptions.display_detail_status = (SendDlgItemMessage(hDlg, IDC_ENABLE_DETAIL_STATUS, BM_GETCHECK, 0, 0) == BST_CHECKED);
 				guioptions.display_profiler_status = (SendDlgItemMessage(hDlg, IDC_ENABLE_PROFILER, BM_GETCHECK, 0, 0) == BST_CHECKED);
 				guioptions.use_default_save_directory = (SendDlgItemMessage(hDlg, IDC_OPTIONS_USE_DEFAULT_SAVE_DIRECTORY, BM_GETCHECK, 0, 0) == BST_CHECKED);
-				guioptions.use_default_plugin_directory =
-					(
-						SendDlgItemMessage
-						(
-							hDlg,
-							IDC_DEFAULTOPTIONS_USE1964PLUGINDIRECTORY,
-							BM_GETCHECK,
-							0,
-							0
-						) == BST_CHECKED
-					);
+				guioptions.use_default_plugin_directory = (
+					SendDlgItemMessage(
+						hDlg,
+						IDC_DEFAULTOPTIONS_USE1964PLUGINDIRECTORY,
+						BM_GETCHECK,
+						0,
+						0
+					) == BST_CHECKED
+				);
 				guioptions.use_last_rom_directory = (SendDlgItemMessage(hDlg, IDC_DEFAULTOPTIONS_USELASTROMDIRECTORY, BM_GETCHECK, 0, 0) == BST_CHECKED);
 
 				GetDlgItemText(hDlg, IDC_DEFAULTOPTIONS_ROMDIRECTORY, user_set_rom_directory, _MAX_PATH);
@@ -2803,36 +2612,36 @@ LRESULT APIENTRY OptionsDialog(HWND hDlg, unsigned message, WORD wParam, LONG lP
 				GetDlgItemText(hDlg, IDC_DEFAULTOPTIONS_PLUGINDIRECTORY, user_set_plugin_directory, _MAX_PATH);
 
 				/* Set the save directory to use */
-				if(guioptions.use_default_save_directory)
+				if (guioptions.use_default_save_directory)
 					strcpy(directories.save_directory_to_use, default_save_directory);
 				else
 					strcpy(directories.save_directory_to_use, user_set_save_directory);
 
 				/* Set the ROM directory to use */
-				if(guioptions.use_last_rom_directory)
+				if (guioptions.use_last_rom_directory)
 					strcpy(directories.rom_directory_to_use, directories.last_rom_directory);
 				else
 					strcpy(directories.rom_directory_to_use, user_set_rom_directory);
 
 				/* Set the plugin directory to use */
-				if(guioptions.use_default_plugin_directory)
+				if (guioptions.use_default_plugin_directory)
 					strcpy(directories.plugin_directory_to_use, default_plugin_directory);
 				else
 					strcpy(directories.plugin_directory_to_use, user_set_plugin_directory);
 
 				EndDialog(hDlg, TRUE);
-				return(TRUE);
+				return (TRUE);
 			}
 
 		case IDCANCEL:
 			{
 				EndDialog(hDlg, TRUE);
-				return(TRUE);
+				return (TRUE);
 			}
 		}
 	}
 
-	return(FALSE);
+	return (FALSE);
 }
 
 /*
@@ -2841,13 +2650,10 @@ LRESULT APIENTRY OptionsDialog(HWND hDlg, unsigned message, WORD wParam, LONG lP
  */
 void SetCounterFactor(int factor)
 {
-	if(CounterFactor != factor)
-	{
+	if (CounterFactor != factor) {
 		CheckMenuItem(gui.hMenu1964main, cfmenulist[CounterFactor - 1], MF_UNCHECKED);
-		if(emustatus.Emu_Is_Running)
-		{
-			if(PauseEmulator())
-			{
+		if (emustatus.Emu_Is_Running) {
+			if (PauseEmulator()) {
 				CounterFactor = factor;
 				ResumeEmulator(REFRESH_DYNA_AFTER_PAUSE);	/* Need to init emu */
 			}
@@ -2866,19 +2672,15 @@ void SetCounterFactor(int factor)
  */
 void SetCodeCheckMethod(int method)
 {
-	if(emustatus.Emu_Is_Running)
-	{
+	if (emustatus.Emu_Is_Running) {
 		CheckMenuItem(gui.hMenu1964main, codecheckmenulist[emustatus.CodeCheckMethod - 1], MF_UNCHECKED);
-		if(PauseEmulator())
-		{
+		if (PauseEmulator()) {
 			Dyna_Check_Codes = Dyna_Code_Check[method - 1];
 			emustatus.CodeCheckMethod = method;
 			ResumeEmulator(REFRESH_DYNA_AFTER_PAUSE);	/* Need to init emu */
 			CheckMenuItem(gui.hMenu1964main, codecheckmenulist[method - 1], MF_CHECKED);
 		}
-	}
-	else
-	{
+	} else {
 		CheckMenuItem(gui.hMenu1964main, codecheckmenulist[emustatus.CodeCheckMethod - 1], MF_UNCHECKED);
 		emustatus.CodeCheckMethod = method;
 		defaultoptions.Code_Check = method;
@@ -2934,8 +2736,7 @@ void PrepareBeforePlay(int IsFullScreen)
 	if (IsFullScreen == 0)	RememberWindowSize();
 	critical_msg_buffer[0] = '\0';					/* clear the critical message buffer */
 
-	if (IsFullScreen == 0)
-	{
+	if (IsFullScreen == 0) {
 	/* Hide romlist */
 	RomListSaveCurrentPos();
 	ListView_SetExtendedListViewStyle(gui.hwndRomList, LVS_EX_FULLROWSELECT);
@@ -2950,7 +2751,7 @@ void PrepareBeforePlay(int IsFullScreen)
 	GenerateCurrentRomOptions();
 	init_whole_mem_func_array();					/* Needed here. The tlb function pointers change. */
 	ResetRdramSize(currentromoptions.RDRAM_Size);
-	if(strcpy(current_cheatcode_rom_internal_name, currentromoptions.Game_Name) != 0)
+	if (strcpy(current_cheatcode_rom_internal_name, currentromoptions.Game_Name) != 0)
 		CodeList_ReadCode(currentromoptions.Game_Name);
 
 	CounterFactor = currentromoptions.Counter_Factor;
@@ -2965,13 +2766,10 @@ void PrepareBeforePlay(int IsFullScreen)
 	 * not boot £
 	 * with DynaCodeCheck, need debug
 	 */
-	if(emustatus.CodeCheckMethod == CODE_CHECK_NONE || emustatus.CodeCheckMethod == CODE_CHECK_DMA_ONLY)
-	{
+	if (emustatus.CodeCheckMethod == CODE_CHECK_NONE || emustatus.CodeCheckMethod == CODE_CHECK_DMA_ONLY) {
 		Dyna_Check_Codes = Dyna_Code_Check_None_Boot;
 		TRACE0("Set code check method = Dyna_Code_Check_None_Boot / Check_DMA_only");
-	}
-	else
-	{
+	} else {
 		Dyna_Check_Codes = Dyna_Code_Check[emustatus.CodeCheckMethod - 1];
 	}
 
@@ -2985,12 +2783,9 @@ void PrepareBeforePlay(int IsFullScreen)
 	);
 
 	/* About FPU usage exceptions */
-	if(currentromoptions.FPU_Hack == USEFPUHACK_YES)
-	{
+	if (currentromoptions.FPU_Hack == USEFPUHACK_YES) {
 		EnableFPUUnusableException();
-	}
-	else
-	{
+	} else {
 		DisableFPUUnusableException();
 	}
 
@@ -3002,30 +2797,23 @@ void PrepareBeforePlay(int IsFullScreen)
 	emustatus.PIDMACount = 0;
 	emustatus.ControllerReadCount = 0;
 
-	if(!QueryPerformanceFrequency(&Freq))
-	{
+	if (!QueryPerformanceFrequency(&Freq)) {
 		currentromoptions.Max_FPS = MAXFPS_NONE;	/* ok, this computer does not support */
 		/* accurate timer, don't use speed limiter */
-	}
-	else
-	{
-		if(rominfo.TV_System == 0)					/* PAL */
-		{
+	} else {
+		if (rominfo.TV_System == 0) { /* PAL */
 			vips_speed_limits[MAXFPS_AUTO_SYNC] = vips_speed_limits[MAXFPS_PAL_50];
-		}
-		else	/* NTSC */
-		{
+		} else { /* NTSC */
 			vips_speed_limits[MAXFPS_AUTO_SYNC] = vips_speed_limits[MAXFPS_NTSC_60];
 		}
 	}
-	if (IsFullScreen == 0)
-	{
-	CheckMenuItem(gui.hMenu1964main, cfmenulist[CounterFactor - 1], MF_UNCHECKED);
-	CheckMenuItem(gui.hMenu1964main, cfmenulist[CounterFactor - 1], MF_CHECKED);
-	SetStatusBarText(2, generalmessage);
-	CheckMenuItem(gui.hMenu1964main, codecheckmenulist[emustatus.CodeCheckMethod - 1], MF_UNCHECKED);
-	CheckMenuItem(gui.hMenu1964main, codecheckmenulist[emustatus.CodeCheckMethod - 1], MF_CHECKED);
-	SetStatusBarText(4, emustatus.cpucore == DYNACOMPILER ? "D" : "I");
+	if (IsFullScreen == 0) {
+		CheckMenuItem(gui.hMenu1964main, cfmenulist[CounterFactor - 1], MF_UNCHECKED);
+		CheckMenuItem(gui.hMenu1964main, cfmenulist[CounterFactor - 1], MF_CHECKED);
+		SetStatusBarText(2, generalmessage);
+		CheckMenuItem(gui.hMenu1964main, codecheckmenulist[emustatus.CodeCheckMethod - 1], MF_UNCHECKED);
+		CheckMenuItem(gui.hMenu1964main, codecheckmenulist[emustatus.CodeCheckMethod - 1], MF_CHECKED);
+		SetStatusBarText(4, emustatus.cpucore == DYNACOMPILER ? "D" : "I");
 	}
 }
 
@@ -3062,7 +2850,7 @@ void AfterStop(void)
 	ShowWindow(gui.hwndRomList, SW_SHOW);
 
 	EnableWindow(gui.hwndRomList, TRUE);
-	ListView_SetExtendedListViewStyle(gui.hwndRomList, LVS_EX_FULLROWSELECT);	/* | LVS_EX_TRACKSELECT ); */
+	ListView_SetExtendedListViewStyle(gui.hwndRomList, LVS_EX_FULLROWSELECT/* | LVS_EX_TRACKSELECT */);
 	NewRomList_ListViewShowHeader(gui.hwndRomList);
 
 	/* refresh the rom list, just to prevent user has changed resolution */
@@ -3073,8 +2861,7 @@ void AfterStop(void)
 	/* Reset some of the default options */
 	defaultoptions.Emulator = DYNACOMPILER;
 	emustatus.cpucore = defaultoptions.Emulator;
-	SendMessage
-	(
+	SendMessage (
 		gui.hwnd1964main,
 		WM_COMMAND,
 		emustatus.cpucore == DYNACOMPILER ? ID_DYNAMICCOMPILER : ID_INTERPRETER,
@@ -3095,8 +2882,7 @@ void AfterStop(void)
 	Set_Ready_Message();
 	SetStatusBarText(1, " 0 VI/s");
 
-	if( NeedFreshromListAfterStop == TRUE )
-	{
+	if (NeedFreshromListAfterStop == TRUE) {
 		NeedFreshromListAfterStop = FALSE;
 		OnFreshRomList();
 	}
@@ -3114,7 +2900,7 @@ void DockStatusBar(void)
 	RECT	rcToolBar;
 	/*~~~~~~~~~~~~~~~~~~~~*/
 
-	if(gui.hStatusBar == NULL) return;
+	if (gui.hStatusBar == NULL) return;
 	GetClientRect(gui.hwnd1964main, &rc);
 	GetWindowRect(gui.hStatusBar, &rcstatusbar);
 	GetWindowRect(gui.hToolBar, &rcToolBar);
@@ -3154,10 +2940,9 @@ void InitStatusBarParts(void)
 	RECT	rc;
 	/*~~~~~~~*/
 
-	if(gui.hStatusBar == NULL)
+	if (gui.hStatusBar == NULL) {
 		return;
-	else
-	{
+	} else {
 		/*~~~~~~~~~*/
 		int sizes[6];
 		/*~~~~~~~~~*/
@@ -3249,19 +3034,15 @@ void ModifyMenuText(UINT menuid, char *newtext)
  */
 void RegerateRecentGameMenus(void)
 {
-	if(guioptions.show_recent_rom_directory_list)
-	{
-		InsertMenu
-		(
+	if (guioptions.show_recent_rom_directory_list) {
+		InsertMenu(
 			file_submenu,
 			recent_game_submenu_pos,
 			MF_BYPOSITION | MF_POPUP,
 			(UINT) recent_game_submenu,
 			"Recent Games"
 		);
-	}
-	else
-	{
+	} else {
 		InsertMenu
 		(
 			file_submenu,
@@ -3285,18 +3066,14 @@ void DeleteRecentGameMenus(void)
 	/*~~~~~~~~~~~~~~~*/
 
 	i = GetMenuItemCount(gui.hMenu1964main);
-	for(k = 0; k < i; k++)
-	{
+	for (k = 0; k < i; k++) {
 		GetMenuString(gui.hMenu1964main, k, str, 80, MF_BYPOSITION);
-		if(strcmp(str, "&File") == 0)
-		{
+		if (strcmp(str, "&File") == 0) {
 			file_submenu = GetSubMenu(gui.hMenu1964main, k);
 			j = GetMenuItemCount(file_submenu);
-			for(n = j - 1; n >= 0; n--) /* I have to delete the menu in reverse order */
-			{
+			for (n = j - 1; n >= 0; n--) { /* I have to delete the menu in reverse order */
 				GetMenuString(file_submenu, n, str, 80, MF_BYPOSITION);
-				if(strcmp(str, "Recent Games") == 0)
-				{
+				if (strcmp(str, "Recent Games") == 0) {
 					recent_game_submenu = GetSubMenu(file_submenu, n);
 					recent_game_submenu_pos = n;
 					RemoveMenu(file_submenu, n, MF_BYPOSITION);
@@ -3317,18 +3094,18 @@ void RefreshRecentGameMenus(char *newgamefilename)
 	int i;
 	/*~~*/
 
-	for(i = 0; i < 8; i++)
-	{
-		if(strcmp(recent_game_lists[i], newgamefilename) == 0) break;
+	for (i = 0; i < 8; i++) {
+		if (strcmp(recent_game_lists[i], newgamefilename) == 0) {
+			break;
+		}
 	}
 
-	if(i != 0)
-	{
-		if(i == 8) i = 7;	/* if not found */
+	if (i != 0) {
+		if (i == 8)
+			i = 7; /* if not found */
 
 		/* need to move the most recent file to the 1st position */
-		for(; i > 0; i--)
-		{
+		for (; i > 0; i--) {
 			strcpy(recent_game_lists[i], recent_game_lists[i - 1]);
 			ModifyMenuText(recent_game_menu_ids[i], recent_game_lists[i]);
 		}
@@ -3351,18 +3128,17 @@ void RefreshRecentRomDirectoryMenus(char *newromdirectory)
 	int i;
 	/*~~*/
 
-	for(i = 0; i < MAX_RECENT_ROM_DIR; i++)
-	{
-		if(strcmp(recent_rom_directory_lists[i], newromdirectory) == 0) break;
+	for (i = 0; i < MAX_RECENT_ROM_DIR; i++) {
+		if (strcmp(recent_rom_directory_lists[i], newromdirectory) == 0)
+			break;
 	}
 
-	if(i != 0)
-	{
-		if(i == MAX_RECENT_ROM_DIR) i = MAX_RECENT_ROM_DIR - 1; /* if not found */
+	if (i != 0) {
+		if (i == MAX_RECENT_ROM_DIR)
+			i = MAX_RECENT_ROM_DIR - 1; /* if not found */
 
 		/* need to move the most recent file to the 1st position */
-		for(; i > 0; i--)
-		{
+		for (; i > 0; i--) {
 			strcpy(recent_rom_directory_lists[i], recent_rom_directory_lists[i - 1]);
 			ModifyMenuText(recent_rom_directory_menu_ids[i], recent_rom_directory_lists[i]);
 		}
@@ -3402,18 +3178,14 @@ void DeleteRecentRomDirectoryMenus(void)
 	/*~~~~~~~~~~~~~~~*/
 
 	i = GetMenuItemCount(gui.hMenu1964main);
-	for(k = 0; k < i; k++)
-	{
+	for (k = 0; k < i; k++) {
 		GetMenuString(gui.hMenu1964main, k, str, 80, MF_BYPOSITION);
-		if(strcmp(str, "&File") == 0)
-		{
+		if (strcmp(str, "&File") == 0) {
 			file_submenu = GetSubMenu(gui.hMenu1964main, k);
 			j = GetMenuItemCount(file_submenu);
-			for(n = j - 1; n >= 0; n--) /* I have to delete the menu in reverse order */
-			{
+			for (n = j - 1; n >= 0; n--) { /* I have to delete the menu in reverse order */
 				GetMenuString(file_submenu, n, str, 80, MF_BYPOSITION);
-				if(strcmp(str, "Recent ROM Folders") == 0)
-				{
+				if (strcmp(str, "Recent ROM Folders") == 0) {
 					recent_rom_directory_submenu = GetSubMenu(file_submenu, n);
 					recent_rom_directory_submenu_pos = n;
 					RemoveMenu(file_submenu, n, MF_BYPOSITION);
@@ -3429,18 +3201,16 @@ void DeleteRecentRomDirectoryMenus(void)
  */
 void RegenerateStateSelectorMenus(void)
 {
-//	if(guioptions.show_expert_user_menu)
+//	if (guioptions.show_expert_user_menu)
 	{
-		InsertMenu
-		(
+		InsertMenu(
 			CPU_submenu,
 			state_save_submenu_pos,
 			MF_BYPOSITION | MF_POPUP,
 			(UINT) state_save_submenu,
 			"Save State\tF5"
 		);
-		InsertMenu
-		(
+		InsertMenu(
 			CPU_submenu,
 			state_save_submenu_pos,
 			MF_BYPOSITION | MF_POPUP,
@@ -3467,26 +3237,20 @@ void DeleteStateSelectorMenus(void)
 	/*~~~~~~~~~~~~~~~*/
 
 	i = GetMenuItemCount(gui.hMenu1964main);
-	for(k = 0; k < i; k++)
-	{
+	for (k = 0; k < i; k++) {
 		GetMenuString(gui.hMenu1964main, k, str, 80, MF_BYPOSITION);
-		if(strcmp(str, "CPU") == 0)
-		{
+		if (strcmp(str, "CPU") == 0) {
 			CPU_submenu = GetSubMenu(gui.hMenu1964main, k);
 			j = GetMenuItemCount(CPU_submenu);
-			for(n = j - 1; n >= 0; n--) /* I have to delete the menu in reverse order */
-			{
+			for (n = j - 1; n >= 0; n--) { /* I have to delete the menu in reverse order */
 				GetMenuString(CPU_submenu, n, str, 80, MF_BYPOSITION);
 
 				/* Delete all cpu core switch menus */
-				if(strcmp(str, "Load State\tF7") == 0)
-				{
+				if (strcmp(str, "Load State\tF7") == 0) {
 					state_load_submenu = GetSubMenu(CPU_submenu, n);
 					state_load_submenu_pos = n;
 					RemoveMenu(CPU_submenu, n, MF_BYPOSITION);
-				}
-				else if(strcmp(str, "Save State\tF5") == 0)
-				{
+				} else if (strcmp(str, "Save State\tF5") == 0) {
 					state_save_submenu = GetSubMenu(CPU_submenu, n);
 					state_save_submenu_pos = n;
 					RemoveMenu(CPU_submenu, n, MF_BYPOSITION);
@@ -3526,20 +3290,16 @@ void DeleteAdvancedUserMenus(void)
 	/*~~~~~~~~~~~~~~~*/
 
 	i = GetMenuItemCount(gui.hMenu1964main);
-	for(k = 0; k < i; k++)
-	{
+	for (k = 0; k < i; k++) {
 		GetMenuString(gui.hMenu1964main, k, str, 80, MF_BYPOSITION);
-		if(strcmp(str, "CPU") == 0)
-		{
+		if (strcmp(str, "CPU") == 0) {
 			CPU_submenu = GetSubMenu(gui.hMenu1964main, k);
 			j = GetMenuItemCount(CPU_submenu);
-			for(n = j - 1; n >= 0; n--) /* I have to delete the menu in reverse order */
-			{
+			for (n = j - 1; n >= 0; n--) { /* I have to delete the menu in reverse order */
 				GetMenuString(CPU_submenu, n, str, 80, MF_BYPOSITION);
 
 				/* Delete all cpu core switch menus */
-				if(strcmp(str, "Switch Compiler") == 0)
-				{
+				if (strcmp(str, "Switch Compiler") == 0) {
 					switch_compiler_submenu = GetSubMenu(CPU_submenu, n);
 					GetMenuItemInfo(CPU_submenu, n, MF_BYPOSITION, &switch_compiler_submenu_info);
 					switch_compiler_submenu_pos = n;
@@ -3547,23 +3307,21 @@ void DeleteAdvancedUserMenus(void)
 				}
 
 				/* Delete all code check method switch menus */
-				else if(strcmp(str, "Self-Modifying Code Detection Method") == 0)
-				{
+				else if (strcmp(str, "Self-Modifying Code Detection Method") == 0) {
 					dyna_code_checking_submenu = GetSubMenu(CPU_submenu, n);
 					dyna_code_checking_submenu_pos = n;
 					RemoveMenu(CPU_submenu, n, MF_BYPOSITION);
 				}
 
 				/* Delete all Counter Hack menus */
-				else if(strcmp(str, "Counter Factor") == 0)
-				{
+				else if (strcmp(str, "Counter Factor") == 0) {
 					counter_hack_submenu = GetSubMenu(CPU_submenu, n);
 					counter_hack_submenu_pos = n;
 					RemoveMenu(CPU_submenu, n, MF_BYPOSITION);
 				}
 
 				/*
-				 * else if( strnicmp(str+2,"port Project64",14 )==0 ) £
+				 * else if (strnicmp(str + 2, "port Project64", 14) == 0) £
 				 * { £
 				 * RemoveMenu(CPU_submenu, n, MF_BYPOSITION); £
 				 * }
@@ -3588,27 +3346,29 @@ void SetupAdvancedMenus(void)
 	int i;
 	/*~~*/
 
-	for(i = 0; i < MAX_RECENT_ROM_DIR; i++)
-	{
+	for (i = 0; i < MAX_RECENT_ROM_DIR; i++) {
 		ModifyMenuText(recent_rom_directory_menu_ids[i], recent_rom_directory_lists[i]);
 	}
 
-	for(i = 0; i < MAX_RECENT_GAME_LIST; i++)
-	{
+	for (i = 0; i < MAX_RECENT_GAME_LIST; i++) {
 		ModifyMenuText(recent_game_menu_ids[i], recent_game_lists[i]);
 	}
 
-	if(guioptions.show_expert_user_menu == FALSE) DeleteAdvancedUserMenus();
+	if (guioptions.show_expert_user_menu == FALSE)
+		DeleteAdvancedUserMenus();
 #ifndef DEBUG_COMMON
-	else
-	{	/* hide the default option menu from RELEASE MODE */
+	else {	/* hide the default option menu from RELEASE MODE */
 		RemoveMenu(gui.hMenu1964main, ID_DEFAULTOPTIONS, MF_BYCOMMAND);
 	}
 #endif
-	if(guioptions.show_recent_rom_directory_list == FALSE) DeleteRecentRomDirectoryMenus();
-	if(guioptions.show_recent_game_list == FALSE) DeleteRecentGameMenus();
-	if(guioptions.show_state_selector_menu == FALSE) DeleteStateSelectorMenus();
-	if(!emuoptions.SyncVI) CheckMenuItem(gui.hMenu1964main, ID_CPU_AUDIOSYNC, MF_UNCHECKED);
+	if (guioptions.show_recent_rom_directory_list == FALSE)
+		DeleteRecentRomDirectoryMenus();
+	if (guioptions.show_recent_game_list == FALSE)
+		DeleteRecentGameMenus();
+	if (guioptions.show_state_selector_menu == FALSE)
+		DeleteStateSelectorMenus();
+	if (!emuoptions.SyncVI)
+		CheckMenuItem(gui.hMenu1964main, ID_CPU_AUDIOSYNC, MF_UNCHECKED);
 }
 
 /*
@@ -3617,12 +3377,10 @@ void SetupAdvancedMenus(void)
  */
 void CaptureScreenToFile(void)
 {
-	if(emustatus.Emu_Is_Running)
-	{
-		if(GfxPluginVersion != 0x0103)
+	if (emustatus.Emu_Is_Running) {
+		if (GfxPluginVersion != 0x0103) {
 			DisplayError("Current video plugin does not support screen capture");
-		else
-		{
+		} else {
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~*/
 			char	directory[_MAX_PATH];
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -3646,13 +3404,15 @@ void Exit1964(void)
 	WINDOWPLACEMENT placement;
 	/*~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(exiting_1964) exit(0);
+	if (exiting_1964)
+		exit(0);
 
 	exiting_1964 = TRUE;
 
 	SetStatusBarText(0, "Exiting 1964");
 
-	if(emustatus.Emu_Is_Running) Stop();
+	if (emustatus.Emu_Is_Running)
+		Stop();
 
 	placement.length = sizeof(WINDOWPLACEMENT);
 	GetWindowPlacement(gui.hwnd1964main, &placement);
@@ -3697,17 +3457,13 @@ void Exit1964(void)
  */
 void Set_Ready_Message(void)
 {
-	if(Rom_Loaded)
-	{
-		if(strlen(currentromoptions.Alt_Title) < 1 || strcmp(rominfo.name, currentromoptions.Game_Name) != 0)
+	if (Rom_Loaded) {
+		if (strlen(currentromoptions.Alt_Title) < 1 || strcmp(rominfo.name, currentromoptions.Game_Name) != 0) {
 			sprintf(generalmessage, "Ready - %s - [%s]", directories.rom_directory_to_use, rominfo.name);
-		else
-		{
+		} else {
 			sprintf(generalmessage, "Ready - %s - [%s]", directories.rom_directory_to_use, currentromoptions.Alt_Title);
 		}
-	}
-	else
-	{
+	} else {
 		sprintf(generalmessage, "Ready - %s", directories.rom_directory_to_use);
 	}
 
@@ -3727,11 +3483,9 @@ void DisableDebugMenu(void)
 	/*~~~~~~~~~~~~*/
 
 	i = GetMenuItemCount(gui.hMenu1964main);
-	for(k = 0; k < i; k++)
-	{
+	for (k = 0; k < i; k++) {
 		GetMenuString(gui.hMenu1964main, k, str, 80, MF_BYPOSITION);
-		if(strcmp(str, "Debug") == 0)
-		{
+		if (strcmp(str, "Debug") == 0) {
 			DeleteMenu(gui.hMenu1964main, k, MF_BYPOSITION);
 		}
 	}
@@ -3747,11 +3501,9 @@ void DisableNetplayMemu(void)
 	/*~~~~~~~~~~~~*/
 
 	i = GetMenuItemCount(gui.hMenu1964main);
-	for(k = 0; k < i; k++)
-	{
+	for (k = 0; k < i; k++) {
 		GetMenuString(gui.hMenu1964main, k, str, 80, MF_BYPOSITION);
-		if(strcmp(str, "Net Play") == 0)
-		{
+		if (strcmp(str, "Net Play") == 0) {
 			DeleteMenu(gui.hMenu1964main, k, MF_BYPOSITION);
 		}
 	}
@@ -3788,34 +3540,27 @@ void SetupDebuger(void)
 
 long OnNotifyStatusBar(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	if( ((LPNMHDR) lParam)->code == NM_DBLCLK )
-	{
+	if (((LPNMHDR) lParam)->code == NM_DBLCLK) {
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		int fieldno = ((LPNMLISTVIEW) lParam)->iItem;
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		
-		switch(fieldno)
-		{
+		switch (fieldno) {
 		case 2:						/* Counter Factor */
 			/* Reset Counter Factor to default value */
 			SendMessage(gui.hwnd1964main, WM_COMMAND, ID_CF_CF1, 0);
 			break;
 		case 4:						/* CPU core */
 			/* Switch CPU core */
-			if(emustatus.Emu_Is_Running)
-			{
-				SendMessage
-					(
+			if (emustatus.Emu_Is_Running) {
+				SendMessage(
 					gui.hwnd1964main,
 					WM_COMMAND,
 					emustatus.cpucore == DYNACOMPILER ? ID_INTERPRETER : ID_DYNAMICCOMPILER,
 					0
 					);
-			}
-			else
-			{
-				SendMessage
-					(
+			} else {
+				SendMessage(
 					gui.hwnd1964main,
 					WM_COMMAND,
 					defaultoptions.Emulator == DYNACOMPILER ? ID_INTERPRETER : ID_DYNAMICCOMPILER,
@@ -3831,15 +3576,11 @@ long OnNotifyStatusBar(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 long OnPopupMenuCommand(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	switch(LOWORD(wParam))
-	{
+	switch (LOWORD(wParam)) {
 	case ID_POPUP_LOADPLAY:
-		if( Rom_Loaded )
-		{
+		if (Rom_Loaded) {
 			Play(emuoptions.auto_full_screen);
-		}
-		else
-		{
+		} else {
 			RomListOpenRom(RomListGetSelectedIndex(), TRUE);
 		}
 		break;
@@ -3855,16 +3596,13 @@ long OnPopupMenuCommand(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		RomListRomOptions(selected_rom_index);
 		break;
 	case ID_POPUP_CHEATCODE:
-		if(emustatus.Emu_Is_Running)
-		{
+		if (emustatus.Emu_Is_Running) {
 			PauseEmulator();
 			//SuspendThread(CPUThreadHandle);
 			DialogBox(gui.hInst, "CHEAT_HACK", hWnd, (DLGPROC) CheatAndHackDialog);
 			//ResumeThread(CPUThreadHandle);
 			ResumeEmulator(DO_NOTHING_AFTER_PAUSE);
-		}
-		else
-		{
+		} else {
 			CodeList_ReadCode(romlist[selected_rom_index]->pinientry->Game_Name);
 			DialogBox(gui.hInst, "CHEAT_HACK", hWnd, (DLGPROC) CheatAndHackDialog);
 		}
@@ -3913,17 +3651,15 @@ long OnPopupMenuCommand(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 long OnOpcodeDebuggerCommands(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	switch(LOWORD(wParam))
-	{
+	switch (LOWORD(wParam)) {
 		case ID_OPCODEDEBUGGER:
             debug_opcode = 1 - debug_opcode;
-			if(debug_opcode!=0)
+			if (debug_opcode != 0)
 				CheckMenuItem(gui.hMenu1964main, ID_OPCODEDEBUGGER, MF_CHECKED);
 			else
 				CheckMenuItem(gui.hMenu1964main, ID_OPCODEDEBUGGER, MF_UNCHECKED);
 
-			if(opcode_debugger_memory_is_allocated == FALSE)
-			{
+			if (opcode_debugger_memory_is_allocated == FALSE) {
 				/* now we allocate the allocate the debugger */
 				InitVirtualMemory1(&gMemoryState_Interpreter_Compare);
 				InitMemoryLookupTables();
@@ -3941,10 +3677,8 @@ long OnOpcodeDebuggerCommands(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 				TRACE0("Allocate memory for opcode debugger");
 			}
 
-			if(emustatus.Emu_Is_Running)
-			{
-				if(PauseEmulator())
-				{
+			if (emustatus.Emu_Is_Running) {
+				if (PauseEmulator()) {
 					Debugger_Copy_Memory(&gMemoryState_Interpreter_Compare, &gMemoryState);
 					memcpy(&gHardwareState_Interpreter_Compare, &gHardwareState, sizeof(HardwareState));
 					ResumeEmulator(REFRESH_DYNA_AFTER_PAUSE);	/* Need to init emu */
@@ -3953,20 +3687,17 @@ long OnOpcodeDebuggerCommands(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 			break;
 		case ID_OPCODEDEBUGGER_BLOCK_ONLY:
 			debug_opcode_block = 1 - debug_opcode_block;
-			if(debug_opcode_block)
+			if (debug_opcode_block)
 				CheckMenuItem(gui.hMenu1964main, ID_OPCODEDEBUGGER_BLOCK_ONLY, MF_CHECKED);
 			else
 				CheckMenuItem(gui.hMenu1964main, ID_OPCODEDEBUGGER_BLOCK_ONLY, MF_UNCHECKED);
-			if(emustatus.Emu_Is_Running)
-			{
-				if(debug_opcode != 1 && debug_opcode_block)
-				{
+			if (emustatus.Emu_Is_Running) {
+				if (debug_opcode != 1 && debug_opcode_block) {
                     debug_opcode = 1;
 					CheckMenuItem(gui.hMenu1964main, ID_OPCODEDEBUGGER, MF_CHECKED);
 				}
 
-				if(PauseEmulator())
-				{
+				if (PauseEmulator()) {
 					Debugger_Copy_Memory(&gMemoryState_Interpreter_Compare, &gMemoryState);
 					memcpy(&gHardwareState_Interpreter_Compare, &gHardwareState, sizeof(HardwareState));
 					ResumeEmulator(REFRESH_DYNA_AFTER_PAUSE);	/* Need to init emu */
@@ -3980,8 +3711,7 @@ long OnOpcodeDebuggerCommands(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
 void OnFreshRomList()
 {
-	if( !emustatus.Emu_Is_Running )
-	{
+	if (!emustatus.Emu_Is_Running) {
 		NewRomList_ListViewChangeWindowRect();
 		DockStatusBar();
 		ClearRomList();

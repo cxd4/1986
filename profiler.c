@@ -43,16 +43,14 @@ BOOL			profiling_started = FALSE;
  */
 void start_profiling(int proc)
 {
-	if(profiling_started)
-	{
+	if (profiling_started) {
 		stop_profiling();
 	}
 
 	process_being_profiling = proc;
 
 	/* start profiler */
-	_asm
-	{
+	_asm {
 		pushad
 		rdtsc
 		mov start_timer_h, edx	/* high DWORD */
@@ -70,8 +68,7 @@ void start_profiling(int proc)
 void stop_profiling(void)
 {
 	/* get current timer */
-	_asm
-	{
+	_asm {
 		pushad
 		rdtsc
 		mov stop_timer_h, edx	/* high DWORD */
@@ -80,12 +77,11 @@ void stop_profiling(void)
 	}
 
 	/* calculate timer elapse from the starting timer */
-	profiler_timer_count[process_being_profiling] +=
-		(
-			(((uint64) (stop_timer_h - start_timer_h)) * 0x100000000) +
-			stop_timer_l -
-			start_timer_l
-		);
+	profiler_timer_count[process_being_profiling] += (
+		(((uint64) (stop_timer_h - start_timer_h)) * 0x100000000) +
+		stop_timer_l -
+		start_timer_l
+	);
 	profiling_started = FALSE;
 }
 
@@ -100,14 +96,13 @@ void format_profiler_result_msg(char *msg)
 	int		i;
 	/*~~~~~~~~~~~~~~~~~~~*/
 
-	for(i = 0; i < MAX_PROF; i++)
-	{
+	for (i = 0; i < MAX_PROF; i++) {
 		totaltimer += profiler_timer_count[i];
 	}
 
-	if(totaltimer == 0) totaltimer = 1;
-	sprintf
-	(
+	if (totaltimer == 0)
+		totaltimer = 1;
+	sprintf(
 		msg,
 		"core-%2d%% video-%2d%% audio-%2d%% compiler-%2d%% idle-%2d%%",
 		(uint32) (profiler_timer_count[R4300I_PROF] * 100 / totaltimer),
@@ -128,8 +123,7 @@ void reset_profiler(void)
 	int i;
 	/*~~*/
 
-	for(i = 0; i < MAX_PROF; i++)
-	{
+	for (i = 0; i < MAX_PROF; i++) {
 		profiler_timer_count[i] = 0;
 	}
 }

@@ -310,7 +310,7 @@ extern uint32	FR_reg_offset;
 #define INTERPRETIVE_LINK(X)	{ gHWS_GPR[X] = (_int32) (gHWS_pc + 8); }
 
 #ifdef DEBUG_COMMON
-#define CHECK_RS_EQUAL_RA(X, op)	{ if(X == 31) DisplayError("Opcode %s: rs=31 (rs=ra)", op); }
+#define CHECK_RS_EQUAL_RA(X, op)	{ if (X == 31) DisplayError("Opcode %s: rs=31 (rs=ra)", op); }
 #else
 #define CHECK_RS_EQUAL_RA(X, op)
 #endif
@@ -345,14 +345,12 @@ enum { TLB_LOAD, TLB_STORE, TLB_INST };
  =======================================================================================================================
  */
 #define ISNOTVALIDDIRECTTLBVALUE(val)	(val < VALIDDIRECTTLBVALUE)
-#define STORE_TLB_TRANSLATE_ADDR_IF_NEEDED(address) \
-	{ \
-		if(NOT_IN_KO_K1_SEG(address)) Direct_TLB_Lookup(address, TLB_STORE); \
-	}
-#define LOAD_TLB_TRANSLATE_ADDR_IF_NEEDED(address) \
-	{ \
-		if(NOT_IN_KO_K1_SEG(address)) Direct_TLB_Lookup(address, TLB_LOAD); \
-	}
+#define STORE_TLB_TRANSLATE_ADDR_IF_NEEDED(address) { \
+	if (NOT_IN_KO_K1_SEG(address)) Direct_TLB_Lookup(address, TLB_STORE); \
+}
+#define LOAD_TLB_TRANSLATE_ADDR_IF_NEEDED(address) { \
+	if (NOT_IN_KO_K1_SEG(address)) Direct_TLB_Lookup(address, TLB_LOAD); \
+}
 
 #define LOAD_TLB_FUN	uint32 QuerAddr; \
 	QUER_ADDR; \
@@ -604,26 +602,21 @@ uint32			TranslateTLBAddressForStore(uint32 address);
 #define PCLOCKDDIV				70
 #define PCLOCKDDIVU				70
 
-#define R4300I_SPEEDHACK		if((uint16) OFFSET_IMMEDIATE == (uint16) 0xFFFF) \
-	{ \
-		if(NOT_IN_KO_K1_SEG(gHWS_pc)) \
-		{ \
-			uint32	temppc = TranslateITLBAddress(gHWS_pc); \
-			if(LOAD_UWORD_PARAM(temppc + 4) == 0) \
-			{ \
-				CPUdelayPC = gHWS_pc; \
-				CPUdelay = 1; \
-				r4300i_do_speedhack(); \
-			} \
-		} \
-		else if(LOAD_UWORD_PARAM(gHWS_pc + 4) == 0) \
-		{ \
+#define R4300I_SPEEDHACK if ((uint16) OFFSET_IMMEDIATE == (uint16)0xFFFF) { \
+	if (NOT_IN_KO_K1_SEG(gHWS_pc)) { \
+		uint32	temppc = TranslateITLBAddress(gHWS_pc); \
+		if (LOAD_UWORD_PARAM(temppc + 4) == 0) { \
 			CPUdelayPC = gHWS_pc; \
 			CPUdelay = 1; \
 			r4300i_do_speedhack(); \
 		} \
+	} else if (LOAD_UWORD_PARAM(gHWS_pc + 4) == 0) { \
+		CPUdelayPC = gHWS_pc; \
+		CPUdelay = 1; \
+		r4300i_do_speedhack(); \
 	} \
-	else
+} \
+else
 #define K0_TO_K1(Addr)			((uint32) (Addr) | 0xA0000000)	/* K0_SEG to K1_SEG */
 #define K1_TO_K0(Addr)			((uint32) (Addr) & 0x9FFFFFFF)	/* K1_SEG to K0_SEG */
 #define K0_TO_PHYS(Addr)		((uint32) (Addr) & 0x1FFFFFFF)	/* K0_SEG to Physical */
@@ -652,8 +645,7 @@ HandleExceptions(0x80000180);
  =======================================================================================================================
  */
 #define CHECKING_ADDR_ALIGNMENT(addr, mask, opcode, exception) \
-	if(addr & mask) \
-	{ \
+	if (addr & mask) { \
 		Trigger_Address_Error_Exception(addr, opcode, exception); \
 	}
 #else

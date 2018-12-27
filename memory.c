@@ -67,8 +67,7 @@ void Init_R_AND_W(uint8 **sDWORD_R, uint8 *MemoryRange, uint32 startAddress, uin
 	uint32	endSegment = ((startAddress + size - 1) >> 16);
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	while(curSegment <= endSegment)
-	{
+	while (curSegment <= endSegment) {
 		sDWORD_R[curSegment | 0x8000] = pTmp;
 		sDWORD_R[curSegment | 0xA000] = pTmp;
 		pTmp += 0x10000;
@@ -91,8 +90,7 @@ void DynInit_R_AND_W(uint8 *MemoryRange, uint32 startAddress, uint32 endAddress)
 	uint32	endSegment = ((endAddress & 0x1FFFFFFF) >> 16);		/* ????????? */
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	while(curSegment <= endSegment)
-	{
+	while (curSegment <= endSegment) {
 		sDYN_PC_LOOKUP[curSegment | 0x8000] = pTmp;
 		sDYN_PC_LOOKUP[curSegment | 0xA000] = pTmp;
 		pTmp += 0x10000;
@@ -143,8 +141,7 @@ void InitMemoryLookupTables(void)
 	sDWord_ptr = (uint8 **) &sDWord;
 	sDWord2_ptr = (uint8 **) &sDWord2;
 
-	for(i = 0; i < 0x10000; i++)
-	{
+	for (i = 0; i < 0x10000; i++) {
 		sDWord[i] = gMemoryState.dummyNoAccess;
 		sDWord2[i] = gMemoryState.dummyNoAccess;
 		sDYN_PC_LOOKUP[i] = gMemoryState.dummyAllZero;
@@ -161,8 +158,7 @@ void InitMemoryLookupTables(void)
 #endif
 	TLB_sDWord_ptr = (uint8 **) &TLB_sDWord;
 
-	for(i = 0; i < 0x100000; i++)
-	{
+	for (i = 0; i < 0x100000; i++) {
 		TLB_sDWord[i] = sDWord[i >> 4] + 0x1000 * (i & 0xf);
 	}
 
@@ -177,27 +173,27 @@ uint8	*Crapola;
  */
 void InitVirtualDynaMemory(void)
 {
-	if(dyna_CodeTable != NULL) VirtualFree(dyna_CodeTable, 0, MEM_RELEASE);
-	if(dyna_RecompCode != NULL) VirtualFree(dyna_RecompCode, 0, MEM_RELEASE);
-	if(RDRAM_Copy != NULL) VirtualFree(RDRAM_Copy, 0, MEM_RELEASE);
+	if (dyna_CodeTable != NULL)
+		VirtualFree(dyna_CodeTable, 0, MEM_RELEASE);
+	if (dyna_RecompCode != NULL)
+		VirtualFree(dyna_RecompCode, 0, MEM_RELEASE);
+	if (RDRAM_Copy != NULL)
+		VirtualFree(RDRAM_Copy, 0, MEM_RELEASE);
 	(double *) dyna_CodeTable = (double *) VirtualAlloc(NULL, CODETABLE_SIZE, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	(double *) dyna_RecompCode = (double *) VirtualAlloc(NULL, RECOMPCODE_SIZE, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	RDRAM_Copy = (uint8 *) VirtualAlloc(NULL, MEMORY_SIZE_WITH_EXPANSION, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 
-	if(dyna_CodeTable == NULL)
-	{
+	if (dyna_CodeTable == NULL) {
 		DisplayError("Cant alloc Mem for dyna_CodeTable");
 		exit(1);
 	}
 
-	if(dyna_RecompCode == NULL)
-	{
+	if (dyna_RecompCode == NULL) {
 		DisplayError("Cant alloc Mem for dyna_RecompCode");
 		exit(1);
 	}
 
-	if(RDRAM_Copy == NULL)
-	{
+	if (RDRAM_Copy == NULL) {
 		DisplayError("Cant alloc RDRAM_Copy");
 		exit(1);
 	}
@@ -209,8 +205,10 @@ void InitVirtualDynaMemory(void)
  */
 void FreeVirtualDynaMemory(void)
 {
-	if(dyna_CodeTable != NULL) VirtualFree(dyna_CodeTable, 0, MEM_RELEASE);
-	if(dyna_RecompCode != NULL) VirtualFree(dyna_RecompCode, 0, MEM_RELEASE);
+	if (dyna_CodeTable != NULL)
+		VirtualFree(dyna_CodeTable, 0, MEM_RELEASE);
+	if (dyna_RecompCode != NULL)
+		VirtualFree(dyna_RecompCode, 0, MEM_RELEASE);
 }
 
 /*
@@ -219,7 +217,8 @@ void FreeVirtualDynaMemory(void)
  */
 void InitVirtualMemory1(MemoryState *gMemoryState)
 {
-	if(gMemoryState->dummyReadWrite == NULL) gMemoryState->dummyReadWrite = (uint8 *) malloc(MEMORY_SIZE_DUMMY * 15);
+	if (gMemoryState->dummyReadWrite == NULL)
+		gMemoryState->dummyReadWrite = (uint8 *) malloc(MEMORY_SIZE_DUMMY * 15);
 
 	gMemoryState->SP_MEM = (uint32 *) (gMemoryState->dummyReadWrite + MEMORY_SIZE_DUMMY);
 	gMemoryState->dummyAllZero = (uint8 *) (gMemoryState->dummyReadWrite + MEMORY_SIZE_DUMMY * 2);
@@ -241,8 +240,7 @@ void InitVirtualMemory1(MemoryState *gMemoryState)
 	 * do faster £
 	 * read/write_mem_rdram
 	 */
-	if(gMemoryState->RDRAM == NULL)
-	{
+	if (gMemoryState->RDRAM == NULL) {
 		(double *) gMemoryState->RDRAM = (double *) VirtualAlloc
 			(
 				(double *) 0x20000000,
@@ -255,8 +253,7 @@ void InitVirtualMemory1(MemoryState *gMemoryState)
 	/* ifndef TEST_OPCODE_DEBUGGER_INTEGRITY */
 	rdram_is_at_0x20000000 = TRUE;
 
-	if((uint32) gMemoryState->RDRAM != 0x20000000 || (debug_opcode == 1))
-	{
+	if ((uint32) gMemoryState->RDRAM != 0x20000000 || (debug_opcode == 1)) {
 		/*
 		 * DisplayError("Cannot allocate 8MB RDRAM at fixed address. You may have some
 		 * problems with memory settings in Windows. 1964 will still work without any
@@ -271,10 +268,8 @@ void InitVirtualMemory1(MemoryState *gMemoryState)
 				PAGE_NOACCESS
 			);
 		rdram_is_at_0x20000000 = FALSE;
-	}
-	else
+	} else {
 	/* endif */
-	{
 		rdram_is_at_0x20000000 = TRUE;
 	}
 
@@ -287,8 +282,7 @@ void InitVirtualMemory1(MemoryState *gMemoryState)
 		);
 
 	/* These registers are a gray area.. */
-	if(gMemoryState->ramRegs0 == NULL)
-	{
+	if (gMemoryState->ramRegs0 == NULL) {
 		gMemoryState->ramRegs0 = (uint32 *) VirtualAlloc(NULL, MEMORY_SIZE_DUMMY, MEM_RESERVE, PAGE_NOACCESS);
 		gMemoryState->ramRegs0 = (uint32 *) VirtualAlloc
 			(
@@ -299,8 +293,7 @@ void InitVirtualMemory1(MemoryState *gMemoryState)
 			);
 	}
 
-	if(gMemoryState->ramRegs4 == NULL)
-	{
+	if (gMemoryState->ramRegs4 == NULL) {
 		gMemoryState->ramRegs4 = (uint32 *) VirtualAlloc
 			(
 				(void *) (((uint8 *) gMemoryState->ramRegs0) + 0x4000),
@@ -310,8 +303,7 @@ void InitVirtualMemory1(MemoryState *gMemoryState)
 			);
 	}
 
-	if(gMemoryState->ramRegs8 == NULL)
-	{
+	if (gMemoryState->ramRegs8 == NULL) {
 		gMemoryState->ramRegs8 = (uint32 *) VirtualAlloc(NULL, MEMORY_SIZE_RAMREGS8, MEM_RESERVE, PAGE_NOACCESS);
 		gMemoryState->ramRegs8 = (uint32 *) VirtualAlloc
 			(
@@ -322,12 +314,14 @@ void InitVirtualMemory1(MemoryState *gMemoryState)
 			);
 	}
 
-	if(gMemoryState->C1A1 == NULL) gMemoryState->C1A1 = (uint32 *) gamesave.SRam;
-	if(gMemoryState->C1A3 == NULL) gMemoryState->C1A3 = (uint32 *) gamesave.SRam;
-	if(gMemoryState->C2A1 == NULL) gMemoryState->C2A1 = (uint32 *) gamesave.SRam;
+	if (gMemoryState->C1A1 == NULL)
+		gMemoryState->C1A1 = (uint32 *) gamesave.SRam;
+	if (gMemoryState->C1A3 == NULL)
+		gMemoryState->C1A3 = (uint32 *) gamesave.SRam;
+	if (gMemoryState->C2A1 == NULL)
+		gMemoryState->C2A1 = (uint32 *) gamesave.SRam;
 
-	if(gMemoryState->dummyNoAccess == NULL)
-	{
+	if (gMemoryState->dummyNoAccess == NULL) {
 		gMemoryState->dummyNoAccess = (uint8 *) VirtualAlloc(NULL, MEMORY_SIZE_DUMMY, MEM_RESERVE, PAGE_NOACCESS);
 		gMemoryState->dummyNoAccess = (uint8 *) VirtualAlloc
 			(
@@ -338,8 +332,7 @@ void InitVirtualMemory1(MemoryState *gMemoryState)
 			);
 	}
 
-	if(gMemoryState->C2A2 == NULL)
-	{
+	if (gMemoryState->C2A2 == NULL) {
 		gMemoryState->C2A2 = (uint32 *) VirtualAlloc(NULL, MEMORY_SIZE_C2A2, MEM_RESERVE, PAGE_NOACCESS);
 		gMemoryState->C2A2 = (uint32 *) VirtualAlloc
 			(
@@ -367,8 +360,7 @@ void InitVirtualMemory(void)
 	InitVirtualMemory1(&gMemoryState);
 
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY16
-	if(debug_opcode!=0)
-	{
+	if (debug_opcode != 0) {
 		InitVirtualMemory1(&gMemoryState_Interpreter_Compare);
 		opcode_debugger_memory_is_allocated = TRUE;
 		TRACE0("Allocate memory for opcode debugger");
@@ -383,7 +375,8 @@ void InitVirtualMemory(void)
  */
 void FreeVirtualMemory1(MemoryState *gMemoryState)
 {
-	if(gMemoryState->dummyReadWrite != NULL) free((uint8 *) gMemoryState->dummyReadWrite);
+	if (gMemoryState->dummyReadWrite != NULL)
+		free((uint8 *) gMemoryState->dummyReadWrite);
 
 	VirtualFree(gMemoryState->RDRAM, 0, MEM_RELEASE);
 	VirtualFree(gMemoryState->ExRDRAM, 0, MEM_RELEASE);
@@ -467,8 +460,7 @@ void InitVirtualRomMemory(uint32 memsize)
 	InitVirtualRomMemory1(&gMemoryState, memsize);
 
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY17
-	if(debug_opcode!=0)
-	{
+	if (debug_opcode != 0) {
 		gMemoryState_Interpreter_Compare.ROM_Image = gMemoryState.ROM_Image;
 	}
 #endif
@@ -484,31 +476,24 @@ void FreeVirtualRomMemory(void)
 	int i;
 	/*~~*/
 
-	for(i = 0; i < 0x10000; i++)
-	{
-		if(dynarommap[i] != NULL)
-		{
+	for (i = 0; i < 0x10000; i++) {
+		if (dynarommap[i] != NULL) {
 			/* VirtualFree(dynarommap[i], 0x10000, MEM_DECOMMIT); */
 			VirtualFree(dynarommap[i], 0, MEM_RELEASE);
 			dynarommap[i] = NULL;
 		}
 	}
 
-	if(gMemoryState.ROM_Image != NULL)
-	{
-		/* if ( !(VirtualFree((void*)gMemoryState.ROM_Image, 64*1024*1024,MEM_DECOMMIT)) ) */
-		if(!(VirtualFree((void *) gMemoryState.ROM_Image, 0, MEM_RELEASE)))
-		{
+	if (gMemoryState.ROM_Image != NULL) {
+		/* if (!(VirtualFree((void*)gMemoryState.ROM_Image, 64*1024*1024,MEM_DECOMMIT))) */
+		if (!(VirtualFree((void *) gMemoryState.ROM_Image, 0, MEM_RELEASE))) {
 			DisplayError("Failed to release virtual memory for ROM Image, error code is %ld", GetLastError());
-		}
-		else
-		{
+		} else {
 			gMemoryState.ROM_Image = NULL;
 		}
 	}
 
-	for(i = 0x1000; i <= 0x1FFF; i++)
-	{
+	for (i = 0x1000; i <= 0x1FFF; i++) {
 		sDWord[i + 0x8000] = gMemoryState.dummyNoAccess;
 		sDWord[i + 0xA000] = gMemoryState.dummyNoAccess;
 	}
@@ -527,26 +512,24 @@ BOOL UnmappedMemoryExceptionHelper(uint32 addr)
 	/*~~~~~~~~~~~~~~~~~~*/
 
 	/*
-	 * if( NOT_IN_KO_K1_SEG(realpc) ) £
+	 * if (NOT_IN_KO_K1_SEG(realpc)) £
 	 * realpc = TranslateITLBAddress(realpc);
 	 */
 	offset = realpc & 0x1FFF0000;
 	index = realpc / 0x10000;
 
-	if(dynarommap[index] != NULL) VirtualFree(dynarommap[index], 0, MEM_RELEASE);
+	if (dynarommap[index] != NULL)
+		VirtualFree(dynarommap[index], 0, MEM_RELEASE);
 
 	dynarommap[index] = VirtualAlloc(NULL, 0x10000, MEM_COMMIT, PAGE_READWRITE);
-	if(dynarommap[index] == NULL)
-	{
+	if (dynarommap[index] == NULL) {
 		DisplayError("Unable to allocate memory to support dyna rom mapping, PC=%8X", gHWS_pc);
 		return FALSE;
-	}
-	else
-	{
+	} else {
 		memset(dynarommap[index], 0, 0x10000);
 
 		/* Mapped the memory */
-		if(IN_KO_K1_SEG(addr))
+		if (IN_KO_K1_SEG(addr))
 			DynInit_R_AND_W(dynarommap[index], offset, offset + 0x0000FFFF);
 		else
 			sDYN_PC_LOOKUP[index] = dynarommap[index];
@@ -570,22 +553,18 @@ void ResetRdramSize(int setsize)
 	int retval;
 	/*~~~~~~~*/
 
-	if(rdram_sizes[setsize] != current_rdram_size)
-	{
-		if(setsize == RDRAMSIZE_4MB)	/* Need to turn off the expansion pack */
-		{
+	if (rdram_sizes[setsize] != current_rdram_size) {
+		if (setsize == RDRAMSIZE_4MB) { /* Need to turn off the expansion pack */
 			/*~~*/
 			int i;
 			/*~~*/
 
-			for(i = 0x40; i < 0x80; i++)
-			{
+			for (i = 0x40; i < 0x80; i++) {
 				sDWord[i | 0x8000] = gMemoryState.dummyNoAccess;
 				sDWord[i | 0xA000] = gMemoryState.dummyNoAccess;
 #ifndef TEST_OPCODE_DEBUGGER_INTEGRITY18
 #ifdef ENABLE_OPCODE_DEBUGGER
-				if(debug_opcode!=0)
-				{
+				if (debug_opcode != 0) {
 					sDWORD_R__Debug[i | 0x8000] = gMemoryState_Interpreter_Compare.dummyNoAccess;
 					sDWORD_R__Debug[i | 0xA000] = gMemoryState_Interpreter_Compare.dummyNoAccess;
 				}
@@ -593,65 +572,50 @@ void ResetRdramSize(int setsize)
 #endif
 			}
 
-			for(i = 0x400; i < 0x800; i++)
-			{
+			for (i = 0x400; i < 0x800; i++) {
 				TLB_sDWord[i] = sDWord[i >> 4] + 0x1000 * (i & 0xf);
 			}
 
 			disable_exrdram_func_array();
 			retval = VirtualFree(gMemoryState.ExRDRAM, MEMORY_SIZE_EXRDRAM, MEM_DECOMMIT);
-			if(retval == 0)
-			{
+			if (retval == 0) {
 				DisplayError("Error to release the ExRDRAM");
-			}
-			else
-			{
+			} else {
 				gMemoryState.ExRDRAM = NULL;
 			}
-		}
-		else	/* Need to turn on the expansion pack */
-		{
-			if(gMemoryState.ExRDRAM != NULL)
-			{
+		} else { /* Need to turn on the expansion pack */
+			if (gMemoryState.ExRDRAM != NULL) {
 				retval = VirtualFree(gMemoryState.ExRDRAM, MEMORY_SIZE_EXRDRAM, MEM_DECOMMIT);
 			}
 
-			gMemoryState.ExRDRAM = (uint8 *) VirtualAlloc
-				(
+			gMemoryState.ExRDRAM = (uint8 *) VirtualAlloc(
 					(((uint8 *) gMemoryState.RDRAM) + 0x400000),
 					MEMORY_SIZE_EXRDRAM,
 					MEM_COMMIT,
 					PAGE_READWRITE
 				);
 
-			if((uint32) gMemoryState.ExRDRAM != (uint32) gMemoryState.RDRAM + 0x400000)
-			{
-				DisplayError
-				(
+			if ((uint32) gMemoryState.ExRDRAM != (uint32) gMemoryState.RDRAM + 0x400000) {
+				DisplayError(
 					"Fix me in ResetRdramSize()!, RDRAM and ExRDRAM is not in contiguous memory address: RDRAM=%08X, ExRDRAM=%08X",
 					(uint32) gMemoryState.RDRAM,
 					(uint32) gMemoryState.ExRDRAM
 				);
 			}
 
-			if(debug_opcode!=0)
-			{
-				gMemoryState_Interpreter_Compare.ExRDRAM = (uint8 *) VirtualAlloc
-					(
+			if (debug_opcode != 0) {
+				gMemoryState_Interpreter_Compare.ExRDRAM = (uint8 *) VirtualAlloc(
 						(((uint8 *) gMemoryState_Interpreter_Compare.RDRAM) + 0x400000),
 						MEMORY_SIZE_EXRDRAM,
 						MEM_COMMIT,
 						PAGE_READWRITE
 					);
-				if
-				(
+				if (
 					(uint32) gMemoryState_Interpreter_Compare.ExRDRAM !=
-							(uint32) gMemoryState_Interpreter_Compare.RDRAM +
+						(uint32) gMemoryState_Interpreter_Compare.RDRAM +
 						0x400000
-				)
-				{
-					DisplayError
-					(
+				) {
+					DisplayError(
 						"Fix me in ResetRdramSize()!, RDRAM and ExRDRAM is not in contiguous memory address: RDRAM=%08X, ExRDRAM=%08X",
 						(uint32) gMemoryState_Interpreter_Compare.RDRAM,
 						(uint32) gMemoryState_Interpreter_Compare.ExRDRAM
@@ -661,10 +625,8 @@ void ResetRdramSize(int setsize)
 
 			Init_R_AND_W(sDWord, (uint8 *) gMemoryState.ExRDRAM, MEMORY_START_EXRDRAM, MEMORY_SIZE_EXRDRAM);
 #ifdef ENABLE_OPCODE_DEBUGGER
-			if(debug_opcode!=0)
-			{
-				Init_R_AND_W
-				(
+			if (debug_opcode != 0) {
+				Init_R_AND_W(
 					sDWORD_R__Debug,
 					(uint8 *) gMemoryState_Interpreter_Compare.ExRDRAM,
 					MEMORY_START_EXRDRAM,
@@ -676,19 +638,15 @@ void ResetRdramSize(int setsize)
 		}
 
 		current_rdram_size = rdram_sizes[setsize];
-	}
-	else if(setsize == RDRAMSIZE_8MB)	/* Need to use 8MB and we are on 8MB now */
-	{
+	} else if (setsize == RDRAMSIZE_8MB) { /* Need to use 8MB and we are on 8MB now */
 		/*~~*/
 		int i;
 		/*~~*/
 
 		Init_R_AND_W(sDWord, (uint8 *) gMemoryState.ExRDRAM, MEMORY_START_EXRDRAM, MEMORY_SIZE_EXRDRAM);
 #ifdef ENABLE_OPCODE_DEBUGGER
-		if(debug_opcode!=0)
-		{
-			Init_R_AND_W
-			(
+		if (debug_opcode != 0) {
+			Init_R_AND_W(
 				sDWORD_R__Debug,
 				(uint8 *) gMemoryState_Interpreter_Compare.ExRDRAM,
 				MEMORY_START_EXRDRAM,
@@ -696,8 +654,7 @@ void ResetRdramSize(int setsize)
 			);
 		}
 #endif
-		for(i = 0x400; i < 0x800; i++)
-		{
+		for (i = 0x400; i < 0x800; i++) {
 			TLB_sDWord[0x80000 + i] = sDWord[(0x80000 + i) >> 4] + 0x1000 * (i & 0xf);
 			TLB_sDWord[0xA0000 + i] = sDWord[(0xA0000 + i) >> 4] + 0x1000 * (i & 0xf);
 		}
@@ -736,12 +693,12 @@ void ROM_CheckSumMario(void)
 
 	TRACE0("Checking CRC for this ROM");
 
-	for(addr1 = 0; addr1 < 0x00100000; addr1 += 4)
-	{
+	for (addr1 = 0; addr1 < 0x00100000; addr1 += 4) {
 		v0 = rom[(addr1 + 0x1000) >> 2];
 		v1 = a3 + v0;
 		a1 = v1;
-		if(v1 < a3) t2++;
+		if (v1 < a3)
+			t2++;
 
 		v1 = v0 & 0x001f;
 		t7 = 0x20 - v1;
@@ -752,7 +709,7 @@ void ROM_CheckSumMario(void)
 		a3 = a1;
 		t3 ^= v0;
 		s0 += a0;
-		if(a2 < v0)
+		if (a2 < v0)
 			a2 ^= a3 ^ v0;
 		else
 			a2 ^= a0;
@@ -767,8 +724,7 @@ void ROM_CheckSumMario(void)
 	a3 ^= t2 ^ t3;				/* CRC1 */
 	s0 ^= a2 ^ t4;				/* CRC2 */
 
-	if(a3 != rom[0x10 >> 2] || s0 != rom[0x14 >> 2])
-	{
+	if (a3 != rom[0x10 >> 2] || s0 != rom[0x14 >> 2]) {
 		/* DisplayError("Warning, CRC values don't match, fixed"); */
 		TRACE0("Warning, CRC values don't match, fixed");
 
@@ -803,20 +759,20 @@ void ROM_CheckSumZelda(void)
 
 	TRACE0("Checking CRC for this ROM");
 
-	for(addr1 = 0; addr1 < 0x00100000; addr1 += 4)
-	{
+	for (addr1 = 0; addr1 < 0x00100000; addr1 += 4) {
 		v0 = rom[(addr1 + 0x1000) >> 2];
 		v1 = a3 + v0;
 		a1 = v1;
 
-		if(v1 < a3) t2++;
+		if (v1 < a3)
+			t2++;
 
 		v1 = v0 & 0x1f;
 		a0 = (v0 >> (t5 - v1)) | (v0 << v1);
 		a3 = a1;
 		t3 = t3 ^ v0;
 		s0 += a0;
-		if(a2 < v0)
+		if (a2 < v0)
 			a2 ^= a3 ^ v0;
 		else
 			a2 ^= a0;
@@ -830,8 +786,7 @@ void ROM_CheckSumZelda(void)
 	a3 ^= t2 ^ t3;
 	s0 ^= a2 ^ t4;
 
-	if(a3 != rom[0x10 >> 2] || s0 != rom[0x14 >> 2])
-	{
+	if (a3 != rom[0x10 >> 2] || s0 != rom[0x14 >> 2]) {
 		/* DisplayError("Warning, CRC values don't match, fixed"); */
 		TRACE0("Warning, CRC values don't match, fixed");
 
@@ -874,13 +829,12 @@ void Debugger_Copy_Memory(MemoryState *target, MemoryState *source)
  */
 BOOL ProtectBlock(uint32 pc)
 {
-	if(IN_KO_K1_SEG(pc))
+	if (IN_KO_K1_SEG(pc))
 		pc = pc & 0xDFFFFFFF;
 	else
 		return FALSE;
 
-	if(pc < 0x80000000 + current_rdram_size)
-	{
+	if (pc < 0x80000000 + current_rdram_size) {
 		protect_memory_set_func_array(pc);
 	}
 
@@ -893,13 +847,12 @@ BOOL ProtectBlock(uint32 pc)
  */
 BOOL UnprotectBlock(uint32 pc)
 {
-	if(IN_KO_K1_SEG(pc))
+	if (IN_KO_K1_SEG(pc))
 		pc = pc & 0xDFFFFFFF;
 	else
 		return FALSE;
 
-	if(pc >= 0x80000000 && pc < 0x80000000 + current_rdram_size)
-	{
+	if (pc >= 0x80000000 && pc < 0x80000000 + current_rdram_size) {
 		unprotect_memory_set_func_array(pc);
 	}
 
@@ -916,8 +869,7 @@ void UnprotectAllBlocks(void)
 	uint32	i;
 	/*~~~~~~*/
 
-	for(i = 0; i < current_rdram_size / 0x1000; i++)
-	{
+	for (i = 0; i < current_rdram_size / 0x1000; i++) {
 		UnprotectBlock(0x80000000 + i * 0x1000);
 	}
 

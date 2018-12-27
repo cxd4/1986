@@ -43,10 +43,9 @@ const int			dynalog_maxcount = 1000;
 void __cdecl LogDyna(char *debug, ...)
 {
 #ifdef _DEBUG
-	if(debugoptions.debug_dyna_log)
+	if (debugoptions.debug_dyna_log)
 #endif
-		if(gMultiPass.WriteCode)
-		{
+		if (gMultiPass.WriteCode) {
 			/*~~~~~~~~~~~~~~~~~~*/
 			va_list argptr;
 			char	text[1024];
@@ -56,8 +55,7 @@ void __cdecl LogDyna(char *debug, ...)
 			strcpy(filename, directories.main_directory);
 			strcat(filename, "dyna.log");
 
-			if(!dynalog_fileisopen)
-			{
+			if (!dynalog_fileisopen) {
 				dynalog_stream = fopen(filename, "at");
 				if(dynalog_stream == NULL) return;
 				dynalog_fileisopen = TRUE;
@@ -70,8 +68,7 @@ void __cdecl LogDyna(char *debug, ...)
 			fprintf(dynalog_stream, "%s", text);
 
 			dynalog_count++;
-			if(dynalog_count % dynalog_maxcount == 0)
-			{
+			if (dynalog_count % dynalog_maxcount == 0) {
 				fclose(dynalog_stream);
 				dynalog_fileisopen = FALSE;
 			}
@@ -85,7 +82,7 @@ void __cdecl LogDyna(char *debug, ...)
 void InitLogDyna(void)
 {
 #ifdef _DEBUG
-	if(debugoptions.debug_dyna_log)
+	if (debugoptions.debug_dyna_log)
 #endif
 	{
 		/*~~~~~~~~~~~~~~~~~~*/
@@ -96,10 +93,11 @@ void InitLogDyna(void)
 		strcat(filename, "dyna.log");
 
 		dynalog_stream = fopen(filename, "wt");
-		if(dynalog_stream == NULL) return;
+		if (dynalog_stream == NULL)
+			return;
 
 		fprintf(dynalog_stream, "1964 Dynarec Log -- ");
-		if(gMultiPass.UseOnePassOnly == 0)
+		if (gMultiPass.UseOnePassOnly == 0)
 			fprintf(dynalog_stream, "Multiple Pass\n");
 		else
 			fprintf(dynalog_stream, "Single Pass\n");
@@ -120,8 +118,7 @@ void InitLogDyna(void)
  */
 void CloseLogDyna(void)
 {
-	if(dynalog_fileisopen)
-	{
+	if (dynalog_fileisopen) {
 		fclose(dynalog_stream);
 		dynalog_fileisopen = FALSE;
 	}

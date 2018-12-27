@@ -26,8 +26,7 @@
 #define PIF_RAM_PHYS	0x7C0
 #define IPIF_EXIT		6
 
-typedef struct
-{
+typedef struct {
 	int enabled;
 	int mempak;
 	int use_mempak;

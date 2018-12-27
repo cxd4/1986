@@ -33,8 +33,7 @@ enum GAME_STOP_REASON { EMURUNNING, EMUSTOP, EMUPAUSE, EMUSWITCHCORE, EMURESUME,
 extern HANDLE CPUThreadHandle;
 extern int Audio_Is_Initialized;
 
-struct EmuStatus
-{
+struct EmuStatus {
 	int						DListCount;
 	int						AListCount;
 	int						PIDMACount;
@@ -51,8 +50,7 @@ struct EmuStatus
 };
 extern struct EmuStatus emustatus;
 
-struct EmuOptions
-{
+struct EmuOptions {
 	BOOL	auto_apply_cheat_code;
 	BOOL	auto_run_rom;
 	BOOL	auto_full_screen;
@@ -85,11 +83,9 @@ void	CPU_Task_To_String(char *str);
 
 #ifdef DEBUG_COMMON
 #define INTERPRETER_DEBUG_INSTRUCTION(inst) \
-	if(DebuggerActive) \
-	{ \
+	if(DebuggerActive) { \
 		HandleBreakpoint(inst); \
-		if(DebuggerOpcodeTraceEnabled) \
-		{ \
+		if(DebuggerOpcodeTraceEnabled) { \
 			DebugPrintInstruction(inst); \
 			RefreshDebugger(); \
 		} \
@@ -100,8 +96,7 @@ void	CPU_Task_To_String(char *str);
 #ifdef DEBUG_COMMON
 #define DYNA_DEBUG_INSTRUCTION(inst) \
 	/* FlushAllRegisters(); */ \
-	if(DebuggerActive && (DebuggerOpcodeTraceEnabled || DebuggerBreakPointActive)) \
-	{ \
+	if(DebuggerActive && (DebuggerOpcodeTraceEnabled || DebuggerBreakPointActive)) { \
 		rc_DYNDEBUG_UPDATE(inst) DEBUG_BPT(inst) \
 	}
 #else
@@ -109,7 +104,7 @@ void	CPU_Task_To_String(char *str);
 #endif
 #ifdef DEBUG_COMMON
 #ifdef LOG_DYNA
-#define DYNA_LOG_INSTRUCTION	if(debugoptions.debug_dyna_log) \
+#define DYNA_LOG_INSTRUCTION	if (debugoptions.debug_dyna_log) \
 		LogDyna("\n%s\n", DebugPrintInstructionWithOutRefresh(gHWS_code));
 #else
 #define DYNA_LOG_INSTRUCTION
@@ -123,8 +118,7 @@ void	CPU_Task_To_String(char *str);
 #endif
 #endif
 #ifdef DEBUG_DYNAEXECUTION
-#define DEBUG_PRINT_DYNA_EXECUTION_INFO if(debugoptions.debug_dyna_execution) \
-	{ \
+#define DEBUG_PRINT_DYNA_EXECUTION_INFO if(debugoptions.debug_dyna_execution) { \
 		sprintf(generalmessage, "Dyna execution: PC = %08X", gHWS_pc); \
 		RefreshOpList(generalmessage); \
 	}
@@ -132,8 +126,7 @@ void	CPU_Task_To_String(char *str);
 #define DEBUG_PRINT_DYNA_EXECUTION_INFO
 #endif
 #ifdef DEBUG_DYNA
-#define DEBUG_PRINT_DYNA_COMPILE_INFO	if(debugoptions.debug_dyna_compiler) \
-	{ \
+#define DEBUG_PRINT_DYNA_COMPILE_INFO	if(debugoptions.debug_dyna_compiler) { \
 		sprintf(generalmessage, "Dyna compile: memory %08X - %08X", compilerstatus.TempPC, gHWS_pc); \
 		RefreshOpList(generalmessage); \
 	}

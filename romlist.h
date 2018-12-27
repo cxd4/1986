@@ -28,15 +28,13 @@
 #include "globals.h"
 #include "1964ini.h"
 
-struct ROMLIST_ENTRY_STRUCT
-{
+struct ROMLIST_ENTRY_STRUCT {
 	INI_ENTRY	*pinientry;
 	char		romfilename[_MAX_FNAME];
 	long		size;
 };
 
-enum
-{
+enum {
 	ROMLIST_GAMENAME,
 	ROMLIST_COUNTRY,
 	ROMLIST_SIZE,
@@ -47,8 +45,7 @@ enum
 	ROMLIST_COMMENT_INVERT
 };
 
-enum
-{
+enum {
 	ROMLIST_DISPLAY_INTERNAL_NAME,
 	ROMLIST_DISPLAY_ALTER_NAME,
 	ROMLIST_DISPLAY_FILENAME,
@@ -105,7 +102,6 @@ extern void SetupToolBar();
 extern BYTE ChangeButtonState(int nID);
 extern void CheckButton(int nID, BOOL bCheck);
 
-
 typedef enum {
 	ROMLIST_COL_GAMENAME=0,
 	ROMLIST_COL_COUNTRY,
@@ -117,7 +113,7 @@ typedef enum {
 	ROMLIST_COL_CRC2
 } ColumnID;
 
-typedef struct{
+typedef struct {
 	ColumnID	colID;
 	char		*text;
 	int			colPos;

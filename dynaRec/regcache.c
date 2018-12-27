@@ -58,8 +58,7 @@ void InitRegisterMap(void)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	ThisYear = 2001;
-	for(k = 0; k < Num_x86regs; k++)
-	{
+	for (k = 0; k < Num_x86regs; k++) {
 		x86reg[k].mips_reg = -1;
 		x86reg[k].HiWordLoc = -1;
 		x86reg[k].BirthDate = ThisYear;
@@ -76,8 +75,7 @@ void InitRegisterMap(void)
 		FlushedRegistersMap[k].Is32bit = 0;
 	}
 
-	for(k = NUM_X86REGS; k < NUM_CONSTS; k++)
-	{
+	for (k = NUM_X86REGS; k < NUM_CONSTS; k++) {
 		ConstMap[k].IsMapped = 0;
 		ConstMap[k].value = 0;
 		FlushedRegistersMap[k].Is32bit = 0;
@@ -114,17 +112,16 @@ int CheckIs32Bit(int mips_reg)
 	const	Num_x86regs = NUM_X86REGS;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(ConstMap[mips_reg].IsMapped) return(1);
-	for(k = 0; k < Num_x86regs; k++)
-	{
-		if(ItIsARegisterNotToUse(k));
-		else if(x86reg[k].mips_reg == mips_reg) /* if mapped */
-		{
-			return(x86reg[k].Is32bit);
+	if (ConstMap[mips_reg].IsMapped)
+		return (1);
+	for (k = 0; k < Num_x86regs; k++) {
+		if (ItIsARegisterNotToUse(k)) {
+		} else if (x86reg[k].mips_reg == mips_reg) /* if mapped */ {
+			return (x86reg[k].Is32bit);
 		}
 	}
 
-	return(0);
+	return (0);
 }
 
 /*
@@ -139,16 +136,14 @@ int CheckIsDirty(int mips_reg)
 	const	Num_x86regs = NUM_X86REGS;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	for(k = 0; k < Num_x86regs; k++)
-	{
-		if(ItIsARegisterNotToUse(k));
-		else if(x86reg[k].mips_reg == mips_reg) /* if mapped */
-		{
-			return(x86reg[k].IsDirty);
+	for (k = 0; k < Num_x86regs; k++) {
+		if (ItIsARegisterNotToUse(k)) {
+		} else if (x86reg[k].mips_reg == mips_reg) /* if mapped */ {
+			return (x86reg[k].IsDirty);
 		}
 	}
 
-	return(0);
+	return (0);
 }
 
 /*
@@ -158,14 +153,20 @@ int CheckIsDirty(int mips_reg)
  */
 int CheckWhereIsMipsReg(int mips_reg)
 {
-	if(x86reg[Reg_EDI].mips_reg == mips_reg) return(Reg_EDI);
-	if(x86reg[Reg_ESI].mips_reg == mips_reg) return(Reg_ESI);
-	if(x86reg[Reg_EBX].mips_reg == mips_reg) return(Reg_EBX);
-	if(x86reg[Reg_EDX].mips_reg == mips_reg) return(Reg_EDX);
-	if(x86reg[Reg_ECX].mips_reg == mips_reg) return(Reg_ECX);
-	if(x86reg[Reg_EAX].mips_reg == mips_reg) return(Reg_EAX);
+	if (x86reg[Reg_EDI].mips_reg == mips_reg)
+		return (Reg_EDI);
+	if (x86reg[Reg_ESI].mips_reg == mips_reg)
+		return (Reg_ESI);
+	if (x86reg[Reg_EBX].mips_reg == mips_reg)
+		return (Reg_EBX);
+	if (x86reg[Reg_EDX].mips_reg == mips_reg)
+		return (Reg_EDX);
+	if (x86reg[Reg_ECX].mips_reg == mips_reg)
+		return (Reg_ECX);
+	if (x86reg[Reg_EAX].mips_reg == mips_reg)
+		return (Reg_EAX);
 
-	return(-1);
+	return (-1);
 }
 
 /*
@@ -177,20 +178,15 @@ int CheckWhereIsMipsReg(int mips_reg)
  */
 void FetchEBP_Params(int mips_reg)
 {
-	if(mips_reg < 16)
-	{
+	if (mips_reg < 16) {
 		/* negative 8bit displacement */
 		x86params.ModRM = ModRM_disp8_EBP;
 		x86params.Address = -128 + (mips_reg << 3);
-	}
-	else if(mips_reg < 32)
-	{
+	} else if (mips_reg < 32) {
 		/* positive 8bit displacement */
 		x86params.ModRM = ModRM_disp8_EBP;
 		x86params.Address = ((mips_reg - 16) << 3);
-	}
-	else
-	{
+	} else {
 		/* positive 32bit displacement. Only GPR_HI/GPR_LO use this. */
 		x86params.ModRM = ModRM_disp32;
 		x86params.Address = (_u32) & gHWS_GPR[0] + ((mips_reg) << 3);
@@ -229,7 +225,8 @@ void ConvertRegTo32bit(int k)
 	FlushRegister(k);
 	goto _Do32bit;
 #endif
-	if(x86reg[k].HiWordLoc == -1) DisplayError("MapRegister() bug: HiWordLoc should not be -1");
+	if (x86reg[k].HiWordLoc == -1)
+		DisplayError("MapRegister() bug: HiWordLoc should not be -1");
 
 	x86reg_Delete(x86reg[k].HiWordLoc);
 
@@ -272,8 +269,7 @@ void ConvertRegTo64bit(int k, x86regtyp *Conditions, int keep2, int keep3)
 	/*~~*/
 
 	/* check if the HiWord is mapped to the same register where we are at now...k. */
-	if((x86reg[k].HiWordLoc == k))
-	{
+	if ((x86reg[k].HiWordLoc == k)) {
 		/*~~~~~~~~~~~~~~~*/
 		int HiMapped = 0;
 		int couldntmap = 0;
@@ -285,15 +281,13 @@ void ConvertRegTo64bit(int k, x86regtyp *Conditions, int keep2, int keep3)
 #endif
 
 		/* find a spot for the HiWord */
-		while(HiMapped == 0)
-		{
-			if(couldntmap++ >= 100) DisplayError("I can't find a place to map.");
+		while (HiMapped == 0) {
+			if (couldntmap++ >= 100)
+				DisplayError("I can't find a place to map.");
 
-			for(i = 0; i < NUM_X86REGS; i++)
-			{
-				if(ItIsARegisterNotToUse(i));
-				else if((x86reg[i].mips_reg == IT_IS_UNUSED))
-				{
+			for (i = 0; i < NUM_X86REGS; i++) {
+				if (ItIsARegisterNotToUse(i)) {
+				} else if ((x86reg[i].mips_reg == IT_IS_UNUSED)) {
 					HiMapped = 1;
 
 					x86reg[k].HiWordLoc = i;
@@ -304,24 +298,18 @@ void ConvertRegTo64bit(int k, x86regtyp *Conditions, int keep2, int keep3)
 					x86reg[i].IsDirty = 0;
 					x86reg[i].HiWordLoc = -1;
 
-					if((x86reg[k].IsDirty == 0))
-					{
-						if
-						(
-							(FlushedRegistersMap[x86reg[k].mips_reg].Is32bit == 1)
-						||	(currentromoptions.Assume_32bit == ASSUME_32BIT_YES)
-						)
-						{
+					if ((x86reg[k].IsDirty == 0)) {
+						if (
+							(FlushedRegistersMap[x86reg[k].mips_reg].Is32bit == 1) ||
+							(currentromoptions.Assume_32bit == ASSUME_32BIT_YES)
+						) {
 							MOV_Reg2ToReg1(1, x86reg[k].HiWordLoc, (uint8) k);
 							SAR_RegByImm(1, x86reg[k].HiWordLoc, 31);
-						}
-						else
-						{
+						} else {
 							LoadGPR_HI(k);
 						}
 					}
-					else if(Conditions->NoNeedToLoadTheHi == 0)
-					{
+					else if (Conditions->NoNeedToLoadTheHi == 0) {
 						MOV_Reg2ToReg1(1, (_u8) i, (_u8) k);
 						SAR_RegByImm(1, (_u8) i, 31);
 					}
@@ -331,8 +319,7 @@ void ConvertRegTo64bit(int k, x86regtyp *Conditions, int keep2, int keep3)
 				}
 			}
 
-			if(HiMapped == 0)
-			{
+			if (HiMapped == 0) {
 				FlushOneButNotThese3(x86reg[k].mips_reg, keep2, keep3);
 			}
 		}
@@ -350,30 +337,29 @@ void Map32bit(int k, x86regtyp *Conditions, int keep2, int keep3)
 	int MapSuccess = 0;
 	/*~~~~~~~~~~~~~~~*/
 
-	while(MapSuccess == 0)
-	{
-		for(k = NUM_X86REGS - 1; k >= 0; k--)
-		{
-			if(ItIsARegisterNotToUse(k));
-			else if(x86reg[k].mips_reg == IT_IS_UNUSED)
-			{
+	while (MapSuccess == 0) {
+		for (k = NUM_X86REGS - 1; k >= 0; k--) {
+			if (ItIsARegisterNotToUse(k)) {
+			} else if (x86reg[k].mips_reg == IT_IS_UNUSED) {
 				/* map it */
 				x86reg[k].mips_reg = Conditions->mips_reg;
 				x86reg[k].Is32bit = 1;
 				x86reg[k].HiWordLoc = k;
 
-				if(x86reg[k].HiWordLoc == Reg_ESP) DisplayError("2: x86reg[%d]: Write to esp: cannot do that!", k);
-				if(Conditions->IsDirty == 1) x86reg[k].IsDirty = 1;
+				if (x86reg[k].HiWordLoc == Reg_ESP)
+					DisplayError("2: x86reg[%d]: Write to esp: cannot do that!", k);
+				if (Conditions->IsDirty == 1)
+					x86reg[k].IsDirty = 1;
 
 				Conditions->x86reg = k;
 				Conditions->HiWordLoc = k;	/* ok.. */
 
-				if((Conditions->NoNeedToLoadTheLo == 0))
-				{
+				if ((Conditions->NoNeedToLoadTheLo == 0)) {
 					LoadGPR_LO(k);
 				}
 
-				if(x86reg[k].HiWordLoc == -1) DisplayError("Do32bit: Hiword = -1 Not expected.");
+				if (x86reg[k].HiWordLoc == -1)
+					DisplayError("Do32bit: Hiword = -1 Not expected.");
 
 				x86reg[k].BirthDate = ThisYear;
 				MapSuccess = 1;
@@ -383,8 +369,7 @@ void Map32bit(int k, x86regtyp *Conditions, int keep2, int keep3)
 			}
 		}
 
-		if(MapSuccess == 0)
-		{
+		if (MapSuccess == 0) {
 			FlushOneButNotThese3(99, keep2, keep3);
 		}
 	}
@@ -404,61 +389,57 @@ void Map64bit(int k, x86regtyp *Conditions, int The2ndOneNotToFlush, int The3rdO
 	int MapSuccess = 0;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	while(MapSuccess == 0)
-	{
+	while (MapSuccess == 0) {
 		TheFirstAvailableReg = 0;
 		NumRegsAvailable = 0;
-		for(k = NUM_X86REGS - 1; k >= 0; k--)
-		{
-			if(x86reg[k].HiWordLoc == Reg_ESP) DisplayError("4: x86reg[%d]: Write to esp: cannot do that!", k);
+		for (k = NUM_X86REGS - 1; k >= 0; k--) {
+			if (x86reg[k].HiWordLoc == Reg_ESP)
+				DisplayError("4: x86reg[%d]: Write to esp: cannot do that!", k);
 
-			if(ItIsARegisterNotToUse(k));
-			else if(x86reg[k].mips_reg == IT_IS_UNUSED)
-			{
+			if (ItIsARegisterNotToUse(k)) {
+			} else if (x86reg[k].mips_reg == IT_IS_UNUSED) {
 				NumRegsAvailable += 1;
-				if(NumRegsAvailable == 1) TheFirstAvailableReg = k; /* This will represent the hiword */
+				if (NumRegsAvailable == 1)
+					TheFirstAvailableReg = k; /* This will represent the hiword */
 
-				if(NumRegsAvailable == 2)
-				{
+				if (NumRegsAvailable == 2) {
 					/* map lo */
 					x86reg[k].mips_reg = Conditions->mips_reg;
 					x86reg[k].Is32bit = 0;
 
-					if(Conditions->IsDirty == 1) x86reg[k].IsDirty = 1;
+					if (Conditions->IsDirty == 1)
+						x86reg[k].IsDirty = 1;
 
 					Conditions->x86reg = k;
 
-					if((Conditions->NoNeedToLoadTheLo == 0)) LoadGPR_LO(k);
+					if ((Conditions->NoNeedToLoadTheLo == 0))
+						LoadGPR_LO(k);
 
 					/* map hi */
 					x86reg[k].HiWordLoc = TheFirstAvailableReg;
 					Conditions->HiWordLoc = TheFirstAvailableReg;
 
-					if(x86reg[k].HiWordLoc == Reg_ESP)
+					if (x86reg[k].HiWordLoc == Reg_ESP)
 						DisplayError("3: x86reg[%d]: Write to esp: cannot do that!", k);
 
 					x86reg[TheFirstAvailableReg].mips_reg = IT_IS_HIGHWORD;
 
-					if((Conditions->NoNeedToLoadTheHi == 0))
-					{
-						if
-						(
-							(FlushedRegistersMap[x86reg[k].mips_reg].Is32bit == 1)
-						||	(currentromoptions.Assume_32bit == ASSUME_32BIT_YES)
-						)
-						{
+					if ((Conditions->NoNeedToLoadTheHi == 0)) {
+						if (
+							(FlushedRegistersMap[x86reg[k].mips_reg].Is32bit == 1) ||
+							(currentromoptions.Assume_32bit == ASSUME_32BIT_YES)
+						) {
 							MOV_Reg2ToReg1(1, x86reg[k].HiWordLoc, (uint8) k);
 							SAR_RegByImm(1, x86reg[k].HiWordLoc, 31);
-						}
-						else
-						{
+						} else {
 							LoadGPR_HI(k);
 						}
 					}
 
 					FlushedRegistersMap[x86reg[k].mips_reg].Is32bit = 0;
 
-					if(x86reg[k].HiWordLoc == -1) DisplayError("Do64bit: Hiword = -1 Not expected.");
+					if (x86reg[k].HiWordLoc == -1)
+						DisplayError("Do64bit: Hiword = -1 Not expected.");
 
 					x86reg[k].BirthDate = ThisYear;
 					x86reg[TheFirstAvailableReg].BirthDate = ThisYear;
@@ -469,8 +450,7 @@ void Map64bit(int k, x86regtyp *Conditions, int The2ndOneNotToFlush, int The3rdO
 			}
 		}
 
-		if(MapSuccess == 0)
-		{
+		if (MapSuccess == 0) {
 			FlushOneButNotThese3(99, The2ndOneNotToFlush, The3rdOneNotToFlush);
 		}
 	}
@@ -502,10 +482,8 @@ void UnwireMap(void)
 
 	ConstMap[0].IsMapped = 1;
 
-	for(k = 0; k < 8; k++)
-	{
-		if((Targetx86reg[k].mips_reg != x86reg[k].mips_reg) || (Targetx86reg[k].HiWordLoc != x86reg[k].HiWordLoc))
-		{
+	for (k = 0; k < 8; k++) {
+		if ((Targetx86reg[k].mips_reg != x86reg[k].mips_reg) || (Targetx86reg[k].HiWordLoc != x86reg[k].HiWordLoc)) {
 			/* TODO: optimize this confusing crap later. */
 			FlushAllRegisters();
 			gMultiPass.PhysAddrAfterMap = compilerstatus.BlockStart;	/* Jump to start of block until we optimize
@@ -523,22 +501,18 @@ void UnwireMap(void)
 void ConvertReg(int k, x86regtyp *Conditions, int The2ndOneNotToFlush, int The3rdOneNotToFlush)
 {
 	/* check if the register wants 32bit */
-	if(Conditions->Is32bit == 1)
-	{
+	if (Conditions->Is32bit == 1) {
 		/*
 		 * check if the HiWord is mapped to some other x86 register than where we are
 		 * now...k.
 		 */
-		if((x86reg[k].HiWordLoc != k) && (Conditions->IsDirty == 1))
-		{
+		if ((x86reg[k].HiWordLoc != k) && (Conditions->IsDirty == 1)) {
 			CHECK_OPCODE_PASS;
 			ConvertRegTo32bit(k);
-		}
-		else if(x86reg[k].HiWordLoc != k)
+		} else if (x86reg[k].HiWordLoc != k) {
 			Conditions->Is32bit = 0;	/* means do not convert. */
-	}
-	else
-	{
+		}
+	} else {
 		CHECK_OPCODE_PASS;
 		ConvertRegTo64bit(k, Conditions, The2ndOneNotToFlush, The3rdOneNotToFlush);
 	}
@@ -547,12 +521,14 @@ void ConvertReg(int k, x86regtyp *Conditions, int The2ndOneNotToFlush, int The3r
 	Conditions->x86reg = k;
 	Conditions->HiWordLoc = x86reg[k].HiWordLoc;
 
-	if(Conditions->IsDirty == 1) x86reg[k].IsDirty = 1;
+	if (Conditions->IsDirty == 1)
+		x86reg[k].IsDirty = 1;
 	x86reg[k].Is32bit = Conditions->Is32bit;
 	x86reg[k].BirthDate = ThisYear;
 	x86reg[x86reg[k].HiWordLoc].BirthDate = ThisYear;
 
-	if(x86reg[k].HiWordLoc == -1) DisplayError("Set&return map info: HiWord is -1!!!");
+	if (x86reg[k].HiWordLoc == -1)
+		DisplayError("Set&return map info: HiWord is -1!!!");
 }
 
 /*
@@ -572,23 +548,25 @@ void MapRegister(x86regtyp *Conditions, int keep2, int keep3)
 	gMultiPass.WriteCode = ((gMultiPass.WhichPass != COMPILE_OPCODES_ONLY) ? 1 : 0) | gMultiPass.UseOnePassOnly;
 
 	/* we still haven't optimized consts fully, so do this: */
-	if(Conditions->NoNeedToLoadTheLo == 0)
-	{
+	if (Conditions->NoNeedToLoadTheLo == 0) {
 		CHECK_OPCODE_PASS;
 		MapOneConstantToRegister(Conditions, keep2, keep3);
 	}
 
-	if(Conditions->mips_reg > 0) ConstMap[Conditions->mips_reg].IsMapped = 0;
+	if (Conditions->mips_reg > 0)
+		ConstMap[Conditions->mips_reg].IsMapped = 0;
 
-	if((k = CheckWhereIsMipsReg(Conditions->mips_reg)) > -1)
+	if ((k = CheckWhereIsMipsReg(Conditions->mips_reg)) > -1)
 		ConvertReg(k, Conditions, keep2, keep3);
-	else if(Conditions->Is32bit == 1)
+	else if (Conditions->Is32bit == 1)
 		Map32bit(k, Conditions, keep2, keep3);
 	else
 		Map64bit(k, Conditions, keep2, keep3);
 
-	if((k == Reg_ESP)) DisplayError("Writing Lo to esp..bad!");
-	if((x86reg[k].HiWordLoc == Reg_ESP)) DisplayError("Writing Hi to esp..bad!");
+	if ((k == Reg_ESP))
+		DisplayError("Writing Lo to esp..bad!");
+	if ((x86reg[k].HiWordLoc == Reg_ESP))
+		DisplayError("Writing Hi to esp..bad!");
 
 	x86reg[k].BirthDate = ThisYear;
 
@@ -611,8 +589,7 @@ void FreeMipsRegister(int mips_reg)
 	/*~~~~~*/
 
 	ConstMap[mips_reg].IsMapped = 0;
-	if((temp = CheckWhereIsMipsReg(mips_reg)) > -1)
-	{
+	if ((temp = CheckWhereIsMipsReg(mips_reg)) > -1) {
 		x86reg[temp].IsDirty = 0;
 		FlushRegister(temp);
 	}
@@ -633,16 +610,14 @@ void MapConst(x86regtyp *xMAP, int value)
 
 	ConstMap[xMAP->mips_reg].IsMapped = 1;
 	ConstMap[xMAP->mips_reg].value = value;
-	if(where > -1)
-	{
+	if (where > -1) {
 		x86reg[where].IsDirty = 0;
 		FlushRegister(where);
 	}
 
 	ConstMap[0].value = 0;
 #else
-	if(xMAP->mips_reg != 0)
-	{
+	if (xMAP->mips_reg != 0) {
 		xMAP->IsDirty = 1;	/* bug fix */
 		xMAP->Is32bit = 1;
 		xMAP->NoNeedToLoadTheLo = 1;
@@ -664,11 +639,9 @@ void MapOneConstantToRegister(x86regtyp *Conditions, int The2ndOneNotToFlush, in
 
 	xRJ->Is32bit = Conditions->Is32bit;
 
-	if(ConstMap[Conditions->mips_reg].IsMapped == 1)
-	{
+	if (ConstMap[Conditions->mips_reg].IsMapped == 1) {
 		ConstMap[Conditions->mips_reg].IsMapped = 0;
-		if(Conditions->mips_reg != 0)
-		{
+		if (Conditions->mips_reg != 0) {
 			xRJ->IsDirty = 1;
 			Conditions->IsDirty = 1;
 		}
@@ -687,33 +660,29 @@ void MapOneConstantToRegister(x86regtyp *Conditions, int The2ndOneNotToFlush, in
 #endif
 		ConstMap[0].value = 0;
 
-		if(ConstMap[Conditions->mips_reg].value == 0)
-		{
+		if (ConstMap[Conditions->mips_reg].value == 0) {
 			XOR_Reg2ToReg1(1, xRJ->x86reg, xRJ->x86reg);
-			if(x86reg[xRJ->x86reg].Is32bit == 0) XOR_Reg2ToReg1(1, xRJ->HiWordLoc, xRJ->HiWordLoc);
-		}
-		else if((_u32) ConstMap[Conditions->mips_reg].value < 32)
-		{
+			if (x86reg[xRJ->x86reg].Is32bit == 0)
+				XOR_Reg2ToReg1(1, xRJ->HiWordLoc, xRJ->HiWordLoc);
+		} else if ((_u32) ConstMap[Conditions->mips_reg].value < 32) {
 			MOV_ImmToReg(1, xRJ->x86reg, (_u8) ConstMap[Conditions->mips_reg].value);
 
-			if(x86reg[xRJ->x86reg].Is32bit == 0) XOR_Reg2ToReg1(1, xRJ->HiWordLoc, xRJ->HiWordLoc);
-		}
-		else
-		{
+			if (x86reg[xRJ->x86reg].Is32bit == 0)
+				XOR_Reg2ToReg1(1, xRJ->HiWordLoc, xRJ->HiWordLoc);
+		} else {
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 			int k = (_s32) ConstMap[Conditions->mips_reg].value;
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 			MOV_ImmToReg(1, xRJ->x86reg, ConstMap[Conditions->mips_reg].value);
-			if(x86reg[xRJ->x86reg].Is32bit == 0)
-			{
-				_asm
-				{
+			if (x86reg[xRJ->x86reg].Is32bit == 0) {
+				_asm {
 					sar k, 31
 				}
 
 				XOR_Reg2ToReg1(1, xRJ->HiWordLoc, xRJ->HiWordLoc);
-				if(k != 0) DEC_Reg(1, xRJ->HiWordLoc);
+				if (k != 0)
+					DEC_Reg(1, xRJ->HiWordLoc);
 			}
 		}
 	}
@@ -731,30 +700,28 @@ void FlushOneConstant(int k)
 
 	CHECK_OPCODE_PASS;
 
-	if(k == 0) return;
-	if(ConstMap[k].IsMapped == 1)
-	{
+	if (k == 0)
+		return;
+	if (ConstMap[k].IsMapped == 1) {
 		FlushedRegistersMap[k].Is32bit = 1;
-		if(k == 0) return;
+		if (k == 0)
+			return;
 		ConstMap[k].IsMapped = 0;
 		where = CheckWhereIsMipsReg(k);
-		if(where > -1)
-		{
+		if (where > -1) {
 #ifdef DEBUG_REGCACHE
 			DisplayError("Odd");
 #endif
 			x86reg[where].IsDirty = 0;
 			FlushRegister(where);
-		}
-		{
+		} {
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 			_u32	off = (_u32) & gHWS_GPR[0] + (k << 3);
 			_s32	i = (_s32) ConstMap[k].value;
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 			StoreImm_LO(k);
-			_asm
-			{
+			_asm {
 				sar i, 31
 			}
 
@@ -777,8 +744,7 @@ void FlushConstants(void)
 	int k;
 	/*~~*/
 
-	for(k = 1; k < NUM_CONSTS; k++)
-	{
+	for (k = 1; k < NUM_CONSTS; k++) {
 		FlushOneConstant(k);
 	}
 
@@ -796,34 +762,33 @@ void FlushConstants(void)
 void WriteBackDirty(_int8 k)
 {
 	/* 32 bit register */
-	if((x86reg[k].HiWordLoc == k))
-	{
-		if(x86reg[k].Is32bit != 1) DisplayError("Bug");
+	if ((x86reg[k].HiWordLoc == k)) {
+		if (x86reg[k].Is32bit != 1)
+			DisplayError("Bug");
 
 		StoreGPR_LO(k);
 
-		if(currentromoptions.Assume_32bit == ASSUME_32BIT_NO)
-		{
+		if (currentromoptions.Assume_32bit == ASSUME_32BIT_NO) {
 			SAR_RegByImm(1, k, 31);
 			StoreGPR_HI(k);
 		}
 
 		FlushedRegistersMap[x86reg[k].mips_reg].Is32bit = 1;
-	}
-	else
+	} else {
 	/* 64 bit register */
-	{
-		if(x86reg[k].Is32bit == 1) DisplayError("Bug");
+		if (x86reg[k].Is32bit == 1)
+			DisplayError("Bug");
 
 		StoreGPR_LO(k);
 
-		if
-		(
-			(x86reg[k].mips_reg == _t1) /* why 9 ? Rice: can ya help me debug it ? (in zelda2, MarioGolf, and many
-										 * others that use the same OS) */
-		||	(currentromoptions.Assume_32bit == ASSUME_32BIT_NO)
-		)
-		{
+		if (
+			(x86reg[k].mips_reg == _t1) ||
+/*
+ * why 9 ? Rice: can ya help me debug it ? (in zelda2, MarioGolf, and many
+ * others that use the same OS)
+ */
+			(currentromoptions.Assume_32bit == ASSUME_32BIT_NO)
+		) {
 			StoreGPR_HI(k);
 		}
 
@@ -840,7 +805,8 @@ void FlushRegister(int k)
 {
 #ifdef DEBUG_REGCACHE
 	/* paranoid error check */
-	if(x86reg[k].HiWordLoc == -1) DisplayError("FlushRegister: The HiWord was not set!");
+	if (x86reg[k].HiWordLoc == -1)
+		DisplayError("FlushRegister: The HiWord was not set!");
 #endif
 #ifdef R0_COMPENSATION
 	/*
@@ -848,10 +814,10 @@ void FlushRegister(int k)
 	 * if (ConstMap[0].IsMapped == 0) DisplayError("How did Const[0] get
 	 * unmapped???");
 	 */
-	if(x86reg[k].mips_reg == 0) x86reg[k].IsDirty = 0;
+	if (x86reg[k].mips_reg == 0)
+		x86reg[k].IsDirty = 0;
 #endif
-	if(x86reg[k].IsDirty == 1)
-	{
+	if (x86reg[k].IsDirty == 1) {
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		CHECK_OPCODE_PASS	WriteBackDirty((_s8) k);
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -877,41 +843,35 @@ void WriteBackDirtyLoOrHi(_int8 k, int Lo)
 	 * if (ConstMap[0].IsMapped == 0) DisplayError("How did Const[0] get
 	 * unmapped???");
 	 */
-	if(x86reg[k].mips_reg == 0) x86reg[k].IsDirty = 0;
+	if (x86reg[k].mips_reg == 0)
+		x86reg[k].IsDirty = 0;
 #endif
-	if(x86reg[k].IsDirty == 1)
-	{
-		if((x86reg[k].HiWordLoc == k))
-		{
-			if(x86reg[k].Is32bit != 1) DisplayError("Bug");
+	if (x86reg[k].IsDirty == 1) {
+		if ((x86reg[k].HiWordLoc == k)) {
+			if (x86reg[k].Is32bit != 1)
+				DisplayError("Bug");
 
-			if(Lo == 0)
-			{
+			if (Lo == 0) {
 				StoreGPR_LO(k);
-			}
-			else if(Lo == 1)
-			{
-				if(currentromoptions.Assume_32bit == ASSUME_32BIT_NO) SAR_RegByImm(1, k, 31);
-			}
-			else if(currentromoptions.Assume_32bit == ASSUME_32BIT_NO)
-			{
-				if(Lo == 2) StoreGPR_HI(k);
+			} else if (Lo == 1) {
+				if (currentromoptions.Assume_32bit == ASSUME_32BIT_NO)
+					SAR_RegByImm(1, k, 31);
+			} else if (currentromoptions.Assume_32bit == ASSUME_32BIT_NO) {
+				if (Lo == 2)
+					StoreGPR_HI(k);
 			}
 
 			FlushedRegistersMap[x86reg[k].mips_reg].Is32bit = 1;
-		}
-		else
-		/* 64 bit register */
-		{
-			if(x86reg[k].Is32bit == 1) DisplayError("Bug");
+		} else {
+			/* 64 bit register */
+			if (x86reg[k].Is32bit == 1)
+				DisplayError("Bug");
 
-			if(!Lo)
-			{
+			if (!Lo) {
 				StoreGPR_LO(k);
-			}
-			else if(currentromoptions.Assume_32bit == ASSUME_32BIT_NO)
-			{
-				if(Lo == 2) StoreGPR_HI(k);
+			} else if (currentromoptions.Assume_32bit == ASSUME_32BIT_NO) {
+				if (Lo == 2)
+					StoreGPR_HI(k);
 			}
 
 			FlushedRegistersMap[x86reg[k].mips_reg].Is32bit = 0;
@@ -940,28 +900,26 @@ void FlushAllRegisters(void)
 	ThisYear = 2001;
 
 	/* TODO: __LO, __HI flush 64bit. */
-	if(currentromoptions.Assume_32bit == ASSUME_32BIT_NO) iterations = 3;
-	for(Lo = 0; Lo < iterations; Lo++)
-	{
-		for(k = 0; k < Num_x86regs; k++)
-		{
-			if(ItIsARegisterNotToUse(k));
-			else if(x86reg[k].mips_reg > -1)
+	if (currentromoptions.Assume_32bit == ASSUME_32BIT_NO)
+		iterations = 3;
+	for (Lo = 0; Lo < iterations; Lo++) {
+		for (k = 0; k < Num_x86regs; k++) {
+			if (ItIsARegisterNotToUse(k));
+			else if (x86reg[k].mips_reg > -1)
 				WriteBackDirtyLoOrHi(k, Lo);
 		}
 	}
 
-	for(k = 0; k < Num_x86regs; k++)
-	{
-		if(ItIsARegisterNotToUse(k));
-		else if(x86reg[k].mips_reg > -1)
-		{
+	for (k = 0; k < Num_x86regs; k++) {
+		if (ItIsARegisterNotToUse(k)) {
+		} else if (x86reg[k].mips_reg > -1) {
 			x86reg_Delete(x86reg[k].HiWordLoc);
 			x86reg_Delete(k);
 		}
 	}
 
-	for(k = 1; k < NUM_CONSTS; k++) FlushedRegistersMap[k].Is32bit = 0;
+	for (k = 1; k < NUM_CONSTS; k++)
+		FlushedRegistersMap[k].Is32bit = 0;
 }
 
 int PopFlag[8];
@@ -995,23 +953,17 @@ void PUSH_RegIfMapped(int k)
 
 	PopFlag[k] = 1;
 
-	if(x86reg[k].mips_reg != -1)
-	{
-		if(currentromoptions.Advanced_Block_Analysis == USEBLOCKANALYSIS_YES)
-		{
-			if(x86reg[k].mips_reg == IT_IS_HIGHWORD)
-			{
-				for(i = 0; i < 8; i++)
-				{
-					if(ItIsARegisterNotToUse(i));
-					else if((x86reg[i].mips_reg > -1) && (x86reg[i].HiWordLoc == k))
-					{
-						if(ConstMap[x86reg[i].mips_reg].FinalAddressUsedAt >= gHWS_pc)
+	if (x86reg[k].mips_reg != -1) {
+		if (currentromoptions.Advanced_Block_Analysis == USEBLOCKANALYSIS_YES) {
+			if (x86reg[k].mips_reg == IT_IS_HIGHWORD) {
+				for (i = 0; i < 8; i++) {
+					if (ItIsARegisterNotToUse(i)) {
+					} else if ((x86reg[i].mips_reg > -1) && (x86reg[i].HiWordLoc == k)) {
+						if (ConstMap[x86reg[i].mips_reg].FinalAddressUsedAt >= gHWS_pc)
 							PUSH_RegToStack((uint8) k);
-						else if(x86reg[i].IsDirty == 1)
+						else if (x86reg[i].IsDirty == 1)
 							PUSH_RegToStack((uint8) k);
-						else
-						{
+						else {
 							PopFlag[k] = 0;
 							FlushRegister(i);
 						}
@@ -1020,12 +972,11 @@ void PUSH_RegIfMapped(int k)
 					}
 				}
 			}
-			else if(ConstMap[x86reg[k].mips_reg].FinalAddressUsedAt >= gHWS_pc)
+			else if (ConstMap[x86reg[k].mips_reg].FinalAddressUsedAt >= gHWS_pc)
 				PUSH_RegToStack((uint8) k);
-			else if(x86reg[k].IsDirty == 1)
+			else if (x86reg[k].IsDirty == 1)
 				PUSH_RegToStack((uint8) k);
-			else
-			{
+			else {
 				PopFlag[k] = 0;
 				FlushRegister(k);
 			}
@@ -1043,7 +994,8 @@ void PUSH_RegIfMapped(int k)
  */
 void POP_RegIfMapped(int k)
 {
-	if(PopFlag[k]) POP_RegFromStack((uint8) k);
+	if (PopFlag[k])
+		POP_RegFromStack((uint8) k);
 }
 
 /*
@@ -1079,60 +1031,46 @@ void FlushOneButNotThese3(int The1stOneNotToFlush, int The2ndOneNotToFlush, int 
 	CHECK_OPCODE_PASS
 
 	/* Flush by least recently used */
-	for(k = Num_x86regs - 1; k >= 0; k--)
-	{
-		if(ItIsARegisterNotToUse(k));
-		else if
-			(
-				(x86reg[k].mips_reg > -1)
-			&&	(x86reg[k].mips_reg != The1stOneNotToFlush)
-			&&	(x86reg[k].mips_reg != The2ndOneNotToFlush)
-			&&	(x86reg[k].mips_reg != The3rdOneNotToFlush)
-			&&	(x86reg[k].mips_reg != 100)
-			)				/* 100 is a Protected register */
-		{
+	for (k = Num_x86regs - 1; k >= 0; k--) {
+		if (ItIsARegisterNotToUse(k)) {
+		} else if (
+				(x86reg[k].mips_reg > -1) &&
+				(x86reg[k].mips_reg != The1stOneNotToFlush) &&
+				(x86reg[k].mips_reg != The2ndOneNotToFlush) &&
+				(x86reg[k].mips_reg != The3rdOneNotToFlush) &&
+				(x86reg[k].mips_reg != 100)
+		) { /* 100 is a Protected register */
 #ifdef DEBUG_REGCACHE
-			if(x86reg[k].HiWordLoc == -1) DisplayError("FlushOne: The HiWord was not set!");
+			if (x86reg[k].HiWordLoc == -1)
+				DisplayError("FlushOne: The HiWord was not set!");
 #endif
-			if(ConstMap[x86reg[k].mips_reg].FinalAddressUsedAt <= gHWS_pc)
-			{
-				if(currentromoptions.Advanced_Block_Analysis == USEBLOCKANALYSIS_YES)
-				{
+			if (ConstMap[x86reg[k].mips_reg].FinalAddressUsedAt <= gHWS_pc) {
+				if (currentromoptions.Advanced_Block_Analysis == USEBLOCKANALYSIS_YES) {
 					MarkedForDeletion = k;
 					EarliestYear = x86reg[k].BirthDate;
 					k = -1; /* exits */
-				}
-				else
+				} else {
 					goto _next;
-			}
-			else
-			{
+				}
+			} else {
 _next:
-				if(init == 0)
-				{
+				if (init == 0) {
 					init = 1;
 					MarkedForDeletion = k;
 					EarliestYear = x86reg[k].BirthDate;
-				}
-				else if(x86reg[k].mips_reg == 0)
-				{
+				} else if (x86reg[k].mips_reg == 0) {
 					MarkedForDeletion = k;
 					EarliestYear = x86reg[k].BirthDate;
 					k = -1; /* exits */
-				}
-				else if(x86reg[k].BirthDate <= EarliestYear)
-				{
+				} else if (x86reg[k].BirthDate <= EarliestYear) {
 					/*
 					 * If they have same birth year, a nondirty has £
 					 * priority over a dirty for flushing
 					 */
-					if(x86reg[k].BirthDate == EarliestYear)
-					{
-						if((x86reg[MarkedForDeletion].IsDirty == 1) && (x86reg[k].IsDirty == 0))
+					if (x86reg[k].BirthDate == EarliestYear) {
+						if ((x86reg[MarkedForDeletion].IsDirty == 1) && (x86reg[k].IsDirty == 0))
 							MarkedForDeletion = k;
-					}
-					else
-					{
+					} else {
 						MarkedForDeletion = k;
 						EarliestYear = x86reg[k].BirthDate;
 					}
@@ -1143,10 +1081,9 @@ _next:
 		}
 	}
 
-	if(ConstMap[x86reg[MarkedForDeletion].mips_reg].IsMapped == 1)
-	{
+	if (ConstMap[x86reg[MarkedForDeletion].mips_reg].IsMapped == 1) {
 #ifdef DEBUG_REGCACHE
-		if(x86reg[MarkedForDeletion].mips_reg != 0)
+		if (x86reg[MarkedForDeletion].mips_reg != 0)
 			DisplayError("This should not happen. Mips = %d", x86reg[MarkedForDeletion].mips_reg);
 #endif
 		FlushOneConstant(x86reg[MarkedForDeletion].mips_reg);	/* Unmaps corr. reg also */
@@ -1154,8 +1091,10 @@ _next:
 
 	/* until we don't map all r0's, we'll need this */
 #ifdef R0_COMPENSATION
-	if(x86reg[MarkedForDeletion].mips_reg == 0) x86reg[MarkedForDeletion].IsDirty = 0;
+	if (x86reg[MarkedForDeletion].mips_reg == 0)
+		x86reg[MarkedForDeletion].IsDirty = 0;
 	FlushRegister(MarkedForDeletion);
 #endif
-	if(paranoid == 0) DisplayError("Could not flush a register!!");
+	if (paranoid == 0)
+		DisplayError("Could not flush a register!!");
 }

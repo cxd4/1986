@@ -59,21 +59,18 @@ void (__cdecl *_AUDIO_Under_Selecting_Test) (HWND) = NULL;
  */
 BOOL LoadAudioPlugin(char *libname)
 {
-	if(hinstLibAudio != NULL)
-	{
+	if (hinstLibAudio != NULL) {
 		FreeLibrary(hinstLibAudio);
 	}
 
 	/* Load the Audio DLL */
 	hinstLibAudio = LoadLibrary(libname);
 
-	if(hinstLibAudio != NULL)	/* Check if load DLL successfully */
-	{
+	if (hinstLibAudio != NULL) { /* Check if load DLL successfully */
 		/* Get the function address AUDIO_GetDllInfo in the audio DLL file */
 		_AUDIO_GetDllInfo = (void(__cdecl *) (PLUGIN_INFO *)) GetProcAddress(hinstLibAudio, "GetDllInfo");
 
-		if(_AUDIO_GetDllInfo != NULL)
-		{
+		if (_AUDIO_GetDllInfo != NULL) {
 			/*~~~~~~~~~~~~~~~~~~~~*/
 			PLUGIN_INFO Plugin_Info;
 			/*~~~~~~~~~~~~~~~~~~~~*/
@@ -82,9 +79,8 @@ BOOL LoadAudioPlugin(char *libname)
 
 			AUDIO_GetDllInfo(&Plugin_Info);
 
-			if(Plugin_Info.Type == PLUGIN_TYPE_AUDIO)
-			{
-				/* if(Plugin_Info.Version == 1) */
+			if (Plugin_Info.Type == PLUGIN_TYPE_AUDIO) {
+				/* if (Plugin_Info.Version == 1) */
 				{
 					_AUDIO_AiDacrateChanged = (void(__cdecl *) (int)) GetProcAddress(hinstLibAudio, "AiDacrateChanged");
 					_AUDIO_AiLenChanged = (void(__cdecl *) (void)) GetProcAddress(hinstLibAudio, "AiLenChanged");
@@ -99,21 +95,17 @@ BOOL LoadAudioPlugin(char *libname)
 					_AUDIO_ProcessAList = (void(__cdecl *) (void)) GetProcAddress(hinstLibAudio, "ProcessAList");
 					_AUDIO_RomClosed = (void(__cdecl *) (void)) GetProcAddress(hinstLibAudio, "RomClosed");
 
-					if( strstr(Plugin_Info.Name, "Jabo") != NULL || strstr(Plugin_Info.Name, "jabo") != NULL )
-					{
+					if (strstr(Plugin_Info.Name, "Jabo") != NULL || strstr(Plugin_Info.Name, "jabo") != NULL) {
 						CoreDoingAIUpdate = FALSE;
-						if( emuoptions.UsingRspPlugin == FALSE )
-						{
+						if (emuoptions.UsingRspPlugin == FALSE) {
 							DisplayError("Warning, Jabo DirectSound Plugin is selected and loaded, but RSP Plugin is not "\
 										"selected, Jabo DirectSound Plugin does not produce sound without RSP plugin. You can activate "\
 										"RSP Plugin in plugin setting, or you can change to other audio plugins");
 						}
-					}
-					else
-					{
+					} else {
 						CoreDoingAIUpdate = TRUE;
 					}
-					return(TRUE);
+					return (TRUE);
 				}
 			}
 		}
@@ -128,13 +120,11 @@ BOOL LoadAudioPlugin(char *libname)
  */
 void AUDIO_GetDllInfo(PLUGIN_INFO *Plugin_Info)
 {
-	if(_AUDIO_GetDllInfo != NULL) __try
-	{
-		_AUDIO_GetDllInfo(Plugin_Info);
-	}
-
-	__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-	{
+	if (_AUDIO_GetDllInfo != NULL) {
+		__try {
+			_AUDIO_GetDllInfo(Plugin_Info);
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
+		}
 	}
 }
 
@@ -144,17 +134,15 @@ void AUDIO_GetDllInfo(PLUGIN_INFO *Plugin_Info)
  */
 BOOL AUDIO_Initialize(AUDIO_INFO Audio_Info)
 {
-	if(_AUDIO_Initialize != NULL) __try
-	{
-		_AUDIO_Initialize(Audio_Info);
+	if (_AUDIO_Initialize != NULL) {
+		__try {
+			_AUDIO_Initialize(Audio_Info);
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
+			/* Some people won't have a sound card. No error. */
+		}
 	}
 
-	__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-	{
-		/* Some people won't have a soud card. No error. */
-	}
-
-	return(1);	/* for now.. */
+	return (1);	/* for now.. */
 }
 
 /*
@@ -164,15 +152,10 @@ BOOL AUDIO_Initialize(AUDIO_INFO Audio_Info)
 void AUDIO_ProcessAList(void)
 {
 	/* try/except is handled from the call to this function */
-	if(_AUDIO_ProcessAList != NULL)
-	{
-		__try
-		{
+	if (_AUDIO_ProcessAList != NULL) {
+		__try {
 			_AUDIO_ProcessAList();
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 			/* Some people won't have a soud card. No error. */
 		}
 	}
@@ -184,15 +167,10 @@ void AUDIO_ProcessAList(void)
  */
 void AUDIO_RomClosed(void)
 {
-	if(_AUDIO_RomClosed != NULL)
-	{
-		__try
-		{
+	if (_AUDIO_RomClosed != NULL) {
+		__try {
 			_AUDIO_RomClosed();
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		}
 	}
 }
@@ -203,15 +181,10 @@ void AUDIO_RomClosed(void)
  */
 void AUDIO_DllClose(void)
 {
-	if(_AUDIO_DllClose != NULL)
-	{
-		__try
-		{
+	if (_AUDIO_DllClose != NULL) {
+		__try {
 			_AUDIO_DllClose();
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 		}
 	}
 }
@@ -226,8 +199,7 @@ void CloseAudioPlugin(void)
 	AUDIO_RomClosed();
 	AUDIO_DllClose();
 
-	if(hinstLibAudio)
-	{
+	if (hinstLibAudio) {
 		FreeLibrary(hinstLibAudio);
 		hinstLibAudio = NULL;
 	}
@@ -249,12 +221,9 @@ void CloseAudioPlugin(void)
  */
 void AUDIO_DllConfig(HWND hParent)
 {
-	if(_AUDIO_DllConfig != NULL)
-	{
+	if (_AUDIO_DllConfig != NULL) {
 		_AUDIO_DllConfig(hParent);
-	}
-	else
-	{
+	} else {
 		DisplayError("%s cannot be configured.", "Audio Plugin");
 	}
 }
@@ -265,12 +234,9 @@ void AUDIO_DllConfig(HWND hParent)
  */
 void AUDIO_About(HWND hParent)
 {
-	if(_AUDIO_About != NULL)
-	{
+	if (_AUDIO_About != NULL) {
 		_AUDIO_About(hParent);
-	}
-	else
-	{
+	} else {
 		/*
 		 * DisplayError("%s: About information is not available for this plug-in.", "Audio
 		 * Plugin");
@@ -284,12 +250,9 @@ void AUDIO_About(HWND hParent)
  */
 void AUDIO_Test(HWND hParent)
 {
-	if(_AUDIO_Test != NULL)
-	{
+	if (_AUDIO_Test != NULL) {
 		_AUDIO_Test(hParent);
-	}
-	else
-	{
+	} else {
 		/* DisplayError("%s: Test box is not available for this plug-in.", "Audio Plugin"); */
 	}
 }
@@ -300,12 +263,9 @@ void AUDIO_Test(HWND hParent)
  */
 void AUDIO_AiDacrateChanged(int SystemType)
 {
-	if(_AUDIO_AiDacrateChanged != NULL)
-	{
+	if (_AUDIO_AiDacrateChanged != NULL) {
 		_AUDIO_AiDacrateChanged(SystemType);
-	}
-	else
-	{
+	} else {
 		/* DisplayError("%s: Test box is not available for this plug-in.", "Audio Plugin"); */
 	}
 }
@@ -316,12 +276,9 @@ void AUDIO_AiDacrateChanged(int SystemType)
  */
 void AUDIO_AiLenChanged(void)
 {
-	if(_AUDIO_AiLenChanged != NULL)
-	{
+	if (_AUDIO_AiLenChanged != NULL) {
 		_AUDIO_AiLenChanged();
-	}
-	else
-	{
+	} else {
 		/* DisplayError("%s: Test box is not available for this plug-in.", "Audio Plugin"); */
 	}
 }
@@ -332,12 +289,9 @@ void AUDIO_AiLenChanged(void)
  */
 DWORD AUDIO_AiReadLength(void)
 {
-	if(_AUDIO_AiReadLength != NULL)
-	{
+	if (_AUDIO_AiReadLength != NULL) {
 		return _AUDIO_AiReadLength();
-	}
-	else
-	{
+	} else {
 		/*
 		 * DisplayError("%s: Test box is not available for this plug-in.", "Audio
 		 * Plugin"); £
@@ -353,12 +307,9 @@ DWORD AUDIO_AiReadLength(void)
  */
 void AUDIO_AiUpdate(BOOL update)
 {
-	if(_AUDIO_AiUpdate != NULL)
-	{
+	if (_AUDIO_AiUpdate != NULL) {
 		_AUDIO_AiUpdate(update);
-	}
-	else
-	{
+	} else {
 		/* DisplayError("%s: Test box is not available for this plug-in.", "Audio Plugin"); */
 	}
 }
@@ -370,12 +321,9 @@ void AUDIO_AiUpdate(BOOL update)
  */
 void AUDIO_Under_Selecting_About(HWND hParent)
 {
-	if(_AUDIO_Under_Selecting_About != NULL)
-	{
+	if (_AUDIO_Under_Selecting_About != NULL) {
 		_AUDIO_Under_Selecting_About(hParent);
-	}
-	else
-	{
+	} else {
 		/*
 		 * DisplayError("%s: About information is not available for this plug-in.", "Audio
 		 * Plugin");
@@ -389,12 +337,9 @@ void AUDIO_Under_Selecting_About(HWND hParent)
  */
 void AUDIO_Under_Selecting_Test(HWND hParent)
 {
-	if(_AUDIO_Under_Selecting_Test != NULL)
-	{
+	if (_AUDIO_Under_Selecting_Test != NULL) {
 		_AUDIO_Under_Selecting_Test(hParent);
-	}
-	else
-	{
+	} else {
 		/* DisplayError("%s: Test box is not available for this plug-in.", "Audio Plugin"); */
 	}
 }

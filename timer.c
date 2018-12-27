@@ -66,8 +66,7 @@ void	DoPIDMASegment(void);
 void	DoSPDMASegment(void);
 void	DoSIDMASegment(void);
 
-enum COUNTER_TARGET_TYPE
-{
+enum COUNTER_TARGET_TYPE {
 	VI_COUNTER_TYPE,
 	COMPARE_COUNTER_TYPE,
 	PI_DMA_COUNTER_TYPE,
@@ -80,8 +79,7 @@ enum COUNTER_TARGET_TYPE
 	DELAY_AI_INTERRUPT_COUNTER_TYPE
 };
 
-struct Counter_Node
-{
+struct Counter_Node {
 	uint64				target_counter;
 	int					type;
 	BOOL				inuse;
@@ -114,16 +112,13 @@ int CounterFactors[9] = { 1, 1, 2, 2, 4, 3, 6, 4, 8 };	/* 1 = half rate, 2 = ful
  =======================================================================================================================
  =======================================================================================================================
  */
-struct Counter_Node *Get_New_Counter_Node(void)
-{
+struct Counter_Node *Get_New_Counter_Node(void) {
 	/*~~*/
 	int i;
 	/*~~*/
 
-	for(i = 0; i < 20; i++)
-	{
-		if(CounterTargets[i].inuse == FALSE)
-		{
+	for (i = 0; i < 20; i++) {
+		if (CounterTargets[i].inuse == FALSE) {
 			CounterTargets[i].inuse = TRUE;
 			return &CounterTargets[i];
 		}
@@ -152,8 +147,7 @@ void Init_Timer_Event_List(void)
 	int i;
 	/*~~*/
 
-	for(i = 0; i < 20; i++)
-	{
+	for (i = 0; i < 20; i++) {
 		CounterTargets[i].inuse = FALSE;
 		CounterTargets[i].next = NULL;
 		CounterTargets[i].prev = NULL;
@@ -172,15 +166,17 @@ BOOL Is_CPU_Doing_Other_Tasks(void)
 	int i;
 	/*~~*/
 
-	/* if( CPUNeedToDoOtherTask ) return TRUE; */
-	for(i = 0; i < 20; i++)
-	{
-		if
-		(
-			CounterTargets[i].inuse
-		&&	CounterTargets[i].type != VI_COUNTER_TYPE
-		&&	CounterTargets[i].type != COMPARE_COUNTER_TYPE
-		) return TRUE;
+#if 0
+	if (CPUNeedToDoOtherTask)
+		return TRUE;
+#endif
+	for (i = 0; i < 20; i++) {
+		if (
+			CounterTargets[i].inuse &&
+			CounterTargets[i].type != VI_COUNTER_TYPE &&
+			CounterTargets[i].type != COMPARE_COUNTER_TYPE
+		)
+			return TRUE;
 	}
 
 	return FALSE;
@@ -192,8 +188,7 @@ BOOL Is_CPU_Doing_Other_Tasks(void)
  */
 void Refresh_Count_Down_Counter(void)
 {
-	if(Timer_Event_List_Header == NULL)
-	{
+	if (Timer_Event_List_Header == NULL) {
 		DisplayError("Error, no timer event in the event list, this should never happen");
 		TRACE0("Error, no timer event in the event list, this should never happen");
 		return;
@@ -201,19 +196,16 @@ void Refresh_Count_Down_Counter(void)
 
 	current_counter = current_counter + counter_leap - countdown_counter;
 
-	if((__int64) Timer_Event_List_Header->target_counter - (__int64) current_counter > 0x60000000)
-	{
+	if ((__int64) Timer_Event_List_Header->target_counter - (__int64) current_counter > 0x60000000) {
 		/* ok, next timer target is too large, must be a non-setted COMPARE counter target */
 		counter_leap = 0x60000000;
 		countdown_counter = counter_leap;
-	}
-	else
-	{
+	} else {
 		counter_leap = (__int32) ((__int64) Timer_Event_List_Header->target_counter - (__int64) current_counter);
 
 		/*
-		 * if( counter_leap < 0 ) £
-		 * DisplayError("Warning, counter_leap < 0");
+		 * if (counter_leap < 0) £
+		 *     DisplayError("Warning, counter_leap < 0");
 		 */
 		countdown_counter = counter_leap;
 	}
@@ -232,8 +224,7 @@ void Add_New_Timer_Event(uint64 newtimer, int type)
 
 	new_target = current_counter + counter_leap - countdown_counter + newtimer; /* new target counter */
 
-	if(type != VI_COUNTER_TYPE && emustatus.cpucore == DYNACOMPILER)
-	{
+	if (type != VI_COUNTER_TYPE && emustatus.cpucore == DYNACOMPILER) {
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		/*
 		 * here, we need to register consider the target timer value £
@@ -245,8 +236,7 @@ void Add_New_Timer_Event(uint64 newtimer, int type)
 
 		pc = gHWS_pc;
 
-		if(NOT_IN_KO_K1_SEG(pc))
-		{
+		if (NOT_IN_KO_K1_SEG(pc)) {
 			/*~~~~~~~~*/
 			uint32	tpc;
 			/*~~~~~~~~*/
@@ -254,25 +244,22 @@ void Add_New_Timer_Event(uint64 newtimer, int type)
 			saveitlb = ITLB_Error;
 			ITLB_Error = FALSE;
 			tpc = Direct_TLB_Lookup_Table[pc >> 12];
-			if(ISNOTVALIDDIRECTTLBVALUE(tpc))
-			{
+			if (ISNOTVALIDDIRECTTLBVALUE(tpc)) {
 				tpc = TranslateTLBAddress(pc, TLB_INST);
-				if(ITLB_Error)
-				{
+				if (ITLB_Error) {
 					/* DisplayError("ITLB Error when setting timer"); */
 					ITLB_Error = saveitlb;
 					goto step2;
 				}
-			}
-			else
+			} else {
 				pc = tpc + (pc & 0x00000FFF);
+			}
 			ITLB_Error = saveitlb;
 		}
 
 		ptr = (uint32 *) ((uint8 *) sDYN_PC_LOOKUP[pc >> 16] + (uint16) pc);
 		blk = (uint8 *) *ptr;
-		if(blk)
-		{
+		if (blk) {
 			blksize = *(uint16 *) (blk - 2) - 1;
 
 			/*
@@ -288,19 +275,18 @@ step2:
 	tempnode = Timer_Event_List_Header;
 
 	/* Step 1: search the whole list, delete the same type event if exists */
-	while(tempnode != NULL)
-	{
-		if(tempnode->type == type)
-		{
-			if(tempnode->prev != NULL)
+	while (tempnode != NULL) {
+		if (tempnode->type == type) {
+			if (tempnode->prev != NULL) {
 				tempnode->prev->next = tempnode->next;
-			else
-			{
+			} else {
 				Timer_Event_List_Header = tempnode->next;
-				if(tempnode->next != NULL) tempnode->next->prev = NULL;
+				if (tempnode->next != NULL)
+					tempnode->next->prev = NULL;
 			}
 
-			if(tempnode->next != NULL) tempnode->next->prev = tempnode->prev;
+			if (tempnode->next != NULL)
+				tempnode->next->prev = tempnode->prev;
 
 			Release_Counter_Node(tempnode);
 			break;
@@ -316,30 +302,22 @@ step2:
 	tempnode = Timer_Event_List_Header;
 
 	/* Step 2: Add the new event to the list */
-	if(tempnode == NULL)
-	{
+	if (tempnode == NULL) {
 		NEW_COUNTER_TRACE1("Add timer event, type=%d into empty list", type);
 
 		/* ok, this new event should be added to the end of the list */
 		Timer_Event_List_Header = newnode;
 		newnode->prev = NULL;
 		newnode->next = NULL;
-	}
-	else
-	{
-		while(tempnode != NULL)
-		{
-			if(tempnode->target_counter > new_target)
-			{
+	} else {
+		while (tempnode != NULL) {
+			if (tempnode->target_counter > new_target) {
 				NEW_COUNTER_TRACE1("Insert timer event, type=%d ", type);
-				if(tempnode->prev == NULL)
-				{
+				if (tempnode->prev == NULL) {
 					NEW_COUNTER_TRACE1("Insert timer event, type=%d at beginning", type);
 					Timer_Event_List_Header = newnode;
 					newnode->prev = NULL;
-				}
-				else
-				{
+				} else {
 					NEW_COUNTER_TRACE1("Insert timer event, type=%d in the middle", type);
 					tempnode->prev->next = newnode;
 					newnode->prev = tempnode->prev;
@@ -350,8 +328,7 @@ step2:
 				break;
 			}
 
-			if(tempnode->next == NULL)
-			{
+			if (tempnode->next == NULL) {
 				NEW_COUNTER_TRACE1("Add timer event, type=%d at the end", type);
 
 				/* ok, this new event should be added to the end of the list */
@@ -359,13 +336,14 @@ step2:
 				newnode->prev = tempnode;
 				newnode->next = NULL;
 				break;
-			}
-			else
+			} else {
 				tempnode = tempnode->next;
+			}
 		}
 	}
 
-	if(Timer_Event_List_Header == newnode) Refresh_Count_Down_Counter();
+	if (Timer_Event_List_Header == newnode)
+		Refresh_Count_Down_Counter();
 }
 
 /*
@@ -375,8 +353,7 @@ step2:
 void Remove_1st_Timer_Event(int type)
 {
 	NEW_COUNTER_TRACE1("Remove 1st timer event, type=%d", Timer_Event_List_Header->type);
-	if(type != Timer_Event_List_Header->type)
-	{
+	if (type != Timer_Event_List_Header->type) {
 		DisplayError("Error, remove timer event type mismatch");
 		TRACE0("Error, remove timer event type mismatch");
 	}
@@ -384,7 +361,8 @@ void Remove_1st_Timer_Event(int type)
 	Release_Counter_Node(Timer_Event_List_Header);
 	Timer_Event_List_Header = Timer_Event_List_Header->next;
 
-	if(Timer_Event_List_Header != NULL) Timer_Event_List_Header->prev = NULL;
+	if (Timer_Event_List_Header != NULL)
+		Timer_Event_List_Header->prev = NULL;
 
 	Refresh_Count_Down_Counter();
 }
@@ -395,14 +373,13 @@ void Remove_1st_Timer_Event(int type)
  */
 int Get_1st_Timer_Event_Type(void)
 {
-	if(Timer_Event_List_Header == NULL)
-	{
+	if (Timer_Event_List_Header == NULL) {
 		DisplayError("Error, no timer event in the event list, this should never happen");
 		TRACE0("Error, no timer event in the event list, this should never happen");
 		return 0;
-	}
-	else
+	} else {
 		return Timer_Event_List_Header->type;
+	}
 }
 
 /*
@@ -495,7 +472,7 @@ void Set_SP_DLIST_Timer_Event(uint32 len)
 	 * DLIST £
 	 * but this will make Snow Kids flicker
 	 */
-	if(len * 3 > 700)
+	if (len * 3 > 700)
 		Add_New_Timer_Event(700, SP_DLIST_COUNTER_TYPE);
 	else
 		Add_New_Timer_Event(len * 3, SP_DLIST_COUNTER_TYPE);
@@ -570,8 +547,7 @@ void Trigger_Timer_Event(void)
 
 	gHWS_COP0Reg[COUNT] = Get_COUNT_Register();
 
-	switch(type)
-	{
+	switch(type) {
 	case VI_COUNTER_TYPE:
 		Remove_1st_Timer_Event(VI_COUNTER_TYPE);
 		Add_New_Timer_Event(max_vi_count, VI_COUNTER_TYPE);
@@ -612,7 +588,8 @@ void Trigger_Timer_Event(void)
 	case CHECK_INTERRUPT_COUNTER_TYPE:
 		Remove_1st_Timer_Event(CHECK_INTERRUPT_COUNTER_TYPE);
 		CPU_Check_Interrupts();
-		if(CPUNeedToCheckInterrupt) Set_Check_Interrupt_Timer_Event_Again();
+		if (CPUNeedToCheckInterrupt)
+			Set_Check_Interrupt_Timer_Event_Again();
 		break;
 	case DELAY_AI_INTERRUPT_COUNTER_TYPE:
 		Remove_1st_Timer_Event(DELAY_AI_INTERRUPT_COUNTER_TYPE);
@@ -633,12 +610,9 @@ void Trigger_Timer_Event(void)
 void Set_Countdown_Counter(void)
 {
 	current_counter = current_counter + counter_leap - countdown_counter;
-	if(next_vi_counter < next_count_counter)
-	{
+	if (next_vi_counter < next_count_counter) {
 		countdown_counter = (__int32) (next_vi_counter - current_counter);
-	}
-	else
-	{
+	} else {
 		countdown_counter = (__int32) (next_count_counter - current_counter);
 	}
 
@@ -655,23 +629,20 @@ uint32 Get_VIcounter(void)
 	int i;
 	/*~~*/
 
-	for(i = 0; i < 20; i++)
-	{
-		if(CounterTargets[i].type == VI_COUNTER_TYPE)
-		{
-			return(uint32)
+	for (i = 0; i < 20; i++) {
+		if (CounterTargets[i].type == VI_COUNTER_TYPE) {
+			return (uint32)(
 				(
-					(
-						max_vi_count +
-						(current_counter + counter_leap - countdown_counter) -
-						CounterTargets[i].target_counter
-					)
-				) % max_vi_count;
+					max_vi_count +
+					(current_counter + counter_leap - countdown_counter) -
+					CounterTargets[i].target_counter
+				)
+			) % max_vi_count;
 		}
 	}
 
 	DisplayError("Cannot find a VI timer event in the event list, should never happen");
-	return(uint32) (current_counter % max_vi_count);
+	return (uint32)(current_counter % max_vi_count);
 }
 
 /*
@@ -690,14 +661,12 @@ void Count_Down(uint32 count)
 void Check_VI_and_COMPARE_Interrupt(void)
 {
 	gHWS_COP0Reg[COUNT] = Get_COUNT_Register();
-	if(next_vi_counter <= current_counter + counter_leap - countdown_counter)
-	{						/* ok, should trigger a VI interrupt */
+	if (next_vi_counter <= current_counter + counter_leap - countdown_counter) {    /* ok, should trigger a VI interrupt */
 		OPCODE_DEBUGGER_EPILOGUE(Trigger_VIInterrupt(););
 		next_vi_counter += max_vi_count;
 	}
 
-	if(next_count_counter <= current_counter + counter_leap - countdown_counter)
-	{						/* ok, should trigger a COMPARE interrupt */
+	if (next_count_counter <= current_counter + counter_leap - countdown_counter) { /* ok, should trigger a COMPARE interrupt */
 		OPCODE_DEBUGGER_EPILOGUE(Trigger_CompareInterrupt(););
 		next_count_counter += 0x100000000;
 	}
@@ -745,21 +714,16 @@ void Set_COMPARE_Timer_Event(void)
 	uint32	count_reg = Get_COUNT_Register();
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(compare_reg > count_reg)
-	{
-		Add_New_Timer_Event
-		(
+	if (compare_reg > count_reg) {
+		Add_New_Timer_Event(
 			((uint64) (compare_reg - count_reg)) *
 				VICounterFactors[CounterFactor] /
 				CounterFactors[CounterFactor] *
 				DOUBLE_COUNT,
 			COMPARE_COUNTER_TYPE
 		);
-	}
-	else
-	{
-		Add_New_Timer_Event
-		(
+	} else {
+		Add_New_Timer_Event(
 			((uint64) (0x100000000 + compare_reg - count_reg)) *
 				VICounterFactors[CounterFactor] /
 				CounterFactors[CounterFactor] *
@@ -795,49 +759,30 @@ void Init_Count_Down_Counters(void)
 	countdown_counter = 0;
 	next_vi_counter = current_counter+current_counter%max_vi_count;
 
-	if(gHWS_COP0Reg[COMPARE] != 0)
-	{
-		if(gHWS_COP0Reg[COMPARE] > gHWS_COP0Reg[COUNT])
-		{
-			Add_New_Timer_Event
-			(
-				(
-					gHWS_COP0Reg[COMPARE] -
-					gHWS_COP0Reg[COUNT]
-				) *
-						VICounterFactors[CounterFactor] /
-						CounterFactors[CounterFactor] *
-						DOUBLE_COUNT,
-				COMPARE_COUNTER_TYPE
-			);
-		}
-		else
-		{
-			Add_New_Timer_Event
-			(
-				(
-					0x100000000 +
-					gHWS_COP0Reg[COMPARE] -
-					gHWS_COP0Reg[COUNT]
-				) *
-						VICounterFactors[CounterFactor] /
-						CounterFactors[CounterFactor] *
-						DOUBLE_COUNT,
-				COMPARE_COUNTER_TYPE
-			);
-		}
-	}
-	else
-	{
-		Add_New_Timer_Event
-		(
-			(
-				0x100000000 -
-				gHWS_COP0Reg[COUNT]
-			) *
+	if (gHWS_COP0Reg[COMPARE] != 0) {
+		if (gHWS_COP0Reg[COMPARE] > gHWS_COP0Reg[COUNT]) {
+			Add_New_Timer_Event(
+				(gHWS_COP0Reg[COMPARE] - gHWS_COP0Reg[COUNT]) *
 					VICounterFactors[CounterFactor] /
 					CounterFactors[CounterFactor] *
 					DOUBLE_COUNT,
+				COMPARE_COUNTER_TYPE
+			);
+		} else {
+			Add_New_Timer_Event(
+				(0x100000000 + gHWS_COP0Reg[COMPARE] - gHWS_COP0Reg[COUNT]) *
+					VICounterFactors[CounterFactor] /
+					CounterFactors[CounterFactor] *
+					DOUBLE_COUNT,
+				COMPARE_COUNTER_TYPE
+			);
+		}
+	} else {
+		Add_New_Timer_Event(
+			(0x100000000 - gHWS_COP0Reg[COUNT]) *
+				VICounterFactors[CounterFactor] /
+				CounterFactors[CounterFactor] *
+				DOUBLE_COUNT,
 			COMPARE_COUNTER_TYPE
 		);
 	}
@@ -851,14 +796,11 @@ void Init_Count_Down_Counters(void)
  */
 void Init_VI_Counter(int tv_type)
 {
-	if(tv_type == 0)		/* PAL */
-	{
+	if (tv_type == 0) {         /* PAL */
 		max_vi_count = PAL_VI_MAGIC_NUMBER;
 		max_vi_lines = PAL_MAX_VI_LINE;
-	}
-	else if(tv_type == 1)	/* NTSC */
-	{
-		max_vi_count = NTSC_VI_MAGIC_NUMBER;	/* 883120;//813722;//813196;//NTSC_VI_MAGIC_NUMBER; */
+	} else if (tv_type == 1) {  /* NTSC */
+		max_vi_count = NTSC_VI_MAGIC_NUMBER; /* 883120;//813722;//813196;//NTSC_VI_MAGIC_NUMBER; */
 		max_vi_lines = NTSC_MAX_VI_LINE;
 	}
 
@@ -872,8 +814,7 @@ void Init_VI_Counter(int tv_type)
 void Set_VI_Counter_By_VSYNC(void)
 {
 	max_vi_count = (VI_V_SYNC_REG + 1) * 1500;
-	if((VI_V_SYNC_REG % 1) != 0)
-	{
+	if ((VI_V_SYNC_REG % 1) != 0) {
 		max_vi_count -= 38;
 	}
 

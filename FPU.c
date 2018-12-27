@@ -54,25 +54,21 @@
 #endif
 #ifdef CHECK_ODD_FPR_REG
 #define CHK_ODD_FPR_1_REG(reg1) \
-	if((gHWS_COP0Reg[STATUS] & SR_FR) == 0 && ((reg1) & 1)) \
-	{ \
-		if(debugoptions.debug_64bit_fpu) TRACE1("Using odd FPU reg %d", reg1); \
+	if ((gHWS_COP0Reg[STATUS] & SR_FR) == 0 && ((reg1) & 1)) { \
+		if (debugoptions.debug_64bit_fpu) TRACE1("Using odd FPU reg %d", reg1); \
 		return; \
 	}
 #define CHK_ODD_FPR_2_REG(reg1, reg2) \
-	if((gHWS_COP0Reg[STATUS] & SR_FR) == 0 && (((reg1) & 1) || ((reg2) & 1))) \
-	{ \
-		if(debugoptions.debug_64bit_fpu) TRACE0("Using odd FPU reg"); \
+	if ((gHWS_COP0Reg[STATUS] & SR_FR) == 0 && (((reg1) & 1) || ((reg2) & 1))) { \
+		if (debugoptions.debug_64bit_fpu) TRACE0("Using odd FPU reg"); \
 		return; \
 	}
 #define CHK_ODD_FPR_3_REG(reg1, reg2, reg3) \
-	if \
-	( \
+	if ( \
 		(gHWS_COP0Reg[STATUS] & SR_FR) == 0 \
 	&&	(((reg1) & 1) || ((reg2) & 1) || ((reg3) & 1)) \
-	) \
-	{ \
-		if(debugoptions.debug_64bit_fpu) TRACE0("Odd FPU reg"); \
+	) { \
+		if (debugoptions.debug_64bit_fpu) TRACE0("Odd FPU reg"); \
 		return; \
 	}
 #else
@@ -117,7 +113,7 @@ __forceinline uint64 read_64bit_fpu_reg(int regno)
 #define ENABLE_CHECK_FPU_USABILITY
 #ifdef ENABLE_CHECK_FPU_USABILITY
 #define CheckFPU_Usablity(addr) \
-	if((gHWS_COP0Reg[STATUS] & 0x20000000) == 0) TriggerFPUUnusableException();
+	if ((gHWS_COP0Reg[STATUS] & 0x20000000) == 0) TriggerFPUUnusableException();
 #else ENABLE_CHECK_FPU_USABILITY
 #define CheckFPU_Usablity(addr)
 #endif ENABLE_CHECK_FPU_USABILITY
@@ -243,8 +239,7 @@ void r4300i_COP1_div_d(uint32 Instruction)
 		uint64	u2 = read_64bit_fpu_reg(RT_FT);
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-		if(*(double *) &u2 != 0)
-		{
+		if (*(double *) &u2 != 0) {
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 			double	val3 = (*(double *) &u1) / (*(double *) &u2);
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -351,13 +346,11 @@ void r4300i_COP1_neg_d(uint32 Instruction)
  */
 void r4300i_COP1_bc1f(uint32 Instruction)
 {
-	CHK_64BITMODE("bc1f") if((((uint32) cCON31 & 0x00800000)) == 0)
-	{
+	CHK_64BITMODE("bc1f") if ((((uint32) cCON31 & 0x00800000)) == 0) {
 		R4300I_SPEEDHACK DELAY_SET
-	}
-	else
-	{
-		if(debug_opcode!=0) CPUdelay = 0;
+	} else {
+		if (debug_opcode!=0)
+			CPUdelay = 0;
 	}
 }
 
@@ -367,13 +360,11 @@ void r4300i_COP1_bc1f(uint32 Instruction)
  */
 void r4300i_COP1_bc1t(uint32 Instruction)
 {
-	CHK_64BITMODE("bc1t") if((((uint32) cCON31 & 0x00800000)) != 0)
-	{
+	CHK_64BITMODE("bc1t") if ((((uint32) cCON31 & 0x00800000)) != 0) {
 		R4300I_SPEEDHACK DELAY_SET
-	}
-	else
-	{
-		if(debug_opcode!=0) CPUdelay = 0;
+	} else {
+		if (debug_opcode != 0)
+			CPUdelay = 0;
 	}
 }
 
@@ -383,13 +374,11 @@ void r4300i_COP1_bc1t(uint32 Instruction)
  */
 void r4300i_COP1_bc1fl(uint32 Instruction)
 {
-	CHK_64BITMODE("bc1fl") if((((uint32) cCON31 & 0x00800000)) == 0)
-	{
+	CHK_64BITMODE("bc1fl") if ((((uint32) cCON31 & 0x00800000)) == 0) {
 		R4300I_SPEEDHACK DELAY_SET
-	}
-	else
-	{
-		if(debug_opcode!=0) CPUdelay = 0;
+	} else {
+		if (debug_opcode != 0)
+			CPUdelay = 0;
 		DELAY_SKIP
 	}
 }
@@ -400,13 +389,11 @@ void r4300i_COP1_bc1fl(uint32 Instruction)
  */
 void r4300i_COP1_bc1tl(uint32 Instruction)
 {
-	CHK_64BITMODE("bc1tl") if((((uint32) cCON31 & 0x00800000)) != 0)
-	{
+	CHK_64BITMODE("bc1tl") if ((((uint32) cCON31 & 0x00800000)) != 0) {
 		R4300I_SPEEDHACK DELAY_SET
-	}
-	else
-	{
-		if(debug_opcode!=0) CPUdelay = 0;
+	} else {
+		if (debug_opcode != 0)
+			CPUdelay = 0;
 		DELAY_SKIP
 	}
 }
@@ -431,20 +418,16 @@ void r4300i_C_cond_fmt_s(uint32 Instruction)
 	fcFS32 = *((float *) &cFS);
 	fcFT32 = *((float *) &cFT);
 
-	if(_isnan(fcFS32) || _isnan(fcFT32))
-	{
+	if (_isnan(fcFS32) || _isnan(fcFT32)) {
 		less = FALSE;
 		equal = FALSE;
 		unordered = TRUE;
 
-		if(cond3)
-		{
+		if (cond3) {
 			/* Fire invalid operation exception */
 			return;
 		}
-	}
-	else
-	{
+	} else {
 		less = (fcFS32 < fcFT32);
 		equal = (fcFS32 == fcFT32);
 		unordered = FALSE;
@@ -452,7 +435,7 @@ void r4300i_C_cond_fmt_s(uint32 Instruction)
 
 	cond = ((cond0 && unordered) || (cond1 && equal) || (cond2 && less));
 
-	if(cond)
+	if (cond)
 		cCON31 |= COP1_CONDITION_BIT;
 	else
 		cCON31 &= ~COP1_CONDITION_BIT;
@@ -481,20 +464,16 @@ void r4300i_C_cond_fmt_d(uint32 Instruction)
 	fcFS32 = *((double *) &val1);
 	fcFT32 = *((double *) &val2);
 
-	if(_isnan(fcFS32) || _isnan(fcFT32))
-	{
+	if (_isnan(fcFS32) || _isnan(fcFT32)) {
 		less = FALSE;
 		equal = FALSE;
 		unordered = TRUE;
 
-		if(cond3)
-		{
+		if (cond3) {
 			/* Fire invalid operation exception */
 			return;
 		}
-	}
-	else
-	{
+	} else {
 		less = (fcFS32 < fcFT32);
 		equal = (fcFS32 == fcFT32);
 		unordered = FALSE;
@@ -502,7 +481,7 @@ void r4300i_C_cond_fmt_d(uint32 Instruction)
 
 	cond = ((cond0 && unordered) || (cond1 && equal) || (cond2 && less));
 
-	if(cond)
+	if (cond)
 		cCON31 |= COP1_CONDITION_BIT;
 	else
 		cCON31 &= ~COP1_CONDITION_BIT;
@@ -628,8 +607,7 @@ void r4300i_COP1_cfc1(uint32 Instruction)
 	uint32	rd_fs = RD_FS;
 	/*~~~~~~~~~~~~~~~~~~*/
 
-	if(rd_fs == 0 || rd_fs == 31)
-	{
+	if (rd_fs == 0 || rd_fs == 31) {
 		gHWS_GPR[rt_ft] = (__int64) (__int32) cCONFS;
 	}
 }
@@ -645,11 +623,9 @@ void r4300i_COP1_ctc1(uint32 Instruction)
 	uint32	rd_fs = RD_FS;
 	/*~~~~~~~~~~~~~~~~~~*/
 
-	if((rd_fs == 31) && (cCON31 != (uint32) gHWS_GPR[rt_ft]))					/* Only Control Register 31 is writeable */
-	{
+	if ((rd_fs == 31) && (cCON31 != (uint32) gHWS_GPR[rt_ft])) { /* Only Control Register 31 is writeable */
 		/* Check if the automatic round setting changes */
-		if(((uint32) gHWS_GPR[rt_ft] ^ cCON31) & 0x00000003)
-		{
+		if (((uint32) gHWS_GPR[rt_ft] ^ cCON31) & 0x00000003) {
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 			uint32	newsetting = ((uint32) gHWS_GPR[rt_ft] & 0x00000003) << 8;	/* Set 80x87 round setting bits */
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -751,8 +727,7 @@ void r4300i_COP1_cvts_l(uint32 Instruction)
 void r4300i_COP1_cvtw_d(uint32 Instruction)
 {
 #ifdef SAVE_RM
-	switch(RM_METHOD)
-	{
+	switch (RM_METHOD) {
 	case FPCSR_RM_RN:	/* 0x00000000 round to nearest */
 		r4300i_COP1_roundw_d(Instruction);
 		break;
@@ -788,8 +763,7 @@ void r4300i_COP1_cvtw_d(uint32 Instruction)
 void r4300i_COP1_cvtl_s(uint32 Instruction)
 {
 #ifdef SAVE_RM
-	switch(RM_METHOD)
-	{
+	switch (RM_METHOD) {
 	case FPCSR_RM_RN:	/* 0x00000000 round to nearest */
 		r4300i_COP1_roundl_s(Instruction);
 		break;
@@ -823,8 +797,7 @@ void r4300i_COP1_cvtl_s(uint32 Instruction)
 void r4300i_COP1_cvtl_d(uint32 Instruction)
 {
 #ifdef SAVE_RM
-	switch(RM_METHOD)
-	{
+	switch (RM_METHOD) {
 	case FPCSR_RM_RN:	/* 0x00000000 round to nearest */
 		r4300i_COP1_roundl_d(Instruction);
 		break;
@@ -868,8 +841,7 @@ void r4300i_COP1_cvts_w(uint32 Instruction)
 void r4300i_COP1_cvtw_s(uint32 Instruction)
 {
 #ifdef SAVE_RM
-	switch(RM_METHOD)
-	{
+	switch (RM_METHOD) {
 	case FPCSR_RM_RN:	/* 0x00000000 round to nearest */
 		r4300i_COP1_roundw_s(Instruction);
 		break;
@@ -1007,8 +979,7 @@ void r4300i_ldc1(uint32 Instruction)
 
 	QuerAddr = (uint32) ((_int32) gBASE + (_int32) OFFSET_IMMEDIATE);
 	LOAD_TLB_TRANSLATE_ADDR_IF_NEEDED(QuerAddr);
-	CHECKING_ADDR_ALIGNMENT(QuerAddr, 0x7, "ldc1", EXC_RADE)
-	{
+	CHECKING_ADDR_ALIGNMENT(QuerAddr, 0x7, "ldc1", EXC_RADE) {
 		/*~~~~~~~~~~~*/
 		uint32	reg[2];
 		/*~~~~~~~~~~~*/
@@ -1036,8 +1007,7 @@ void r4300i_sdc1(uint32 Instruction)
 
 	QuerAddr = (uint32) ((_int32) gBASE + (_int32) OFFSET_IMMEDIATE);
 	STORE_TLB_TRANSLATE_ADDR_IF_NEEDED(QuerAddr);
-	CHECKING_ADDR_ALIGNMENT(QuerAddr, 0x7, "sdc1", EXC_WADE)
-	{
+	CHECKING_ADDR_ALIGNMENT(QuerAddr, 0x7, "sdc1", EXC_WADE) {
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		uint32	reg[2];
 		uint32	temp = (uint32) gHWS_GPR[rt_ft];
@@ -1065,7 +1035,7 @@ void r4300i_COP1_truncw_s(uint32 Instruction)
 
 	CHK_64BITMODE("truncw_s") CHK_ODD_FPR_2_REG(RD_FS, SA_FD);
 
-	if(tempf >= 0)
+	if (tempf >= 0)
 		*((__int32 *) &cFD) = (__int32) (tempf);
 	else
 		*((__int32 *) &cFD) = -((__int32) (-tempf));
@@ -1083,7 +1053,7 @@ void r4300i_COP1_truncw_d(uint32 Instruction)
 	double	tempd = *((double *) &val);
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(tempd >= 0)
+	if (tempd >= 0)
 		*((__int32 *) &cFD) = (__int32) (tempd);
 	else
 		*((__int32 *) &cFD) = -((__int32) (-tempd));;
@@ -1103,7 +1073,7 @@ void r4300i_COP1_truncl_s(uint32 Instruction)
 
 	CHK_ODD_FPR_2_REG(RD_FS, SA_FD);
 
-	if(tempf >= 0)
+	if (tempf >= 0)
 		templ = (__int64) (tempf);
 	else
 		templ = -((__int64) (-tempf));
@@ -1126,12 +1096,9 @@ void r4300i_COP1_truncl_d(uint32 Instruction)
 
 	CHK_ODD_FPR_2_REG(RD_FS, SA_FD);
 
-	if(tempf >= 0)
-	{
+	if (tempf >= 0) {
 		templ = (__int64) tempf;
-	}
-	else
-	{
+	} else {
 		templ = -(__int64) (-tempf);
 	}
 
@@ -1212,7 +1179,7 @@ void r4300i_COP1_roundl_s(uint32 Instruction)
 	float	cfs = *(float *) &cFS;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(cfs > 0)
+	if (cfs > 0)
 		templ = (__int64) (cfs + 0.5);
 	else
 		templ = -(__int64) (-cfs + 0.5);
@@ -1234,7 +1201,7 @@ void r4300i_COP1_roundl_d(uint32 Instruction)
 	double	cfs = *((double *) &val);
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(cfs > 0)
+	if (cfs > 0)
 		templ = (__int64) (cfs + 0.5);
 	else
 		templ = -(__int64) (-cfs + 0.5);
@@ -1255,7 +1222,7 @@ void r4300i_COP1_roundw_s(uint32 Instruction)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	CHK_ODD_FPR_2_REG(RD_FS, SA_FD);
-	if(cfs > 0)
+	if (cfs > 0)
 		*((__int32 *) &cFD) = (__int32) (cfs + 0.5);
 	else
 		*((__int32 *) &cFD) = -(__int32) (-cfs + 0.5);
@@ -1274,7 +1241,7 @@ void r4300i_COP1_roundw_d(uint32 Instruction)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	CHK_ODD_FPR_2_REG(RD_FS, SA_FD);
-	if(cfs > 0)
+	if (cfs > 0)
 		*((__int32 *) &cFD) = (__int32) (cfs + 0.5);
 	else
 		*((__int32 *) &cFD) = -(__int32) (-cfs + 0.5);
@@ -1525,12 +1492,9 @@ extern void COP1_instr(uint32);
  */
 void COP1_NotAvailable_instr(uint32 Instruction)
 {
-	if((gHWS_COP0Reg[STATUS] & SR_CU1))
-	{
+	if ((gHWS_COP0Reg[STATUS] & SR_CU1)) {
 		COP1_instr(Instruction);
-	}
-	else
-	{
+	} else {
 		TRACE0("Trigger FPU Exception from Interpreter");
 		TriggerFPUUnusableException();
 	}

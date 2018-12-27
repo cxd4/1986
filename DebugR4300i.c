@@ -2830,7 +2830,8 @@ extern BOOL IsBooting;
 void WinDynDebugPrintInstruction(uint32 Instruction)
 {
 	/* if (DebuggerOpcodeTraceEnabled) */
-	if(DebuggerOpcodeTraceEnabled && !IsBooting) DebugPrintInstruction(Instruction);
+	if (DebuggerOpcodeTraceEnabled && !IsBooting)
+		DebugPrintInstruction(Instruction);
 }
 #endif
 
@@ -2857,128 +2858,103 @@ void __cdecl printlist(char *Message, ...)
  */
 void Dbg_Handle_SP(uint32 value)
 {
-	if((value & SP_CLR_HALT))
-	{
+	if ((value & SP_CLR_HALT)) {
 		printlist("SP_CLR_HALT");
 	}
 
-	if((value & SP_SET_HALT))
-	{
+	if ((value & SP_SET_HALT)) {
 		printlist("SP_SET_HALT");
 	}
 
-	if((value & SP_CLR_BROKE))
-	{
+	if ((value & SP_CLR_BROKE)) {
 		printlist("SP_CLR_BROKE");
 	}
 
-	if((value & SP_CLR_INTR))
-	{
+	if ((value & SP_CLR_INTR)) {
 		printlist("SP_CLR_INTR");
 	}
 
-	if((value & SP_SET_INTR))
-	{
+	if ((value & SP_SET_INTR)) {
 		printlist("SP_SET_INTR");
 	}
 
-	if((value & SP_CLR_SSTEP))
-	{
+	if ((value & SP_CLR_SSTEP)) {
 		printlist("SP_CLR_SSTEP");
 	}
 
-	if((value & SP_SET_SSTEP))
-	{
+	if ((value & SP_SET_SSTEP)) {
 		printlist("SP_SET_SSTEP");
 	}
 
-	if((value & SP_CLR_INTR_BREAK))
-	{
+	if ((value & SP_CLR_INTR_BREAK)) {
 		printlist("SP_CLR_INTR_BREAK");
 	}
 
-	if((value & SP_SET_INTR_BREAK))
-	{
+	if ((value & SP_SET_INTR_BREAK)) {
 		printlist("SP_SET_INTR_BREAK");
 	}
 
-	if((value & SP_CLR_YIELD))
-	{
+	if ((value & SP_CLR_YIELD)) {
 		printlist("SP_CLR_YIELD");
 	}
 
-	if((value & SP_SET_YIELD))
-	{
+	if ((value & SP_SET_YIELD)) {
 		printlist("SP_SET_YIELD");
 	}
 
-	if((value & SP_CLR_YIELDED))
-	{
+	if ((value & SP_CLR_YIELDED)) {
 		printlist("SP_CLR_YIELDED");
 	}
 
-	if((value & SP_SET_YIELDED))
-	{
+	if ((value & SP_SET_YIELDED)) {
 		printlist("SP_SET_YIELDED");
 	}
 
-	if((value & SP_CLR_TASKDONE))
-	{
+	if ((value & SP_CLR_TASKDONE)) {
 		printlist("SP_CLR_TASKDONE");
 	}
 
-	if((value & SP_SET_TASKDONE))
-	{
+	if ((value & SP_SET_TASKDONE)) {
 		printlist("SP_SET_TASKDONE");
 	}
 
-	if((value & SP_CLR_SIG3))
-	{
+	if ((value & SP_CLR_SIG3)) {
 		printlist("SP_CLR_SIG3");
 	}
 
-	if((value & SP_SET_SIG3))
-	{
+	if ((value & SP_SET_SIG3)) {
 		printlist("SP_SET_SIG3");
 	}
 
-	if((value & SP_CLR_SIG4))
-	{
+	if ((value & SP_CLR_SIG4)) {
 		printlist("SP_CLR_SIG4");
 	}
 
-	if((value & SP_SET_SIG4))
-	{
+	if ((value & SP_SET_SIG4)) {
 		printlist("SP_SET_SIG4");
 	}
 
-	if((value & SP_CLR_SIG5))
-	{
+	if ((value & SP_CLR_SIG5)) {
 		printlist("SP_CLR_SIG5");
 	}
 
-	if((value & SP_SET_SIG5))
-	{
+	if ((value & SP_SET_SIG5)) {
 		printlist("SP_SET_SIG5");
 	}
 
-	if((value & SP_CLR_SIG6))
-	{
+	if ((value & SP_CLR_SIG6)) {
 		printlist("SP_CLR_SIG6");
 	}
 
-	if((value & SP_SET_SIG6))
-	{
+	if ((value & SP_SET_SIG6)) {
 		printlist("SP_SET_SIG6");
 	}
 
-	if((value & SP_CLR_SIG7))
-	{
+	if ((value & SP_CLR_SIG7)) {
 		printlist("SP_CLR_SIG7");
 	}
 
-	if((value & SP_SET_SIG7))
-	{
+	if ((value & SP_SET_SIG7)) {
 		printlist("SP_SET_SIG7");
 	}
 }
@@ -2995,21 +2971,18 @@ char *Get_Interrupt_Name(void)
 	uint32	cause;
 	/*~~~~~~~~~~*/
 
-	if(gHWS_COP0Reg[CAUSE] & 0x00007B00)
-	{
+	if (gHWS_COP0Reg[CAUSE] & 0x00007B00) {
 		DisplayError("Invalid interrupt bits set, CAUSE reg = %08X", gHWS_COP0Reg[CAUSE]);
 		return "Invalid";
 	}
 
 	cause = (gHWS_COP0Reg[CAUSE] & 0x00008400);
-	switch(cause)
-	{
+	switch (cause) {
 	case 0x00008000:
 		return "Compare";
 		break;
 	case 0x00000400:
-		switch(MI_INTR_REG_R & 0x0000003F)
-		{
+		switch (MI_INTR_REG_R & 0x0000003F) {
 		case MI_INTR_SP:
 			return "SP";
 			break;
@@ -3032,19 +3005,15 @@ char *Get_Interrupt_Name(void)
 			return "DP&SP";
 			break;
 		default:
-			if((MI_INTR_REG_R & 0x0000003F) == 0)
-			{
+			if ((MI_INTR_REG_R & 0x0000003F) == 0) {
 				DisplayError("No MI interrupt as interrupt is triggered, MI_INTR_REG = %08X", MI_INTR_REG_R);
 				return "No MI";
-			}
-			else
-			{
+			} else {
 				/*
 				 * DisplayError("Warning: Multiple MI interrupt is triggered at the same time,
 				 * MI_INTR_REG = %08X", MI_INTR_REG_R);
 				 */
-				TRACE1
-				(
+				TRACE1(
 					"Warning: Multiple MI interrupt is triggered at the same time, MI_INTR_REG = %08X",
 					MI_INTR_REG_R
 				);
@@ -3054,17 +3023,14 @@ char *Get_Interrupt_Name(void)
 		}
 		break;
 	default:
-		if(cause == 0x00008400)
-		{
+		if (cause == 0x00008400) {
 			/*
 			 * DisplayError("Warning, both COMPARE and MI interrupt happens together, could
 			 * lose one");
 			 */
 			return "COMPARE&MI";
 			break;
-		}
-		else
-		{
+		} else {
 			DisplayError("Warning, invalid interrupts, CAUSE=%08X", gHWS_COP0Reg[CAUSE]);
 			return "Invalid";
 		}
@@ -3080,8 +3046,7 @@ char *Get_Interrupt_Name(void)
  */
 void DebugIORead(uint32 QuerAddr)
 {
-	switch(QuerAddr >> 20)
-	{
+	switch (QuerAddr >> 20) {
 	case 0x3F:	/* RDRAM registers */break;
 	case 0x40:	/* SP Registers */break;
 	case 0x41:	/* DP Registers */break;
@@ -3110,20 +3075,16 @@ void DebugIO(uint32 QuerAddr, char *operation, uint32 value)
 
 	QuerAddr &= 0x1FFFFFFF;
 
-	if(debugoptions.debug_io == 0) return;
+	if (debugoptions.debug_io == 0)
+		return;
 
-	switch(QuerAddr >> 20)
-	{
+	switch (QuerAddr >> 20) {
 #ifdef DEBUG_IO_RDRAM
 	case 0x3F:	/* RDRAM registers */
-		if(debugoptions.debug_io_rdram)
-		{
-			if(index < NUMBEROFRDRAMREG)
-			{
+		if (debugoptions.debug_io_rdram) {
+			if (index < NUMBEROFRDRAMREG) {
 				TRACE4("PC=0x%08X %s [%s] value=0x%08X", gHWS_pc, operation, rdram_RegNames[index], value);
-			}
-			else
-			{
+			} else {
 				TRACE2("%s invalid RDRAM registers, Address = 0x%08x", operation, QuerAddr);
 			}
 		}
@@ -3131,29 +3092,19 @@ void DebugIO(uint32 QuerAddr, char *operation, uint32 value)
 #endif
 #ifdef DEBUG_IO_SP
 	case 0x40:	/* SP Registers */
-		if(debugoptions.debug_io_sp)
-		{
+		if (debugoptions.debug_io_sp) {
 			index = ((QuerAddr - 0x04040000) & 0xFF) / 4;
 
 			/* SP PC (R/W): [11:0] program counter */
-			if(index < NUMBEROFSPREG)
-			{
+			if (index < NUMBEROFSPREG) {
 				TRACE4("PC=0x%08X %s [%s] value=0x%08X", gHWS_pc, operation, sp_RegNames[index], value);
-			}
-			else if(QuerAddr == 0x04080000)
-			{
+			} else if (QuerAddr == 0x04080000) {
 				TRACE2("PC=0x%08X %s SP PC Register", gHWS_pc, operation);
-			}
-			else if(QuerAddr < 0x04001000)
-			{
+			} else if (QuerAddr < 0x04001000) {
 				TRACE4("PC=0x%08X %s SP DMEM [0x%08X] value=0x%08X", gHWS_pc, operation, QuerAddr, value);
-			}
-			else if(QuerAddr < 0x04002000)
-			{
+			} else if (QuerAddr < 0x04002000) {
 				TRACE4("PC=0x%08X %s SP IMEM [0x%08X] value=0x%08X", gHWS_pc, operation, QuerAddr, value);
-			}
-			else
-			{
+			} else {
 				TRACE2("%s invalid SP registers, Address = 0x%08x", operation, QuerAddr);
 			}
 		}
@@ -3161,14 +3112,10 @@ void DebugIO(uint32 QuerAddr, char *operation, uint32 value)
 #endif
 #ifdef DEBUG_IO_DP
 	case 0x41:	/* DP Registers */
-		if(debugoptions.debug_io_dp)
-		{
-			if(index < NUMBEROFDPREG)
-			{
+		if (debugoptions.debug_io_dp) {
+			if (index < NUMBEROFDPREG) {
 				TRACE4("PC=0x%08X %s [%s] value=0x%08X", gHWS_pc, operation, dp_RegNames[index], value);
-			}
-			else
-			{
+			} else {
 				TRACE2("%s invalid DP registers, Address = 0x%08x", operation, QuerAddr);
 			}
 		}
@@ -3176,14 +3123,10 @@ void DebugIO(uint32 QuerAddr, char *operation, uint32 value)
 #endif
 #ifdef DEBUG_IO_DPS
 	case 0x42:	/* DP Span Registers */
-		if(debugoptions.debug_io_dps)
-		{
-			if(index < NUMBEROFDPSREG)
-			{
+		if (debugoptions.debug_io_dps) {
+			if (index < NUMBEROFDPSREG) {
 				TRACE4("PC=0x%08X %s [%s] value=0x%08X", gHWS_pc, operation, dps_RegNames[index], value);
-			}
-			else
-			{
+			} else {
 				TRACE2("%s invalid DP Span registers, Address = 0x%08x", operation, QuerAddr);
 			}
 		}
@@ -3191,14 +3134,10 @@ void DebugIO(uint32 QuerAddr, char *operation, uint32 value)
 #endif
 #ifdef DEBUG_IO_MI
 	case 0x43:	/* MI registers */
-		if(debugoptions.debug_io_mi)
-		{
-			if(index < NUMBEROFMIREG)
-			{
+		if (debugoptions.debug_io_mi) {
+			if (index < NUMBEROFMIREG) {
 				TRACE4("PC=0x%08X %s [%s] value=0x%08X", gHWS_pc, operation, mi_RegNames[index], value);
-			}
-			else
-			{
+			} else {
 				TRACE2("%s invalid MI registers, Address = 0x%08x", operation, QuerAddr);
 			}
 		}
@@ -3206,14 +3145,10 @@ void DebugIO(uint32 QuerAddr, char *operation, uint32 value)
 #endif
 #ifdef DEBUG_IO_VI
 	case 0x44:	/* VI Registers */
-		if(debugoptions.debug_io_vi)
-		{
-			if(index < NUMBEROFVIREG)
-			{
+		if (debugoptions.debug_io_vi) {
+			if (index < NUMBEROFVIREG) {
 				TRACE4("PC=0x%08X %s [%s] value=0x%08X", gHWS_pc, operation, vi_RegNames[index], value);
-			}
-			else
-			{
+			} else {
 				TRACE2("%s invalid Vi registers, Address = 0x%08x", operation, QuerAddr);
 			}
 		}
@@ -3221,14 +3156,10 @@ void DebugIO(uint32 QuerAddr, char *operation, uint32 value)
 #endif
 #ifdef DEBUG_IO_AI
 	case 0x45:	/* AI Registers */
-		if(debugoptions.debug_io_ai)
-		{
-			if(index < NUMBEROFAIREG)
-			{
+		if (debugoptions.debug_io_ai) {
+			if (index < NUMBEROFAIREG) {
 				TRACE4("PC=0x%08X %s [%s] value=0x%08X", gHWS_pc, operation, ai_RegNames[index], value);
-			}
-			else
-			{
+			} else {
 				TRACE2("%s invalid AI registers, Address = 0x%08x", operation, QuerAddr);
 			}
 		}
@@ -3236,14 +3167,10 @@ void DebugIO(uint32 QuerAddr, char *operation, uint32 value)
 #endif
 #ifdef DEBUG_IO_PI
 	case 0x46:	/* PI Registers */
-		if(debugoptions.debug_io_pi)
-		{
-			if(index < NUMBEROFPIREG)
-			{
+		if (debugoptions.debug_io_pi) {
+			if (index < NUMBEROFPIREG) {
 				TRACE4("PC=0x%08X %s [%s] value=0x%08X", gHWS_pc, operation, pi_RegNames[index], value);
-			}
-			else
-			{
+			} else {
 				TRACE2("%s invalid PI registers, Address = 0x%08x", operation, QuerAddr);
 			}
 		}
@@ -3251,14 +3178,10 @@ void DebugIO(uint32 QuerAddr, char *operation, uint32 value)
 #endif
 #ifdef DEBUG_IO_RI
 	case 0x47:	/* RI Registers */
-		if(debugoptions.debug_io_ri)
-		{
-			if(index < NUMBEROFRIREG)
-			{
+		if (debugoptions.debug_io_ri) {
+			if (index < NUMBEROFRIREG) {
 				TRACE4("PC=0x%08X %s [%s] value=0x%08X", gHWS_pc, operation, ri_RegNames[index], value);
-			}
-			else
-			{
+			} else {
 				TRACE2("%s invalid RI registers, Address = 0x%08x", operation, QuerAddr);
 			}
 		}
@@ -3266,14 +3189,10 @@ void DebugIO(uint32 QuerAddr, char *operation, uint32 value)
 #endif
 #ifdef DEBUG_IO_SI
 	case 0x48:	/* SI Registers */
-		if(debugoptions.debug_io_si)
-		{
-			if(index < NUMBEROFSIREG)
-			{
+		if (debugoptions.debug_io_si) {
+			if (index < NUMBEROFSIREG) {
 				TRACE4("PC=0x%08X %s [%s] value=0x%08X", gHWS_pc, operation, si_RegNames[index], value);
-			}
-			else
-			{
+			} else {
 				TRACE2("%s invalid SI registers, Address = 0x%08x", operation, QuerAddr);
 			}
 		}

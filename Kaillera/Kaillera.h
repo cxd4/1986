@@ -23,8 +23,7 @@ int					UnloadDllKaillera(void);
     Kaillera 0.84 spec
  -----------------------------------------------------------------------------------------------------------------------
  */
-typedef struct
-{
+typedef struct {
 	char	*appName;
 	char	*gameList;
 

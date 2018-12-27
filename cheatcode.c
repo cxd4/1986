@@ -61,7 +61,7 @@ void disable_cheat_code_lock_block(uint32 addr);
 BOOL AllocateOneCheatCodeMemoryMap(uint32 block);
 void ReleaseAllCheatCodeMemoryMaps(void);
 void AllocateAllCheatCodeMemoryMaps(void);
-void AddCheatCodeGroupToMemoryMap(int index );
+void AddCheatCodeGroupToMemoryMap(int index);
 void RefreshAllCheatCodeMemoryMaps(void);
 #endif
 
@@ -87,7 +87,7 @@ void CodeList_Clear(void)
 	codegroupcount = 0;
 	codemodified = FALSE;
 
-	if(codegrouplist != NULL)
+	if (codegrouplist != NULL)
 	{
 		VirtualFree(codegrouplist, 0, MEM_RELEASE);
 	}
@@ -130,12 +130,12 @@ BOOL CodeList_ReadCode(char *intername_rom_name)
 	strcat(codefilepath, "1964.cht");
 
 	stream = fopen(codefilepath, "rt");
-	if(stream == NULL)
+	if (stream == NULL)
 	{
 		/* File does not exist, create a new empty one */
 		stream = fopen(codefilepath, "wt");
 
-		if(stream == NULL)
+		if (stream == NULL)
 		{
 			DisplayError("Cannot find 1964.cht file and cannot create it.");
 			return FALSE;
@@ -152,7 +152,7 @@ BOOL CodeList_ReadCode(char *intername_rom_name)
 	while(fgets(line, 256, stream))
 	{
 		chopm(line);
-		if(strcmp(line, romname) != 0)
+		if (strcmp(line, romname) != 0)
 			continue;
 		else
 		{
@@ -161,7 +161,7 @@ BOOL CodeList_ReadCode(char *intername_rom_name)
 		}
 	}
 
-	if(found)
+	if (found)
 	{
 		/*~~~~~~~~~~~~~~~*/
 		int numberofgroups;
@@ -171,13 +171,13 @@ BOOL CodeList_ReadCode(char *intername_rom_name)
 		 * Read all code for current rom only £
 		 * Step 1, read the number of groups
 		 */
-		if(fgets(line, 256, stream))
+		if (fgets(line, 256, stream))
 		{
 			chopm(line);
-			if(strncmp(line, "NumberOfGroups=", 15) == 0)
+			if (strncmp(line, "NumberOfGroups=", 15) == 0)
 			{
 				numberofgroups = atoi(line + 15);
-				if( numberofgroups > MAX_CHEATCODE_GROUP_PER_ROM )
+				if (numberofgroups > MAX_CHEATCODE_GROUP_PER_ROM)
 				{
 					numberofgroups = MAX_CHEATCODE_GROUP_PER_ROM;
 				}
@@ -194,7 +194,7 @@ BOOL CodeList_ReadCode(char *intername_rom_name)
 
 		/* Allocate memory for groups */
 		codegrouplist = VirtualAlloc(NULL, numberofgroups * sizeof(CODEGROUP), MEM_COMMIT, PAGE_READWRITE);
-		if(codegrouplist == NULL)
+		if (codegrouplist == NULL)
 		{
 			DisplayError("Cannot allocate memory to load cheat codes");
 			return FALSE;
@@ -206,7 +206,7 @@ BOOL CodeList_ReadCode(char *intername_rom_name)
 			/* Codes for the group are in the string line[] */
 			for(c1 = 0; line[c1] != '=' && line[c1] != '\0'; c1++) codegrouplist[codegroupcount].name[c1] = line[c1];
 
-			if(codegrouplist[codegroupcount].name[c1 - 2] != ',')
+			if (codegrouplist[codegroupcount].name[c1 - 2] != ',')
 			{
 				codegrouplist[codegroupcount].country = 0;
 				codegrouplist[codegroupcount].name[c1] = '\0';
@@ -217,7 +217,7 @@ BOOL CodeList_ReadCode(char *intername_rom_name)
 				codegrouplist[codegroupcount].name[c1 - 2] = '\0';
 			}
 
-			if(line[c1 + 1] == '"')
+			if (line[c1 + 1] == '"')
 			{
 				/*~~~*/
 				/* we have a note for this cheat code group */
@@ -293,7 +293,8 @@ BOOL CodeList_SaveCode(void)
 	FILE	*stream, *stream2;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(!codemodified) return TRUE;	/* Do nothing if no changes */
+	if (!codemodified)
+		return TRUE;	/* Do nothing if no changes */
 
 
 	strcpy(codefilepath, directories.main_directory);
@@ -305,33 +306,33 @@ BOOL CodeList_SaveCode(void)
 	sprintf(romname, "[%s]", current_cheatcode_rom_internal_name);
 
 	stream2 = fopen(bakfilepath, "wt");
-	if(stream2 == NULL)
+	if (stream2 == NULL)
 	{
 		DisplayError("Cannot open 1964.cht file to write.");
 		return FALSE;
 	}
 
 	stream = fopen(codefilepath, "rt");
-	if(stream != NULL)
+	if (stream != NULL)
 	{
 		while(fgets(line, 2048, stream))
 		{
 			chopm(line);
-			if(strcmp(line, romname) == 0 && found == FALSE)
+			if (strcmp(line, romname) == 0 && found == FALSE)
 			{
 				found = TRUE;
 	fprintf(stream2, "[%s]\n", current_cheatcode_rom_internal_name);
 	fprintf(stream2, "NumberOfGroups=%d\n", codegroupcount);
 				for(c1 = 0; c1 < codegroupcount; c1++) // write cheats to file
 	{
-		if(codegrouplist[c1].country == 0)
+		if (codegrouplist[c1].country == 0) {
 			fprintf(stream2, "%s=", codegrouplist[c1].name);
-		else
+		} else
 		{
 			fprintf(stream2, "%s,%d=", codegrouplist[c1].name, codegrouplist[c1].country);
 		}
 
-		if(strlen(codegrouplist[c1].note) > 0)
+		if (strlen(codegrouplist[c1].note) > 0)
 		{
 			fprintf(stream2, "\"%s\",%d,", codegrouplist[c1].note, codegrouplist[c1].active);
 		}
@@ -424,14 +425,14 @@ BOOL CodeList_ApplyCode(int index, int mode)
 	BOOL	executenext = TRUE;
 	/*~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(Rom_Loaded && emustatus.Emu_Is_Running && index < codegroupcount)
+	if (Rom_Loaded && emustatus.Emu_Is_Running && index < codegroupcount)
 	{
-		if(IsCodeMatchRomCountryCode(codegrouplist[index].country, currentromoptions.countrycode) == FALSE)
+		if (IsCodeMatchRomCountryCode(codegrouplist[index].country, currentromoptions.countrycode) == FALSE)
 			return FALSE;
 
 		for(i = 0; i < codegrouplist[index].codecount; i++)
 		{
-			if(executenext == FALSE)					/* OK, skip this code */
+			if (executenext == FALSE)					/* OK, skip this code */
 			{
 				executenext = TRUE;
 				continue;
@@ -475,14 +476,14 @@ BOOL CodeList_ApplyCode(int index, int mode)
 							uint16	valinc = valword;
 							/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-							if(i + 1 < codegrouplist[index].codecount)
+							if (i + 1 < codegrouplist[index].codecount)
 							{
 								codetype = codegrouplist[index].codelist[i + 1].addr / 0x1000000;
 								addr = (codegrouplist[index].codelist[i + 1].addr & 0x00FFFFFF | 0x80000000);
 								valword = codegrouplist[index].codelist[i + 1].val;
 								valbyte = (uint8) valword;
 
-								if(codetype == 0x80)	/* Only works if the next code is 0x80 */
+								if (codetype == 0x80)	/* Only works if the next code is 0x80 */
 								{
 									do
 									{
@@ -492,7 +493,7 @@ BOOL CodeList_ApplyCode(int index, int mode)
 										repeatcount--;
 									} while(repeatcount > 0);
 								}
-								else if( codetype == 0x81 )
+								else if (codetype == 0x81)
 								{
 									do
 									{
@@ -513,16 +514,20 @@ BOOL CodeList_ApplyCode(int index, int mode)
 						LOAD_UHALF_PARAM(addr) = valword;
 						break;
 					case 0xD0:		/* D0-XXXXXX 00YY 8-Bit If Equal To */
-						if(LOAD_UBYTE_PARAM(addr) != valbyte) executenext = FALSE;
+						if (LOAD_UBYTE_PARAM(addr) != valbyte)
+							executenext = FALSE;
 						break;
 					case 0xD1:		/* D1-XXXXXX YYYY 16-Bit If Equal To */
-						if(LOAD_UHALF_PARAM(addr) != valword) executenext = FALSE;
+						if (LOAD_UHALF_PARAM(addr) != valword)
+							executenext = FALSE;
 						break;
 					case 0xD2:		/* D2-XXXXXX 00YY 8-Bit If Not Equal To */
-						if(LOAD_UBYTE_PARAM(addr) == valbyte) executenext = FALSE;
+						if (LOAD_UBYTE_PARAM(addr) == valbyte)
+							executenext = FALSE;
 						break;
 					case 0xD3:		/* D3-XXXXXX YYYY 16-Bit If Not Equal To */
-						if(LOAD_UHALF_PARAM(addr) == valword) executenext = FALSE;
+						if (LOAD_UHALF_PARAM(addr) == valword)
+							executenext = FALSE;
 						break;
 					}
 					break;
@@ -543,10 +548,9 @@ BOOL CodeList_ApplyCode(int index, int mode)
 				case ONLYIN1964:	/* Works in 1964 only */
 					switch(codetype)
 					{
-						if((codetype & 0xE0) == 0x00)	/* 1964 only code type */
-						{
+						if ((codetype & 0xE0) == 0x00) { /* 1964 only code type */
 							addr = (codegrouplist[index].codelist[i].addr & 0x0FFFFFFF | 0x80000000);
-							if((codetype & 0xF0) == 0)
+							if ((codetype & 0xF0) == 0)
 							{
 								/* 0-XXXXXXX 00YY 8-Bit Constant ROM Write, to modify the ROM data after loading */
 								LOAD_UBYTE_PARAM(addr) = valbyte;
@@ -595,7 +599,7 @@ BOOL CodeList_ApplyAllCode(enum APPLYCHEATMODE mode)
 
 	for(i = 0; i < codegroupcount; i++)
 	{
-		if(codegrouplist[i].active)
+		if (codegrouplist[i].active)
 		{
 			CodeList_ApplyCode(i, mode);
 		}
@@ -662,10 +666,11 @@ void StringDelete0x0a(char *str)
 	int len = strlen(str);
 	/*~~~~~~~~~~~~~~~~~~*/
 
-	if(len == 0) return;
+	if (len == 0)
+		return;
 	for(i = 0; i < len; i++)
 	{
-		if(str[i] == 0x0a)
+		if (str[i] == 0x0a)
 		{
 			/* Delete this character */
 			for(j = i; j < len - 1; j++) str[j] = str[j + 1];
@@ -733,7 +738,7 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 
 		SetWindowText(hDlg, codename);
 
-		if(codegroupcount > 0)
+		if (codegroupcount > 0)
 		{
 			/*~~*/
 			int i;
@@ -741,7 +746,7 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 
 			for(i = 0; i < codegroupcount; i++)
 			{
-				if(codegrouplist[i].active)
+				if (codegrouplist[i].active)
 				{
 					sprintf(generalmessage, "* %s", codegrouplist[i].name);
 				}
@@ -777,7 +782,7 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 			break;
 			
 			case IDC_GAMESHARK_ADD:
-				if( codegroupcount >= MAX_CHEATCODE_GROUP_PER_ROM) 
+				if (codegroupcount >= MAX_CHEATCODE_GROUP_PER_ROM) 
 				{
 					DisplayError("Cannot have more than %d groups for this rom", MAX_CHEATCODE_GROUP_PER_ROM);
 					break;
@@ -790,7 +795,7 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 				GetDlgItemText(hDlg, IDC_CHEAT_NOTE, codenote, 256);
 				code_country = SendDlgItemMessage(hDlg, IDC_CHEATCODE_COUNTRY, CB_GETCURSEL, 0, 0);
 
-				if(strlen(codename) == 0)
+				if (strlen(codename) == 0)
 				{
 					DisplayError("Please enter valid name for the codes");
 					codeerror = TRUE;
@@ -824,16 +829,16 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 						SendDlgItemMessage(hDlg, IDC_GAMESHARK_CODE, EM_GETLINE, (WPARAM)linecount, (LPARAM)(LPCSTR)code);
 
 						len = strlen(code);
-						for( k=0, pos=0; k<len; k++)
+						for(k=0, pos=0; k<len; k++)
 						{
-							if( isxdigit(code[k]) )
+							if (isxdigit(code[k]))
 							{
 								codebuf[pos++] = code[k];
 							}
 						}
 
 						len = strlen(codebuf);
-						if ( len == 12 && IsHex(codebuf) == TRUE)
+						if (len == 12 && IsHex(codebuf) == TRUE)
 						{
 							newgroup.codelist[newgroup.codecount].addr = ConvertHexStringToInt(codebuf, 8);
 							newgroup.codelist[newgroup.codecount].val = (uint16) ConvertHexStringToInt(codebuf+8, 4);
@@ -849,7 +854,7 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 					}
 					// End of modification
 
-					if(codeerror)
+					if (codeerror)
 					{
 						DisplayError("Codes must be all in HEX numbers, and each code must be 12 characters in length");
 					}
@@ -860,7 +865,7 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 					}
 				}
 
-				if(codeerror == FALSE)
+				if (codeerror == FALSE)
 				{
 					/*~~~~~~~~~~~~~~~~~~*/
 					/* To add the code into groups */
@@ -873,14 +878,14 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 					/* step 1, check if there is a same name in current group list */
 					for(i = 0; i < codegroupcount; i++)
 					{
-						if(strcmp(codegrouplist[i].name, newgroup.name) == 0)
+						if (strcmp(codegrouplist[i].name, newgroup.name) == 0)
 						{
 							found = TRUE;
 							break;
 						}
 					}
 
-					if(found == FALSE)
+					if (found == FALSE)
 					{
 						/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 						/* Need to release and reallocate the memory blocks to add a new entry */
@@ -894,7 +899,7 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 								MEM_COMMIT,
 								PAGE_READWRITE
 							);
-						if(newgrouplist == NULL)
+						if (newgrouplist == NULL)
 						{
 							DisplayError("Cannot allocate memory to add a new code group");
 							break;
@@ -918,7 +923,7 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 					strcpy(codegrouplist[i].name, newgroup.name);
 					strcpy(codegrouplist[i].note, codenote);
 					codegrouplist[i].country = code_country;
-					if(found == FALSE)
+					if (found == FALSE)
 					{
 						int pos;
 						codegroupcount++;
@@ -940,9 +945,9 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 				break;
 			case IDC_GAMESHARK_DELETE:
 				index = SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_GETCARETINDEX, 0, 0);
-				if(index < codegroupcount)
+				if (index < codegroupcount)
 				{
-					if(index < codegroupcount - 1)
+					if (index < codegroupcount - 1)
 					{
 						/*~~*/
 						int j;
@@ -966,7 +971,7 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 				break;
 			case IDC_GAMESHARK_ACTIVATE:
 				index = SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_GETCARETINDEX, 0, 0);
-				if(index < codegroupcount && !codegrouplist[index].active)
+				if (index < codegroupcount && !codegrouplist[index].active)
 				{
 					codegrouplist[index].active = TRUE;
 					SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_DELETESTRING, index, 0);
@@ -979,7 +984,7 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 				break;
 			case IDC_GAMESHARK_DEACTIVATE:
 				index = SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_GETCARETINDEX, 0, 0);
-				if(index < codegroupcount && codegrouplist[index].active)
+				if (index < codegroupcount && codegrouplist[index].active)
 				{
 					codegrouplist[index].active = FALSE;
 					SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_DELETESTRING, index, 0);
@@ -1035,10 +1040,11 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 			}
 			break;
 		case LBN_SELCHANGE:
-			if((int) LOWORD(wParam) != IDC_GAMESHARK_LIST) return TRUE;
+			if ((int) LOWORD(wParam) != IDC_GAMESHARK_LIST)
+				return TRUE;
 
 			index = SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_GETCARETINDEX, 0, 0);
-			if(index < codegroupcount)
+			if (index < codegroupcount)
 			{
 				/*~~*/
 				int i;
@@ -1068,7 +1074,7 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 
 				SetDlgItemText(hDlg, IDC_CHEAT_NOTE, codegrouplist[index].note);
 
-				if(!matchcountrycode)
+				if (!matchcountrycode)
 				{
 					SetDlgItemText
 					(
@@ -1086,12 +1092,13 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 			return -2;
 			break;
 		case LBN_DBLCLK:
-			if((int) LOWORD(wParam) != IDC_GAMESHARK_LIST) return TRUE;
+			if ((int) LOWORD(wParam) != IDC_GAMESHARK_LIST)
+				return TRUE;
 
 			index = SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_GETCARETINDEX, 0, 0);
-			if(index < codegroupcount)
+			if (index < codegroupcount)
 			{
-				if(!codegrouplist[index].active)
+				if (!codegrouplist[index].active)
 				{
 					codegrouplist[index].active = TRUE;
 					SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_DELETESTRING, index, 0);
@@ -1127,9 +1134,9 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 		{
 		case VK_DELETE:
 			index = SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_GETCARETINDEX, 0, 0);
-			if(index < codegroupcount)
+			if (index < codegroupcount)
 			{
-				if(index < codegroupcount - 1)
+				if (index < codegroupcount - 1)
 				{
 					/*~~*/
 					int j;
@@ -1148,9 +1155,9 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 			break;
 		case VK_SPACE:
 			index = SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_GETCARETINDEX, 0, 0);
-			if(index < codegroupcount)
+			if (index < codegroupcount)
 			{
-				if(!codegrouplist[index].active)
+				if (!codegrouplist[index].active)
 				{
 					codegrouplist[index].active = TRUE;
 					SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_DELETESTRING, index, 0);
@@ -1178,30 +1185,35 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 			break;
 		case VK_UP:
 			index = SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_GETCARETINDEX, 0, 0);
-			if(index > 0) index--;
+			if (index > 0)
+				index--;
 			SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_SETCURSEL, index, 0);
 			break;
 		case VK_DOWN:
 			index = SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_GETCARETINDEX, 0, 0);
-			if(index < codegroupcount - 1) index++;
+			if (index < codegroupcount - 1)
+				index++;
 			SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_SETCURSEL, index, 0);
 			break;
 		case VK_PRIOR:
 			index = SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_GETCARETINDEX, 0, 0);
 			index -= 5;
-			if(index < 0) index = 0;
+			if (index < 0)
+				index = 0;
 			SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_SETCURSEL, index, 0);
 			break;
 			break;
 		case VK_NEXT:
 			index = SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_GETCARETINDEX, 0, 0);
 			index += 5;
-			if(index > codegroupcount - 1) index = codegroupcount - 1;
+			if (index > codegroupcount - 1)
+				index = codegroupcount - 1;
 			SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_SETCURSEL, index, 0);
 			break;
 		case VK_END:
 			index = codegroupcount - 1;
-			if(index < 0) index = 0;
+			if (index < 0)
+				index = 0;
 			SendDlgItemMessage(hDlg, IDC_GAMESHARK_LIST, LB_SETCURSEL, index, 0);
 			break;
 		case VK_HOME:
@@ -1225,7 +1237,7 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 		lpdis = (LPDRAWITEMSTRUCT) lParam;
 
 		/* If there are no list box items, skip this message. */
-		if(lpdis->itemID == -1)
+		if (lpdis->itemID == -1)
 		{
 			break;
 		}
@@ -1250,7 +1262,7 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 				int			x;
 				/*~~~~~~~~~~~~~~~~~~*/
 
-				if(codegrouplist[index].active)
+				if (codegrouplist[index].active)
 				{
 					textcolor = 0x000000CC;
 					x = 0;
@@ -1263,13 +1275,13 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 					sprintf(generalmessage, "%s", codegrouplist[index].name);
 				}
 
-				if(!matchcountrycode)
+				if (!matchcountrycode)
 				{
 					strcat(generalmessage, " (country code mismatch)");
 					textcolor = 0x00888888;
 				}
 
-				if( strlen(generalmessage) < 2 )
+				if (strlen(generalmessage) < 2)
 				{
 					strcpy(generalmessage, "                                      ");
 				}
@@ -1280,7 +1292,7 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 			}
 
 			/* Is the item selected? */
-			if(lpdis->itemState & ODS_SELECTED)
+			if (lpdis->itemState & ODS_SELECTED)
 			{
 				/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 				COLORREF	savetextcol, savebkcol;
@@ -1288,7 +1300,7 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
 
 				savetextcol = SetTextColor(lpdis->hDC, 0x00FFFFFF);
 				savebkcol = SetBkColor(lpdis->hDC, 0x00FF0000);
-				if(codegrouplist[index].active)
+				if (codegrouplist[index].active)
 					TextOut(lpdis->hDC, 0, y, generalmessage, strlen(generalmessage));
 				else
 					TextOut(lpdis->hDC, 8, y, generalmessage, strlen(generalmessage));
@@ -1379,39 +1391,39 @@ BOOL IsCodeMatchRomCountryCode(int cheat_country_code, int rom_country_code)
 
 // End of modification
 	
-/*		if(cheat_country_code == CHEAT_ALL_COUNTRY) // for all countries
+/*		if (cheat_country_code == CHEAT_ALL_COUNTRY) // for all countries
 		return TRUE;
 
 	CountryCodeToCountryName_and_TVSystem(rom_country_code, country_name, &tv_system);
 
-	if(cheat_country_code == CHEAT_EUR)
+	if (cheat_country_code == CHEAT_EUR)
 	{
-		if(tv_system == TV_SYSTEM_PAL)
+		if (tv_system == TV_SYSTEM_PAL)
 			return TRUE;
 		else
 			return FALSE;
 	}
 	else
 	{
-		if(rom_country_code == 0x45)			// USA
+		if (rom_country_code == 0x45)			// USA
 		{
-			if(cheat_country_code == CHEAT_USA)
+			if (cheat_country_code == CHEAT_USA)
 				return TRUE;
 			else
 				return FALSE;
 		}
 
-		if(rom_country_code == 0x4A)			// JAP 
+		if (rom_country_code == 0x4A)			// JAP 
 		{
-			if(cheat_country_code == CHEAT_JAPAN)
+			if (cheat_country_code == CHEAT_JAPAN)
 				return TRUE;
 			else
 				return FALSE;
 		}
 		
-		if(rom_country_code == 0x41)			// USA & JAP 
+		if (rom_country_code == 0x41)			// USA & JAP 
 		{
-			if(cheat_country_code == CHEAT_USA_AND_JAPAN)
+			if (cheat_country_code == CHEAT_USA_AND_JAPAN)
 				return TRUE;
 			else
 				return FALSE;
@@ -1448,38 +1460,35 @@ void AllocateAllCheatCodeMemoryMaps(void)
 {
 	int i;
 	TRACE0("Refresh Cheat Code Memory Lock");
-	for( i=0; i< codegroupcount; i++)
+	for(i=0; i< codegroupcount; i++)
 	{
 		AddCheatCodeGroupToMemoryMap(i);
 	}
 }
 
-void CheatCodeProtectBlock( uint32 addr, int groupIndex, uint8 val )	//Protect the byte at address = addr
+void CheatCodeProtectBlock(uint32 addr, int groupIndex, uint8 val)	//Protect the byte at address = addr
 {
 	uint32 i;
 	addr &= 0x1FFFFFFF;
-	if( addr >= current_rdram_size )
-	{
+	if  (addr >= current_rdram_size) {
 		return;
-	}
-	else
-	{
+	} else {
 		int block = addr/0x1000;
-		if( cheatCodeBlockMap[block] == NULL )
+		if (cheatCodeBlockMap[block] == NULL)
 		{
-			if( AllocateOneCheatCodeMemoryMap(block) == FALSE )
+			if (AllocateOneCheatCodeMemoryMap(block) == FALSE)
 			{
 				return;	//Cannot allocate memory
 			}
 		}
 
-		for( i=0; i<4; i++)
+		for(i=0; i<4; i++)
 		{
-			if( ((addr&0x3)^0x3) == (i^0x3) )
+			if (((addr&0x3)^0x3) == (i^0x3))
 			{
 				cheatCodeBlockMap[block][(addr&0xFFC)+(i^0x3)] = (uint8)groupIndex+val*0x100;
 			}
-			else if( cheatCodeBlockMap[block][(addr&0xFFC)+(i^0x3)] == 0 )
+			else if (cheatCodeBlockMap[block][(addr&0xFFC)+(i^0x3)] == 0)
 			{
 				cheatCodeBlockMap[block][(addr&0xFFC)+(i^0x3)] = BYTE_AFFECTED_BY_CHEAT_CODES;
 			}
@@ -1488,7 +1497,7 @@ void CheatCodeProtectBlock( uint32 addr, int groupIndex, uint8 val )	//Protect t
 	}
 }
 
-void AddCheatCodeGroupToMemoryMap(int index )
+void AddCheatCodeGroupToMemoryMap(int index)
 {
 	/*~~~~~~~~~~~~~~~~~~~~~~~*/
 	int		i, codetype;
@@ -1498,17 +1507,17 @@ void AddCheatCodeGroupToMemoryMap(int index )
 	BOOL	executenext = TRUE;
 	/*~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if( !Rom_Loaded || !emustatus.Emu_Is_Running || index >= codegroupcount )
+	if (!Rom_Loaded || !emustatus.Emu_Is_Running || index >= codegroupcount)
 	{
 		return;
 	}
 
-	if(IsCodeMatchRomCountryCode(codegrouplist[index].country, currentromoptions.countrycode) == FALSE)
+	if (IsCodeMatchRomCountryCode(codegrouplist[index].country, currentromoptions.countrycode) == FALSE)
 	{
 		return;
 	}
 
-	if( index < 0 || !(codegrouplist[index].active) )
+	if (index < 0 || !(codegrouplist[index].active))
 	{
 		return;
 	}
@@ -1516,7 +1525,7 @@ void AddCheatCodeGroupToMemoryMap(int index )
 	executenext = TRUE;
 	for(i = 0; i < codegrouplist[index].codecount; i++)
 	{
-		if(executenext == FALSE)					/* OK, skip this code */
+		if (executenext == FALSE)					/* OK, skip this code */
 		{
 			executenext = TRUE;
 			continue;
@@ -1548,14 +1557,14 @@ void AddCheatCodeGroupToMemoryMap(int index )
 				uint8	valinc = valbyte;
 				/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 				
-				if(i + 1 < codegrouplist[index].codecount)
+				if (i + 1 < codegrouplist[index].codecount)
 				{
 					codetype = codegrouplist[index].codelist[i + 1].addr / 0x1000000;
 					addr = (codegrouplist[index].codelist[i + 1].addr & 0x00FFFFFF | 0x80000000);
 					valword = codegrouplist[index].codelist[i + 1].val;
 					valbyte = (uint8) valword;
 					
-					if(codetype == 0x80)	/* Only works if the next code is 0x80 */
+					if (codetype == 0x80)	/* Only works if the next code is 0x80 */
 					{
 						do
 						{
@@ -1575,16 +1584,20 @@ void AddCheatCodeGroupToMemoryMap(int index )
 			break;
 			/*	Skip these types for this moment, go come back later
 		case 0xD0:		// D0-XXXXXX 00YY 8-Bit If Equal To
-			if(LOAD_UBYTE_PARAM(addr) != valbyte) executenext = FALSE;
+			if (LOAD_UBYTE_PARAM(addr) != valbyte)
+				executenext = FALSE;
 			break;
 		case 0xD1:		// D1-XXXXXX YYYY 16-Bit If Equal To
-			if(LOAD_UHALF_PARAM(addr) != valword) executenext = FALSE;
+			if (LOAD_UHALF_PARAM(addr) != valword)
+				executenext = FALSE;
 			break;
 		case 0xD2:		// D2-XXXXXX 00YY 8-Bit If Not Equal To
-			if(LOAD_UBYTE_PARAM(addr) == valbyte) executenext = FALSE;
+			if (LOAD_UBYTE_PARAM(addr) == valbyte)
+				executenext = FALSE;
 			break;
 		case 0xD3:		// D3-XXXXXX YYYY 16-Bit If Not Equal To
-			if(LOAD_UHALF_PARAM(addr) == valword) executenext = FALSE;
+			if (LOAD_UHALF_PARAM(addr) == valword)
+				executenext = FALSE;
 			break;
 			*/
 		}
@@ -1593,12 +1606,12 @@ void AddCheatCodeGroupToMemoryMap(int index )
 
 BOOL AllocateOneCheatCodeMemoryMap(uint32 block)
 {
-	if( cheatCodeBlockMap[block] == NULL )
+	if (cheatCodeBlockMap[block] == NULL)
 	{
 		cheatCodeBlockMap[block] = VirtualAlloc(NULL, 0x2000, MEM_COMMIT, PAGE_READWRITE);
-		if( cheatCodeBlockMap[block] != NULL )
+		if (cheatCodeBlockMap[block] != NULL)
 		{
-			TRACE1("Allocate cheat code memory block at %08X", ((block*0x1000)|0x80000000) );
+			TRACE1("Allocate cheat code memory block at %08X", ((block*0x1000)|0x80000000));
 			memset(cheatCodeBlockMap[block], 0, 0x1000);
 			TRACE1("Lock Cheat Code Memory block at %08X", ((block*0x1000)|0x80000000));
 			enable_cheat_code_lock_block((block*0x1000)|0x80000000);
@@ -1616,7 +1629,7 @@ BOOL AllocateOneCheatCodeMemoryMap(uint32 block)
 
 void ReleaseOneCheatCodeMemoryMap(uint32 block)
 {
-	if( cheatCodeBlockMap[block] != NULL )
+	if (cheatCodeBlockMap[block] != NULL)
 	{
 		TRACE1("Unock Cheat Code Memory block at %08X", ((block*0x1000)|0x80000));
 		disable_cheat_code_lock_block((block*0x1000)|0x80000);
@@ -1628,9 +1641,9 @@ void ReleaseOneCheatCodeMemoryMap(uint32 block)
 void ReleaseAllCheatCodeMemoryMaps(void)
 {
 	int i;
-	for( i=0; i<0x800; i++)
+	for(i=0; i<0x800; i++)
 	{
-		if( cheatCodeBlockMap[i] != 0 )
+		if (cheatCodeBlockMap[i] != 0)
 		{
 			ReleaseOneCheatCodeMemoryMap(i);
 		}
@@ -1647,12 +1660,12 @@ BOOL CodeList_ApplyCode_At_Address(int index, uint32 addr_to_apply)
 	BOOL	executenext = TRUE;
 	/*~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(index >= codegroupcount)
+	if (index >= codegroupcount)
 		return FALSE;
 
 	for(i = 0; i < codegrouplist[index].codecount; i++)
 	{
-		if(executenext == FALSE)					/* OK, skip this code */
+		if (executenext == FALSE)					/* OK, skip this code */
 		{
 			executenext = TRUE;
 			continue;
@@ -1660,7 +1673,7 @@ BOOL CodeList_ApplyCode_At_Address(int index, uint32 addr_to_apply)
 		
 		codetype = codegrouplist[index].codelist[i].addr / 0x1000000;
 		addr = (codegrouplist[index].codelist[i].addr & 0x00FFFFFF | 0x80000000);
-		if( (addr&0x7FFFFFC) != (addr_to_apply&0x7FFFFFC) )
+		if ((addr & 0x7FFFFFC) != (addr_to_apply & 0x7FFFFFC))
 		{
 			continue;
 		}
@@ -1686,14 +1699,14 @@ BOOL CodeList_ApplyCode_At_Address(int index, uint32 addr_to_apply)
 				uint8	valinc = valbyte;
 				/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 				
-				if(i + 1 < codegrouplist[index].codecount)
+				if (i + 1 < codegrouplist[index].codecount)
 				{
 					codetype = codegrouplist[index].codelist[i + 1].addr / 0x1000000;
 					addr = (codegrouplist[index].codelist[i + 1].addr & 0x00FFFFFF | 0x80000000);
 					valword = codegrouplist[index].codelist[i + 1].val;
 					valbyte = (uint8) valword;
 					
-					if(codetype == 0x80)	/* Only works if the next code is 0x80 */
+					if (codetype == 0x80)	/* Only works if the next code is 0x80 */
 					{
 						do
 						{
@@ -1721,16 +1734,20 @@ BOOL CodeList_ApplyCode_At_Address(int index, uint32 addr_to_apply)
 			LOAD_UHALF_PARAM(addr) = valword;
 			break;
 		case 0xD0:		/* D0-XXXXXX 00YY 8-Bit If Equal To */
-			if(LOAD_UBYTE_PARAM(addr) != valbyte) executenext = FALSE;
+			if (LOAD_UBYTE_PARAM(addr) != valbyte)
+				executenext = FALSE;
 			break;
 		case 0xD1:		/* D1-XXXXXX YYYY 16-Bit If Equal To */
-			if(LOAD_UHALF_PARAM(addr) != valword) executenext = FALSE;
+			if (LOAD_UHALF_PARAM(addr) != valword)
+				executenext = FALSE;
 			break;
 		case 0xD2:		/* D2-XXXXXX 00YY 8-Bit If Not Equal To */
-			if(LOAD_UBYTE_PARAM(addr) == valbyte) executenext = FALSE;
+			if (LOAD_UBYTE_PARAM(addr) == valbyte)
+				executenext = FALSE;
 			break;
 		case 0xD3:		/* D3-XXXXXX YYYY 16-Bit If Not Equal To */
-			if(LOAD_UHALF_PARAM(addr) == valword) executenext = FALSE;
+			if (LOAD_UHALF_PARAM(addr) == valword)
+				executenext = FALSE;
 			break;
 		}
 	}

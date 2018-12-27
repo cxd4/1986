@@ -39,8 +39,7 @@ __declspec(naked)
  */
 void osDisableInt(void)
 {
-	__asm
-	{
+	__asm {
 		mov eax, [_status_] /* mfc0 t0,Status */
 		mov ecx, eax
 		and eax, 1			/* andi v0,t0,0x1 */
@@ -59,8 +58,7 @@ __declspec(naked)
  */
 void osDispatchThread(void)
 {
-	_asm
-	{
+	_asm {
 
 		ret 0
 	}
@@ -74,8 +72,7 @@ __declspec(naked)
  */
 void osPopThread(void)
 {
-	_asm
-	{
+	_asm {
 		mov eax, [_a0_]
 		mov eax, [eax + 0xA0000000]
 
@@ -98,8 +95,7 @@ __declspec(naked)
  */
 void osEnqueueAndYield(void)
 {
-	__asm
-	{
+	__asm {
 		mov edx, 0x203359b0			/* lui a1,0xffff8033 */
 		mov edx, [edx]				/* lw a1,[a1+0x59B0] */
 		mov eax, [_status_]			/* mfc0 t0,Status */
@@ -238,8 +234,7 @@ __declspec(naked)
  */
 void osRestoreInt(void)
 {
-	__asm
-	{
+	__asm {
 		mov eax, [_a0_]		/* mfc0 t0,Status */
 		or[_status_], eax	/* or t0,t0,a0..mtc0 t0,Status, nop, nop */
 		ret
@@ -254,8 +249,7 @@ __declspec(naked)
  */
 void osSendMessage(void)
 {
-	__asm
-	{
+	__asm {
 		mov esi, dword ptr[_sp_]	/* addiu sp,sp,0xffffffc8 */
 		lea esi, [esi + 0xA0000000 + 0xffffffc8]
 		mov ebx, [_s2_]				/* sw s2,[sp+0x20] */

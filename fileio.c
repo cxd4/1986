@@ -169,8 +169,7 @@ void SwapRomName(uint8 *name)
 	uint8	c;
 	/*~~~~~~*/
 
-	for(i = 0; i < 20; i += 4)
-	{
+	for (i = 0; i < 20; i += 4) {
 		c = name[i];
 		name[i] = name[i + 3];
 		name[i + 3] = c;
@@ -180,17 +179,16 @@ void SwapRomName(uint8 *name)
 		name[i + 1] = c;
 	}
 
-	for(i = 19; i >= 0; i--)
-	{
-		if(name[i] != ' ') break;
+	for (i = 19; i >= 0; i--) {
+		if (name[i] != ' ')
+			break;
 	}
 
 	name[i + 1] = '\0';
 
 	/*
-	 * for( ; i>=0; i-- ) £
-	 * { £
-	 * if( name[i] == ':' ) £
+	 * for (; i >= 0; i--) { £
+	 * if (name[i] == ':') £
 	 * name[i] = '-'; £
 	 * }
 	 */
@@ -207,8 +205,7 @@ void SwapRomHeader(uint8 *romheader)
 	uint8	c;
 	/*~~~~~~*/
 
-	for(i = 0; i < 0x40; i += 4)
-	{
+	for (i = 0; i < 0x40; i += 4) {
 		c = romheader[i];
 		romheader[i] = romheader[i + 3];
 		romheader[i + 3] = c;
@@ -234,19 +231,18 @@ long ReadRomHeader(char *rompath, INI_ENTRY *ini_entry)
 
 	/* DisplayError("Read Rom Header: %s",rompath); */
 	fp = fopen(rompath, "rb");
-	if(fp != NULL)
-	{
+	if (fp != NULL) {
 		/* Get file size */
 		fseek(fp, 0, SEEK_END);
 		filesize = ftell(fp);
 
 		/* pad with zeros to fill the displacement */
-		if(filesize & 0xFFFF) filesize = filesize + (0x10000 - (filesize & 0xFFFF));
+		if (filesize & 0xFFFF)
+			filesize = filesize + (0x10000 - (filesize & 0xFFFF));
 		fseek(fp, 0, SEEK_SET); /* set pointer to beginning of file */
 
 		fread(buffer, sizeof(uint8), 0x40, fp);
-		if(ByteSwap(0x40, buffer) == TRUE)
-		{
+		if (ByteSwap(0x40, buffer) == TRUE) {
 			strncpy(ini_entry->Game_Name, buffer + 0x20, 0x14);
 			SwapRomName(ini_entry->Game_Name);
 
@@ -258,16 +254,12 @@ long ReadRomHeader(char *rompath, INI_ENTRY *ini_entry)
 			/* ini_entry->countrycode = buffer[0x3E]; */
 			fclose(fp);
 			return filesize;
-		}
-		else
-		{
+		} else {
 			/* This file is not a ROM file, skipped */
 			fclose(fp);
 			return 0;
 		}
-	}
-	else
-	{
+	} else {
 		/* Cannot open this file, skipped it */
 		return 0;
 	}
@@ -289,43 +281,35 @@ long ReadZippedRomHeader(char *rompath, INI_ENTRY *ini_entry)
 
 	/* DisplayError("Read Zipped Rom Header: %s",rompath); */
 	fp = unzOpen(rompath);
-	if(fp == NULL)
-	{
+	if (fp == NULL) {
 		return FALSE;	/* Cannot open this ZIP file */
 	}
 
-	if(unzGoToFirstFile(fp) == UNZ_OK)
-	{
-		do
-		{
+	if (unzGoToFirstFile(fp) == UNZ_OK) {
+		do {
 			/*~~~~~~~~~~~~~~~~~~~~~~*/
 			unz_file_info	file_info;
 			/*~~~~~~~~~~~~~~~~~~~~~~*/
 
-			if(unzGetCurrentFileInfo(fp, &file_info, szFileName, 256, NULL, 0, NULL, 0) == UNZ_OK)
-			{
+			if (unzGetCurrentFileInfo(fp, &file_info, szFileName, 256, NULL, 0, NULL, 0) == UNZ_OK) {
 				filesize = file_info.uncompressed_size;
-				if(filesize & 0xFFFF) filesize = filesize + (0x10000 - (filesize & 0xFFFF));
+				if (filesize & 0xFFFF)
+					filesize = filesize + (0x10000 - (filesize & 0xFFFF));
 
 				strcpy(ext, szFileName + strlen(szFileName) - 4);
-				if
-				(
-					stricmp(ext, ".bin") == 0
-				||	stricmp(ext, ".v64") == 0
-				||	stricmp(ext, ".rom") == 0
-				||	stricmp(ext, ".usa") == 0
-				||	stricmp(ext, ".j64") == 0
-				||	stricmp(ext, ".pal") == 0
-				||	stricmp(ext, ".z64") == 0
-				||	stricmp(ext, ".n64") == 0
-				)
-				{
-					if(unzOpenCurrentFile(fp) == UNZ_OK)
-					{
-						if(unzReadCurrentFile(fp, buffer, 0x40) == 0x40)
-						{
-							if(ByteSwap(0x40, buffer))
-							{
+				if (
+					stricmp(ext, ".bin") == 0 ||
+					stricmp(ext, ".v64") == 0 ||
+					stricmp(ext, ".rom") == 0 ||
+					stricmp(ext, ".usa") == 0 ||
+					stricmp(ext, ".j64") == 0 ||
+					stricmp(ext, ".pal") == 0 ||
+					stricmp(ext, ".z64") == 0 ||
+					stricmp(ext, ".n64") == 0
+				) {
+					if (unzOpenCurrentFile(fp) == UNZ_OK) {
+						if (unzReadCurrentFile(fp, buffer, 0x40) == 0x40) {
+							if (ByteSwap(0x40, buffer)) {
 								strncpy(ini_entry->Game_Name, buffer + 0x20, 0x14);
 								SwapRomName(ini_entry->Game_Name);
 
@@ -363,14 +347,12 @@ BOOL ReadRomData(char *rompath)
 	unsigned long	gROMLength; /* size in bytes of the ROM */
 	/*~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(stricmp(&rompath[strlen(rompath) - 4], ".zip") == 0)
-	{
+	if (stricmp(&rompath[strlen(rompath) - 4], ".zip") == 0) {
 		return ReadZippedRomData(rompath);
 	}
 
 	fp = fopen(rompath, "rb");
-	if(fp == NULL)
-	{
+	if (fp == NULL) {
 		MessageBox
 		(
 			gui.hwnd1964main,
@@ -386,14 +368,13 @@ BOOL ReadRomData(char *rompath)
 	gROMLength = ftell(fp);
 
 	/* pad with zeros to fill the displacement */
-	if(((gROMLength & 0xFFFF)) == 0)
+	if (((gROMLength & 0xFFFF)) == 0)
 		gAllocationLength = gROMLength;
 	else
 		gAllocationLength = gROMLength + (0x10000 - (gROMLength & 0xFFFF));
 
 	fseek(fp, 0, SEEK_SET);		/* set pointer to beginning of file */
-	if(fp != NULL)
-	{
+	if (fp != NULL) {
 		/*~~~~~~~~*/
 		uint64	i;
 		MSG		msg;
@@ -406,18 +387,16 @@ BOOL ReadRomData(char *rompath)
 		Is_Reading_Rom_File = TRUE;;
 		To_Stop_Reading_Rom_File = FALSE;
 
-		for(i = 0; i < gROMLength && To_Stop_Reading_Rom_File == FALSE; i += 65536)
-		{
-			if(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
-			{
-				if(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
-				{
-					if(GetMessage(&msg, NULL, 0, 0)) DispatchMessage(&msg);
+		for (i = 0; i < gROMLength && To_Stop_Reading_Rom_File == FALSE; i += 65536) {
+			if (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
+				if (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
+					if (GetMessage(&msg, NULL, 0, 0)) {
+						DispatchMessage(&msg);
+					}
 				}
 			}
 
-			if(To_Stop_Reading_Rom_File == TRUE)
-			{
+			if (To_Stop_Reading_Rom_File == TRUE) {
 				CloseROM();
 				To_Stop_Reading_Rom_File = FALSE;
 				Is_Reading_Rom_File = FALSE;
@@ -453,9 +432,7 @@ BOOL ReadRomData(char *rompath)
 		memcpy((uint8 *) &SP_DMEM, gMS_ROM_Image, 0x1000);
 		memcpy(rominfo.name, gMS_ROM_Image + 0x20, 20);
 		SwapRomName(rominfo.name);
-	}
-	else
-	{
+	} else {
 		DisplayError("File could not be opened.");
 		exit(0);
 	}
@@ -476,44 +453,37 @@ BOOL ReadZippedRomData(char *rompath)
 	unsigned long	gROMLength; /* size in bytes of the ROM */
 	/*~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(fp = unzOpen(rompath))
-	{
+	if (fp = unzOpen(rompath)) {
 		/*~~~~~~~~~~~~~~~~~~~~*/
 		char	szFileName[256];
 		/*~~~~~~~~~~~~~~~~~~~~*/
 
-		if(unzGoToFirstFile(fp) == UNZ_OK)
-		{
-			do
-			{
+		if (unzGoToFirstFile(fp) == UNZ_OK) {
+			do {
 				/*~~~~~~~~~~~~~~~~~~~~~~*/
 				unz_file_info	file_info;
 				/*~~~~~~~~~~~~~~~~~~~~~~*/
 
-				if(unzGetCurrentFileInfo(fp, &file_info, szFileName, 256, NULL, 0, NULL, 0) == UNZ_OK)
-				{
-					if
-					(
-						stricmp(&szFileName[strlen(szFileName) - 4], ".bin") == 0
-					||	stricmp(&szFileName[strlen(szFileName) - 4], ".v64") == 0
-					||	stricmp(&szFileName[strlen(szFileName) - 4], ".rom") == 0
-					||	stricmp(&szFileName[strlen(szFileName) - 4], ".usa") == 0
-					||	stricmp(&szFileName[strlen(szFileName) - 4], ".z64") == 0
-					||	stricmp(&szFileName[strlen(szFileName) - 4], ".j64") == 0
-					||	stricmp(&szFileName[strlen(szFileName) - 4], ".pal") == 0
-					||	stricmp(&szFileName[strlen(szFileName) - 4], ".n64") == 0
-					)
-					{
-						gROMLength = file_info.uncompressed_size;	/* get size of ROM */
+				if (unzGetCurrentFileInfo(fp, &file_info, szFileName, 256, NULL, 0, NULL, 0) == UNZ_OK) {
+					if (
+						stricmp(&szFileName[strlen(szFileName) - 4], ".bin") == 0 ||
+						stricmp(&szFileName[strlen(szFileName) - 4], ".v64") == 0 ||
+						stricmp(&szFileName[strlen(szFileName) - 4], ".rom") == 0 ||
+						stricmp(&szFileName[strlen(szFileName) - 4], ".usa") == 0 ||
+						stricmp(&szFileName[strlen(szFileName) - 4], ".z64") == 0 ||
+						stricmp(&szFileName[strlen(szFileName) - 4], ".j64") == 0 ||
+						stricmp(&szFileName[strlen(szFileName) - 4], ".pal") == 0 ||
+						stricmp(&szFileName[strlen(szFileName) - 4], ".n64") == 0
+					) {
+						gROMLength = file_info.uncompressed_size; /* get size of ROM */
 
 						/* pad with zeros to fill the displacement */
-						if(((gROMLength & 0xFFFF)) == 0)
+						if (((gROMLength & 0xFFFF)) == 0)
 							gAllocationLength = gROMLength;
 						else
 							gAllocationLength = gROMLength + (0x10000 - (gROMLength & 0xFFFF));
 
-						if(unzOpenCurrentFile(fp) == UNZ_OK)
-						{
+						if (unzOpenCurrentFile(fp) == UNZ_OK) {
 							/*~~~~~~~~*/
 							uint64	i;
 							MSG		msg;
@@ -529,19 +499,17 @@ BOOL ReadZippedRomData(char *rompath)
 							sprintf(generalmessage, "Loading [%s] ", szFileName);
 							SetStatusBarText(0, generalmessage);
 
-							for(i = 0; i < gROMLength && To_Stop_Reading_Rom_File == FALSE; i += 65536)
-							/* for( i=0; i<gROMLength; i+=65536) */
-							{
-								if(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
-								{
-									if(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
+							for (i = 0; i < gROMLength && To_Stop_Reading_Rom_File == FALSE; i += 65536) {
+								if (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
+									if (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
 									{
-										if(GetMessage(&msg, NULL, 0, 0)) DispatchMessage(&msg);
+										if (GetMessage(&msg, NULL, 0, 0)) {
+											DispatchMessage(&msg);
+										}
 									}
 								}
 
-								if(To_Stop_Reading_Rom_File == TRUE)
-								{
+								if (To_Stop_Reading_Rom_File == TRUE) {
 									CloseROM();
 									To_Stop_Reading_Rom_File = FALSE;
 									Is_Reading_Rom_File = FALSE;
@@ -551,18 +519,13 @@ BOOL ReadZippedRomData(char *rompath)
 								}
 
 								/* fread(gMS_ROM_Image+i, sizeof(uint8), 65536, fp); */
-								if(unzReadCurrentFile(fp, gMS_ROM_Image + i, sizeof(uint8) * 65536) == 65536)
-								{
+								if (unzReadCurrentFile(fp, gMS_ROM_Image + i, sizeof(uint8) * 65536) == 65536) {
 									sprintf(generalmessage, "Loading [%s] %d%%", szFileName, i * 100 / gROMLength);
 									SetStatusBarText(0, generalmessage);
-								}
-								else if(unzReadCurrentFile(fp, gMS_ROM_Image + i, 1) == 0)
-								{
+								} else if (unzReadCurrentFile(fp, gMS_ROM_Image + i, 1) == 0) {
 									sprintf(generalmessage, "Loading [%s] %d%%", szFileName, i * 100 / gROMLength);
 									SetStatusBarText(0, generalmessage);
-								}
-								else
-								{
+								} else {
 									DisplayError("File could not be read. gROMLength = %08X\n", gROMLength);
 									CloseROM();
 									unzCloseCurrentFile(fp);
@@ -586,17 +549,13 @@ BOOL ReadZippedRomData(char *rompath)
 							unzClose(fp);
 							Is_Reading_Rom_File = FALSE;
 							return TRUE;
-						}
-						else
-						{
+						} else {
 							DisplayError("File could not be read: CRC Error in zip.");
 							unzClose(fp);
 							return FALSE;
 						}
 					}
-				}
-				else
-				{
+				} else {
 					DisplayError("File could not unzipped.");
 					unzClose(fp);
 					return FALSE;
@@ -620,13 +579,10 @@ BOOL ByteSwap(uint32 Size, uint8 *Image)
 	uint32	k;
 	/*~~~~~~*/
 
-	if(Image[0] == 0x80 && Image[1] == 0x37)
-	{
-		for(k = 0; k < Size; k += 4)
-		{
+	if (Image[0] == 0x80 && Image[1] == 0x37) {
+		for (k = 0; k < Size; k += 4) {
 			/* Converts 40123780 to 0x80371240 */
-			_asm
-			{
+			_asm {
 				mov edx, Image
 				add edx, k
 				mov eax, dword ptr[edx]
@@ -636,30 +592,25 @@ BOOL ByteSwap(uint32 Size, uint8 *Image)
 		}
 
 		return TRUE;
-	}
-	else if(Image[0] == 0x37 && Image[1] == 0x80)
-	/* for (k=Size;k != 0; k-=4) { */
-	{
+	} else if (Image[0] == 0x37 && Image[1] == 0x80) {
+	/* for (k = Size; k != 0; k -= 4) { */
 		/* Converts 0x12408037 to 0x80371240 */
 		k = Size;
-		_asm
-		{
+		_asm {
 			mov edx, Image
 			mov ebx, dword ptr[k]
 			jmp _LABEL3
 		}
 
 _LABEL2:
-		_asm
-		{
+		_asm {
 			sub ebx, 8
 			test ebx, ebx
 			jz _LABELEXIT
 		}
 
 _LABEL3:
-		_asm
-		{
+		_asm {
 			/* Yup i copied this asm routine twice..to cut down on the looping by 50% */
 			mov eax, dword ptr[edx]
 			mov ecx, eax
@@ -681,16 +632,11 @@ _LABEL3:
 
 _LABELEXIT: ;
 		return TRUE;
-	}
-	else
-	{
-		if(Image[2] == 0x37 && Image[3] == 0x80)
-		{
+	} else {
+		if (Image[2] == 0x37 && Image[3] == 0x80) {
 			/* OK, this rom has already been swapped */
 			return TRUE;
-		}
-		else
-		{
+		} else {
 			/* This is not a ROM file */
 			return FALSE;
 		}
@@ -713,8 +659,7 @@ int LoadGNUDistConditions(char *ConditionsBuf)
 	_getcwd(temp_path, MAX_PATH);
 	strcat(temp_path, "\\dist.txt");
 
-	if((fp = fopen(temp_path, "rb")) == NULL)
-	{
+	if ((fp = fopen(temp_path, "rb")) == NULL) {
 		sprintf(ConditionsBuf, "Error: %s not found.", temp_path);
 		return(0);
 	}
@@ -723,13 +668,10 @@ int LoadGNUDistConditions(char *ConditionsBuf)
 	fseek(fp, 0, SEEK_END);
 	filesize = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
-	if(fp != NULL)
-	{
+	if (fp != NULL) {
 		fread(ConditionsBuf, sizeof(uint8), 11201, fp);
 		ConditionsBuf[11201] = '\0';
-	}
-	else
-	{
+	} else {
 		sprintf(ConditionsBuf, "Error getting fp");
 		return(0);
 	}
@@ -749,41 +691,52 @@ void AnalyzeString(char *temp)
 	int i = -1;
 	/*~~~~~~~*/
 
-	while(1)
-	{
+	while (1) {
 		i++;
-		if(temp[i] == 0) break;
+		if (temp[i] == 0)
+			break;
 
 		/* A-Z */
-		if((temp[i] >= 0x41) && (temp[i] <= 0x5a)) continue;
+		if ((temp[i] >= 0x41) && (temp[i] <= 0x5a))
+			continue;
 
 		/* a-z */
-		if((temp[i] >= 0x61) && (temp[i] <= 0x7a)) continue;
+		if ((temp[i] >= 0x61) && (temp[i] <= 0x7a))
+			continue;
 
 		/* 0-9 */
-		if((temp[i] >= 0x30) && (temp[i] <= 0x39)) continue;
+		if ((temp[i] >= 0x30) && (temp[i] <= 0x39))
+			continue;
 
 		/* "." */
-		if(temp[i] == 0x2E) continue;
+		if (temp[i] == 0x2E)
+			continue;
 
 		/* "_" */
-		if(temp[i] == 0x5F) continue;
+		if (temp[i] == 0x5F)
+			continue;
 
 		/* " " */
-		if(temp[i] == 0x20) continue;
+		if (temp[i] == 0x20)
+			continue;
 
 		/* "(" */
-		if(temp[i] == 0x28) continue;
+		if (temp[i] == 0x28)
+			continue;
 
 		/* ")" */
-		if(temp[i] == 0x29) continue;
+		if (temp[i] == 0x29)
+			continue;
 
 		/* "-" */
-		if(temp[i] == 0x2D) continue;
+		if (temp[i] == 0x2D)
+			continue;
 
 		/* "'" */
-		if(temp[i] == 0x27) continue;
-		if(temp[i] == '\\' || temp[i] == ':' || temp[i] == '/') continue;
+		if (temp[i] == 0x27)
+			continue;
+		if (temp[i] == '\\' || temp[i] == ':' || temp[i] == '/')
+			continue;
 
 		/* unknown character ... print a "_" */
 		temp[i] = 0x5F;
@@ -803,13 +756,10 @@ BOOL FileIO_CreateMempakFile(char *filename)
 	/*~~~~~~~~~~~~~~~~~~~~*/
 
 	dest = fopen(filename, "wb");
-	if(dest)
-	{
+	if (dest) {
 		fwrite(&gzipped_defaultm0[0], 113, 1, dest);
 		fclose(dest);
-	}
-	else
-	{
+	} else {
 		DisplayError("Unable to create new mempak file, please check your save directory setting.");
 		return FALSE;
 	}
@@ -819,13 +769,10 @@ BOOL FileIO_CreateMempakFile(char *filename)
 	gzclose(gztempfile);
 
 	dest = fopen(filename, "wb");
-	if(dest)
-	{
+	if (dest) {
 		fwrite(temp, 1024 * 32, 1, dest);
 		fclose(dest);
-	}
-	else
-	{
+	} else {
 		DisplayError("Unable to create new mempak file, please check your save directory setting.");
 		return FALSE;
 	}
@@ -845,14 +792,11 @@ BOOL FileIO_CreateFile(char *filename, int size)
 	/*~~~~~~~~~~~~*/
 
 	stream = fopen(filename, "wb");
-	if(stream != NULL)
-	{
+	if (stream != NULL) {
 		fwrite(tmp, 1, size, stream);
 		fclose(stream);
 		return TRUE;
-	}
-	else
-	{
+	} else {
 		return FALSE;
 	}
 }
@@ -871,16 +815,13 @@ void GetFileName(char *Directory, char *Ext)
 	int		i;
 	/*~~~~~~~~~~~~~~~~~*/
 
-	for(i = 0; i < 8; i++)
-	{
+	for (i = 0; i < 8; i++) {
 		CRC[i] = ((char *) &rominfo.crc1)[i ^ 3];
 	}
 
 	strcpy(romname, rominfo.name);
-	for(i = 0; i < (int) strlen(romname); i++)
-	{
-		if(romname[i] == ':' || romname[i] == '/' )
-		{
+	for (i = 0; i < (int) strlen(romname); i++) {
+		if (romname[i] == ':' || romname[i] == '/') {
 			romname[i] = '-';
 		}
 	}
@@ -914,15 +855,11 @@ void FileIO_WriteMemPak(int pak_no)
 	GetFileName(temp, ext);
 
 	stream = fopen(temp, "wb");
-	if(stream == NULL)
-	{
+	if (stream == NULL) {
 		DisplayError("Cannot Write MEMPAK to file %s", temp);
-	}
-	else
-	{
+	} else {
 #ifdef DEBUG_COMMON
-		if( debugoptions.debug_si_mempak )
-		{
+		if (debugoptions.debug_si_mempak) {
 			TRACE1("Write MEMPAK to file: %s", temp);
 		}
 #endif
@@ -947,26 +884,18 @@ void FileIO_LoadMemPak(int pak_no)
 	GetFileName(temp, ext);
 	stream = fopen(temp, "rb");
 
-	if(stream == NULL)
-	{
-		if(!FileIO_CreateMempakFile(temp))
-		{
+	if (stream == NULL) {
+		if (!FileIO_CreateMempakFile(temp)) {
 			DisplayError("Cannot create an empty MEMPAK file: ", temp);
-		}
-		else
-		{
+		} else {
 			stream = fopen(temp, "rb");
-			if(stream == NULL)
-			{
+			if (stream == NULL) {
 				DisplayError("Cannot Load MEMPAK from file %s", temp);
 			}
 		}
-	}
-	else
-	{
+	} else {
 #ifdef DEBUG_COMMON
-		if( debugoptions.debug_si_mempak )
-		{
+		if (debugoptions.debug_si_mempak) {
 			TRACE1("Load MEMPAK from file: %s", temp);
 		}
 #endif
@@ -990,14 +919,11 @@ void FileIO_WriteEEprom(void)
 	GetFileName(temp, "eep");
 	stream = fopen(temp, "wb");
 
-	if(stream != NULL)
-	{
+	if (stream != NULL) {
 		TRACE1("Write EEPROM to file: %s", temp);
 		fwrite(gamesave.EEprom, currentromoptions.Eeprom_size == EEPROMSIZE_4KB ? 0x800 : 0x1000, 1, stream);
 		fclose(stream);
-	}
-	else
-	{
+	} else {
 		TRACE0("Cannot write EEPROM to file");
 	}
 }
@@ -1017,25 +943,18 @@ void FileIO_LoadEEprom(void)
 	GetFileName(temp, "eep");
 	stream = fopen(temp, "rb");
 
-	if(stream == NULL)
-	{
-		if(!FileIO_CreateFile(temp, currentromoptions.Eeprom_size == EEPROMSIZE_4KB ? 0x800 : 0x1000))
-		{
+	if (stream == NULL) {
+		if (!FileIO_CreateFile(temp, currentromoptions.Eeprom_size == EEPROMSIZE_4KB ? 0x800 : 0x1000)) {
 			DisplayError("Cannot Load EEPROM from file %s", temp);
 			return;
-		}
-		else
-		{
+		} else {
 			stream = fopen(temp, "rb");
-			if(stream == NULL)
-			{
+			if (stream == NULL) {
 				DisplayError("Cannot Load EEPROM from file %s", temp);
 				return;
 			}
 		}
-	}
-	else
-	{
+	} else {
 		TRACE1("Load EEPROM from file: %s", temp);
 
 		fread(gamesave.EEprom, currentromoptions.Eeprom_size == EEPROMSIZE_4KB ? 0x800 : 0x1000, 1, stream);
@@ -1068,21 +987,19 @@ void FileIO_WriteFLASHRAM(int FileOffset, int MemOffset, int len)
 	else
 		GetFileName(temp, "fla");
 
-	if( hFlashRam == NULL )
+	if (hFlashRam == NULL)
 		hFlashRam = CreateFile(temp,GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ,NULL,OPEN_ALWAYS,
 		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS, NULL);
 
 	TRACE1("Save Flashram to file: %s", temp);
 	
 	if ((currentromoptions.Save_Type == ANYUSED_SAVETYPE) ||
-		(currentromoptions.Save_Type == SRAM_SAVETYPE))
-	{		
+		(currentromoptions.Save_Type == SRAM_SAVETYPE)
+	) {		
 		DWORD dwWritten;
 		SetFilePointer(hFlashRam,FileOffset&(SRAM_SIZE-1),NULL,FILE_BEGIN);
 		WriteFile(hFlashRam, gMS_RDRAM+(MemOffset&0x007FFFFF), len, &dwWritten, 0);
-	}
-	else
-	{
+	} else {
 		DWORD dwWritten;
 
 		SetFilePointer(hFlashRam,0,NULL,FILE_BEGIN);
@@ -1101,32 +1018,27 @@ void FileIO_ReadFLASHRAM(int FileOffset, int MemOffset, int len)
 	/*~~~~~~~~~~~~~~*/
 
 	if ((currentromoptions.Save_Type == ANYUSED_SAVETYPE) ||
-		(currentromoptions.Save_Type == SRAM_SAVETYPE))
-	{	
+		(currentromoptions.Save_Type == SRAM_SAVETYPE)
+	) {	
 		GetFileName(temp, "sra");
-	}
-	else
-	{
+	} else {
 		GetFileName(temp, "fla");
 	}
 
-	if(hFlashRam == NULL)
-	{
+	if (hFlashRam == NULL) {
 		hFlashRam = CreateFile(temp,GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ,NULL,OPEN_ALWAYS,
 		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS, NULL);
 	}
 	TRACE1("Load Flashram from file: %s", temp);
 
 	if ((currentromoptions.Save_Type == ANYUSED_SAVETYPE) ||
-		(currentromoptions.Save_Type == SRAM_SAVETYPE))
-	{
+		(currentromoptions.Save_Type == SRAM_SAVETYPE)
+	) {
 		DWORD dwWritten;
 	
 		SetFilePointer(hFlashRam,FileOffset&(SRAM_SIZE-1),NULL,FILE_BEGIN);
 		ReadFile(hFlashRam, gMS_RDRAM+(MemOffset&0x007FFFFF), len, &dwWritten, 0);
-	}
-	else
-	{
+	} else {
 		DWORD dwWritten;
 		
 		SetFilePointer(hFlashRam,0,NULL,FILE_BEGIN);
@@ -1187,16 +1099,13 @@ void FileIO_gzWriteHardwareState(gzFile *stream)
 
 	gHWS_COP0Reg[COUNT] = Get_COUNT_Register();	//Refresh the COUNT register
 
-	if(currentromoptions.Assume_32bit == ASSUME_32BIT_YES)
-	{
-		for(k = 0; k < 34; k++)
-		{
+	if (currentromoptions.Assume_32bit == ASSUME_32BIT_YES) {
+		for (k = 0; k < 34; k++) {
 			gHardwareState.GPR[k] = (_int64) (_int32) gHardwareState.GPR[k];
 		}
 	}
 
-	gzwrite
-	(
+	gzwrite(
 		stream,
 		(uint8 *) (&gHardwareState),
 		(
@@ -1218,8 +1127,7 @@ void FileIO_gzSaveStateFile(const char *filename)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	stream = gzopen(filename, "wb");
-	if(stream == NULL)
-	{
+	if (stream == NULL) {
 		DisplayError("Cannot create/open gzip file to save state");
 		return;
 	}
@@ -1295,8 +1203,7 @@ void FileIO_gzLoadStateFile(const char *filename)
 	/*~~~~~~~~~~~~~~~*/
 
 	stream = gzopen(filename, "rb");
-	if(stream == NULL)
-	{
+	if (stream == NULL) {
 		DisplayError("Cannot open gzip file to load state");
 		return;
 	}
@@ -1304,8 +1211,7 @@ void FileIO_gzLoadStateFile(const char *filename)
 	TRACE1("Load state from file: %s", filename);
 
 	gzread(stream, (uint8 *) (&magic1964), sizeof(DWORD));
-	if(magic1964 != VERSION_MAGIC_NUMBER)
-	{
+	if (magic1964 != VERSION_MAGIC_NUMBER) {
 		DisplayError("This state file is at different version or it is not a 1964 state save format, it may not work");
 	}
 
@@ -1330,8 +1236,7 @@ void FileIO_gzLoadStateFile(const char *filename)
 	gzread(stream, (uint8 *) gMS_RI, 0x20);					/* RI */
 	gzread(stream, (uint8 *) gMS_SI, 0x1C);					/* SI */
 
-	if(currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY)
-	{
+	if (currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY) {
 		UnprotectAllBlocks();
 		memset(RDRAM_Copy, 0xEE, 0x00800000);
 	}
@@ -1351,8 +1256,7 @@ void FileIO_gzLoadStateFile(const char *filename)
 
 	gzclose(stream);
 
-	if(debug_opcode!=0)
-	{
+	if (debug_opcode != 0) {
 		Debugger_Copy_Memory(&gMemoryState_Interpreter_Compare, &gMemoryState);
 		memcpy(&gHardwareState_Interpreter_Compare, &gHardwareState, sizeof(HardwareState));
 	}
@@ -1375,14 +1279,12 @@ BOOL FileIO_Load1964Ini(void)
 	strcat(inifilepath, "1964.ini");
 
 	stream = fopen(inifilepath, "rt");
-	if(stream == NULL)
-	{
+	if (stream == NULL) {
 		DisplayError("Cannot find 1964.ini file.");
 		return FALSE;
 	}
 
-	if(ReadAllIniEntries(stream) == FALSE)
-	{
+	if (ReadAllIniEntries(stream) == FALSE) {
 		DisplayError("Error reading information from 1964.ini");
 		fclose(stream);
 		return FALSE;
@@ -1411,31 +1313,25 @@ BOOL FileIO_Write1964Ini(void)
 	strcat(bakfilepath, "1964.ini.bak");
 
 	stream2 = fopen(bakfilepath, "wt");
-	if(stream2 == NULL)
-	{
+	if (stream2 == NULL) {
 		DisplayError("Cannot open 1964.ini file to write.");
 		return FALSE;
 	}
 
 	stream = fopen(inifilepath, "rt");
-	if(stream != NULL)
-	{
-		do
-		{
-			if((fgets(line, 255, stream) != NULL) && strncmp(line, "[", 1) != 0)
+	if (stream != NULL) {
+		do {
+			if ((fgets(line, 255, stream) != NULL) && strncmp(line, "[", 1) != 0)
 				fprintf(stream2, "%s", line);
 			else
 				break;
 		} while(feof(stream) != 0);
 		fclose(stream);
-	}
-	else
-	{
+	} else {
 		DisplayError("1964.ini does not exist, create a new one");
 	}
 
-	if(WriteAllIniEntries(stream2) == FALSE)
-	{
+	if (WriteAllIniEntries(stream2) == FALSE) {
 		DisplayError("Error to write information from 1964.ini");
 		fclose(stream2);
 		return FALSE;
@@ -1466,8 +1362,7 @@ void FileIO_ImportPJ64State(const char *filename)
 	/*~~~~~~~~~~~~~~~~~*/
 
 	stream = fopen(filename, "rb");
-	if(stream == NULL)
-	{
+	if (stream == NULL) {
 		DisplayError("Cannot create/open PJ64 state file to save state");
 		return;
 	}
@@ -1479,10 +1374,8 @@ void FileIO_ImportPJ64State(const char *filename)
 	ResetRdramSize(rdram_size == 0x400000 ? RDRAMSIZE_4MB : RDRAMSIZE_8MB);
 
 	fread(header, 64, 1, stream);
-	if(memcmp(header, gMS_ROM_Image, 0x40) != 0)
-	{
-		if(!DisplayError_AskIfContinue("Rom header mismatched, this PJ64 save state could be for another ROM"))
-		{
+	if (memcmp(header, gMS_ROM_Image, 0x40) != 0) {
+		if (!DisplayError_AskIfContinue("Rom header mismatched, this PJ64 save state could be for another ROM")) {
 			fclose(stream);
 			return;
 		}
@@ -1511,8 +1404,7 @@ void FileIO_ImportPJ64State(const char *filename)
 	fread(&SI_PIF_ADDR_WR64B_REG, sizeof(DWORD), 1, stream);
 	fread(&SI_STATUS_REG, sizeof(DWORD), 1, stream);
 
-	for(i = 0; i < MAXTLB; i++)
-	{
+	for (i = 0; i < MAXTLB; i++) {
 		/*~~~~~~~~~~*/
 		DWORD	valid;
 		/*~~~~~~~~~~*/
@@ -1522,13 +1414,10 @@ void FileIO_ImportPJ64State(const char *filename)
 		fread(&(gMS_TLB[i].EntryHi), sizeof(DWORD), 1, stream);
 		fread(&(gMS_TLB[i].EntryLo0), sizeof(DWORD), 1, stream);
 		fread(&(gMS_TLB[i].EntryLo1), sizeof(DWORD), 1, stream);
-		if(valid)
-		{
+		if (valid) {
 			gMS_TLB[i].EntryLo1 |= valid;
 			gMS_TLB[i].EntryLo0 |= valid;
-		}
-		else
-		{
+		} else {
 			gMS_TLB[i].EntryLo1 &= 0xFFFFFFFE;
 			gMS_TLB[i].EntryLo0 &= 0xFFFFFFFE;
 		}
@@ -1554,8 +1443,7 @@ void FileIO_ExportPJ64State(const char *filename)
 	/*~~~~~~~~~~~~~~~~~*/
 
 	stream = fopen(filename, "wb");
-	if(stream == NULL)
-	{
+	if (stream == NULL) {
 		DisplayError("Cannot create/open PJ64 state file to save state");
 		return;
 	}
@@ -1591,8 +1479,7 @@ void FileIO_ExportPJ64State(const char *filename)
 	fwrite(&SI_PIF_ADDR_WR64B_REG, sizeof(DWORD), 1, stream);
 	fwrite(&SI_STATUS_REG, sizeof(DWORD), 1, stream);
 
-	for(i = 0; i < MAXTLB; i++)
-	{
+	for (i = 0; i < MAXTLB; i++) {
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		DWORD	valid = (gMS_TLB[i].EntryLo0 & TLBLO_G & gMS_TLB[i].EntryLo1);
 		/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/

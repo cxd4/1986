@@ -59,8 +59,7 @@ void ReadConfiguration(void)
 	int		i;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(Test1964Registry() == FALSE)
-	{
+	if (Test1964Registry() == FALSE) {
 		InitAll1964Options();
 		WriteConfiguration();
 		return;
@@ -77,39 +76,29 @@ void ReadConfiguration(void)
 	strcpy(gRegSettings.ROMPath, ReadRegistryStrVal(MAIN_1964_KEY, "ROMPath"));
 
 	GetCmdLineParameter(CMDLINE_AUDIO_PLUGIN, tempstr);		//Get command line audio plugin setting
-	if( strlen(tempstr) == 0 )
-	{
+	if (strlen(tempstr) == 0) {
 		strcpy(gRegSettings.AudioPlugin, ReadRegistryStrVal(MAIN_1964_KEY, "AudioPlugin"));
-	}
-	else
-	{
+	} else {
 		strcpy(gRegSettings.AudioPlugin, tempstr);
 	}
 
 	GetCmdLineParameter(CMDLINE_VIDEO_PLUGIN, tempstr);		//Get command line video plugin setting
-	if( strlen(tempstr) == 0 )
-	{
+	if (strlen(tempstr) == 0) {
 		strcpy(gRegSettings.VideoPlugin, ReadRegistryStrVal(MAIN_1964_KEY, "VideoPlugin"));
-	}
-	else
-	{
+	} else {
 		strcpy(gRegSettings.VideoPlugin, tempstr);
 	}
 	
 	GetCmdLineParameter(CMDLINE_CONTROLLER_PLUGIN, tempstr);		//Get command line controller plugin setting
-	if( strlen(tempstr) == 0 )
-	{
+	if (strlen(tempstr) == 0) {
 		strcpy(gRegSettings.InputPlugin, ReadRegistryStrVal(MAIN_1964_KEY, "InputPlugin"));
-	}
-	else
-	{
+	} else {
 		strcpy(gRegSettings.InputPlugin, tempstr);
 	}
 	
 	
 	strcpy(user_set_rom_directory, ReadRegistryStrVal(MAIN_1964_KEY, "ROMDirectory"));
-	if(strlen(user_set_rom_directory) == 0) 
-	{
+	if (strlen(user_set_rom_directory) == 0)  {
 		strcpy(user_set_rom_directory, gRegSettings.ROMPath);
 	}
 	
@@ -117,10 +106,12 @@ void ReadConfiguration(void)
 	strcpy(user_set_save_directory, ReadRegistryStrVal(MAIN_1964_KEY, "SaveDirectory"));
 
 	strcpy(state_save_directory, ReadRegistryStrVal(MAIN_1964_KEY, "StateSaveDirectory"));
-	if(strlen(state_save_directory) == 0) strcpy(state_save_directory, default_state_save_directory);
+	if (strlen(state_save_directory) == 0)
+		strcpy(state_save_directory, default_state_save_directory);
 
 	strcpy(user_set_plugin_directory, ReadRegistryStrVal(MAIN_1964_KEY, "PluginDirectory"));
-	if(strlen(user_set_plugin_directory) == 0) strcpy(user_set_plugin_directory, default_plugin_directory);
+	if (strlen(user_set_plugin_directory) == 0)
+		strcpy(user_set_plugin_directory, default_plugin_directory);
 
 	emuoptions.auto_run_rom = 1; //0.8.5: This is no longer a user option
 	emuoptions.auto_full_screen = ReadRegistryDwordVal(MAIN_1964_KEY, "AutoFullScreen");
@@ -149,46 +140,43 @@ void ReadConfiguration(void)
 	guioptions.use_last_rom_directory = ReadRegistryDwordVal(MAIN_1964_KEY, "UseLastRomDiectory");
 
 	/* Set the save directory to use */
-	if(guioptions.use_default_save_directory)
+	if (guioptions.use_default_save_directory)
 		strcpy(directories.save_directory_to_use, default_save_directory);
 	else
 		strcpy(directories.save_directory_to_use, user_set_save_directory);
 
 	/* Set the ROM directory to use */
 	GetCmdLineParameter(CMDLINE_ROM_DIR, tempstr);		//Get command line rom path setting
-	if( strlen(tempstr) > 0 )
-	{
+	if (strlen(tempstr) > 0) {
 		strcpy(directories.rom_directory_to_use, tempstr);
-	}
-	else
-	{
-		if(guioptions.use_last_rom_directory)
-		{
+	} else {
+		if (guioptions.use_last_rom_directory) {
 			strcpy(directories.rom_directory_to_use, directories.last_rom_directory);
-		}
-		else
-		{
+		} else {
 			strcpy(directories.rom_directory_to_use, user_set_rom_directory);
 		}
 	}
 	
 	/* Set the plugin directory to use */
-	if(guioptions.use_default_plugin_directory)
+	if (guioptions.use_default_plugin_directory)
 		strcpy(directories.plugin_directory_to_use, default_plugin_directory);
 	else
 		strcpy(directories.plugin_directory_to_use, user_set_plugin_directory);
 
 #ifdef DEBUG_COMMON
 	defaultoptions.Eeprom_size = ReadRegistryDwordVal(MAIN_1964_KEY, "DefaultEepromSize");
-	if(defaultoptions.Eeprom_size == 0 || defaultoptions.Eeprom_size > 2) defaultoptions.Eeprom_size = 1;
+	if (defaultoptions.Eeprom_size == 0 || defaultoptions.Eeprom_size > 2)
+		defaultoptions.Eeprom_size = 1;
 
 	defaultoptions.RDRAM_Size = ReadRegistryDwordVal(MAIN_1964_KEY, "DefaultRdramSize");
-	if(defaultoptions.RDRAM_Size == 0 || defaultoptions.RDRAM_Size > 2) defaultoptions.RDRAM_Size = 2;
+	if (defaultoptions.RDRAM_Size == 0 || defaultoptions.RDRAM_Size > 2)
+		defaultoptions.RDRAM_Size = 2;
 
 	defaultoptions.Emulator = DYNACOMPILER;
 
 	defaultoptions.Save_Type = ReadRegistryDwordVal(MAIN_1964_KEY, "DefaultSaveType");
-	if(defaultoptions.Save_Type == DEFAULT_SAVETYPE) defaultoptions.Save_Type = ANYUSED_SAVETYPE;
+	if (defaultoptions.Save_Type == DEFAULT_SAVETYPE)
+		defaultoptions.Save_Type = ANYUSED_SAVETYPE;
 
 	defaultoptions.Code_Check = ReadRegistryDwordVal(MAIN_1964_KEY, "DefaultCodeCheck");
 	defaultoptions.Max_FPS = ReadRegistryDwordVal(MAIN_1964_KEY, "DefaultMaxFPS");
@@ -202,7 +190,7 @@ void ReadConfiguration(void)
 	defaultoptions.Link_4KB_Blocks = USE4KBLINKBLOCK_YES;
 	defaultoptions.DMA_Segmentation = emuoptions.dma_in_segments;
 	defaultoptions.Use_Register_Caching = ReadRegistryDwordVal(MAIN_1964_KEY, "RegisterCaching");
-	if(defaultoptions.Use_Register_Caching == USEREGC_DEFAULT || defaultoptions.Use_Register_Caching > USEREGC_NO)
+	if (defaultoptions.Use_Register_Caching == USEREGC_DEFAULT || defaultoptions.Use_Register_Caching > USEREGC_NO)
 		defaultoptions.Use_Register_Caching = USEREGC_YES;
 
 	defaultoptions.Counter_Factor = COUTERFACTOR_2;
@@ -229,13 +217,17 @@ void ReadConfiguration(void)
 	defaultoptions.Use_HLE = USEHLE_NO;
 #endif
 	guistatus.clientwidth = ReadRegistryDwordVal(MAIN_1964_KEY, "ClientWindowWidth");
-	if(guistatus.clientwidth < 320) guistatus.clientwidth = 640;
+	if (guistatus.clientwidth < 320)
+		guistatus.clientwidth = 640;
 	guistatus.clientheight = ReadRegistryDwordVal(MAIN_1964_KEY, "ClientWindowHeight");
-	if(guistatus.clientheight < 200) guistatus.clientheight = 480;
+	if (guistatus.clientheight < 200)
+		guistatus.clientheight = 480;
 	guistatus.window_position.top = ReadRegistryDwordVal(MAIN_1964_KEY, "1964WindowTOP");
-	if(guistatus.window_position.top < 0) guistatus.window_position.top = 100;
+	if (guistatus.window_position.top < 0)
+		guistatus.window_position.top = 100;
 	guistatus.window_position.left = ReadRegistryDwordVal(MAIN_1964_KEY, "1964WindowLeft");
-	if(guistatus.window_position.left < 0) guistatus.window_position.left = 100;
+	if (guistatus.window_position.left < 0)
+		guistatus.window_position.left = 100;
 	guistatus.WindowIsMaximized = ReadRegistryDwordVal(MAIN_1964_KEY, "1964WindowIsMaximized");
 
 #ifdef DEBUG_COMMON
@@ -251,34 +243,31 @@ void ReadConfiguration(void)
 	debugoptions.debug_si_eeprom = ReadRegistryDwordVal(MAIN_1964_KEY, "DebugEEPROM");
 	debugoptions.debug_sram = ReadRegistryDwordVal(MAIN_1964_KEY, "DebugSRAM");
 #endif
-	for(i = 0; i < MAX_RECENT_ROM_DIR; i++)
-	{
+	for (i = 0; i < MAX_RECENT_ROM_DIR; i++) {
 		sprintf(str, "RecentRomDirectory%d", i);
 		strcpy(recent_rom_directory_lists[i], ReadRegistryStrVal(MAIN_1964_KEY, str));
-		if(strlen(recent_rom_directory_lists[i]) == 0) strcpy(recent_rom_directory_lists[i], "Empty Rom Folder Slot");
+		if (strlen(recent_rom_directory_lists[i]) == 0)
+			strcpy(recent_rom_directory_lists[i], "Empty Rom Folder Slot");
 	}
 
-	for(i = 0; i < MAX_RECENT_GAME_LIST; i++)
-	{
+	for (i = 0; i < MAX_RECENT_GAME_LIST; i++) {
 		sprintf(str, "RecentGame%d", i);
 		strcpy(recent_game_lists[i], ReadRegistryStrVal(MAIN_1964_KEY, str));
-		if(strlen(recent_game_lists[i]) == 0) strcpy(recent_game_lists[i], "Empty Game Slot");
+		if (strlen(recent_game_lists[i]) == 0)
+			strcpy(recent_game_lists[i], "Empty Game Slot");
 	}
 
-	for(i = 0; i < numberOfRomListColumns; i++)
-	{
+	for (i = 0; i < numberOfRomListColumns; i++) {
 		int width;
 		sprintf(str, "RomListColumn%dWidth", i);
 		width = ReadRegistryDwordVal(MAIN_1964_KEY, str);
-		if(width >= 0 && width <= 500)
-		{
+		if (width >= 0 && width <= 500) {
 			romListColumns[i].colWidth = width;
 		}
 
 		sprintf(str, "RomListColumn%dEnabled", i);
 		romListColumns[i].enabled = ReadRegistryDwordVal(MAIN_1964_KEY, str);
-		if( romListColumns[i].enabled != TRUE )
-		{
+		if (romListColumns[i].enabled != TRUE) {
 			romListColumns[i].enabled = FALSE;
 		}
 	}
@@ -295,8 +284,7 @@ BOOL Test1964Registry(void)
 	DWORD	rc;
 	/*~~~~~~~~~~~~~~~~~*/
 
-	if(RegConnectRegistry(NULL, HKEY_CURRENT_USER, &hKey1) == ERROR_SUCCESS)
-	{
+	if (RegConnectRegistry(NULL, HKEY_CURRENT_USER, &hKey1) == ERROR_SUCCESS) {
 		/*~~~~~~~~~~~~~~~~~~*/
 		char	szBuffer[260];
 		/*~~~~~~~~~~~~~~~~~~*/
@@ -306,7 +294,7 @@ BOOL Test1964Registry(void)
 		rc = RegOpenKey(hKey1, MAIN_1964_KEY, &hKey2);
 		RegCloseKey(hKey1);
 
-		if(rc == ERROR_SUCCESS)
+		if (rc == ERROR_SUCCESS)
 			return TRUE;
 		else
 			return FALSE;
@@ -330,8 +318,7 @@ char *ReadRegistryStrVal(char *MainKey, char *Field)
 	DWORD	cbData, dwType;
 	/*~~~~~~~~~~~~~~~~~~~*/
 
-	if(RegConnectRegistry(NULL, HKEY_CURRENT_USER, &hKey1) == ERROR_SUCCESS)
-	{
+	if (RegConnectRegistry(NULL, HKEY_CURRENT_USER, &hKey1) == ERROR_SUCCESS) {
 		/*~~~~~~~~~~~~~~~~~~*/
 		char	szBuffer[260];
 		/*~~~~~~~~~~~~~~~~~~*/
@@ -339,8 +326,7 @@ char *ReadRegistryStrVal(char *MainKey, char *Field)
 		strcpy(szBuffer, MainKey);
 
 		rc = RegOpenKey(hKey1, szBuffer, &hKey2);
-		if(rc == ERROR_SUCCESS)
-		{
+		if (rc == ERROR_SUCCESS) {
 			cbData = sizeof(szData);
 			rc = RegQueryValueEx(hKey2, Field, NULL, &dwType, (LPBYTE) szData, &cbData);
 
@@ -350,12 +336,9 @@ char *ReadRegistryStrVal(char *MainKey, char *Field)
 		RegCloseKey(hKey1);
 	}
 
-	if(rc == ERROR_SUCCESS && cbData != 0)
-	{
+	if (rc == ERROR_SUCCESS && cbData != 0) {
 		return(szData);
-	}
-	else
-	{
+	} else {
 		return("");
 	}
 }
@@ -375,8 +358,7 @@ uint32 ReadRegistryDwordVal(char *MainKey, char *Field)
 	DWORD	dwType = REG_DWORD;
 	/*~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(RegConnectRegistry(NULL, HKEY_CURRENT_USER, &hKey1) == ERROR_SUCCESS)
-	{
+	if (RegConnectRegistry(NULL, HKEY_CURRENT_USER, &hKey1) == ERROR_SUCCESS) {
 		/*~~~~~~~~~~~~~~~~~~*/
 		char	szBuffer[260];
 		/*~~~~~~~~~~~~~~~~~~*/
@@ -384,8 +366,7 @@ uint32 ReadRegistryDwordVal(char *MainKey, char *Field)
 		strcpy(szBuffer, MainKey);
 
 		rc = RegOpenKey(hKey1, szBuffer, &hKey2);
-		if(rc == ERROR_SUCCESS)
-		{
+		if (rc == ERROR_SUCCESS) {
 			cbData = sizeof(DwordData);
 			rc = RegQueryValueEx(hKey2, Field, NULL, &dwType, (LPBYTE) & DwordData, &cbData);
 
@@ -395,12 +376,9 @@ uint32 ReadRegistryDwordVal(char *MainKey, char *Field)
 		RegCloseKey(hKey1);
 	}
 
-	if(rc == ERROR_SUCCESS && cbData != 0)
-	{
+	if (rc == ERROR_SUCCESS && cbData != 0) {
 		return(DwordData);
-	}
-	else
-	{
+	} else {
 		return(0);
 	}
 }
@@ -420,19 +398,16 @@ void WriteConfiguration(void)
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	/* Save current configuration */
-	if(RegConnectRegistry(NULL, HKEY_CURRENT_USER, &hKey1) != ERROR_SUCCESS)
-	{
+	if (RegConnectRegistry(NULL, HKEY_CURRENT_USER, &hKey1) != ERROR_SUCCESS) {
 		DisplayError("Error to write registry");
 		return;
 	}
 
 	strcpy(szBuffer, MAIN_1964_KEY);
 	rc = RegOpenKey(hKey1, szBuffer, &hKey2);
-	if(rc != ERROR_SUCCESS)
-	{
+	if (rc != ERROR_SUCCESS) {
 		rc = RegCreateKey(hKey1, szBuffer, &hKey2);
-		if(rc != ERROR_SUCCESS)
-		{
+		if (rc != ERROR_SUCCESS) {
 			DisplayError("Error to create MAIN_1964_KEY in the registry");
 			return;
 		}
@@ -619,24 +594,21 @@ void WriteConfiguration(void)
 	DwordData = debugoptions.debug_sram;
 	RegSetValueEx(hKey2, "DebugSRAM", 0, REG_DWORD, (LPBYTE) & DwordData, cbData);
 #endif
-	for(i = 0; i < MAX_RECENT_ROM_DIR; i++)
-	{
+	for (i = 0; i < MAX_RECENT_ROM_DIR; i++) {
 		strcpy(szData, recent_rom_directory_lists[i]);
 		sprintf(str, "RecentRomDirectory%d", i);
 		cbData = strlen(szData) + 1;
 		RegSetValueEx(hKey2, str, 0, REG_SZ, (LPBYTE) szData, cbData);
 	}
 
-	for(i = 0; i < MAX_RECENT_GAME_LIST; i++)
-	{
+	for (i = 0; i < MAX_RECENT_GAME_LIST; i++) {
 		strcpy(szData, recent_game_lists[i]);
 		sprintf(str, "RecentGame%d", i);
 		cbData = strlen(szData) + 1;
 		RegSetValueEx(hKey2, str, 0, REG_SZ, (LPBYTE) szData, cbData);
 	}
 
-	for(i = 0; i < numberOfRomListColumns; i++)
-	{
+	for (i = 0; i < numberOfRomListColumns; i++) {
 		sprintf(str, "RomListColumn%dWidth", i);
 		cbData = sizeof(DwordData);
 		DwordData = romListColumns[i].colWidth;
@@ -742,13 +714,11 @@ void InitAll1964Options(void)
 	debugoptions.debug_si_eeprom = 1;
 	debugoptions.debug_sram = 1;
 #endif
-	for(i = 0; i < MAX_RECENT_ROM_DIR; i++)
-	{
+	for (i = 0; i < MAX_RECENT_ROM_DIR; i++) {
 		strcpy(recent_rom_directory_lists[i], "Empty Rom Folder Slot");
 	}
 
-	for(i = 0; i < MAX_RECENT_GAME_LIST; i++)
-	{
+	for (i = 0; i < MAX_RECENT_GAME_LIST; i++) {
 		strcpy(recent_game_lists[i], "Empty Game Slot");
 	}
 }

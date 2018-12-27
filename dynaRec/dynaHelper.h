@@ -44,7 +44,8 @@ void HELP_Call(unsigned long function)
  */
 void DoSpeedHack(void)
 {
-	if(Is_CPU_Doing_Other_Tasks()) return;
+	if (Is_CPU_Doing_Other_Tasks())
+		return;
 
 	//Count_Down_All
 	countdown_counter = 0;
@@ -59,13 +60,10 @@ void		COP1_instr(uint32 Instruction);
  */
 void Do_COP1_with_exception(uint32 Instruction)
 {
-	if((gHWS_COP0Reg[STATUS] & STATUS_CU1) == 0)	/* CPU1 is not usable */
-	{
+	if ((gHWS_COP0Reg[STATUS] & STATUS_CU1) == 0) { /* CPU1 is not usable */
 		TriggerFPUUnusableException();
 		COP1_instr(Instruction);
-	}
-	else
-	{
+	} else {
 		COP1_instr(Instruction);
 
 		/* dyna_instruction[0x11] = dyna4300i_cop1; */
@@ -86,20 +84,18 @@ void Set_Translate_PC(void)
 	register uint32 translatepc;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(NOT_IN_KO_K1_SEG(gHWS_pc))
-	{
+	if (NOT_IN_KO_K1_SEG(gHWS_pc)) {
 		translatepc = TranslateITLBAddress(gHWS_pc);
-		if(ITLB_Error)
-		{
+		if (ITLB_Error) {
 			translatepc = gHWS_pc;
 			g_LookupPtr = (uint32 *) (gMemoryState.dummyAllZero);
 			return;
 		}
-	}
-	else
+	} else {
 		translatepc = gHWS_pc;
+	}
 
-	if((translatepc & 0x1FFFFFFF) < current_rdram_size)
+	if ((translatepc & 0x1FFFFFFF) < current_rdram_size)
 		g_pc_is_rdram = translatepc & 0x007FFFFF;
 	else
 		g_pc_is_rdram = 0;
@@ -123,14 +119,11 @@ void Set_Translate_PC_No_Check(void)
 		register uint32 tpc;
 		/*~~~~~~~~~~~~~~~~*/
 
-		if(NOT_IN_KO_K1_SEG(pc))
-		{
+		if (NOT_IN_KO_K1_SEG(pc)) {
 			tpc = Direct_TLB_Lookup_Table[pc >> 12];
-			if(ISNOTVALIDDIRECTTLBVALUE(tpc))
-			{
+			if (ISNOTVALIDDIRECTTLBVALUE(tpc)) {
 				pc = TranslateTLBAddress(pc, TLB_INST);
-				if(ITLB_Error)
-				{
+				if (ITLB_Error) {
 					g_LookupPtr = (uint32 *) (gMemoryState.dummyAllZero);
 					return;
 				}
@@ -138,9 +131,9 @@ void Set_Translate_PC_No_Check(void)
 			else
 				pc = tpc + (pc & 0x00000FFF);
 			g_LookupPtr = (uint32 *) ((uint8 *) sDYN_PC_LOOKUP[pc >> 16] + (uint16) pc);
-		}
-		else
+		} else {
 			g_LookupPtr = (uint32 *) ((uint8 *) sDYN_PC_LOOKUP[pc >> 16] + (uint16) pc);
+		}
 	}
 }
 
@@ -156,7 +149,7 @@ void Set_Translate_PC_No_TLB(void)
 
 	translatepc = gHWS_pc;
 
-	if((translatepc & 0x1FFFFFFF) < current_rdram_size)
+	if ((translatepc & 0x1FFFFFFF) < current_rdram_size)
 		g_pc_is_rdram = translatepc & 0x007FFFFF;
 	else
 		g_pc_is_rdram = 0;
@@ -180,16 +173,13 @@ void Set_Translate_PC_No_TLB_No_Check(void)
 void TLB_TRANSLATE_PC_INDIRECT(void)
 {
 	/* PushMap(); */
-	if(currentromoptions.Use_TLB != USETLB_YES)
-	{
-		if((uint32) (*Dyna_Check_Codes) == (uint32) Dyna_Code_Check_None)
+	if (currentromoptions.Use_TLB != USETLB_YES) {
+		if ((uint32) (*Dyna_Check_Codes) == (uint32) Dyna_Code_Check_None)
 			X86_CALL((_u32) Set_Translate_PC_No_TLB_No_Check);
 		else
 			X86_CALL((_u32) Set_Translate_PC_No_TLB);
-	}
-	else
-	{
-		if((uint32) (*Dyna_Check_Codes) == (uint32) Dyna_Code_Check_None)
+	} else {
+		if ((uint32) (*Dyna_Check_Codes) == (uint32) Dyna_Code_Check_None)
 			X86_CALL((_u32) Set_Translate_PC_No_Check);
 		else
 			X86_CALL((_u32) Set_Translate_PC);
@@ -208,20 +198,18 @@ void TLB_TRANSLATE_PC(uint32 pc)
 	register uint32 translatepc;
 	/*~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-	if(NOT_IN_KO_K1_SEG(pc))
-	{
+	if (NOT_IN_KO_K1_SEG(pc)) {
 		TLB_TRANSLATE_PC_INDIRECT();
-	}
-	else
-	{
+	} else {
 		translatepc = pc;
-		if((translatepc & 0x1FFFFFFF) < current_rdram_size)
+		if ((translatepc & 0x1FFFFFFF) < current_rdram_size)
 			g_pc_is_rdram = translatepc & 0x007FFFFF;
 		else
 			g_pc_is_rdram = 0;
-		if((uint32) (*Dyna_Check_Codes) != (uint32) Dyna_Code_Check_None)
+		if ((uint32) (*Dyna_Check_Codes) != (uint32) Dyna_Code_Check_None)
 			MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &g_pc_is_rdram, g_pc_is_rdram);
-		if(sDYN_PC_LOOKUP[translatepc >> 16] == gMemoryState.dummyAllZero) UnmappedMemoryExceptionHelper(translatepc);
+		if (sDYN_PC_LOOKUP[translatepc >> 16] == gMemoryState.dummyAllZero)
+			UnmappedMemoryExceptionHelper(translatepc);
 		g_LookupPtr = (uint32 *) ((uint8 *) sDYN_PC_LOOKUP[translatepc >> 16] + (uint16) translatepc);
 		MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &g_LookupPtr, (uint32) g_LookupPtr);
 	}
@@ -270,7 +258,8 @@ void DisplayPC(void)
 	static uint32	pc = 0;
 	/*~~~~~~~~~~~~~~~~~~~*/
 
-	if(pc != gHWS_pc) TRACE1("PC=%08X", gHWS_pc);
+	if (pc != gHWS_pc)
+		TRACE1("PC=%08X", gHWS_pc);
 	pc = gHWS_pc;
 
 	/* DisplayError("PC=%08X", gHWS_pc); */

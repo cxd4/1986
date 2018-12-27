@@ -83,8 +83,7 @@ extern HINSTANCE	hinstLibVideo;
 extern uint16		GfxPluginVersion;
 
 
-typedef struct g_GFX_PluginRECT
-{
+typedef struct g_GFX_PluginRECT {
 	RECT rect;
 	BOOL UseThis;
 } g_GFX_PluginRECT;

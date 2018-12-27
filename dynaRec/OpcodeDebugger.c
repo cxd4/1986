@@ -137,26 +137,19 @@ void CompareStates(uint32 Instruction)
 
 	gHardwareState_Interpreter_Compare.COP0Reg[COUNT] = gHardwareState.COP0Reg[COUNT];
 
-	if(debug_opcode_block == 1)
-	{
-		if(memcmp(&gHardwareState, &gHardwareState_Interpreter_Compare, GPR_array_size - 8) != 0)
-		{
+	if (debug_opcode_block == 1) {
+		if (memcmp(&gHardwareState, &gHardwareState_Interpreter_Compare, GPR_array_size - 8) != 0) {
 			errcount = 1;
 			memcpy(&gHardwareState_Flushed_Dynarec_Compare, &gHardwareState, GPR_array_size - 8);
 		}
-	}
-	else
-	{
-		if
-		(
-			memcmp
-				(
-					&gHardwareState_Flushed_Dynarec_Compare,
-					&gHardwareState_Interpreter_Compare,
-					GPR_array_size - 8
-				) != 0
-		)
-		{
+	} else {
+		if (
+			memcmp(
+				&gHardwareState_Flushed_Dynarec_Compare,
+				&gHardwareState_Interpreter_Compare,
+				GPR_array_size - 8
+			) != 0
+		) {
 			errcount = 1;
 		}
 	}
@@ -165,20 +158,16 @@ void CompareStates(uint32 Instruction)
 	 * -8 to ignore gHardwareState.code..so code must be last item in struct! £
 	 * memcmp should be faster, but not sure yet.
 	 */
-	if(errcount > 0)
-	{
+	if (errcount > 0) {
 		/*
 		 * This part needs no optimization because it's only executed when memcmp != 0 £
 		 * Which GPR is it ?
 		 */
-		for(reg = sizeof(gHardwareState.GPR) / 8 - 1; reg >= 0; reg--)
-		{
-			if(gHardwareState_Flushed_Dynarec_Compare.GPR[reg] != gHardwareState_Interpreter_Compare.GPR[reg])
-			{
-				if(reg >= 31) break;	/* We won't use this method to compare GPR[32] and GPR[33] (which are mult and
-										 * div's LO and HI) */
-				sprintf
-				(
+		for (reg = sizeof(gHardwareState.GPR) / 8 - 1; reg >= 0; reg--) {
+			if (gHardwareState_Flushed_Dynarec_Compare.GPR[reg] != gHardwareState_Interpreter_Compare.GPR[reg]) {
+				if (reg >= 31)
+					break; /* We won't use this method to compare GPR[32] and GPR[33] (which are mult and div's LO and HI) */
+				sprintf(
 					generalmessage,
 					"%s\n%08X: Dynarec and Interpretive GPR do not match.\n \
 					InterGPR[%s(%d)] = %016I64X\n \
@@ -200,25 +189,19 @@ void CompareStates(uint32 Instruction)
 		}
 	}
 
-	if
-	(
-		memcmp
-			(
-				&gHardwareState + GPR_array_size,
-				&gHardwareState_Interpreter_Compare + GPR_array_size,
-				sizeof(gHardwareState) - (GPR_array_size + 8)
-			) != 0
-	)
-	{
+	if (
+		memcmp(
+			&gHardwareState + GPR_array_size,
+			&gHardwareState_Interpreter_Compare + GPR_array_size,
+			sizeof(gHardwareState) - (GPR_array_size + 8)
+		) != 0
+	) {
 		errcount = 1;
 
 		/* Is it COP0Reg ? */
-		for(reg = sizeof(gHardwareState.COP0Reg) / 4 - 1; reg >= 0; reg--)
-		{
-			if(gHardwareState.COP0Reg[reg] != gHardwareState_Interpreter_Compare.COP0Reg[reg])
-			{
-				sprintf
-				(
+		for (reg = sizeof(gHardwareState.COP0Reg) / 4 - 1; reg >= 0; reg--) {
+			if (gHardwareState.COP0Reg[reg] != gHardwareState_Interpreter_Compare.COP0Reg[reg]) {
+				sprintf(
 					generalmessage,
 					"%s\n%08X: Dynarec and Interpretive COP0Reg do not match.\n \
             InterCOP0Reg[%s] = %08X\n \
@@ -238,12 +221,9 @@ void CompareStates(uint32 Instruction)
 		}
 
 		/* Is it COP0Con ? */
-		for(reg = sizeof(gHardwareState.COP0Con) / 4 - 1; reg >= 0; reg--)
-		{
-			if(gHardwareState.COP0Con[reg] != gHardwareState_Interpreter_Compare.COP0Con[reg])
-			{
-				sprintf
-				(
+		for (reg = sizeof(gHardwareState.COP0Con) / 4 - 1; reg >= 0; reg--) {
+			if (gHardwareState.COP0Con[reg] != gHardwareState_Interpreter_Compare.COP0Con[reg]) {
+				sprintf(
 					generalmessage,
 					"%s\n%08X: Dynarec and Interpretive COP0Con do not match.\n \
 			InterCOP0Con[%d] = %08X\n \
@@ -263,12 +243,9 @@ void CompareStates(uint32 Instruction)
 		}
 
 		/* Is it COP1Con ? */
-		for(reg = sizeof(gHardwareState.COP1Con) / 4 - 1; reg >= 0; reg--)
-		{
-			if(gHardwareState.COP1Con[reg] != gHardwareState_Interpreter_Compare.COP1Con[reg])
-			{
-				sprintf
-				(
+		for (reg = sizeof(gHardwareState.COP1Con) / 4 - 1; reg >= 0; reg--) {
+			if (gHardwareState.COP1Con[reg] != gHardwareState_Interpreter_Compare.COP1Con[reg]) {
+				sprintf(
 					generalmessage,
 					"%s\n%08X: Dynarec and Interpretive COP1Con do not match.\n \
 			InterCOP1Con[%d] = %08X\n \
@@ -288,12 +265,9 @@ void CompareStates(uint32 Instruction)
 		}
 
 		/* Is it FPR32 ? */
-		if(FR_reg_offset == 1)			/* 64bit FPU is off */
-		{
-			for(reg = 0; reg < 32; reg++)
-			{
-				if(gHardwareState.fpr32[reg] != gHardwareState_Interpreter_Compare.fpr32[reg])
-				{
+		if (FR_reg_offset == 1) { /* 64bit FPU is off */
+			for (reg = 0; reg < 32; reg++) {
+				if (gHardwareState.fpr32[reg] != gHardwareState_Interpreter_Compare.fpr32[reg]) {
 					sprintf
 					(
 						generalmessage,
@@ -313,19 +287,13 @@ void CompareStates(uint32 Instruction)
 					OutputDisplayed = 1;
 				}
 			}
-		}
-		else	/* 64bit FPU */
-		{
-			for(reg = 0; reg < 32; reg++)
-			{
-				if
-				(
-					gHardwareState.fpr32[reg] != gHardwareState_Interpreter_Compare.fpr32[reg]
-				||	gHardwareState.fpr32[reg + 32] != gHardwareState_Interpreter_Compare.fpr32[reg + 32]
-				)
-				{
-					sprintf
-					(
+		} else { /* 64bit FPU */
+			for (reg = 0; reg < 32; reg++) {
+				if (
+					gHardwareState.fpr32[reg] != gHardwareState_Interpreter_Compare.fpr32[reg] ||
+					gHardwareState.fpr32[reg + 32] != gHardwareState_Interpreter_Compare.fpr32[reg + 32]
+				) {
+					sprintf(
 						generalmessage,
 						"%s\n%08X: Dynarec and Interpretive 64bit FPU reg do not match.\n \
 					Inter_fpr32[%d] = %08X%08X\n \
@@ -348,8 +316,7 @@ void CompareStates(uint32 Instruction)
 		}
 
 		/* Is it LLbit ? */
-		if(gHardwareState.LLbit != gHardwareState_Interpreter_Compare.LLbit)
-		{
+		if (gHardwareState.LLbit != gHardwareState_Interpreter_Compare.LLbit) {
 			DebugPrintInstr(Instruction);
 
 			sprintf
@@ -371,10 +338,8 @@ void CompareStates(uint32 Instruction)
 		}
 
 		/* Is it RememberFprHi ? */
-		for(reg = sizeof(gHardwareState.RememberFprHi) / 4 - 1; reg >= 0; reg--)
-		{
-			if(gHardwareState.RememberFprHi[reg] != gHardwareState_Interpreter_Compare.RememberFprHi[reg])
-			{
+		for (reg = sizeof(gHardwareState.RememberFprHi) / 4 - 1; reg >= 0; reg--) {
+			if (gHardwareState.RememberFprHi[reg] != gHardwareState_Interpreter_Compare.RememberFprHi[reg]) {
 				DebugPrintInstr(Instruction);
 
 				sprintf
@@ -398,9 +363,8 @@ void CompareStates(uint32 Instruction)
 		}
 
 		/* ignore for now. TODO: FixMe! */
-		if(!OutputDisplayed);
-		else if(errcount > 0)
-		{
+		if (!OutputDisplayed) {
+		} else if (errcount > 0) {
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 			int val = MessageBox(NULL, op_Str, "Error", MB_YESNOCANCEL | MB_ICONINFORMATION | MB_SYSTEMMODAL);
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -410,12 +374,12 @@ void CompareStates(uint32 Instruction)
 
 			strcat(op_Str, "\nYes-Copy Dyna to Interpreter,  No->Copy Interpreter to Dyna, Cancel->Do nothing");
 
-			if(!OutputDisplayed) DisplayError("Missed a message output.");
+			if (!OutputDisplayed)
+				DisplayError("Missed a message output.");
 
 			memset(op_Str, 0, sizeof(op_Str));
 
-			if(val == IDYES)
-			{
+			if (val == IDYES) {
 				Debugger_Copy_Memory(&gMemoryState_Interpreter_Compare, &gMemoryState);
 
 				/*
@@ -428,9 +392,7 @@ void CompareStates(uint32 Instruction)
 					&gHardwareState_Flushed_Dynarec_Compare,
 					sizeof(gHardwareState)
 				);
-			}
-			else if(val == IDNO)
-			{
+			} else if (val == IDNO) {
 				memcpy(&gHardwareState, &gHardwareState_Interpreter_Compare, sizeof(gHardwareState));
 				Debugger_Copy_Memory(&gMemoryState, &gMemoryState_Interpreter_Compare);
 
@@ -455,7 +417,7 @@ void COMPARE_Run_Interpreter_Opcode(uint32 code)
 {
 	/*
 	 * static BOOL passed = FALSE; £
-	 * if( gHWS_pc >= 0x800ED79C && gHWS_pc <= 0x800ED7C4 ) £
+	 * if (gHWS_pc >= 0x800ED79C && gHWS_pc <= 0x800ED7C4) £
 	 * { £
 	 * passed=TRUE; £
 	 * }
@@ -463,9 +425,9 @@ void COMPARE_Run_Interpreter_Opcode(uint32 code)
 	CPU_instruction[(code >> 26)](code);
 
 	/*
-	 * if( passed ) £
+	 * if (passed) £
 	 * { £
-	 * if( *(uint32*)&gMS_RDRAM[0x39060] != 0x1B ) £
+	 * if (*(uint32*)&gMS_RDRAM[0x39060] != 0x1B) £
 	 * DisplayError("Memory is not 0x1B any more, pc=%08X", gHWS_pc); £
 	 * }
 	 */
@@ -477,7 +439,8 @@ void COMPARE_Run_Interpreter_Opcode(uint32 code)
  */
 void COMPARE_Run(uint32 Inter_Opcode_Address, uint32 code)
 {
-	if(debug_opcode != 1) return;
+	if (debug_opcode != 1)
+		return;
 
 #ifdef TEST_OPCODE_DEBUGGER_INTEGRITY21
 	return;
@@ -511,40 +474,35 @@ _int32	RegisterRecall[8];
 void WriteBackDirtyToDynaCompare(_int8 k)
 {
 	/* 32 bit register */
-	if((x86reg[k].HiWordLoc == k))
-	{
-		if(x86reg[k].Is32bit != 1) DisplayError("Bug");
+	if ((x86reg[k].HiWordLoc == k)) {
+		if (x86reg[k].Is32bit != 1)
+			DisplayError("Bug");
 
-		MOV_RegToMemory
-		(
+		MOV_RegToMemory(
 			1,
 			k,
 			ModRM_disp32,
 			(_u32) & gHardwareState_Flushed_Dynarec_Compare.GPR[0] + (x86reg[k].mips_reg << 3)
 		);
 		SAR_RegByImm(1, k, 31);
-		MOV_RegToMemory
-		(
+		MOV_RegToMemory(
 			1,
 			x86reg[k].HiWordLoc,
 			ModRM_disp32,
 			4 + (_u32) & gHardwareState_Flushed_Dynarec_Compare.GPR[0] + (x86reg[k].mips_reg << 3)
 		);
-	}
-	else
-	/* 64 bit register */
-	{
-		if(x86reg[k].Is32bit == 1) DisplayError("Bug");
+	} else {
+		/* 64 bit register */
+		if (x86reg[k].Is32bit == 1)
+			DisplayError("Bug");
 
-		MOV_RegToMemory
-		(
+		MOV_RegToMemory(
 			1,
 			k,
 			ModRM_disp32,
 			(_u32) & gHardwareState_Flushed_Dynarec_Compare.GPR[0] + (x86reg[k].mips_reg << 3)
 		);
-		MOV_RegToMemory
-		(
+		MOV_RegToMemory(
 			1,
 			x86reg[k].HiWordLoc,
 			ModRM_disp32,
@@ -563,7 +521,8 @@ void FlushRegisterToDynaCompare(int k)
 {
 #ifdef DEBUG_REGCACHE
 	/* paranoid error check */
-	if(x86reg[k].HiWordLoc == -1) DisplayError("FlushRegister: The HiWord was not set!");
+	if (x86reg[k].HiWordLoc == -1)
+		DisplayError("FlushRegister: The HiWord was not set!");
 #endif
 #ifdef R0_COMPENSATION
 	/*
@@ -571,9 +530,11 @@ void FlushRegisterToDynaCompare(int k)
 	 * if (ConstMap[0].IsMapped == 0) DisplayError("How did Const[0] get
 	 * unmapped???");
 	 */
-	if(x86reg[k].mips_reg == 0) x86reg[k].IsDirty = 0;
+	if (x86reg[k].mips_reg == 0)
+		x86reg[k].IsDirty = 0;
 #endif
-	if(x86reg[k].IsDirty == 1) WriteBackDirtyToDynaCompare((_s8) k);
+	if (x86reg[k].IsDirty == 1)
+		WriteBackDirtyToDynaCompare((_s8) k);
 
 	x86reg_Delete(x86reg[k].HiWordLoc);
 	x86reg_Delete(k);
@@ -587,7 +548,8 @@ void FlushRegisterToDynaCompare_NoUnmap(int k)
 {
 #ifdef DEBUG_REGCACHE
 	/* paranoid error check */
-	if(x86reg[k].HiWordLoc == -1) DisplayError("FlushRegister: The HiWord was not set!");
+	if (x86reg[k].HiWordLoc == -1)
+		DisplayError("FlushRegister: The HiWord was not set!");
 #endif
 #ifdef R0_COMPENSATION
 	/*
@@ -595,9 +557,11 @@ void FlushRegisterToDynaCompare_NoUnmap(int k)
 	 * if (ConstMap[0].IsMapped == 0) DisplayError("How did Const[0] get
 	 * unmapped???");
 	 */
-	if(x86reg[k].mips_reg == 0) x86reg[k].IsDirty = 0;
+	if (x86reg[k].mips_reg == 0)
+		x86reg[k].IsDirty = 0;
 #endif
-	if(x86reg[k].IsDirty == 1) WriteBackDirtyToDynaCompare((_s8) k);
+	if (x86reg[k].IsDirty == 1)
+		WriteBackDirtyToDynaCompare((_s8) k);
 
 	/*
 	 * x86reg_Delete(x86reg[k].HiWordLoc); £
@@ -615,10 +579,8 @@ void FlushConstantsToDynaCompare(void)
 	int k;
 	/*~~*/
 
-	for(k = 1; k < NUM_CONSTS; k++)
-	{
-		if(ConstMap[k].IsMapped)
-		{
+	for (k = 1; k < NUM_CONSTS; k++) {
+		if (ConstMap[k].IsMapped) {
 			MOV_ImmToMemory
 			(
 				1,
@@ -650,10 +612,9 @@ void FlushAllRegistersToDynaCompare(void)
 
 	FlushConstantsToDynaCompare();	/* schibo: need to work on this for opcode debugger when using constants!! */
 
-	for(k = 0; k < Num_x86regs; k++)
-	{
-		if(ItIsARegisterNotToUse(k));
-		else if(x86reg[k].mips_reg > -1)
+	for (k = 0; k < Num_x86regs; k++) {
+		if (ItIsARegisterNotToUse(k)) {
+		} else if (x86reg[k].mips_reg > -1)
 			FlushRegisterToDynaCompare(k);
 	}
 }
@@ -723,10 +684,8 @@ void COMPARE_SomeErrorMessage(uint32 pc, uint32 code)
 	 * This COP1Con[31] check needs to be one of the first because I set bad_mips_reg
 	 * to a negative value.
 	 */
-	if(gHardwareState_Interpreter_Compare.LLbit != gHardwareState.LLbit)
-	{
-		sprintf
-		(
+	if (gHardwareState_Interpreter_Compare.LLbit != gHardwareState.LLbit) {
+		sprintf(
 			op_Str,
 			"%s\n%08X: COP1Con[31] mismatch.\n \
         COP1Con[31] = %08X\n \
@@ -744,10 +703,8 @@ void COMPARE_SomeErrorMessage(uint32 pc, uint32 code)
 	 * This COP1Con[31] check needs to be one of the first because I set bad_mips_reg
 	 * to a negative value.
 	 */
-	else if(gHardwareState_Interpreter_Compare.COP1Con[31] != gHardwareState.COP1Con[31])
-	{
-		sprintf
-		(
+	else if (gHardwareState_Interpreter_Compare.COP1Con[31] != gHardwareState.COP1Con[31]) {
+		sprintf(
 			op_Str,
 			"%s\n%08X: COP1Con[31] mismatch.\n \
         COP1Con[31] = %08X\n \
@@ -759,15 +716,11 @@ void COMPARE_SomeErrorMessage(uint32 pc, uint32 code)
 			bad_mips_reg,
 			gHardwareState.COP1Con[31]
 		);
-	}
-	else if
-		(
-			gHardwareState_Interpreter_Compare.GPR[bad_mips_reg] != gHardwareState_Flushed_Dynarec_Compare.GPR[
-				bad_mips_reg]
-		)
-	{
-		sprintf
-		(
+	} else if (
+		gHardwareState_Interpreter_Compare.GPR[bad_mips_reg] !=
+		gHardwareState_Flushed_Dynarec_Compare.GPR[bad_mips_reg]
+	) {
+		sprintf(
 			op_Str,
 			"%s\n%08X: Dirty GPR mismatch.\n \
         InterGPR[%s/%d] = %016I64X\n \
@@ -781,11 +734,8 @@ void COMPARE_SomeErrorMessage(uint32 pc, uint32 code)
 			bad_mips_reg,
 			gHardwareState_Flushed_Dynarec_Compare.GPR[bad_mips_reg]
 		);
-	}
-	else if(gHardwareState_Interpreter_Compare.fpr32[bad_mips_reg] != gHardwareState.fpr32[bad_mips_reg])
-	{
-		sprintf
-		(
+	} else if (gHardwareState_Interpreter_Compare.fpr32[bad_mips_reg] != gHardwareState.fpr32[bad_mips_reg]) {
+		sprintf(
 			op_Str,
 			"%s\n%08X: Dirty FPR mismatch.\n \
         InterFPR[%d] = %016I64X\n \
@@ -797,11 +747,8 @@ void COMPARE_SomeErrorMessage(uint32 pc, uint32 code)
 			bad_mips_reg,
 			gHardwareState.fpr32[bad_mips_reg]
 		);
-	}
-	else if(gHardwareState_Interpreter_Compare.COP0Reg[bad_mips_reg] != gHardwareState.COP0Reg[bad_mips_reg])
-	{
-		sprintf
-		(
+	} else if (gHardwareState_Interpreter_Compare.COP0Reg[bad_mips_reg] != gHardwareState.COP0Reg[bad_mips_reg]) {
+		sprintf(
 			op_Str,
 			"%08X: COP0 mismatch.\n \
         InterCOP0[%s/%d] = %08X\n \
@@ -814,9 +761,7 @@ void COMPARE_SomeErrorMessage(uint32 pc, uint32 code)
 			bad_mips_reg,
 			gHardwareState.COP0Reg[bad_mips_reg]
 		);
-	}
-	else
-	{
+	} else {
 		DisplayError("Some mismatch is found, bad register should be %d", bad_mips_reg);
 		return;
 	}
@@ -833,8 +778,7 @@ void COMPARE_SomeErrorMessage(uint32 pc, uint32 code)
 
 	memset(op_Str, 0, sizeof(op_Str));
 
-	if(val == IDYES)
-	{
+	if (val == IDYES) {
 		Debugger_Copy_Memory(&gMemoryState_Interpreter_Compare, &gMemoryState);
 
 		/*
@@ -842,8 +786,7 @@ void COMPARE_SomeErrorMessage(uint32 pc, uint32 code)
 		 * sizeof(gHardwareState)); £
 		 * we don't know which chip it was, so for now let's just do this:
 		 */
-		memcpy
-		(
+		memcpy(
 			&gHardwareState_Interpreter_Compare.GPR[bad_mips_reg],
 			&gHardwareState_Flushed_Dynarec_Compare.GPR[bad_mips_reg],
 			4
@@ -899,7 +842,8 @@ void COMPARE_DebugDirtyConst(uint32 mips_reg)
  */
 void COMPARE_DebugDirty(x86regtyp *xCMP)
 {
-	if((xCMP->mips_reg) > 31) return;	/* We won't use this method to compare GPR[32] and GPR[33] (which are mult and
+	if ((xCMP->mips_reg) > 31)
+		return;	/* We won't use this method to compare GPR[32] and GPR[33] (which are mult and
 										 * div's LO and HI) */
 
 	/* Compare the lo */
@@ -907,16 +851,13 @@ void COMPARE_DebugDirty(x86regtyp *xCMP)
 	Jcc_auto(CC_NE, 41);
 
 	/* Compare the hi */
-	if(xCMP->Is32bit)
-	{
+	if (xCMP->Is32bit) {
 		PUSH_RegToStack(xCMP->x86reg);
 		SAR_RegByImm(1, xCMP->x86reg, 31);
 		CMP_RegWithMemory(xCMP->x86reg, (_u32) & gHardwareState_Interpreter_Compare.GPR[xCMP->mips_reg] + 4);
 		POP_RegFromStack(xCMP->x86reg);
 		Jcc_auto(CC_NE, 43);
-	}
-	else
-	{
+	} else {
 		CMP_RegWithMemory(xCMP->HiWordLoc, (_u32) & gHardwareState_Interpreter_Compare.GPR[xCMP->mips_reg] + 4);
 		Jcc_auto(CC_NE, 43);
 	}
@@ -948,27 +889,27 @@ void COMPARE_DebugDirty(x86regtyp *xCMP)
  */
 int COMPARE_DebugDirty_TheRest(uint32 fd, uint32 fs, uint32 ft)
 {
-	if(gHardwareState_Interpreter_Compare.fpr32[ft] != gHardwareState.fpr32[ft])
+	if (gHardwareState_Interpreter_Compare.fpr32[ft] != gHardwareState.fpr32[ft])
 		return(ft);
-	else if(gHardwareState_Interpreter_Compare.fpr32[ft + FR_reg_offset] != gHardwareState.fpr32[ft + FR_reg_offset])
+	else if (gHardwareState_Interpreter_Compare.fpr32[ft + FR_reg_offset] != gHardwareState.fpr32[ft + FR_reg_offset])
 		return(ft);
-	else if(gHardwareState_Interpreter_Compare.fpr32[fs] != gHardwareState.fpr32[fs])
+	else if (gHardwareState_Interpreter_Compare.fpr32[fs] != gHardwareState.fpr32[fs])
 		return(fs);
-	else if(gHardwareState_Interpreter_Compare.fpr32[fs + FR_reg_offset] != gHardwareState.fpr32[fs + FR_reg_offset])
+	else if (gHardwareState_Interpreter_Compare.fpr32[fs + FR_reg_offset] != gHardwareState.fpr32[fs + FR_reg_offset])
 		return(fs);
-	else if(gHardwareState_Interpreter_Compare.fpr32[fd] != gHardwareState.fpr32[fd])
+	else if (gHardwareState_Interpreter_Compare.fpr32[fd] != gHardwareState.fpr32[fd])
 		return(fd);
-	else if(gHardwareState_Interpreter_Compare.fpr32[fd + FR_reg_offset] != gHardwareState.fpr32[fd + FR_reg_offset])
+	else if (gHardwareState_Interpreter_Compare.fpr32[fd + FR_reg_offset] != gHardwareState.fpr32[fd + FR_reg_offset])
 		return(fd);
-	else if(gHardwareState_Interpreter_Compare.COP1Con[31] != gHardwareState.COP1Con[31])
+	else if (gHardwareState_Interpreter_Compare.COP1Con[31] != gHardwareState.COP1Con[31])
 		return(-1);
-	else if(gHardwareState_Interpreter_Compare.LLbit != gHardwareState.LLbit)
+	else if (gHardwareState_Interpreter_Compare.LLbit != gHardwareState.LLbit)
 		return(-2);
 
 	/* patches for CP0 discrepancy */
-	else if(gHardwareState_Interpreter_Compare.COP0Reg[COUNT] != gHardwareState.COP0Reg[COUNT])
+	else if (gHardwareState_Interpreter_Compare.COP0Reg[COUNT] != gHardwareState.COP0Reg[COUNT])
 		memcpy(&gHardwareState_Interpreter_Compare.COP0Reg[COUNT], &gHardwareState.COP0Reg[COUNT], 4);
-	else if(gHardwareState_Interpreter_Compare.COP0Reg[STATUS] != gHardwareState.COP0Reg[STATUS])
+	else if (gHardwareState_Interpreter_Compare.COP0Reg[STATUS] != gHardwareState.COP0Reg[STATUS])
 		memcpy(&gHardwareState_Interpreter_Compare.COP0Reg[STATUS], &gHardwareState.COP0Reg[STATUS], 4);
 
 	return(0);
@@ -1027,17 +968,15 @@ void OpcodeDebugger(OP_PARAMS)
 	now_do_dyna_instruction[__OPCODE](PASS_PARAMS);
 	return;
 #endif
-	if(debug_opcode != 1)
-	{
+	if (debug_opcode != 1) {
 		now_do_dyna_instruction[__OPCODE](PASS_PARAMS);
 		return;
 	}
 
-	if(!CompilingSlot)
+	if (!CompilingSlot)
 		MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &gHardwareState_Interpreter_Compare.pc, gHWS_pc);
 
-	if(debug_opcode_block == 1 && debug_dirty_only == 0)
-	{
+	if (debug_opcode_block == 1 && debug_dirty_only == 0) {
 		now_do_dyna_instruction[__OPCODE](PASS_PARAMS);
 		return;
 	}
@@ -1049,25 +988,26 @@ void OpcodeDebugger(OP_PARAMS)
 
 	now_do_dyna_instruction[__OPCODE](PASS_PARAMS);
 
-	if(currentromoptions.Use_Register_Caching == USEREGC_NO) FlushAllRegisters();
+	if (currentromoptions.Use_Register_Caching == USEREGC_NO)
+		FlushAllRegisters();
 
-	if(debug_dirty_only && currentromoptions.Use_Register_Caching == USEREGC_YES)
-	{
-		if(ConstMap[xRD->mips_reg].IsMapped == 1) COMPARE_DebugDirtyConst(xRD->mips_reg);
-		if(ConstMap[xRT->mips_reg].IsMapped == 1) COMPARE_DebugDirtyConst(xRT->mips_reg);
-		if(ConstMap[xRS->mips_reg].IsMapped == 1) COMPARE_DebugDirtyConst(xRS->mips_reg);
+	if (debug_dirty_only && currentromoptions.Use_Register_Caching == USEREGC_YES) {
+		if (ConstMap[xRD->mips_reg].IsMapped == 1)
+			COMPARE_DebugDirtyConst(xRD->mips_reg);
+		if (ConstMap[xRT->mips_reg].IsMapped == 1)
+			COMPARE_DebugDirtyConst(xRT->mips_reg);
+		if (ConstMap[xRS->mips_reg].IsMapped == 1)
+			COMPARE_DebugDirtyConst(xRS->mips_reg);
 
-		if(xRD->IsDirty)
+		if (xRD->IsDirty)
 			COMPARE_DebugDirty(xRD);
-		else if(xRT->IsDirty)
+		else if (xRT->IsDirty)
 			COMPARE_DebugDirty(xRT);
-		else if(xRS->IsDirty)
+		else if (xRS->IsDirty)
 			COMPARE_DebugDirty(xRS);
 		else
 			COMPARE_DebugDirtyFPU(PASS_PARAMS);
-	}
-	else
-	{
+	} else {
 		PUSHAD();
 		MOV_ImmToReg(1, Reg_EAX, (uint32) & CompareStates1);
 		CALL_Reg(Reg_EAX);
@@ -1076,15 +1016,15 @@ void OpcodeDebugger(OP_PARAMS)
 		memcpy(Tempx86reg_Debug, x86reg, sizeof(x86reg));
 		POPAD();
 
-		for(k = 0; k < 8; k++)
-			if(k == Reg_ESP);
+		for (k = 0; k < 8; k++)
+			if (k == Reg_ESP);
 			else
 				MOV_RegToMemory(1, (unsigned char) k, ModRM_disp32, (uint32) & RegisterRecall[k]);
 
 		FlushAllRegistersToDynaCompare();
 
-		for(k = 0; k < 8; k++)
-			if(k == Reg_ESP);
+		for (k = 0; k < 8; k++)
+			if (k == Reg_ESP);
 			else
 				MOV_MemoryToReg(1, (unsigned char) k, ModRM_disp32, (uint32) & RegisterRecall[k]);
 

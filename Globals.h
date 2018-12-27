@@ -44,8 +44,7 @@
 
 extern void __cdecl DisplayError(char *Message, ...);
 
-typedef struct
-{
+typedef struct {
 	char	*real_name;
 	char	*dmem_name;
 	char	*imem_name;

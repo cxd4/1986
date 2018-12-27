@@ -33,8 +33,7 @@ typedef		int			BOOL;
     includes for all Hardware parts
  -----------------------------------------------------------------------------------------------------------------------
  */
-typedef struct	sHardwareState
-{
+typedef struct sHardwareState {
 	_int64	GPR[34];				/* General Purpose Registers GPR[32] = lo, GPR[33] = hi */
 	uint32	COP0Reg[32];			/* Coprocessor0 Registers */
 	uint32	fpr32[64];				/* 32bit 64 items needed! */
@@ -52,8 +51,7 @@ extern HardwareState	*p_gHardwareState;
 #define HARDWARESTATE_SIZE	(sizeof(HardwareState))
 #define MAXTLB				32
 
-typedef struct
-{
+typedef struct {
 	uint32	valid;
 	uint32	EntryHi;
 	uint32	EntryLo1;
@@ -63,8 +61,7 @@ typedef struct
 	uint32	MyHiMask;
 } tlb_struct;
 
-typedef struct	sMemorySTATE
-{
+typedef struct sMemorySTATE {
 	uint32		*ramRegs0;
 	uint32		*ramRegs4;
 	uint32		*ramRegs8;

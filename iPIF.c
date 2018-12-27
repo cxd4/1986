@@ -57,8 +57,7 @@ void Init_iPIF(void)
 	gamesave.EEprom_used = FALSE;
 	gamesave.firstusedsavemedia = 0;
 
-	switch(currentromoptions.Eeprom_size)
-	{
+	switch (currentromoptions.Eeprom_size) {
 	case EEPROMSIZE_16KB:	
 		EEProm_Status_Byte = 0xC0; 
 		break;
@@ -85,15 +84,12 @@ void Close_iPIF(void)
 	/* write mempaks to file if it was in use */
 	if
 	(
-		currentromoptions.Save_Type == MEMPAK_SAVETYPE
-	||	(currentromoptions.Save_Type == FIRSTUSE_SAVETYPE && gamesave.firstusedsavemedia == MEMPAK_SAVETYPE)
-	||	currentromoptions.Save_Type == ANYUSED_SAVETYPE
-	)
-	{
-		for(i = 0; i < 4; i++)
-		{
-			if(gamesave.mempak_used[i] && gamesave.mempak_written[i])
-			{
+		currentromoptions.Save_Type == MEMPAK_SAVETYPE ||
+		(currentromoptions.Save_Type == FIRSTUSE_SAVETYPE && gamesave.firstusedsavemedia == MEMPAK_SAVETYPE) ||
+		currentromoptions.Save_Type == ANYUSED_SAVETYPE
+	) {
+		for (i = 0; i < 4; i++) {
+			if (gamesave.mempak_used[i] && gamesave.mempak_written[i]) {
 				FileIO_WriteMemPak(i);
 				gamesave.mempak_used[i] = FALSE;
 				gamesave.mempak_written[i] = FALSE;
@@ -102,29 +98,24 @@ void Close_iPIF(void)
 	}
 
 	/* write eeprom to file if it was in use */
-	if
-	(
-		currentromoptions.Save_Type == EEPROM_SAVETYPE
-	||	(currentromoptions.Save_Type == FIRSTUSE_SAVETYPE && gamesave.firstusedsavemedia == EEPROM_SAVETYPE)
-	||	currentromoptions.Save_Type == ANYUSED_SAVETYPE
-	)
-	{
-		if(gamesave.EEprom_used && gamesave.EEprom_written)
-		{
+	if (
+		currentromoptions.Save_Type == EEPROM_SAVETYPE ||
+		(currentromoptions.Save_Type == FIRSTUSE_SAVETYPE && gamesave.firstusedsavemedia == EEPROM_SAVETYPE) ||
+		currentromoptions.Save_Type == ANYUSED_SAVETYPE
+	) {
+		if (gamesave.EEprom_used && gamesave.EEprom_written) {
 			FileIO_WriteEEprom();
 			gamesave.EEprom_used = FALSE;
 			gamesave.EEprom_written = FALSE;
 		}
 	}
 
-	if
-	(
-		currentromoptions.Save_Type == FLASHRAM_SAVETYPE
-	||	currentromoptions.Save_Type == SRAM_SAVETYPE
-	||	(currentromoptions.Save_Type == FIRSTUSE_SAVETYPE && gamesave.firstusedsavemedia == FLASHRAM_SAVETYPE)
-	||	currentromoptions.Save_Type == ANYUSED_SAVETYPE
-	)
-	{
+	if (
+		currentromoptions.Save_Type == FLASHRAM_SAVETYPE ||
+		currentromoptions.Save_Type == SRAM_SAVETYPE ||
+		(currentromoptions.Save_Type == FIRSTUSE_SAVETYPE && gamesave.firstusedsavemedia == FLASHRAM_SAVETYPE) ||
+		currentromoptions.Save_Type == ANYUSED_SAVETYPE
+	) {
 		//FileIO_WriteFLASHRAM();
 	}
 }
@@ -143,18 +134,16 @@ void BuildCRC(_u8 *data, _u8 *crc)
 
 	tmp = 0;
 	tmp2 = 0;
-	for(i = 0; i <= 32; i++)
-	{
-		for(j = 7; j >= 0; j--)
-		{
-			if(tmp & 0x80)
+	for (i = 0; i <= 32; i++) {
+		for (j = 7; j >= 0; j--) {
+			if (tmp & 0x80)
 				tmp2 = 0x85;
 			else
 				tmp2 = 0x00;
 			tmp <<= 1;
-			if(i == 32)
+			if (i == 32)
 				tmp |= 0;
-			else if(data[i] & (1 << j))
+			else if (data[i] & (1 << j))
 				tmp |= 1;
 			else
 				tmp |= 0;
@@ -178,15 +167,12 @@ void ReadControllerPak(int device, char *cmd)
 	offset = (offset >> 8) | (offset << 8);
 	offset = offset >> 5;
 
-	if(offset <= 0x400)
-	{
-		if(!gamesave.mempak_used[device])
-		{
+	if (offset <= 0x400) {
+		if (!gamesave.mempak_used[device]) {
 			FileIO_LoadMemPak(device);
 			gamesave.mempak_used[device] = TRUE;
 
-			if(gamesave.firstusedsavemedia == 0)
-			{
+			if (gamesave.firstusedsavemedia == 0) {
 				gamesave.firstusedsavemedia = MEMPAK_SAVETYPE;
 			}
 		}
@@ -210,15 +196,12 @@ void WriteControllerPak(int device, char *cmd)
 	offset = (offset >> 8) | (offset << 8);
 	offset = offset >> 5;
 
-	if(offset <= 0x400)
-	{
-		if(!gamesave.mempak_used[device])
-		{
+	if (offset <= 0x400) {
+		if (!gamesave.mempak_used[device]) {
 			FileIO_LoadMemPak(device);
 			gamesave.mempak_used[device] = TRUE;
 
-			if(gamesave.firstusedsavemedia == 0)
-			{
+			if (gamesave.firstusedsavemedia == 0) {
 				gamesave.firstusedsavemedia = MEMPAK_SAVETYPE;
 			}
 		}
@@ -242,22 +225,17 @@ BOOL ControllerCommand(_u8 *cmd, int device)
 {
 	emustatus.ControllerReadCount++;
 
-	if(Kaillera_Is_Running == TRUE)
-	{
+	if (Kaillera_Is_Running == TRUE) {
 		// Need only the first device for kaillera mode cause this is the only device we really use ;)
-		if(!Controls[0].Present)
-		{
+		if (!Controls[0].Present) {
 			cmd[1] |= 0x80;
 			cmd[3] = 0xFF;
 			cmd[4] = 0xFF;
 			cmd[5] = 0xFF;
 			return TRUE;
 		}
-	}
-	else
-	{
-		if(!Controls[device].Present)
-		{
+	} else {
+		if (!Controls[device].Present) {
 			cmd[1] |= 0x80;
 			cmd[3] = 0xFF;
 			cmd[4] = 0xFF;
@@ -266,8 +244,7 @@ BOOL ControllerCommand(_u8 *cmd, int device)
 		}
 	}
 
-	switch(cmd[2])
-	{
+	switch (cmd[2]) {
 	/* Get Controller status */
 	case 0xFF:				/* 0xFF could be something like Reset Controller and return the status */
 	case 0x00:				/* 0x00 return the status */
@@ -289,11 +266,9 @@ BOOL ControllerCommand(_u8 *cmd, int device)
 			BUTTONS Keys;
 			/*~~~~~~~~~*/
 
-			if(Kaillera_Is_Running)
-			{
+			if (Kaillera_Is_Running) {
 				/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-				typedef struct
-				{
+				typedef struct {
 					unsigned int	c;
 					BUTTONS			b;
 				} kbuffer;
@@ -305,8 +280,7 @@ BOOL ControllerCommand(_u8 *cmd, int device)
 				CONTROLLER_GetKeys(0, &Keys);
 
 label_Jump:
-				if(internal_counter > 100)
-				{
+				if (internal_counter > 100) {
 					MessageBox(NULL, "internal_counter reached !!!", "Error", 0);
 					Kaillera_Is_Running = FALSE;
 				}
@@ -315,40 +289,32 @@ label_Jump:
 				kBuffers[0].c = Kaillera_Counter;
 				reclen = kailleraModifyPlayValues((void *) kBuffers, sizeof(kbuffer));
 
-				if(reclen == -1)
-				{
+				if (reclen == -1) {
 					MessageBox(NULL, "Kaillera timeout", "Error", 0);
 					Kaillera_Is_Running = FALSE;
-				}
-				else if(reclen > 0)
-				{
+				} else if (reclen > 0) {
 					int i;
-					for(i = 0; i < Kaillera_Players; i++)
-					{
-						if(kBuffers[i].c != Kaillera_Counter)	
-						{
+					for (i = 0; i < Kaillera_Players; i++) {
+						if (kBuffers[i].c != Kaillera_Counter) {
 							/* This synchronizes all players */
 							/* but could make game play really slow */
 							goto label_Jump;
 						}
 					}
-				}
-				else
+				} else {
 					goto label_Jump;
+				}
 
 				Kaillera_Counter++;
 				internal_counter++;
 
 				memcpy(&Keys, &kBuffers[device].b, sizeof(BUTTONS));
-			}
-			else
-			{
-				if( NetplayInitialized )
-				{
+			} else {
+				if (NetplayInitialized) {
 					netplay_get_keys(device, &Keys, emustatus.DListCount);
-				}
-				else
+				} else {
 					CONTROLLER_GetKeys(device, &Keys);
+				}
 			}
 
 			*(DWORD *) &cmd[3] = *(DWORD *) &Keys;
@@ -358,8 +324,7 @@ label_Jump:
 
 	/* Read Controller Pak */
 	case 0x02:
-		switch(Controls[device].Plugin)
-		{
+		switch (Controls[device].Plugin) {
 		case PLUGIN_MEMPAK:
 			ReadControllerPak(device, &cmd[2]);
 			break;
@@ -375,8 +340,7 @@ label_Jump:
 
 	/* Write Controller Pak */
 	case 0x03:
-		switch(Controls[device].Plugin)
-		{
+		switch (Controls[device].Plugin) {
 		case PLUGIN_MEMPAK:
 			WriteControllerPak(device, &cmd[2]);
 			break;
@@ -400,12 +364,10 @@ label_Jump:
 			int		i;
 			/*~~~~~~~~~~~~~~~~~~*/
 
-			for(i = 0; i < 64; i++)
-			{
+			for (i = 0; i < 64; i++) {
 				sprintf(pline, "%02X ", cmd[i]);
 				pline += 3;
-				if(i % 8 == 7)
-				{
+				if (i % 8 == 7) {
 					pline = line;
 					TRACE1("%s", pline);
 				}
@@ -440,19 +402,16 @@ label_Jump:
 void ReadEEprom(char *dest, long offset)
 {
 #ifdef DEBUG_SI_EEPROM
-	if(debugoptions.debug_si_eeprom)
-	{
+	if (debugoptions.debug_si_eeprom) {
 		TRACE0("Read from EEPROM");
 	}
 #endif
 
-	if(!gamesave.EEprom_used)
-	{
+	if (!gamesave.EEprom_used) {
 		FileIO_LoadEEprom();
 		gamesave.EEprom_used = TRUE;
 
-		if(gamesave.firstusedsavemedia == 0)
-		{
+		if (gamesave.firstusedsavemedia == 0) {
 			gamesave.firstusedsavemedia = EEPROM_SAVETYPE;
 		}
 	}
@@ -468,19 +427,16 @@ void ReadEEprom(char *dest, long offset)
 void WriteEEprom(char *src, long offset)
 {
 #ifdef DEBUG_SI_EEPROM
-	if(debugoptions.debug_si_eeprom)
-	{
+	if (debugoptions.debug_si_eeprom) {
 		TRACE0("Write to EEPROM");
 	}
 #endif
 
-	if(!gamesave.EEprom_used)
-	{
+	if (!gamesave.EEprom_used) {
 		FileIO_LoadEEprom();
 		gamesave.EEprom_used = TRUE;
 
-		if(gamesave.firstusedsavemedia == 0)
-		{
+		if (gamesave.firstusedsavemedia == 0) {
 			gamesave.firstusedsavemedia = EEPROM_SAVETYPE;
 		}
 	}
@@ -497,14 +453,12 @@ void WriteEEprom(char *src, long offset)
  */
 BOOL EEpromCommand(_u8 *cmd, int device)
 {
-	switch(cmd[2])
-	{
+	switch (cmd[2]) {
 	/* reporting eeprom state ... hmmm */
 	case 0xFF:
 	case 0x00:
 #ifdef DEBUG_SI_EEPROM
-		if(debugoptions.debug_si_eeprom)
-		{
+		if (debugoptions.debug_si_eeprom) {
 			TRACE0("Execute EEPROM GetStatis Commands");
 		}
 #endif
@@ -1082,8 +1036,7 @@ void iPifCheck(void)
 	int i, count, device;
 	/*~~~~~~~~~~~~~~~~~*/
 
-	for(i = 0; i < 64; i++)
-	{
+	for (i = 0; i < 64; i++) {
 		/* bufin[i]=mem.pi_ram[i^3]; */
 		bufin[i] = gMS_PIF[(PIF_RAM_PHYS + i) ^ 3];
 	}
@@ -1099,15 +1052,14 @@ void iPifCheck(void)
 		if ((tmp[0] == 0xffffffff) && 
 			(tmp[1] == 0xffffffff) &&
 			(tmp[2] == 0xffffffff) &&
-			(tmp[3] == 0xffffffff))
-		{
-			for(cIdx = 0; cIdx < sizeof(SrcCodeLUT) / sizeof(_u32);cIdx += 4)
-			{
+			(tmp[3] == 0xffffffff)
+		) {
+			for (cIdx = 0; cIdx < sizeof(SrcCodeLUT) / sizeof(_u32); cIdx += 4) {
 				if ((tmp[13] == SrcCodeLUT[cIdx]) && 
 					(tmp[12] == SrcCodeLUT[cIdx+1]) &&
 					(tmp[15] == SrcCodeLUT[cIdx+2]) &&
-					(tmp[14] == SrcCodeLUT[cIdx+3]))
-				{				
+					(tmp[14] == SrcCodeLUT[cIdx+3])
+				) {
 					tmp[13] = ResCodeLUT[cIdx];
 					tmp[12] = ResCodeLUT[cIdx+1];
 					tmp[15] = ResCodeLUT[cIdx+2];
@@ -1117,8 +1069,7 @@ void iPifCheck(void)
 
 					//bufin[63] = 0;	// Set the last bit is 0 as successfully return
 					//error("Decrypt %08X %08X %08X %08X", tmp[13], tmp[12], tmp[15], tmp[14]);
-					for(i = 0; i < 64; i++)
-					{
+					for (i = 0; i < 64; i++) {
 						// mem.pi_ram[i^3] = bufin[i];
 						gMS_PIF[(PIF_RAM_PHYS + i) ^ 3] = bufin[i];
 					}
@@ -1128,15 +1079,13 @@ void iPifCheck(void)
 			return;
 		}
 	}
-	while(count < 64)
-	{
+	while (count < 64) {
 		/*~~~~~~~~~~~~~~~~~~~~~*/
 		_u8 *cmd = &bufin[count];
 		/*~~~~~~~~~~~~~~~~~~~~~*/
 
 		/* Command Block is ready */
-		if(cmd[0] == 0xFE)
-		{
+		if (cmd[0] == 0xFE) {
 			count = 0x40;
 			break;
 		}
@@ -1145,50 +1094,41 @@ void iPifCheck(void)
 		 * no-op Commands £
 		 * FD is from Command and Conquer
 		 */
-		if((cmd[0] == 0xFF) || (cmd[0] == 0xFD))
-		{
+		if ((cmd[0] == 0xFF) || (cmd[0] == 0xFD)) {
 			count++;
 			continue;
 		}
-		if((cmd[0] ==  0xB4) || (cmd[0] == 0x56) || (cmd[0] == 0xB8))
-		{ //???
+		if ((cmd[0] ==  0xB4) || (cmd[0] == 0x56) || (cmd[0] == 0xB8)) { //???
 			count++;
 			continue;
 		}
 
 		/* Next Device */
-		if(cmd[0] == 0x00)
-		{
+		if (cmd[0] == 0x00) {
 			count++;
 			device++;
 			continue;
 		}
 
 		/* Device Channel to large (0-3 = Controller, 4 = EEprom) */
-		if(device > 4)
-		{
+		if (device > 4) {
 			device+=0;
 			break;
 		}
 
 		/* We get a Real Command now =) */
-		switch(device)
-		{
+		switch (device) {
 		/* Controler Command */
 		case 0:
 		case 1:
 		case 2:
 		case 3:
-			if(Controls[device].RawData)
-			{
+			if (Controls[device].RawData) {
 				CONTROLLER_ControllerCommand(device, cmd);
 				CONTROLLER_ReadController(device, cmd);
 				break;
-			}
-			else
-			{
-				if(!ControllerCommand(cmd, device))
-				{
+			} else {
+				if (!ControllerCommand(cmd, device)) {
 					count = 64;
 				}
 			}
@@ -1196,8 +1136,7 @@ void iPifCheck(void)
 
 		/* EEprom Command */
 		case 4:
-			if(!EEpromCommand(cmd, device))
-			{
+			if (!EEpromCommand(cmd, device)) {
 				count = 64;
 			}
 			break;
@@ -1208,36 +1147,31 @@ void iPifCheck(void)
 		}
 
 #ifdef DEBUG_COMMON
-		switch(cmd[2])
-		{
+		switch (cmd[2]) {
 		case 0x00:
 		case 0xFF:
-			if(debugoptions.debug_si_controller)
-			{
+			if (debugoptions.debug_si_controller) {
 				sprintf(tracemessage, "Get Status: %02X %02X %02X %02X %02X %02X %02X",
 						cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6]); 
 				RefreshOpList(tracemessage);
 			}
 			break;
 		case 0x01:
-			if(debugoptions.debug_si_controller)
-			{
+			if (debugoptions.debug_si_controller) {
 				sprintf(tracemessage, "Read Controller: %02X %02X %02X %02X %02X %02X %02X",
 						cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6]); 
 				RefreshOpList(tracemessage);
 			}
 			break;
 		case 0x02:
-			if(debugoptions.debug_si_mempak)
-			{
+			if (debugoptions.debug_si_mempak) {
 				sprintf(tracemessage, "Read Mempak: %02X %02X %02X %02X %02X %02X %02X",
 						cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6]); 
 				RefreshOpList(tracemessage);
 			}
 			break;
 		case 0x03:
-			if(debugoptions.debug_si_mempak)
-			{
+			if (debugoptions.debug_si_mempak) {
 				sprintf(tracemessage, "Write Mempak: %02X %02X %02X %02X %02X %02X %02X",
 						cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6]); 
 				RefreshOpList(tracemessage);
@@ -1261,8 +1195,7 @@ void iPifCheck(void)
 		2;			/* size of Command-Bytes + size of Answer-Bytes + 2 for the 2 size Bytes */
 	}
 
-	if(Controls[0].RawData)
-	{
+	if (Controls[0].RawData) {
 		CONTROLLER_ControllerCommand(-1, bufin);	/* 1 signalling end of processing the pif ram. */
 	}
 
@@ -1271,8 +1204,7 @@ void iPifCheck(void)
 	 * bufin[63] = 1;
 	 */
 	bufin[63] = 0;	/* Set the last bit is 0 as successfully return */
-	for(i = 0; i < 64; i++)
-	{
+	for (i = 0; i < 64; i++) {
 		/* mem.pi_ram[i^3] = bufin[i]; */
 		gMS_PIF[(PIF_RAM_PHYS + i) ^ 3] = bufin[i];
 	}
@@ -1290,24 +1222,18 @@ void iPifCheck(void)
 void LogPIFData(char *data, BOOL input)
 {
 	FILE *stream = fopen("c:/pif_data.txt", "at");
-	if(stream != NULL)
-	{
+	if (stream != NULL) {
 		int				i, j;
 		unsigned char	*p = data;
 
-		if(input)
-		{
+		if (input) {
 			fprintf(stream, "\nIncoming\n");
-		}
-		else
-		{
+		} else {
 			fprintf(stream, "\nOutgoing\n");
 		}
 
-		for(i = 0; i < 8; i++)
-		{
-			for(j = 0; j < 8; j++)
-			{
+		for (i = 0; i < 8; i++) {
+			for (j = 0; j < 8; j++) {
 				fprintf(stream, "%02x ", *p);
 				p++;
 			}

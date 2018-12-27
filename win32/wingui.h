@@ -82,8 +82,7 @@ unsigned char	WarrantyPart1[700];
 unsigned char	WarrantyPart2[700];
 unsigned char	DistConditions[800];	/* GNU Redistribution Conditions */
 
-struct EMU1964GUI
-{
+struct EMU1964GUI {
 	char		*szBaseWindowTitle;
 	HINSTANCE	hInst;
 	HANDLE		hAccTable;				/* handle to accelerator table */
@@ -97,8 +96,7 @@ struct EMU1964GUI
 	HMENU		hMenu1964main;
 	HMENU		hMenuRomListPopup;
 
-	struct
-	{
+	struct {
 		/* Status Bar text fields */
 		char	field_1[256];
 		char	field_2[80];
@@ -111,8 +109,7 @@ struct EMU1964GUI
 
 extern struct EMU1964GUI	gui;
 
-struct GUIOPTIONS
-{
+struct GUIOPTIONS {
 	BOOL	pause_at_inactive;
 	BOOL	pause_at_menu;
 	BOOL	ok_to_pause_at_menu;
@@ -132,8 +129,7 @@ struct GUIOPTIONS
 
 extern struct GUIOPTIONS	guioptions;
 
-struct GUISTATUS
-{
+struct GUISTATUS {
 	int		clientwidth;				/* Client window width */
 	int		clientheight;				/* Client window height */
 	RECT	window_position;			/* 1964 main window location */
@@ -155,8 +151,7 @@ extern void				SetStatusBarText(int, char *);
 char					recent_rom_directory_lists[MAX_RECENT_ROM_DIR][260];
 char					recent_game_lists[MAX_RECENT_GAME_LIST][260];
 
-struct DIRECTORIES
-{
+struct DIRECTORIES {
 	char	main_directory[256];
 	char	plugin_directory_to_use[256];
 	char	save_directory_to_use[256];

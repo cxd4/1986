@@ -23,8 +23,7 @@
 #ifndef _REGISTRY_H__1964_
 #define _REGISTRY_H__1964_
 
-typedef struct
-{
+typedef struct {
 	int		WindowXPos;
 	int		WindowYPos;
 	int		Maximized;

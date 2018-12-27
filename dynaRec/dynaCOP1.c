@@ -41,8 +41,7 @@
 extern void COMPARE_Run(uint32 Inter_Opcode_Address, uint32 code);
 
 #define _SAFTY_COP1_(x) \
-	if(debug_opcode!=0) \
-	{ \
+	if (debug_opcode != 0) { \
 		SetRdRsRt64bit(PASS_PARAMS); \
 		COMPARE_Run((uint32) & x, reg->code); \
 	}\
@@ -58,11 +57,10 @@ extern void COMPARE_Run(uint32 Inter_Opcode_Address, uint32 code);
 	X86_CALL((uint32) & OPCODE); \
 	PopMap();
 
-#define INTERPRET_FLUSH1(OPCODE, reg1) \
-	{ \
+#define INTERPRET_FLUSH1(OPCODE, reg1) { \
 		int temp; \
-		if(ConstMap[reg1].IsMapped) FlushOneConstant(reg1); \
-		if((temp = CheckWhereIsMipsReg(reg1)) > -1) FlushRegister(temp); \
+		if (ConstMap[reg1].IsMapped) FlushOneConstant(reg1); \
+		if ((temp = CheckWhereIsMipsReg(reg1)) > -1) FlushRegister(temp); \
 		PushMap(); \
 		MOV_ImmToReg(1, Reg_ECX, reg->code); \
 		X86_CALL((uint32) & OPCODE); \
@@ -185,8 +183,7 @@ void	dyna4300i_c_s(OP_PARAMS);
 void	dyna4300i_c_d(OP_PARAMS);
 
 /* \ Function Tables \ */
-void (*dyna4300i_cop1_Instruction[32]) (OP_PARAMS) =
-{
+void (*dyna4300i_cop1_Instruction[32]) (OP_PARAMS) = {
 	dyna4300i_cop1_mfc1,
 	dyna4300i_cop1_dmfc1,
 	dyna4300i_cop1_cfc1,
@@ -221,16 +218,14 @@ void (*dyna4300i_cop1_Instruction[32]) (OP_PARAMS) =
 	dyna4300i_reserved
 };
 
-void (*dyna4300i_cop1_BC_instruction[]) (OP_PARAMS) =
-{
+void (*dyna4300i_cop1_BC_instruction[]) (OP_PARAMS) = {
 	dyna4300i_cop1_bc1f,
 	dyna4300i_cop1_bc1t,
 	dyna4300i_cop1_bc1fl,
 	dyna4300i_cop1_bc1tl
 };
 
-void (*dyna4300i_cop1_S_instruction[]) (OP_PARAMS) =
-{
+void (*dyna4300i_cop1_S_instruction[]) (OP_PARAMS) = {
 	dyna4300i_cop1_add_s,
 	dyna4300i_cop1_sub_s,
 	dyna4300i_cop1_mul_s,
@@ -304,8 +299,7 @@ void (*dyna4300i_cop1_S_instruction[]) (OP_PARAMS) =
 	 */
 };
 
-void (*dyna4300i_cop1_D_instruction[64]) (OP_PARAMS) =
-{
+void (*dyna4300i_cop1_D_instruction[64]) (OP_PARAMS) = {
 	dyna4300i_cop1_add_d,
 	dyna4300i_cop1_sub_d,
 	dyna4300i_cop1_mul_d,
@@ -379,8 +373,7 @@ void (*dyna4300i_cop1_D_instruction[64]) (OP_PARAMS) =
 	dyna4300i_c_ngt_d
 };
 
-void (*dyna4300i_cop1_W_instruction[64]) (OP_PARAMS) =
-{
+void (*dyna4300i_cop1_W_instruction[64]) (OP_PARAMS) = {
 	dyna4300i_reserved,
 	dyna4300i_reserved,
 	dyna4300i_reserved,
@@ -446,8 +439,7 @@ void (*dyna4300i_cop1_W_instruction[64]) (OP_PARAMS) =
 	dyna4300i_reserved,
 	dyna4300i_reserved
 };
-void (*dyna4300i_cop1_L_instruction[]) (OP_PARAMS) =
-{
+void (*dyna4300i_cop1_L_instruction[]) (OP_PARAMS) = {
 	dyna4300i_reserved,
 	dyna4300i_reserved,
 	dyna4300i_reserved,
@@ -525,8 +517,7 @@ void dyna4300i_cop1_mfc1(OP_PARAMS)
 	compilerstatus.cp0Counter += 1;
 	_SAFTY_COP1_(r4300i_COP1_mfc1) SetRdRsRt32bit(PASS_PARAMS);
 
-	if(xRT->mips_reg != 0)	/* mandatory */
-	{
+	if (xRT->mips_reg != 0) { /* mandatory */
 		ConstMap[xRT->mips_reg].IsMapped = 0;
 		xRT->IsDirty = 1;
 		xRT->NoNeedToLoadTheLo = 1;
@@ -545,10 +536,9 @@ void dyna4300i_cop1_dmfc1(OP_PARAMS)
 
 	INTERPRET_FLUSH1(r4300i_COP1_dmfc1, __RT);
 
-	if(currentromoptions.Assume_32bit == ASSUME_32BIT_YES)
+	if (currentromoptions.Assume_32bit == ASSUME_32BIT_YES)
 		MessageBox(0, "Need to compile dmfc1 for 32bit? Please use 64bit for now.", "", 0);
-	if(xRT->mips_reg != 0)	/* mandatory */
-	{
+	if (xRT->mips_reg != 0) { /* mandatory */
 		ConstMap[xRT->mips_reg].IsMapped = 0;
 		xRT->IsDirty = 1;
 		xRT->NoNeedToLoadTheLo = 1;
@@ -568,10 +558,8 @@ void dyna4300i_cop1_cfc1(OP_PARAMS)
 	compilerstatus.cp0Counter += 1;
 	_SAFTY_COP1_(r4300i_COP1_cfc1) SetRdRsRt32bit(PASS_PARAMS);
 
-	if(xRT->mips_reg != 0)					/* mandatory */
-	{
-		if(((__FS == 0) || (__FS == 31)))	/* This operation is only defined if */
-		{
+	if (xRT->mips_reg != 0) { /* mandatory */
+		if (((__FS == 0) || (__FS == 31))) { /* This operation is only defined if */
 			ConstMap[xRT->mips_reg].IsMapped = 0;
 			xRT->IsDirty = 1;
 			MapRT;
@@ -606,13 +594,12 @@ void dyna4300i_cop1_mtc1(OP_PARAMS)
 	compilerstatus.cp0Counter += 1;
 	_SAFTY_COP1_(r4300i_COP1_mtc1) SetRdRsRt32bit(PASS_PARAMS);
 
-	if(ConstMap[xRT->mips_reg].IsMapped == 0)
-	{
+	if (ConstMap[xRT->mips_reg].IsMapped == 0) {
 		MapRT;
 		MOV_RegToMemory(1, (_u8) xRT->x86reg, ModRM_disp32, (unsigned long) &reg->fpr32[__FS]);
-	}
-	else
+	} else {
 		MOV_ImmToMemory(1, ModRM_disp32, (unsigned long) &reg->fpr32[__FS], ConstMap[xRT->mips_reg].value);
+	}
 }
 
 /*
@@ -762,7 +749,8 @@ void dyna4300i_cop1_mov_s(OP_PARAMS)
 {
 	compilerstatus.cp0Counter += 1;
 	
-	if (__FD == __FS) return;
+	if (__FD == __FS)
+		return;
 	_SAFTY_COP1_(r4300i_COP1_mov_s)
 		
 	PUSH_RegIfMapped(Reg_EAX);
@@ -1670,10 +1658,8 @@ void dyna4300i_lwc1(OP_PARAMS)
 #ifdef SAFE_LOADSTORE_FPU
 	goto _Default;
 #endif
-	if(ConstMap[xRS->mips_reg].IsMapped == 1)
-	{
-		__try
-		{
+	if (ConstMap[xRS->mips_reg].IsMapped == 1) {
+		__try {
 			/*~~~~~~~~~~~~~*/
 			_u32	QuerAddr;
 			/*~~~~~~~~~~~~~*/
@@ -1681,7 +1667,8 @@ void dyna4300i_lwc1(OP_PARAMS)
 			/* TLB range */
 			QuerAddr = (_u32) ((_s32) ConstMap[xRS->mips_reg].value + (_s32) (_s16) __I);
 
-			if(NOT_IN_KO_K1_SEG(QuerAddr)) goto _Default;
+			if (NOT_IN_KO_K1_SEG(QuerAddr))
+				goto _Default;
 
 			value = LOAD_UWORD_PARAM(QuerAddr);
 
@@ -1689,18 +1676,12 @@ void dyna4300i_lwc1(OP_PARAMS)
 			MOV_MemoryToReg(1, Reg_EAX, ModRM_disp32, (_u32) pLOAD_UWORD_PARAM(QuerAddr));
 			MOV_RegToMemory(1, Reg_EAX, ModRM_disp32, (_u32) & gHWS_fpr32[__FT]);
 			POP_RegIfMapped(Reg_EAX);
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 			goto _Default;
 		}
-	}
-	else
-	{
+	} else {
 _Default:
-		if(ConstMap[xRS->mips_reg].IsMapped)
-		{
+		if (ConstMap[xRS->mips_reg].IsMapped) {
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 			int temp = ConstMap[xRS->mips_reg].value;
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -1720,9 +1701,7 @@ _Default:
 
 			POP_RegIfMapped(Reg_ECX);
 			POP_RegIfMapped(Reg_EAX);
-		}
-		else
-		{
+		} else {
 			MapRS;
 			PUSH_RegIfMapped(Reg_EAX);
 			PUSH_RegIfMapped(Reg_ECX);
@@ -1764,13 +1743,11 @@ void dyna4300i_ldc1(OP_PARAMS)
 #endif
 	INTERPRET_FLUSH1(r4300i_ldc1, __RS);
 
-	if((__RT & 0x1))	/* Ignore this instruction if the RT_FT is odd */
+	if ((__RT & 0x1))	/* Ignore this instruction if the RT_FT is odd */
 		goto _Default;
 
-	if(ConstMap[xRS->mips_reg].IsMapped == 1)
-	{
-		__try
-		{
+	if (ConstMap[xRS->mips_reg].IsMapped == 1) {
+		__try {
 			/*~~~~~~~~~~~~~*/
 			_u32	QuerAddr;
 			/*~~~~~~~~~~~~~*/
@@ -1778,7 +1755,8 @@ void dyna4300i_ldc1(OP_PARAMS)
 			/* TLB range */
 			QuerAddr = (_u32) ((_s32) ConstMap[xRS->mips_reg].value + (_s32) (_s16) __I);
 
-			if(NOT_IN_KO_K1_SEG(QuerAddr)) goto _Default;
+			if (NOT_IN_KO_K1_SEG(QuerAddr))
+				goto _Default;
 
 			value = LOAD_UWORD_PARAM(QuerAddr);
 			value = LOAD_UWORD_PARAM((QuerAddr + 4));
@@ -1789,15 +1767,12 @@ void dyna4300i_ldc1(OP_PARAMS)
 			MOV_MemoryToReg(1, Reg_EDI, ModRM_disp32, (_u32) pLOAD_UWORD_PARAM((QuerAddr + 4)));
 			MOV_RegToMemory(1, Reg_EDI, ModRM_disp32, (_u32) & gHWS_fpr32[__FT]);
 			POP_RegIfMapped(Reg_EDI);
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 			goto _Default;
 		}
-	}
-	else
+	} else {
 		_Default : INTERPRET_FLUSH1(r4300i_ldc1, __RS);
+	}
 }
 
 /*
@@ -1817,10 +1792,8 @@ void dyna4300i_swc1(OP_PARAMS)
 #ifdef SAFE_LOADSTORE_FPU
 	goto _Default;
 #endif
-	if(ConstMap[xRS->mips_reg].IsMapped == 1 && currentromoptions.Code_Check != CODE_CHECK_PROTECT_MEMORY)
-	{
-		__try
-		{
+	if (ConstMap[xRS->mips_reg].IsMapped == 1 && currentromoptions.Code_Check != CODE_CHECK_PROTECT_MEMORY) {
+		__try {
 			/*~~~~~~~~~~~~~*/
 			_u32	QuerAddr;
 			/*~~~~~~~~~~~~~*/
@@ -1828,25 +1801,20 @@ void dyna4300i_swc1(OP_PARAMS)
 			/* TLB range */
 			QuerAddr = (_u32) ((_s32) ConstMap[xRS->mips_reg].value + (_s32) (_s16) __I);
 
-			if(NOT_IN_KO_K1_SEG(QuerAddr)) goto _Default;
+			if (NOT_IN_KO_K1_SEG(QuerAddr))
+				goto _Default;
 
 			value = LOAD_UWORD_PARAM(QuerAddr);
 			PUSH_RegIfMapped(Reg_EAX);
 			MOV_MemoryToReg(1, Reg_EAX, ModRM_disp32, (_u32) & gHWS_fpr32[__FT]);
 			MOV_RegToMemory(1, Reg_EAX, ModRM_disp32, (_u32) pLOAD_UWORD_PARAM(QuerAddr));
 			POP_RegIfMapped(Reg_EAX);
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 			goto _Default;
 		}
-	}
-	else
-	{
+	} else {
 _Default:
-		if(ConstMap[xRS->mips_reg].IsMapped)
-		{
+		if (ConstMap[xRS->mips_reg].IsMapped) {
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 			int temp = ConstMap[xRS->mips_reg].value;
 			/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -1867,9 +1835,7 @@ _Default:
 
 			POP_RegIfMapped(Reg_ECX);
 			POP_RegIfMapped(Reg_EAX);
-		}
-		else
-		{
+		} else {
 			MapRS;
 			PUSH_RegIfMapped(Reg_EAX);
 			PUSH_RegIfMapped(Reg_ECX);
@@ -1910,13 +1876,11 @@ void dyna4300i_sdc1(OP_PARAMS)
 #endif
 	INTERPRET_FLUSH1(r4300i_sdc1, __RS);
 
-	if((__RT & 0x1))	/* Ignore this instruction if the RT_FT is odd */
+	if ((__RT & 0x1))	/* Ignore this instruction if the RT_FT is odd */
 		goto _Default;
 
-	if(ConstMap[xRS->mips_reg].IsMapped == 1 && currentromoptions.Code_Check != CODE_CHECK_PROTECT_MEMORY)
-	{
-		__try
-		{
+	if (ConstMap[xRS->mips_reg].IsMapped == 1 && currentromoptions.Code_Check != CODE_CHECK_PROTECT_MEMORY) {
+		__try {
 			/*~~~~~~~~~~~~~*/
 			uint32	QuerAddr;
 			/*~~~~~~~~~~~~~*/
@@ -1924,7 +1888,8 @@ void dyna4300i_sdc1(OP_PARAMS)
 			/* TLB range */
 			QuerAddr = (_u32) ((_s32) ConstMap[xRS->mips_reg].value + (_s32) (_s16) __I);
 
-			if(NOT_IN_KO_K1_SEG(QuerAddr)) goto _Default;
+			if (NOT_IN_KO_K1_SEG(QuerAddr))
+				goto _Default;
 
 			value = LOAD_UWORD_PARAM(QuerAddr);
 			value = LOAD_UWORD_PARAM((QuerAddr + 4));
@@ -1934,15 +1899,12 @@ void dyna4300i_sdc1(OP_PARAMS)
 			MOV_MemoryToReg(1, Reg_EDI, ModRM_disp32, (_u32) & reg->fpr32[__FT] + 4);
 			MOV_RegToMemory(1, Reg_EDI, ModRM_disp32, (_u32) pLOAD_UWORD_PARAM((QuerAddr)));
 			POP_RegIfMapped(Reg_EDI);
-		}
-
-		__except(NULL, EXCEPTION_EXECUTE_HANDLER)
-		{
+		} __except(NULL, EXCEPTION_EXECUTE_HANDLER) {
 			goto _Default;
 		}
-	}
-	else
+	} else {
 		_Default : INTERPRET_FLUSH1(r4300i_sdc1, __RS);
+	}
 }
 
 /*
