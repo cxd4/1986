@@ -367,49 +367,49 @@
 			Name="core"
 			Filter="">
 			<File
-				RelativePath=".\1964ini.c">
+				RelativePath="..\1964ini.c">
 			</File>
 			<File
-				RelativePath=".\1964ini.h">
+				RelativePath="..\1964ini.h">
 			</File>
 			<File
-				RelativePath=".\DbgPrint.h">
+				RelativePath="..\DbgPrint.h">
 			</File>
 			<File
-				RelativePath=".\DebugR4300i.c">
+				RelativePath="..\DebugR4300i.c">
 			</File>
 			<File
-				RelativePath=".\FPU.c">
+				RelativePath="..\FPU.c">
 			</File>
 			<File
-				RelativePath=".\Globals.h">
+				RelativePath="..\Globals.h">
 			</File>
 			<File
-				RelativePath=".\Kaillera\Kaillera.c">
+				RelativePath="..\Kaillera\Kaillera.c">
 			</File>
 			<File
-				RelativePath=".\Kaillera\Kaillera.h">
+				RelativePath="..\Kaillera\Kaillera.h">
 			</File>
 			<File
-				RelativePath=".\R4300i.c">
+				RelativePath="..\R4300i.c">
 			</File>
 			<File
-				RelativePath=".\Tlb.c">
+				RelativePath="..\Tlb.c">
 			</File>
 			<File
-				RelativePath=".\debug_option.c">
+				RelativePath="..\debug_option.c">
 			</File>
 			<File
-				RelativePath=".\debug_option.h">
+				RelativePath="..\debug_option.h">
 			</File>
 			<File
-				RelativePath=".\dma.c">
+				RelativePath="..\dma.c">
 			</File>
 			<File
-				RelativePath=".\dma.h">
+				RelativePath="..\dma.h">
 			</File>
 			<File
-				RelativePath=".\emulator.c">
+				RelativePath="..\emulator.c">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -424,186 +424,186 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\emulator.h">
+				RelativePath="..\emulator.h">
 			</File>
 			<File
-				RelativePath=".\fileio.c">
+				RelativePath="..\fileio.c">
 			</File>
 			<File
-				RelativePath=".\fileio.h">
+				RelativePath="..\fileio.h">
 			</File>
 			<File
-				RelativePath=".\gamesave.c">
+				RelativePath="..\gamesave.c">
 			</File>
 			<File
-				RelativePath=".\gamesave.h">
+				RelativePath="..\gamesave.h">
 			</File>
 			<File
-				RelativePath=".\globals.c">
+				RelativePath="..\globals.c">
 			</File>
 			<File
-				RelativePath=".\hardware.h">
+				RelativePath="..\hardware.h">
 			</File>
 			<File
-				RelativePath=".\iPIF.c">
+				RelativePath="..\iPIF.c">
 			</File>
 			<File
-				RelativePath=".\iPIF.h">
+				RelativePath="..\iPIF.h">
 			</File>
 			<File
-				RelativePath=".\interrupt.c">
+				RelativePath="..\interrupt.c">
 			</File>
 			<File
-				RelativePath=".\interrupt.h">
+				RelativePath="..\interrupt.h">
 			</File>
 			<File
-				RelativePath=".\memory.c">
+				RelativePath="..\memory.c">
 			</File>
 			<File
-				RelativePath=".\memory.h">
+				RelativePath="..\memory.h">
 			</File>
 			<File
-				RelativePath=".\memory2.c">
+				RelativePath="..\memory2.c">
 			</File>
 			<File
-				RelativePath=".\n64rcp.c">
+				RelativePath="..\n64rcp.c">
 			</File>
 			<File
-				RelativePath=".\n64rcp.h">
+				RelativePath="..\n64rcp.h">
 			</File>
 			<File
-				RelativePath=".\netplay.c">
+				RelativePath="..\netplay.c">
 			</File>
 			<File
-				RelativePath=".\netplay.h">
+				RelativePath="..\netplay.h">
 			</File>
 			<File
-				RelativePath=".\profiler.c">
+				RelativePath="..\profiler.c">
 			</File>
 			<File
-				RelativePath=".\r4300i.h">
+				RelativePath="..\r4300i.h">
 			</File>
 			<File
-				RelativePath=".\timer.c">
+				RelativePath="..\timer.c">
 			</File>
 			<File
-				RelativePath=".\timer.h">
+				RelativePath="..\timer.h">
 			</File>
 			<File
-				RelativePath=".\zlib\unzip.h">
+				RelativePath="..\zlib\unzip.h">
 			</File>
 			<File
-				RelativePath=".\zlib\zconf.h">
+				RelativePath="..\zlib\zconf.h">
 			</File>
 			<File
-				RelativePath=".\zlib\zlib.h">
+				RelativePath="..\zlib\zlib.h">
 			</File>
 		</Filter>
 		<Filter
 			Name="win32"
 			Filter="">
 			<File
-				RelativePath=".\cheatcode.c">
+				RelativePath="..\cheatcode.c">
 			</File>
 			<File
-				RelativePath=".\cheatcode.h">
+				RelativePath="..\cheatcode.h">
 			</File>
 			<File
-				RelativePath=".\win32\registry.c">
+				RelativePath="..\win32\registry.c">
 			</File>
 			<File
-				RelativePath=".\win32\registry.h">
+				RelativePath="..\win32\registry.h">
 			</File>
 			<File
-				RelativePath=".\romlist.c">
+				RelativePath="..\romlist.c">
 			</File>
 			<File
-				RelativePath=".\romlist.h">
+				RelativePath="..\romlist.h">
 			</File>
 			<File
-				RelativePath=".\win32\windebug.c">
+				RelativePath="..\win32\windebug.c">
 			</File>
 			<File
-				RelativePath=".\win32\windebug.h">
+				RelativePath="..\win32\windebug.h">
 			</File>
 			<File
-				RelativePath=".\win32\wingui.c">
+				RelativePath="..\win32\wingui.c">
 			</File>
 			<File
-				RelativePath=".\win32\wingui.h">
+				RelativePath="..\win32\wingui.h">
 			</File>
 			<File
-				RelativePath=".\win32\wingui2.c">
+				RelativePath="..\win32\wingui2.c">
 			</File>
 			<Filter
 				Name="Plugins"
 				Filter="">
 				<File
-					RelativePath=".\win32\DLL_Rsp.c">
+					RelativePath="..\win32\DLL_Rsp.c">
 				</File>
 				<File
-					RelativePath=".\win32\DLL_Rsp.h">
+					RelativePath="..\win32\DLL_Rsp.h">
 				</File>
 				<File
-					RelativePath=".\win32\Dll_Audio.c">
+					RelativePath="..\win32\Dll_Audio.c">
 				</File>
 				<File
-					RelativePath=".\win32\Dll_Audio.h">
+					RelativePath="..\win32\Dll_Audio.h">
 				</File>
 				<File
-					RelativePath=".\win32\Dll_Input.c">
+					RelativePath="..\win32\Dll_Input.c">
 				</File>
 				<File
-					RelativePath=".\win32\Dll_Input.h">
+					RelativePath="..\win32\Dll_Input.h">
 				</File>
 				<File
-					RelativePath=".\win32\Dll_Video.c">
+					RelativePath="..\win32\Dll_Video.c">
 				</File>
 				<File
-					RelativePath=".\win32\Dll_Video.h">
+					RelativePath="..\win32\Dll_Video.h">
 				</File>
 				<File
-					RelativePath=".\plugins.h">
+					RelativePath="..\plugins.h">
 				</File>
 			</Filter>
 			<Filter
 				Name="Resource Files"
 				Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 				<File
-					RelativePath="win32\1964.bmp">
+					RelativePath="..\win32\1964.bmp">
 				</File>
 				<File
-					RelativePath=".\win32\audio.bmp">
+					RelativePath="..\win32\audio.bmp">
 				</File>
 				<File
-					RelativePath=".\win32\bitmap2.bmp">
+					RelativePath="..\win32\bitmap2.bmp">
 				</File>
 				<File
-					RelativePath=".\win32\bmp00001.bmp">
+					RelativePath="..\win32\bmp00001.bmp">
 				</File>
 				<File
-					RelativePath=".\win32\icon2.ico">
+					RelativePath="..\win32\icon2.ico">
 				</File>
 				<File
-					RelativePath=".\win32\input.bmp">
+					RelativePath="..\win32\input.bmp">
 				</File>
 				<File
-					RelativePath=".\win32\logo.bmp">
+					RelativePath="..\win32\logo.bmp">
 				</File>
 				<File
-					RelativePath=".\win32\resource.h">
+					RelativePath="..\win32\resource.h">
 				</File>
 				<File
-					RelativePath=".\win32\rom_open.bmp">
+					RelativePath="..\win32\rom_open.bmp">
 				</File>
 				<File
-					RelativePath="win32\toolbar1.bmp">
+					RelativePath="..\win32\toolbar1.bmp">
 				</File>
 				<File
-					RelativePath=".\win32\video.bmp">
+					RelativePath="..\win32\video.bmp">
 				</File>
 				<File
-					RelativePath=".\win32\wingui.rc">
+					RelativePath="..\win32\wingui.rc">
 					<FileConfiguration
 						Name="Release|Win32">
 						<Tool
@@ -641,74 +641,74 @@
 			Name="Dynarec"
 			Filter="">
 			<File
-				RelativePath=".\dynaRec\Analyze.c">
+				RelativePath="..\dynaRec\Analyze.c">
 			</File>
 			<File
-				RelativePath=".\dynaRec\OpcodeDebugger.c">
+				RelativePath="..\dynaRec\OpcodeDebugger.c">
 			</File>
 			<File
-				RelativePath=".\compiler.c">
+				RelativePath="..\compiler.c">
 			</File>
 			<File
-				RelativePath=".\compiler.h">
+				RelativePath="..\compiler.h">
 			</File>
 			<File
-				RelativePath=".\dynaRec\dynaBranch.h">
+				RelativePath="..\dynaRec\dynaBranch.h">
 			</File>
 			<File
-				RelativePath=".\dynaRec\dynaCOP1.c">
+				RelativePath="..\dynaRec\dynaCOP1.c">
 			</File>
 			<File
-				RelativePath=".\dynaRec\dynaCOP1.h">
+				RelativePath="..\dynaRec\dynaCOP1.h">
 			</File>
 			<File
-				RelativePath=".\dynaRec\dynaCPU.c">
+				RelativePath="..\dynaRec\dynaCPU.c">
 			</File>
 			<File
-				RelativePath=".\dynaRec\dynaCPU.h">
+				RelativePath="..\dynaRec\dynaCPU.h">
 			</File>
 			<File
-				RelativePath=".\dynaRec\dynaCPU_defines.h">
+				RelativePath="..\dynaRec\dynaCPU_defines.h">
 			</File>
 			<File
-				RelativePath=".\dynaRec\dynaHelper.h">
+				RelativePath="..\dynaRec\dynaHelper.h">
 			</File>
 			<File
-				RelativePath=".\dynaRec\dynaLog.c">
+				RelativePath="..\dynaRec\dynaLog.c">
 			</File>
 			<File
-				RelativePath=".\dynaRec\dynaLog.h">
+				RelativePath="..\dynaRec\dynaLog.h">
 			</File>
 			<File
-				RelativePath=".\dynaRec\dynaRec.h">
+				RelativePath="..\dynaRec\dynaRec.h">
 			</File>
 			<File
-				RelativePath=".\hle.c">
+				RelativePath="..\hle.c">
 			</File>
 			<File
-				RelativePath=".\hle.h">
+				RelativePath="..\hle.h">
 			</File>
 			<File
-				RelativePath=".\dynaRec\opcodeDebugger.h">
+				RelativePath="..\dynaRec\opcodeDebugger.h">
 			</File>
 			<File
-				RelativePath=".\dynaRec\regcache.c">
+				RelativePath="..\dynaRec\regcache.c">
 			</File>
 			<File
-				RelativePath=".\dynaRec\regcache.h">
+				RelativePath="..\dynaRec\regcache.h">
 			</File>
 			<File
-				RelativePath=".\dynaRec\x86.c">
+				RelativePath="..\dynaRec\x86.c">
 			</File>
 			<File
-				RelativePath=".\dynaRec\x86.h">
+				RelativePath="..\dynaRec\x86.h">
 			</File>
 		</Filter>
 		<File
-			RelativePath=".\COPYRIGHT.txt">
+			RelativePath="..\COPYRIGHT.txt">
 		</File>
 		<File
-			RelativePath=".\zlib\zlib.lib">
+			RelativePath="..\zlib\zlib.lib">
 		</File>
 	</Files>
 	<Globals>
