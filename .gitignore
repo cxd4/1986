@@ -1,0 +1,80 @@
+make/.vs/
+make/obj/
+
+# compiled C sources
+*.asm
+*.s
+*.cod
+
+# precompiled headers:  GCC and MSC
+*.gch
+*.pch
+
+# object files
+*.o
+*.so
+*.obj
+*.elf
+
+# binary images
+*.bin
+*.BIN
+*.z64
+*.v64
+*.rom
+*.usa
+*.jap
+*.eur
+
+# save file extensions
+*.eep
+*.sra
+*.fla
+*.mpk
+*.n64
+*.a64
+
+# third-party configuration files
+*.conf
+*.cfg
+*.ini
+
+# executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+
+# compiled resource objects
+*.aps
+*.res
+
+# Microsoft Visual Studio files:  cache
+*.bsc
+*.ilk
+*.opensdf
+*.sbr
+*.sdf
+*.suo
+
+# Visual Studio:  solutions
+*.sln
+*.user
+*.dsp
+
+# Visual Studio:  debugging
+*.idb
+*.ncb
+*.pdb
+
+# Visual Studio:  logging
+*.lastbuildstate
+*.log
+*.manifest
+*.plg
+*.tlog
