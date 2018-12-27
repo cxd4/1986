@@ -1553,7 +1553,7 @@ long OnNotifyRomListHeader(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam
             
             if (romListHeaderClickedColumn == 0) {
                 popupmenu = GetSubMenu(popupmainmenu,1);
-                switch (omlistNameToDisplay) {
+                switch (romlistNameToDisplay) {
                 case ROMLIST_DISPLAY_INTERNAL_NAME:
                     CheckMenuItem(popupmenu, ID_HEADERPOPUP_SHOW_INTERNAL_NAME, MF_CHECKED);
                     break;

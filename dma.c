@@ -335,6 +335,7 @@ L1:
                             goto L1;
                         } else {
                             break;
+                        }
                     } else if (i + addr % 0x10000 < 0) {
                         i += addr %
                         0x10000;

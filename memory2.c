@@ -474,7 +474,7 @@ uint32 *write_mem_rdram_not_at_0x20000000(uint32 addr)
     __asm push edx
     tempaddr = (uint32)(gMS_RDRAM + (addr & 0x007FFFFF));
     __asm pop edx
-    return (uint32 *)empaddr;
+    return ((uint32 *)tempaddr);
 #else
     return (uint32 *)(gMS_RDRAM + (addr & 0x007FFFFF));
 #endif

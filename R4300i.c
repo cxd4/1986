@@ -1646,7 +1646,7 @@ void r4300i_COP0_mtc0(uint32 Instruction)
             }
         } else {
             gHWS_COP0Reg[CAUSE] =
-                (uint32) gRT & 0x300) |
+                ((uint32)gRT & 0x300) |
                 (gHWS_COP0Reg[CAUSE] &~(0x300))
             ;
         }
