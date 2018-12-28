@@ -174,16 +174,14 @@ void DMA_Flashram_To_RDRAM(unsigned __int32 rdramaddr, unsigned __int32 flashram
         }
     }
 
-    DEBUG_FLASHRAM_TRACE
-    (
-        TRACE4
-            (
-                "DMA Read flashram: %08X-%08X-08X-08X ...",
-                MEM_READ_UWORD(rdramaddr),
-                MEM_READ_UWORD(rdramaddr + 4),
-                MEM_READ_UWORD(rdramaddr + 8),
-                MEM_READ_UWORD(rdramaddr + 12)
-            )
+    DEBUG_FLASHRAM_TRACE(
+        TRACE4(
+            "DMA Read flashram: %08X-%08X-%08X-%08X ...",
+            MEM_READ_UWORD(rdramaddr),
+            MEM_READ_UWORD(rdramaddr + 4),
+            MEM_READ_UWORD(rdramaddr + 8),
+            MEM_READ_UWORD(rdramaddr + 12)
+        )
     );
 }
 
