@@ -149,18 +149,10 @@ BOOL RomListReadDirectory(const char *spath)
             strcasecmp(ext, ".j64") == 0 ||
             strcasecmp(ext, ".pal") == 0
         ) {
-            if (strcasecmp(ext, ".zip") == 0) {
-                /* Open and read this zip file */
-                if ((filesize = ReadZippedRomHeader(romfilename, &entry)) == 0) {
-                    /* This is not a ROM zip file, skipped it */
-                    continue;
-                }
-            } else {
-                /* Open and read this rom file */
-                if ((filesize = ReadRomHeader(romfilename, &entry)) == 0) {
-                    /* This is not a ROM file, skipped it */
-                    continue;
-                }
+            /* Open and read this rom file */
+            if ((filesize = ReadRomHeader(romfilename, &entry)) == 0) {
+                /* This is not a ROM file, skipped it */
+                continue;
             }
 
             /* Add the header information to our romlist */

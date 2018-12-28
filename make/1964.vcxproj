@@ -114,7 +114,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>DYNAREC;WIN32;NDEBUG;_WINDOWS;ZLIB_DLL;WIN32_LEAN_AND_MEAN;ENABLE_64BIT_FPU;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DYNAREC;WIN32;NDEBUG;_WINDOWS;WIN32_LEAN_AND_MEAN;ENABLE_64BIT_FPU;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling />
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -136,7 +136,7 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>ddraw.lib;..\zlib\zlib.lib;comctl32.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ddraw.lib;comctl32.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>./Release/1964.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ProgramDatabaseFile>.\obj/Release/1964.pdb</ProgramDatabaseFile>
@@ -165,7 +165,7 @@
       <Optimization>MinSpace</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>ENABLE_OPCODE_DEBUGGER;DYNAREC;WIN32;NDEBUG;_WINDOWS;ZLIB_DLL;WIN32_LEAN_AND_MEAN;ENABLE_64BIT_FPU;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ENABLE_OPCODE_DEBUGGER;DYNAREC;WIN32;NDEBUG;_WINDOWS;WIN32_LEAN_AND_MEAN;ENABLE_64BIT_FPU;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -182,7 +182,7 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>dsound.lib;..\zlib\zlib.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dsound.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>./Release/1964-opcodedebugger.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ProgramDatabaseFile>.\obj/Release_Opcode_Debugger/1964-opcodedebugger.pdb</ProgramDatabaseFile>
@@ -203,7 +203,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>DYNAREC;DYN_DEBUG;WIN32;_WINDOWS;VIDEO;ZIP_SUPPORT;HLE;GRAPHICS_TRACER;ZLIB_DLL;ENABLE_64BIT_FPU;DEBUG_COMMON;WINDEBUG_1964;_DEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DYNAREC;DYN_DEBUG;WIN32;_WINDOWS;VIDEO;ZIP_SUPPORT;HLE;GRAPHICS_TRACER;ENABLE_64BIT_FPU;DEBUG_COMMON;WINDEBUG_1964;_DEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <PrecompiledHeader />
@@ -221,7 +221,7 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>dsound.lib;dxguid.lib;odbc32.lib;odbccp32.lib;comctl32.lib;opengl32.lib;..\zlib/zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dsound.lib;dxguid.lib;odbc32.lib;odbccp32.lib;comctl32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>./Release/1964dbug.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -245,7 +245,7 @@
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>DYNAREC;WIN32;NDEBUG;_WINDOWS;ZLIB_DLL;WIN32_LEAN_AND_MEAN;ENABLE_64BIT_FPU;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DYNAREC;WIN32;NDEBUG;_WINDOWS;WIN32_LEAN_AND_MEAN;ENABLE_64BIT_FPU;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling />
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -267,7 +267,7 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>..\zlib\zlib.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>./Release/1964.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ProgramDatabaseFile>.\obj/Release/1964.pdb</ProgramDatabaseFile>
@@ -294,7 +294,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>false</OmitFramePointers>
       <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>DYNAREC;WIN32;NDEBUG;_WINDOWS;ZLIB_DLL;WIN32_LEAN_AND_MEAN;ENABLE_64BIT_FPU;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DYNAREC;WIN32;NDEBUG;_WINDOWS;WIN32_LEAN_AND_MEAN;ENABLE_64BIT_FPU;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling />
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -316,7 +316,7 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>ddraw.lib;..\zlib\zlib.lib;comctl32.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ddraw.lib;comctl32.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>./Release/1964_Net_Debug.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -426,9 +426,6 @@
     <ClInclude Include="..\win32\resource.h" />
     <ClInclude Include="..\win32\windebug.h" />
     <ClInclude Include="..\win32\wingui.h" />
-    <ClInclude Include="..\zlib\unzip.h" />
-    <ClInclude Include="..\zlib\zconf.h" />
-    <ClInclude Include="..\zlib\zlib.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\COPYRIGHT.txt" />
@@ -451,9 +448,6 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release with .NET Debugging|Win32'">win32</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">win32</AdditionalIncludeDirectories>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="..\zlib\zlib.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -22,9 +22,8 @@
  * authors: email: schibo@emulation64.com, rice1964@yahoo.com
  */
 #include <stdio.h>
-#include "zlib/unzip.h"
+#include <windows.h>
 
-/* include <zlib.h> */
 #include <direct.h>
 #include "n64rcp.h"
 #include "fileio.h"
@@ -35,7 +34,7 @@
 #include "gamesave.h"
 #include "emulator.h"
 
-BOOL    Is_Reading_Rom_File = FALSE;;
+BOOL    Is_Reading_Rom_File = FALSE;
 BOOL    To_Stop_Reading_Rom_File = FALSE;
 
 BYTE    gzipped_defaultm0[] =
@@ -269,87 +268,12 @@ long ReadRomHeader(char *rompath, INI_ENTRY *ini_entry)
  =======================================================================================================================
  =======================================================================================================================
  */
-long ReadZippedRomHeader(char *rompath, INI_ENTRY *ini_entry)
-{
-    /*~~~~~~~~~~~~~~~~~~~~~~~~*/
-    long int    filesize;
-    unzFile     fp;
-    char        szFileName[256];
-    char        ext[_MAX_EXT];
-    uint8       buffer[0x100];
-    /*~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-    /* DisplayError("Read Zipped Rom Header: %s",rompath); */
-    fp = unzOpen(rompath);
-    if (fp == NULL) {
-        return FALSE;   /* Cannot open this ZIP file */
-    }
-
-    if (unzGoToFirstFile(fp) == UNZ_OK) {
-        do {
-            /*~~~~~~~~~~~~~~~~~~~~~~*/
-            unz_file_info   file_info;
-            /*~~~~~~~~~~~~~~~~~~~~~~*/
-
-            if (unzGetCurrentFileInfo(fp, &file_info, szFileName, 256, NULL, 0, NULL, 0) == UNZ_OK) {
-                filesize = file_info.uncompressed_size;
-                if (filesize & 0xFFFF)
-                    filesize = filesize + (0x10000 - (filesize & 0xFFFF));
-
-                strcpy(ext, szFileName + strlen(szFileName) - 4);
-                if (
-                    strcasecmp(ext, ".bin") == 0 ||
-                    strcasecmp(ext, ".v64") == 0 ||
-                    strcasecmp(ext, ".rom") == 0 ||
-                    strcasecmp(ext, ".usa") == 0 ||
-                    strcasecmp(ext, ".j64") == 0 ||
-                    strcasecmp(ext, ".pal") == 0 ||
-                    strcasecmp(ext, ".z64") == 0 ||
-                    strcasecmp(ext, ".n64") == 0
-                ) {
-                    if (unzOpenCurrentFile(fp) == UNZ_OK) {
-                        if (unzReadCurrentFile(fp, buffer, 0x40) == 0x40) {
-                            if (ByteSwap(0x40, buffer)) {
-                                strncpy(ini_entry->Game_Name, buffer + 0x20, 0x14);
-                                SwapRomName(ini_entry->Game_Name);
-
-                                /* SwapRomHeader(buffer); */
-                                ini_entry->crc1 = *((uint32 *) (buffer + 0x10));
-                                ini_entry->crc2 = *((uint32 *) (buffer + 0x14));
-                                ini_entry->countrycode = buffer[0x3D];
-
-                                /* ini_entry->countrycode = buffer[0x3E]; */
-                                unzCloseCurrentFile(fp);
-                                unzClose(fp);
-                                return filesize;
-                            }
-                        }
-
-                        unzCloseCurrentFile(fp);
-                    }
-                }
-            }
-        } while(unzGoToNextFile(fp) == UNZ_OK);
-    }
-
-    unzClose(fp);
-    return 0;           /* Read ZIP file fails for some reason */
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
 BOOL ReadRomData(char *rompath)
 {
     /*~~~~~~~~~~~~~~~~~~~~~~~*/
     FILE            *fp;
     unsigned long   gROMLength; /* size in bytes of the ROM */
     /*~~~~~~~~~~~~~~~~~~~~~~~*/
-
-    if (strcasecmp(&rompath[strlen(rompath) - 4], ".zip") == 0) {
-        return ReadZippedRomData(rompath);
-    }
 
     fp = fopen(rompath, "rb");
     if (fp == NULL) {
@@ -440,133 +364,6 @@ BOOL ReadRomData(char *rompath)
     fclose(fp);
 
     return TRUE;
-}
-
-/*
- =======================================================================================================================
- =======================================================================================================================
- */
-BOOL ReadZippedRomData(char *rompath)
-{
-    /*~~~~~~~~~~~~~~~~~~~~~~~*/
-    unzFile         fp;
-    unsigned long   gROMLength; /* size in bytes of the ROM */
-    /*~~~~~~~~~~~~~~~~~~~~~~~*/
-
-    if (fp = unzOpen(rompath)) {
-        /*~~~~~~~~~~~~~~~~~~~~*/
-        char    szFileName[256];
-        /*~~~~~~~~~~~~~~~~~~~~*/
-
-        if (unzGoToFirstFile(fp) == UNZ_OK) {
-            do {
-                /*~~~~~~~~~~~~~~~~~~~~~~*/
-                unz_file_info   file_info;
-                /*~~~~~~~~~~~~~~~~~~~~~~*/
-
-                if (unzGetCurrentFileInfo(fp, &file_info, szFileName, 256, NULL, 0, NULL, 0) == UNZ_OK) {
-                    if (
-                        strcasecmp(&szFileName[strlen(szFileName) - 4], ".bin") == 0 ||
-                        strcasecmp(&szFileName[strlen(szFileName) - 4], ".v64") == 0 ||
-                        strcasecmp(&szFileName[strlen(szFileName) - 4], ".rom") == 0 ||
-                        strcasecmp(&szFileName[strlen(szFileName) - 4], ".usa") == 0 ||
-                        strcasecmp(&szFileName[strlen(szFileName) - 4], ".z64") == 0 ||
-                        strcasecmp(&szFileName[strlen(szFileName) - 4], ".j64") == 0 ||
-                        strcasecmp(&szFileName[strlen(szFileName) - 4], ".pal") == 0 ||
-                        strcasecmp(&szFileName[strlen(szFileName) - 4], ".n64") == 0
-                    ) {
-                        gROMLength = file_info.uncompressed_size; /* get size of ROM */
-
-                        /* pad with zeros to fill the displacement */
-                        if (((gROMLength & 0xFFFF)) == 0)
-                            gAllocationLength = gROMLength;
-                        else
-                            gAllocationLength = gROMLength + (0x10000 - (gROMLength & 0xFFFF));
-
-                        if (unzOpenCurrentFile(fp) == UNZ_OK) {
-                            /*~~~~~~~~*/
-                            unsigned long i;
-                            MSG msg;
-                            /*~~~~~~~~*/
-
-                            InitVirtualRomMemory(gAllocationLength);
-                            InitMemoryLookupTables();
-                            InitTLB();
-
-                            Is_Reading_Rom_File = TRUE;;
-                            To_Stop_Reading_Rom_File = FALSE;
-
-                            sprintf(generalmessage, "Loading [%s] ", szFileName);
-                            SetStatusBarText(0, generalmessage);
-
-                            for (i = 0; i < gROMLength && To_Stop_Reading_Rom_File == FALSE; i += 65536) {
-                                if (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
-                                    if (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
-                                    {
-                                        if (GetMessage(&msg, NULL, 0, 0)) {
-                                            DispatchMessage(&msg);
-                                        }
-                                    }
-                                }
-
-                                if (To_Stop_Reading_Rom_File == TRUE) {
-                                    CloseROM();
-                                    To_Stop_Reading_Rom_File = FALSE;
-                                    Is_Reading_Rom_File = FALSE;
-
-                                    unzClose(fp);
-                                    return FALSE;
-                                }
-
-                                /* fread(gMS_ROM_Image+i, sizeof(uint8), 65536, fp); */
-                                if (unzReadCurrentFile(fp, gMS_ROM_Image + i, sizeof(uint8) * 65536) == 65536) {
-                                    sprintf(generalmessage, "Loading [%s] %lu%%", szFileName, i * 100 / gROMLength);
-                                    SetStatusBarText(0, generalmessage);
-                                } else if (unzReadCurrentFile(fp, gMS_ROM_Image + i, 1) == 0) {
-                                    sprintf(generalmessage, "Loading [%s] %lu%%", szFileName, i * 100 / gROMLength);
-                                    SetStatusBarText(0, generalmessage);
-                                } else {
-                                    DisplayError("File could not be read. gROMLength = %08X\n", gROMLength);
-                                    CloseROM();
-                                    unzCloseCurrentFile(fp);
-                                    unzClose(fp);
-                                    Set_Ready_Message();
-                                    Is_Reading_Rom_File = FALSE;
-                                    return FALSE;
-                                }
-                            }
-
-                            ByteSwap(gAllocationLength, gMS_ROM_Image);
-                            memcpy((uint8 *) &rominfo.validation, gMS_ROM_Image, 0x40);
-                            SwapRomHeader((uint8 *) &rominfo.validation);
-
-                            /* Copy boot code to SP_DMEM */
-                            memcpy((uint8 *) &SP_DMEM, gMS_ROM_Image, 0x1000);
-                            memcpy(rominfo.name, gMS_ROM_Image + 0x20, 20);
-                            SwapRomName(rominfo.name);
-                            Set_Ready_Message();
-                            unzCloseCurrentFile(fp);
-                            unzClose(fp);
-                            Is_Reading_Rom_File = FALSE;
-                            return TRUE;
-                        } else {
-                            DisplayError("File could not be read: CRC Error in zip.");
-                            unzClose(fp);
-                            return FALSE;
-                        }
-                    }
-                } else {
-                    DisplayError("File could not unzipped.");
-                    unzClose(fp);
-                    return FALSE;
-                }
-            } while(unzGoToNextFile(fp) == UNZ_OK);
-        }
-
-        unzClose(fp);
-    }
-
-    return FALSE;
 }
 
 /*
@@ -750,9 +547,9 @@ void AnalyzeString(char *temp)
 BOOL FileIO_CreateMempakFile(char *filename)
 {
     /*~~~~~~~~~~~~~~~~~~~~*/
-    FILE    *dest;
-    char    temp[1024 * 32];
-    gzFile  *gztempfile;
+    FILE *dest;
+    char temp[1024 * 32];
+    FILE *gztempfile; /* was gzFile */
     /*~~~~~~~~~~~~~~~~~~~~*/
 
     dest = fopen(filename, "wb");
@@ -764,9 +561,9 @@ BOOL FileIO_CreateMempakFile(char *filename)
         return FALSE;
     }
 
-    gztempfile = gzopen(filename, "rb");
-    gzread(gztempfile, temp, 1024 * 32);
-    gzclose(gztempfile);
+    gztempfile = fopen(filename, "rb");
+    fread(&temp[0], 1024, 32, gztempfile);
+    fclose(gztempfile);
 
     dest = fopen(filename, "wb");
     if (dest) {
@@ -1052,7 +849,7 @@ extern int  StateFileNumber;
  =======================================================================================================================
  =======================================================================================================================
  */
-void FileIO_gzSaveState(void)
+void FileIO_SaveState(void)
 {
     /*~~~~~~~~~~~~~~~*/
     /* Open File to write, file should be named as rom name */
@@ -1062,24 +859,24 @@ void FileIO_gzSaveState(void)
 
     sprintf(ext, "sav%d", StateFileNumber);
     GetFileName(temp, ext);
-    FileIO_gzSaveStateFile(temp);
+    FileIO_SaveStateFile(temp);
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void FileIO_gzReadHardwareState(gzFile *stream)
+void FileIO_ReadHardwareState(FILE *stream)
 {
     memset((uint8 *) (&gHardwareState), 0, sizeof(HardwareState));
-    gzread
-    (
-        stream,
-        (uint8 *) (&gHardwareState),
-        (
-            sizeof(HardwareState) - sizeof(gHardwareState.COP0Con) - sizeof(gHardwareState.RememberFprHi) - sizeof
-                (gHardwareState.code)
-        )
+    fread(
+        (uint8 *)(&gHardwareState),
+        1,
+            sizeof(HardwareState)
+          - sizeof(gHardwareState.COP0Con)
+          - sizeof(gHardwareState.RememberFprHi)
+          - sizeof(gHardwareState.code),
+        stream
     );
 }
 
@@ -1091,7 +888,7 @@ uint32  Get_COUNT_Register(void);
 void DoOthersBeforeSaveState();
 void DoOthersAfterLoadState();
 
-void FileIO_gzWriteHardwareState(gzFile *stream)
+void FileIO_WriteHardwareState(FILE *stream)
 {
     /*~~*/
     int k;
@@ -1105,13 +902,14 @@ void FileIO_gzWriteHardwareState(gzFile *stream)
         }
     }
 
-    gzwrite(
-        stream,
-        (uint8 *) (&gHardwareState),
-        (
-            sizeof(HardwareState) - sizeof(gHardwareState.COP0Con) - sizeof(gHardwareState.RememberFprHi) - sizeof
-                (gHardwareState.code)
-        )
+    fwrite(
+        (uint8 *)(&gHardwareState),
+        1,
+            sizeof(HardwareState)
+          - sizeof(gHardwareState.COP0Con)
+          - sizeof(gHardwareState.RememberFprHi)
+          - sizeof(gHardwareState.code),
+        stream
     );
 }
 
@@ -1119,16 +917,16 @@ void FileIO_gzWriteHardwareState(gzFile *stream)
  =======================================================================================================================
  =======================================================================================================================
  */
-void FileIO_gzSaveStateFile(const char *filename)
+void FileIO_SaveStateFile(const char *filename)
 {
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    gzFile  *stream;
-    DWORD   magic1964 = VERSION_MAGIC_NUMBER;
+    FILE  *stream; /* was gzFile */
+    DWORD magic1964 = VERSION_MAGIC_NUMBER;
     /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-    stream = gzopen(filename, "wb");
+    stream = fopen(filename, "wb");
     if (stream == NULL) {
-        DisplayError("Cannot create/open gzip file to save state");
+        DisplayError("Cannot create/open file to save state");
         return;
     }
 
@@ -1136,47 +934,47 @@ void FileIO_gzSaveStateFile(const char *filename)
 
     DoOthersBeforeSaveState();
 
-    gzwrite(stream, (uint8 *) (&magic1964), sizeof(DWORD));
-    gzwrite(stream, (uint8 *) (&current_rdram_size), sizeof(uint32));
+    fwrite((uint8 *)(&magic1964), sizeof(DWORD), 1, stream);
+    fwrite((uint8 *)(&current_rdram_size), sizeof(uint32), 1, stream);
 
     /* All CPU registers */
-    FileIO_gzWriteHardwareState(stream);
+    FileIO_WriteHardwareState(stream);
 
     /* All IO registers should be saved */
-    gzwrite(stream, (uint8 *) gMS_ramRegs0, 0x30);  /* ramRegs0 */
-    gzwrite(stream, (uint8 *) gMS_ramRegs4, 0x30);  /* ramRegs4 */
-    gzwrite(stream, (uint8 *) gMS_ramRegs8, 0x30);  /* ramRegs8 */
-    gzwrite(stream, (uint8 *) gMS_SP_MEM, MEMORY_SIZE_SPMEM);
-    gzwrite(stream, (uint8 *) gMS_SP_REG_1, MEMORY_SIZE_SPREG_1);
-    gzwrite(stream, (uint8 *) gMS_SP_REG_2, MEMORY_SIZE_SPREG_2);
-    gzwrite(stream, (uint8 *) gMS_DPC, 0x20);       /* DPC */
-    gzwrite(stream, (uint8 *) gMS_DPS, 0x10);       /* DPS */
-    gzwrite(stream, (uint8 *) gMS_MI, 0x10);        /* MI */
-    gzwrite(stream, (uint8 *) gMS_VI, 0x50);        /* VI */
-    gzwrite(stream, (uint8 *) gMS_AI, 0x18);        /* AI */
-    gzwrite(stream, (uint8 *) gMS_PI, 0x4C);        /* PI */
-    gzwrite(stream, (uint8 *) gMS_RI, 0x20);        /* RI */
-    gzwrite(stream, (uint8 *) gMS_SI, 0x1C);        /* SI */
+    fwrite((uint8 *)gMS_ramRegs0, 1, 0x30, stream); /* ramRegs0 */
+    fwrite((uint8 *)gMS_ramRegs4, 1, 0x30, stream); /* ramRegs4 */
+    fwrite((uint8 *)gMS_ramRegs8, 1, 0x30, stream); /* ramRegs8 */
+    fwrite((uint8 *)gMS_SP_MEM, 1, MEMORY_SIZE_SPMEM, stream);
+    fwrite((uint8 *)gMS_SP_REG_1, 1, MEMORY_SIZE_SPREG_1, stream);
+    fwrite((uint8 *)gMS_SP_REG_2, 1, MEMORY_SIZE_SPREG_2, stream);
+    fwrite((uint8 *)gMS_DPC, 1, 0x20, stream);      /* DPC */
+    fwrite((uint8 *)gMS_DPS, 1, 0x10, stream);      /* DPS */
+    fwrite((uint8 *)gMS_MI, 1, 0x10, stream);       /* MI */
+    fwrite((uint8 *)gMS_VI, 1, 0x50, stream);       /* VI */
+    fwrite((uint8 *)gMS_AI, 1, 0x18, stream);       /* AI */
+    fwrite((uint8 *)gMS_PI, 1, 0x4C, stream);       /* PI */
+    fwrite((uint8 *)gMS_RI, 1, 0x20, stream);       /* RI */
+    fwrite((uint8 *)gMS_SI, 1, 0x1C, stream);       /* SI */
 
-    gzwrite(stream, (uint8 *) gMS_RDRAM, current_rdram_size);   /* RDRAM */
-    gzwrite(stream, (uint8 *) gMS_GIO_REG, 0x804);              /* GIO_REG */
-    gzwrite(stream, (uint8 *) gMS_PIF, 0x800);                  /* PIF */
+    fwrite((uint8 *)gMS_RDRAM, 1, current_rdram_size, stream);  /* RDRAM */
+    fwrite((uint8 *)gMS_GIO_REG, 1, 0x804, stream);             /* GIO_REG */
+    fwrite((uint8 *)gMS_PIF, 1, 0x800, stream);                 /* PIF */
 
-    gzwrite(stream, (uint8 *) gMS_TLB, sizeof(tlb_struct) * MAXTLB);
+    fwrite((uint8 *)gMS_TLB, sizeof(tlb_struct), MAXTLB, stream);
 
-    gzwrite(stream, (uint8 *) gMS_C2A1, MEMORY_SIZE_C2A1);      /* C2A1 */
-    gzwrite(stream, (uint8 *) gMS_C1A1, MEMORY_SIZE_C1A1);      /* C1A1 */
-    gzwrite(stream, (uint8 *) gMS_C2A2, MEMORY_SIZE_C2A2);      /* C2A2 */
-    gzwrite(stream, (uint8 *) gMS_C1A3, MEMORY_SIZE_C1A3);      /* C1A3 */
+    fwrite((uint8 *)gMS_C2A1, 1, MEMORY_SIZE_C2A1, stream);     /* C2A1 */
+    fwrite((uint8 *)gMS_C1A1, 1, MEMORY_SIZE_C1A1, stream);     /* C1A1 */
+    fwrite((uint8 *)gMS_C2A2, 1, MEMORY_SIZE_C2A2, stream);     /* C2A2 */
+    fwrite((uint8 *)gMS_C1A3, 1, MEMORY_SIZE_C1A3, stream);     /* C1A3 */
 
-    gzclose(stream);
+    fclose(stream);
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void FileIO_gzLoadState(void)
+void FileIO_LoadState(void)
 {
     /*~~~~~~~~~~~~~~~*/
     /* Open File to write, file should be named as rom name */
@@ -1187,74 +985,74 @@ void FileIO_gzLoadState(void)
     sprintf(ext, "sav%d", StateFileNumber);
 
     GetFileName(temp, ext);
-    FileIO_gzLoadStateFile(temp);
+    FileIO_LoadStateFile(temp);
 }
 
 /*
  =======================================================================================================================
  =======================================================================================================================
  */
-void FileIO_gzLoadStateFile(const char *filename)
+void FileIO_LoadStateFile(const char *filename)
 {
     /*~~~~~~~~~~~~~~~*/
-    gzFile  *stream;
+    FILE    *stream;
     DWORD   magic1964;
     uint32  rdram_size;
     /*~~~~~~~~~~~~~~~*/
 
-    stream = gzopen(filename, "rb");
+    stream = fopen(filename, "rb");
     if (stream == NULL) {
-        DisplayError("Cannot open gzip file to load state");
+        DisplayError("Cannot open file to load state");
         return;
     }
 
     TRACE1("Load state from file: %s", filename);
 
-    gzread(stream, (uint8 *) (&magic1964), sizeof(DWORD));
+    fread((uint8 *)(&magic1964), 1, sizeof(DWORD), stream);
     if (magic1964 != VERSION_MAGIC_NUMBER) {
         DisplayError("This state file is at different version or it is not a 1964 state save format, it may not work");
     }
 
-    gzread(stream, (uint8 *) (&rdram_size), sizeof(uint32));
+    fread((uint8 *)(&rdram_size), 1, sizeof(uint32), stream);
     ResetRdramSize(rdram_size == 0x400000 ? RDRAMSIZE_4MB : RDRAMSIZE_8MB);
 
-    FileIO_gzReadHardwareState(stream);
+    FileIO_ReadHardwareState(stream);
 
     /* All IO registers should be saved */
-    gzread(stream, (uint8 *) gMS_ramRegs0, 0x30);                   /* ramRegs0 */
-    gzread(stream, (uint8 *) gMS_ramRegs4, 0x30);                   /* ramRegs4 */
-    gzread(stream, (uint8 *) gMS_ramRegs8, 0x30);                   /* ramRegs8 */
-    gzread(stream, (uint8 *) gMS_SP_MEM, MEMORY_SIZE_SPMEM);        /* SPMEM and SP_REG, size?? */
-    gzread(stream, (uint8 *) gMS_SP_REG_1, MEMORY_SIZE_SPREG_1);    /* SPMEM and SP_REG, size?? */
-    gzread(stream, (uint8 *) gMS_SP_REG_2, MEMORY_SIZE_SPREG_2);    /* SPMEM and SP_REG, size?? */
-    gzread(stream, (uint8 *) gMS_DPC, 0x20);                        /* DPC */
-    gzread(stream, (uint8 *) gMS_DPS, 0x10);                        /* DPS */
-    gzread(stream, (uint8 *) gMS_MI, 0x10);                 /* MI */
-    gzread(stream, (uint8 *) gMS_VI, 0x50);                 /* VI */
-    gzread(stream, (uint8 *) gMS_AI, 0x18);                 /* AI */
-    gzread(stream, (uint8 *) gMS_PI, 0x4C);                 /* PI */
-    gzread(stream, (uint8 *) gMS_RI, 0x20);                 /* RI */
-    gzread(stream, (uint8 *) gMS_SI, 0x1C);                 /* SI */
+    fread((uint8 *)gMS_ramRegs0, 1, 0x30, stream);                  /* ramRegs0 */
+    fread((uint8 *)gMS_ramRegs4, 1, 0x30, stream);                  /* ramRegs4 */
+    fread((uint8 *)gMS_ramRegs8, 1, 0x30, stream);                  /* ramRegs8 */
+    fread((uint8 *)gMS_SP_MEM, 1, MEMORY_SIZE_SPMEM, stream);       /* SPMEM and SP_REG, size?? */
+    fread((uint8 *)gMS_SP_REG_1, 1, MEMORY_SIZE_SPREG_1, stream);   /* SPMEM and SP_REG, size?? */
+    fread((uint8 *)gMS_SP_REG_2, 1, MEMORY_SIZE_SPREG_2, stream);   /* SPMEM and SP_REG, size?? */
+    fread((uint8 *)gMS_DPC, 1, 0x20, stream);                       /* DPC */
+    fread((uint8 *)gMS_DPS, 1, 0x10, stream);                       /* DPS */
+    fread((uint8 *)gMS_MI, 1, 0x10, stream);                /* MI */
+    fread((uint8 *)gMS_VI, 1, 0x50, stream);                /* VI */
+    fread((uint8 *)gMS_AI, 1, 0x18, stream);                /* AI */
+    fread((uint8 *)gMS_PI, 1, 0x4C, stream);                /* PI */
+    fread((uint8 *)gMS_RI, 1, 0x20, stream);                /* RI */
+    fread((uint8 *)gMS_SI, 1, 0x1C, stream);                /* SI */
 
     if (currentromoptions.Code_Check == CODE_CHECK_PROTECT_MEMORY) {
         UnprotectAllBlocks();
         memset(RDRAM_Copy, 0xEE, 0x00800000);
     }
 
-    gzread(stream, (uint8 *) gMS_RDRAM, rdram_size);        /* RDRAM */
-    gzread(stream, (uint8 *) gMS_GIO_REG, 0x804);           /* GIO_REG */
-    gzread(stream, (uint8 *) gMS_PIF, 0x800);               /* PIF */
+    fread((uint8 *)gMS_RDRAM, 1, rdram_size, stream);       /* RDRAM */
+    fread((uint8 *)gMS_GIO_REG, 1, 0x804, stream);          /* GIO_REG */
+    fread((uint8 *)gMS_PIF, 1, 0x800, stream);              /* PIF */
 
     InitTLB();
-    gzread(stream, (uint8 *) gMS_TLB, sizeof(tlb_struct) * MAXTLB);
+    fread((uint8 *)gMS_TLB, sizeof(tlb_struct), MAXTLB, stream);
     Build_Whole_Direct_TLB_Lookup_Table();
 
-    gzread(stream, (uint8 *) gMS_C2A1, MEMORY_SIZE_C2A1);   /* C2A1 */
-    gzread(stream, (uint8 *) gMS_C1A1, MEMORY_SIZE_C1A1);   /* C1A1 */
-    gzread(stream, (uint8 *) gMS_C2A2, MEMORY_SIZE_C2A2);   /* C2A2 */
-    gzread(stream, (uint8 *) gMS_C1A3, MEMORY_SIZE_C1A3);   /* C1A3 */
+    fread((uint8 *)gMS_C2A1, 1, MEMORY_SIZE_C2A1, stream);  /* C2A1 */
+    fread((uint8 *)gMS_C1A1, 1, MEMORY_SIZE_C1A1, stream);  /* C1A1 */
+    fread((uint8 *)gMS_C2A2, 1, MEMORY_SIZE_C2A2, stream);  /* C2A2 */
+    fread((uint8 *)gMS_C1A3, 1, MEMORY_SIZE_C1A3, stream);  /* C1A3 */
 
-    gzclose(stream);
+    fclose(stream);
 
     if (debug_opcode != 0) {
         Debugger_Copy_Memory(&gMemoryState_Interpreter_Compare, &gMemoryState);

@@ -22,6 +22,8 @@
  */
 #ifndef _WINGUI_H__1964_
 #define _WINGUI_H__1964_
+
+#include <windows.h>
 #include "resource.h"
 
 /* Functions in the wingui.c */

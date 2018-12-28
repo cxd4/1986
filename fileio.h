@@ -28,8 +28,6 @@
 /* function declarations */
 BOOL        ReadRomData(char *RomPath);
 long        ReadRomHeader(char *RomPath, INI_ENTRY *ini_entry);
-long        ReadZippedRomHeader(char *RomPath, INI_ENTRY *ini_entry);
-BOOL        ReadZippedRomData(char *RomPath);
 BOOL        ByteSwap(uint32 Size, uint8 *Image);
 int         LoadGNUDistConditions(char *ConditionsBuf);
 void        FileIO_WriteMemPak(int pak_no);
@@ -40,10 +38,8 @@ void        FileIO_WriteFLASHRAM(int, int, int);
 void        FileIO_ReadFLASHRAM(int, int, int);
 void        FileIO_SaveState(void);
 void        FileIO_LoadState(void);
-void        FileIO_gzSaveState(void);
-void        FileIO_gzLoadState(void);
-void        FileIO_gzSaveStateFile(const char *filename);
-void        FileIO_gzLoadStateFile(const char *filename);
+void        FileIO_SaveStateFile(const char *filename);
+void        FileIO_LoadStateFile(const char *filename);
 void        FileIO_ImportPJ64State(const char *filename);
 void        FileIO_ExportPJ64State(const char *filename);
 BOOL        FileIO_Load1964Ini(void);

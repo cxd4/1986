@@ -1854,14 +1854,14 @@ void SaveState(void)
                 sprintf(generalmessage, "%s - Saving State %d", gui.szWindowTitle, StateFileNumber);
                 SetStatusBarText(0, generalmessage);
 
-                FileIO_gzSaveState();
+                FileIO_SaveState();
                 ResumeEmulator(DO_NOTHING_AFTER_PAUSE);
             }
         } else {
             sprintf(generalmessage, "%s - Saving State %d", gui.szWindowTitle, StateFileNumber);
             SetStatusBarText(0, generalmessage);
 
-            FileIO_gzSaveState();
+            FileIO_SaveState();
         }
     }
 }
@@ -1881,21 +1881,20 @@ void LoadState(void)
             if (PauseEmulator()) {
                 sprintf(generalmessage, "%s - Loading State %d", gui.szWindowTitle, StateFileNumber);
                 SetStatusBarText(0, generalmessage);
-                FileIO_gzLoadState();
+                FileIO_LoadState();
                 Init_Count_Down_Counters();
                 ResumeEmulator(REFRESH_DYNA_AFTER_PAUSE);
             }
         } else {
             sprintf(generalmessage, "%s - Loading State %d", gui.szWindowTitle, StateFileNumber);
             SetStatusBarText(0, generalmessage);
-            FileIO_gzLoadState();
+            FileIO_LoadState();
             Init_Count_Down_Counters();
         }
     }
 }
 
-unsigned int    statesavemenulist[10] =
-{
+unsigned int statesavemenulist[10] = {
     ID_SAVE_STATE_0,
     ID_SAVE_STATE_1,
     ID_SAVE_STATE_2,
@@ -1907,8 +1906,7 @@ unsigned int    statesavemenulist[10] =
     ID_SAVE_STATE_8,
     ID_SAVE_STATE_9
 };
-unsigned int    stateloadmenulist[10] =
-{
+unsigned int stateloadmenulist[10] = {
     ID_LOAD_STATE_0,
     ID_LOAD_STATE_1,
     ID_LOAD_STATE_2,
@@ -2067,7 +2065,7 @@ void SaveStateByDialog(int format)
 
         if (GetSaveFileName((LPOPENFILENAME) & ofn)) {
             if (format == SAVE_STATE_1964_FORMAT)
-                FileIO_gzSaveStateFile(szFileName);
+                FileIO_SaveStateFile(szFileName);
             else
                 FileIO_ExportPJ64State(szFileName);
         }
@@ -2121,7 +2119,7 @@ void LoadStateByDialog(int format)
 
         if (GetOpenFileName((LPOPENFILENAME) & ofn)) {
             if (format == SAVE_STATE_1964_FORMAT)
-                FileIO_gzLoadStateFile(szFileName);
+                FileIO_LoadStateFile(szFileName);
             else
                 FileIO_ImportPJ64State(szFileName);
         }

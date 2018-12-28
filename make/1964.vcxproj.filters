@@ -189,15 +189,6 @@
     <ClInclude Include="..\timer.h">
       <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="..\zlib\unzip.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="..\zlib\zconf.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="..\zlib\zlib.h">
-      <Filter>core</Filter>
-    </ClInclude>
     <ClInclude Include="..\cheatcode.h">
       <Filter>win32</Filter>
     </ClInclude>
@@ -305,8 +296,5 @@
     <ResourceCompile Include="..\win32\wingui.rc">
       <Filter>win32\Resource Files</Filter>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="..\zlib\zlib.lib" />
   </ItemGroup>
 </Project>
