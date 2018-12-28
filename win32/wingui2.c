@@ -131,13 +131,21 @@ void CountryCodeToCountryName_and_TVSystem(int countrycode, char *countryname, i
     case 0x38:
     case 0x70:
         *tvsystem = TV_SYSTEM_PAL;
-        sprintf(countryname, "Europe", countrycode);
+        strcpy(countryname, "Europe");
         break;
 
     /* ??? */
     default:
         *tvsystem = TV_SYSTEM_PAL;
-        sprintf(countryname, "PAL", countrycode);
+        if (countrycode < 0 || countrycode > 255) {
+            strcpy(countryname, "???");
+            break;
+        }
+        sprintf(
+            countryname,
+            "PAL (%02X)",
+            (unsigned char)countrycode
+        );
         break;
     }
 }

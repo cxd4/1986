@@ -328,7 +328,6 @@ void CompareStates(uint32 Instruction)
                 DebugPrintInstr(Instruction),
                 gHardwareState.pc,
                 gHardwareState_Interpreter_Compare.LLbit,
-                reg,
                 gHardwareState.LLbit
             );
             strcat(op_Str, generalmessage);
@@ -692,9 +691,7 @@ void COMPARE_SomeErrorMessage(uint32 pc, uint32 code)
         COP1Con[31] = %08X\n\n",
             DebugPrintInstr(Instruction),
             pc,
-            bad_mips_reg,
             gHardwareState_Interpreter_Compare.LLbit,
-            bad_mips_reg,
             gHardwareState.LLbit
         );
     }
@@ -711,9 +708,7 @@ void COMPARE_SomeErrorMessage(uint32 pc, uint32 code)
         COP1Con[31] = %08X\n\n",
             DebugPrintInstr(Instruction),
             pc,
-            bad_mips_reg,
             gHardwareState_Interpreter_Compare.COP1Con[31],
-            bad_mips_reg,
             gHardwareState.COP1Con[31]
         );
     } else if (
