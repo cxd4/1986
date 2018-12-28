@@ -202,7 +202,7 @@ void ReadConfiguration(void)
      */
     defaultoptions.Eeprom_size = EEPROMSIZE_4KB;
     defaultoptions.RDRAM_Size = RDRAMSIZE_4MB;
-    defaultoptions.Emulator = DYNACOMPILER;
+    defaultoptions.Emulator = INTERPRETER;
     defaultoptions.Save_Type = ANYUSED_SAVETYPE;
     defaultoptions.Code_Check = CODE_CHECK_MEMORY_QWORD;
     defaultoptions.Max_FPS = MAXFPS_AUTO_SYNC;
@@ -680,7 +680,7 @@ void InitAll1964Options(void)
 
     defaultoptions.Eeprom_size = EEPROMSIZE_4KB;
     defaultoptions.RDRAM_Size = RDRAMSIZE_4MB;
-    defaultoptions.Emulator = DYNACOMPILER;
+    defaultoptions.Emulator = INTERPRETER;
     defaultoptions.Save_Type = ANYUSED_SAVETYPE;
 
     defaultoptions.Code_Check = CODE_CHECK_MEMORY_QWORD;

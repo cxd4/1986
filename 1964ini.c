@@ -86,7 +86,7 @@ void SetDefaultOptions(void)
     defaultoptions.countrycode = 0;
     defaultoptions.crc1 = 0;
     defaultoptions.crc2 = 0;
-    defaultoptions.Emulator = DYNACOMPILER;
+    defaultoptions.Emulator = INTERPRETER;
     defaultoptions.Game_Name[0] = '\0';
     defaultoptions.Max_FPS = MAXFPS_AUTO_SYNC;
     defaultoptions.RDRAM_Size = RDRAMSIZE_4MB;
