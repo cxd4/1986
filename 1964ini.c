@@ -246,7 +246,7 @@ int AddIniEntry(const INI_ENTRY *pnewentry)
             if (strlen(ini_entries[i]->Game_Name) == 0 && strlen(pnewentry->Game_Name) == 0) {
                 compname = 0;
             } else {
-                compname = stricmp(ini_entries[i]->Game_Name, pnewentry->Game_Name);
+                compname = strcasecmp(ini_entries[i]->Game_Name, pnewentry->Game_Name);
             }
 
             if (pnewentry->crc1 == ini_entries[i]->crc1 && pnewentry->crc2 == ini_entries[i]->crc2) {

@@ -386,8 +386,8 @@ void N64_Boot(void)
     
     NeedToApplyRomWriteHack = FALSE;
     if (
-        strnicmp(currentromoptions.Game_Name, "A Bug's Life", 12) == 0 ||
-        strnicmp(currentromoptions.Game_Name, "Toy Story 2", 11) == 0
+        strncasecmp(currentromoptions.Game_Name, "A Bug's Life", 12) == 0 ||
+        strncasecmp(currentromoptions.Game_Name, "Toy Story 2", 11) == 0
     ) {
         NeedToApplyRomWriteHack = TRUE;
         TRACE0("Using Rom Write Hack");

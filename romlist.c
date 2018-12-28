@@ -139,17 +139,17 @@ BOOL RomListReadDirectory(const char *spath)
          * drive, dir, filename, ext);
          */
         if (
-            stricmp(ext, ".rom") == 0 ||
-            stricmp(ext, ".v64") == 0 ||
-            stricmp(ext, ".z64") == 0 ||
-            stricmp(ext, ".usa") == 0 ||
-            stricmp(ext, ".n64") == 0 ||
-            stricmp(ext, ".bin") == 0 ||
-            stricmp(ext, ".zip") == 0 ||
-            stricmp(ext, ".j64") == 0 ||
-            stricmp(ext, ".pal") == 0
+            strcasecmp(ext, ".rom") == 0 ||
+            strcasecmp(ext, ".v64") == 0 ||
+            strcasecmp(ext, ".z64") == 0 ||
+            strcasecmp(ext, ".usa") == 0 ||
+            strcasecmp(ext, ".n64") == 0 ||
+            strcasecmp(ext, ".bin") == 0 ||
+            strcasecmp(ext, ".zip") == 0 ||
+            strcasecmp(ext, ".j64") == 0 ||
+            strcasecmp(ext, ".pal") == 0
         ) {
-            if (strcmp(ext, ".zip") == 0) {
+            if (strcasecmp(ext, ".zip") == 0) {
                 /* Open and read this zip file */
                 if ((filesize = ReadZippedRomHeader(romfilename, &entry)) == 0) {
                     /* This is not a ROM zip file, skipped it */
@@ -271,7 +271,7 @@ int RomListAddEntry(INI_ENTRY *newentry, char *romfilename, long filesize)
             /*~~*/
 
             for (i = 0; i < romlist_count; i++) {
-                if (stricmp(romlist[i]->pinientry->Game_Name, pnewentry->pinientry->Game_Name) >= 0)
+                if (strcasecmp(romlist[i]->pinientry->Game_Name, pnewentry->pinientry->Game_Name) >= 0)
                     break;
             }
 
@@ -746,10 +746,11 @@ void RomListSelectLoadedRomEntry(void)
     ReadRomHeaderInMemory(&entry);
 
     for (i = 0; i < romlist_count; i++) {
-        if (stricmp(romlist[i]->pinientry->Game_Name, entry.Game_Name) == 0 &&
+        if (strcasecmp(romlist[i]->pinientry->Game_Name, entry.Game_Name) == 0 &&
             romlist[i]->pinientry->crc1 == entry.crc1 &&
             romlist[i]->pinientry->crc2 == entry.crc2 &&
-            romlist[i]->pinientry->countrycode == entry.countrycode) {
+            romlist[i]->pinientry->countrycode == entry.countrycode
+        ) {
             break;
         }
     }
@@ -840,20 +841,20 @@ BOOL WINAPI InitListViewItems(HWND hwndLV)
             __try {
             ListView_GetColumn(hwndLV, i, &colinfo);
             {
-                if (stricmp(colinfo.pszText, romListColumns[1].text) == 0) { //Country name
+                if (strcasecmp(colinfo.pszText, romListColumns[1].text) == 0) { //Country name
                     ListView_SetItemText(hwndLV, index, i, countryname);
-                } else if (stricmp(colinfo.pszText, romListColumns[2].text) == 0) { //Rom Size
+                } else if (strcasecmp(colinfo.pszText, romListColumns[2].text) == 0) { //Rom Size
                     sprintf(size, "%3dM", romlist[index]->size * 8 / 0x100000);
                     ListView_SetItemText(hwndLV, index, i, size);
-                } else if (stricmp(colinfo.pszText, romListColumns[3].text) == 0) { //Comments
+                } else if (strcasecmp(colinfo.pszText, romListColumns[3].text) == 0) { //Comments
                     ListView_SetItemText(hwndLV, index, i, romlist[index]->pinientry->Comments);
-                } else if (stricmp(colinfo.pszText, romListColumns[4].text) == 0) { //Game Save Type
+                } else if (strcasecmp(colinfo.pszText, romListColumns[4].text) == 0) { //Game Save Type
                     ListView_SetItemText(hwndLV, index, i, save_type_names[romlist[index]->pinientry->Save_Type]);
-                } else if (stricmp(colinfo.pszText, romListColumns[5].text) == 0) { //CIC_Chip
-                } else if (stricmp(colinfo.pszText, romListColumns[6].text) == 0) { //CRC1
+                } else if (strcasecmp(colinfo.pszText, romListColumns[5].text) == 0) { //CIC_Chip
+                } else if (strcasecmp(colinfo.pszText, romListColumns[6].text) == 0) { //CRC1
                     sprintf(size, "%08X", romlist[index]->pinientry->crc1);
                     ListView_SetItemText(hwndLV, index, i, size);
-                } else if (stricmp(colinfo.pszText, romListColumns[7].text) == 0) { //CRC2
+                } else if (strcasecmp(colinfo.pszText, romListColumns[7].text) == 0) { //CRC2
                     sprintf(size, "%08X", romlist[index]->pinientry->crc2);
                     ListView_SetItemText(hwndLV, index, i, size);
                 }
@@ -1313,16 +1314,16 @@ void NewRomList_Sort()
             needswap = FALSE;
             switch (romlist_sort_method % 4) {
             case ROMLIST_GAMENAME:
-                if (stricmp(gamename1, gamename2) >= 0)
+                if (strcasecmp(gamename1, gamename2) >= 0)
                     needswap = TRUE;
                 break;
             case ROMLIST_COUNTRY:
                 CountryCodeToCountryName_and_TVSystem(romlist[j]->pinientry->countrycode, cname2, &tv2);
-                retval = stricmp(cname1, cname2);
+                retval = strcasecmp(cname1, cname2);
                 if (retval > 0) {
                     needswap = TRUE;
                 } else if (retval == 0) {
-                    if (stricmp(gamename1, gamename2) >= 0) {
+                    if (strcasecmp(gamename1, gamename2) >= 0) {
                         needswap = TRUE;
                     }
                 }
@@ -1331,18 +1332,21 @@ void NewRomList_Sort()
                 if (romlist[i]->size > romlist[j]->size) {
                     needswap = TRUE;
                 } else if (romlist[i]->size == romlist[j]->size) {
-                    if (stricmp(gamename1, gamename2) >= 0) {
+                    if (strcasecmp(gamename1, gamename2) >= 0) {
                         needswap = TRUE;
                     }
                 }
                 break;
             case ROMLIST_COMMENT:
-                retval = stricmp(romlist[i]->pinientry->Comments, romlist[j]->pinientry->Comments);
+                retval = strcasecmp(
+                    romlist[i]->pinientry->Comments,
+                    romlist[j]->pinientry->Comments
+                );
 
                 if ((retval > 0 && romlist_sort_method < 4 ) || (retval < 0 && romlist_sort_method > 4)) {
                     needswap = TRUE;
                 } else {
-                    if (stricmp(gamename1, gamename2) >= 0) {
+                    if (strcasecmp(gamename1, gamename2) >= 0) {
                         ;//needswap = TRUE;
                     }
                 }
@@ -1714,7 +1718,7 @@ ColumnID GetColumnIDByName(char *name)
 {
     int i;
     for (i=0; i<numberOfRomListColumns; i++) {
-        if (stricmp(name, romListColumns[i].text) == 0) {
+        if (strcasecmp(name, romListColumns[i].text) == 0) {
             return i;
         }
     }

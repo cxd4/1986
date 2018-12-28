@@ -298,14 +298,14 @@ long ReadZippedRomHeader(char *rompath, INI_ENTRY *ini_entry)
 
                 strcpy(ext, szFileName + strlen(szFileName) - 4);
                 if (
-                    stricmp(ext, ".bin") == 0 ||
-                    stricmp(ext, ".v64") == 0 ||
-                    stricmp(ext, ".rom") == 0 ||
-                    stricmp(ext, ".usa") == 0 ||
-                    stricmp(ext, ".j64") == 0 ||
-                    stricmp(ext, ".pal") == 0 ||
-                    stricmp(ext, ".z64") == 0 ||
-                    stricmp(ext, ".n64") == 0
+                    strcasecmp(ext, ".bin") == 0 ||
+                    strcasecmp(ext, ".v64") == 0 ||
+                    strcasecmp(ext, ".rom") == 0 ||
+                    strcasecmp(ext, ".usa") == 0 ||
+                    strcasecmp(ext, ".j64") == 0 ||
+                    strcasecmp(ext, ".pal") == 0 ||
+                    strcasecmp(ext, ".z64") == 0 ||
+                    strcasecmp(ext, ".n64") == 0
                 ) {
                     if (unzOpenCurrentFile(fp) == UNZ_OK) {
                         if (unzReadCurrentFile(fp, buffer, 0x40) == 0x40) {
@@ -347,7 +347,7 @@ BOOL ReadRomData(char *rompath)
     unsigned long   gROMLength; /* size in bytes of the ROM */
     /*~~~~~~~~~~~~~~~~~~~~~~~*/
 
-    if (stricmp(&rompath[strlen(rompath) - 4], ".zip") == 0) {
+    if (strcasecmp(&rompath[strlen(rompath) - 4], ".zip") == 0) {
         return ReadZippedRomData(rompath);
     }
 
@@ -466,14 +466,14 @@ BOOL ReadZippedRomData(char *rompath)
 
                 if (unzGetCurrentFileInfo(fp, &file_info, szFileName, 256, NULL, 0, NULL, 0) == UNZ_OK) {
                     if (
-                        stricmp(&szFileName[strlen(szFileName) - 4], ".bin") == 0 ||
-                        stricmp(&szFileName[strlen(szFileName) - 4], ".v64") == 0 ||
-                        stricmp(&szFileName[strlen(szFileName) - 4], ".rom") == 0 ||
-                        stricmp(&szFileName[strlen(szFileName) - 4], ".usa") == 0 ||
-                        stricmp(&szFileName[strlen(szFileName) - 4], ".z64") == 0 ||
-                        stricmp(&szFileName[strlen(szFileName) - 4], ".j64") == 0 ||
-                        stricmp(&szFileName[strlen(szFileName) - 4], ".pal") == 0 ||
-                        stricmp(&szFileName[strlen(szFileName) - 4], ".n64") == 0
+                        strcasecmp(&szFileName[strlen(szFileName) - 4], ".bin") == 0 ||
+                        strcasecmp(&szFileName[strlen(szFileName) - 4], ".v64") == 0 ||
+                        strcasecmp(&szFileName[strlen(szFileName) - 4], ".rom") == 0 ||
+                        strcasecmp(&szFileName[strlen(szFileName) - 4], ".usa") == 0 ||
+                        strcasecmp(&szFileName[strlen(szFileName) - 4], ".z64") == 0 ||
+                        strcasecmp(&szFileName[strlen(szFileName) - 4], ".j64") == 0 ||
+                        strcasecmp(&szFileName[strlen(szFileName) - 4], ".pal") == 0 ||
+                        strcasecmp(&szFileName[strlen(szFileName) - 4], ".n64") == 0
                     ) {
                         gROMLength = file_info.uncompressed_size; /* get size of ROM */
 
