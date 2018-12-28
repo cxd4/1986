@@ -136,7 +136,7 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>ddraw.lib;zlib\zlib.lib;comctl32.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ddraw.lib;..\zlib\zlib.lib;comctl32.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>./Release/1964.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ProgramDatabaseFile>.\obj/Release/1964.pdb</ProgramDatabaseFile>
@@ -182,7 +182,7 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>dsound.lib;zlib\zlib.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dsound.lib;..\zlib\zlib.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>./Release/1964-opcodedebugger.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ProgramDatabaseFile>.\obj/Release_Opcode_Debugger/1964-opcodedebugger.pdb</ProgramDatabaseFile>
@@ -221,7 +221,7 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>dsound.lib;dxguid.lib;dinput.lib;odbc32.lib;odbccp32.lib;comctl32.lib;opengl32.lib;zlib/zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dsound.lib;dxguid.lib;dinput.lib;odbc32.lib;odbccp32.lib;comctl32.lib;opengl32.lib;..\zlib/zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>./Release/1964dbug.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -267,7 +267,7 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>zlib\zlib.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\zlib\zlib.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>./Release/1964.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ProgramDatabaseFile>.\obj/Release/1964.pdb</ProgramDatabaseFile>
@@ -316,7 +316,7 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>ddraw.lib;zlib\zlib.lib;comctl32.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ddraw.lib;..\zlib\zlib.lib;comctl32.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>./Release/1964_Net_Debug.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
