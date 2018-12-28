@@ -201,7 +201,7 @@ void ReadConfiguration(void)
      * I think it is better to call the function if we need this here.
      */
     defaultoptions.Eeprom_size = EEPROMSIZE_4KB;
-    defaultoptions.RDRAM_Size = RDRAMSIZE_4MB;
+    defaultoptions.RDRAM_Size = RDRAMSIZE_8MB;
     defaultoptions.Emulator = INTERPRETER;
     defaultoptions.Save_Type = ANYUSED_SAVETYPE;
     defaultoptions.Code_Check = CODE_CHECK_MEMORY_QWORD;
@@ -679,7 +679,7 @@ void InitAll1964Options(void)
     guioptions.use_last_rom_directory = TRUE;
 
     defaultoptions.Eeprom_size = EEPROMSIZE_4KB;
-    defaultoptions.RDRAM_Size = RDRAMSIZE_4MB;
+    defaultoptions.RDRAM_Size = RDRAMSIZE_8MB;
     defaultoptions.Emulator = INTERPRETER;
     defaultoptions.Save_Type = ANYUSED_SAVETYPE;
 

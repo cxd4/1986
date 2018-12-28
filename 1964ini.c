@@ -89,7 +89,7 @@ void SetDefaultOptions(void)
     defaultoptions.Emulator = INTERPRETER;
     defaultoptions.Game_Name[0] = '\0';
     defaultoptions.Max_FPS = MAXFPS_AUTO_SYNC;
-    defaultoptions.RDRAM_Size = RDRAMSIZE_4MB;
+    defaultoptions.RDRAM_Size = RDRAMSIZE_8MB;
     defaultoptions.Save_Type = ANYUSED_SAVETYPE;
     defaultoptions.Use_TLB = USETLB_YES;
     defaultoptions.Eeprom_size = EEPROMSIZE_4KB;
