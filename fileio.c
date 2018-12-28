@@ -376,8 +376,8 @@ BOOL ReadRomData(char *rompath)
     fseek(fp, 0, SEEK_SET);     /* set pointer to beginning of file */
     if (fp != NULL) {
         /*~~~~~~~~*/
-        uint64  i;
-        MSG     msg;
+        unsigned long i;
+        MSG msg;
         /*~~~~~~~~*/
 
         InitVirtualRomMemory(gAllocationLength);
@@ -414,7 +414,7 @@ BOOL ReadRomData(char *rompath)
 
                 _splitpath(rompath, drive, dir, fname, ext);
                 strcat(fname, ext);
-                sprintf(generalmessage, "Loading [%s] %d%%", fname, i * 100 / gROMLength);
+                sprintf(generalmessage, "Loading [%s] %lu%%", fname, i * 100 / gROMLength);
             }
 
             SetStatusBarText(0, generalmessage);
@@ -485,8 +485,8 @@ BOOL ReadZippedRomData(char *rompath)
 
                         if (unzOpenCurrentFile(fp) == UNZ_OK) {
                             /*~~~~~~~~*/
-                            uint64  i;
-                            MSG     msg;
+                            unsigned long i;
+                            MSG msg;
                             /*~~~~~~~~*/
 
                             InitVirtualRomMemory(gAllocationLength);
@@ -520,10 +520,10 @@ BOOL ReadZippedRomData(char *rompath)
 
                                 /* fread(gMS_ROM_Image+i, sizeof(uint8), 65536, fp); */
                                 if (unzReadCurrentFile(fp, gMS_ROM_Image + i, sizeof(uint8) * 65536) == 65536) {
-                                    sprintf(generalmessage, "Loading [%s] %d%%", szFileName, i * 100 / gROMLength);
+                                    sprintf(generalmessage, "Loading [%s] %lu%%", szFileName, i * 100 / gROMLength);
                                     SetStatusBarText(0, generalmessage);
                                 } else if (unzReadCurrentFile(fp, gMS_ROM_Image + i, 1) == 0) {
-                                    sprintf(generalmessage, "Loading [%s] %d%%", szFileName, i * 100 / gROMLength);
+                                    sprintf(generalmessage, "Loading [%s] %lu%%", szFileName, i * 100 / gROMLength);
                                     SetStatusBarText(0, generalmessage);
                                 } else {
                                     DisplayError("File could not be read. gROMLength = %08X\n", gROMLength);

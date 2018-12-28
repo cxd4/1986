@@ -399,7 +399,11 @@ void UpdateCIC(void)
         break;
     }
 
-    TRACE1("Rom CIC=%02X", rominfo.CIC);
+    TRACE2(
+        "Rom CIC=%08lX%08lX",
+        (unsigned long)((rominfo.CIC >> 32) & 0xFFFFFFFFul),
+        (unsigned long)((rominfo.CIC >>  0) & 0xFFFFFFFFul)
+    );
 
     rominfo.countrycode = HeaderDllPass[0x3D];
 

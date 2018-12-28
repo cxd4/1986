@@ -126,7 +126,7 @@ void        DebugPrintPC(uint32 thePC);
 #define DBGPRINT_RS_OFF(_op_name) \
     sprintf( \
         op_str, \
-        "%08X: %s%s[%08X],%04Xh", \
+        "%08X: %s%s[%08llX],%04Xh", \
         gHWS_pc, \
         _op_name, \
         r4300i_RegNames[RS_BASE_FMT], \
@@ -137,51 +137,51 @@ void        DebugPrintPC(uint32 thePC);
 #define DBGPRINT_RS_IMM(_op_name) \
     sprintf( \
         op_str, \
-        "%08X: %s%s[%08X],%04Xh", \
+        "%08X: %s%s[%08llX],%04Xh", \
         gHWS_pc, \
-        (uint32) _op_name, \
+         _op_name, \
         r4300i_RegNames[RS_BASE_FMT], \
-        (uint32) gHWS_GPR[RS_BASE_FMT], \
+        gHWS_GPR[RS_BASE_FMT], \
         OFFSET_IMMEDIATE \
     );
 
 #define DBGPRINT_RS_RD(_op_name) \
     sprintf( \
         op_str, \
-        "%08X: %s%s[%08X],%s[%08X]", \
+        "%08X: %s%s[%08llX],%s[%08llX]", \
         gHWS_pc, \
-        (uint32) _op_name, \
+        _op_name, \
         r4300i_RegNames[RS_BASE_FMT], \
-        (uint32) gHWS_GPR[RS_BASE_FMT], \
+        gHWS_GPR[RS_BASE_FMT], \
         r4300i_RegNames[RD_FS], \
-        (uint32) gHWS_GPR[RD_FS] \
+        gHWS_GPR[RD_FS] \
     );
 
 #define DBGPRINT_RS_RT_RD(_op_name) \
     sprintf( \
         op_str, \
-        "%08X: %s%2s[%08X],%s[%08X],%s[%08X]", \
+        "%08X: %s%2s[%08llX],%s[%08llX],%s[%08llX]", \
         gHWS_pc, \
-        (uint32) _op_name, \
+        _op_name, \
         r4300i_RegNames[RD_FS], \
-        (uint32) gHWS_GPR[RD_FS], \
+        gHWS_GPR[RD_FS], \
         r4300i_RegNames[RS_BASE_FMT], \
-        (uint32) gHWS_GPR[RS_BASE_FMT], \
+        gHWS_GPR[RS_BASE_FMT], \
         r4300i_RegNames[RT_FT], \
-        (uint32) gHWS_GPR[RT_FT] \
+        gHWS_GPR[RT_FT] \
     );
 
 #define DBGPRINT_RT_RD_SA(_op_name) \
-    if((RT_FT | SA_FD | RD_FS) == 0) { \
+    if ((RT_FT | SA_FD | RD_FS) == 0) { \
         sprintf(op_str, "%08X: NOP", gHWS_pc); \
     } else { \
         sprintf( \
             op_str, \
             "%08X: %s%2s,%s,%04Xh", \
             gHWS_pc, \
-            (uint32) _op_name, \
-            (uint32) r4300i_RegNames[RD_FS], \
-            (uint32) r4300i_RegNames[RT_FT], \
+            _op_name, \
+            r4300i_RegNames[RD_FS], \
+            r4300i_RegNames[RT_FT], \
             SA_FD \
         ); \
     }
@@ -191,7 +191,7 @@ void        DebugPrintPC(uint32 thePC);
         op_str, \
         "%08X: %s%s[%08X],%s[%08X]", \
         gHWS_pc, \
-        (uint32) _op_name, \
+        _op_name, \
         r4300i_RegNames[RS_BASE_FMT], \
         (uint32) gHWS_GPR[RS_BASE_FMT], \
         r4300i_RegNames[RT_FT], \
@@ -203,7 +203,7 @@ void        DebugPrintPC(uint32 thePC);
         op_str, \
         "%08X: %s%s[%08X]", \
         gHWS_pc, \
-        (uint32) _op_name, \
+        _op_name, \
         r4300i_RegNames[RD_FS], \
         (uint32) gHWS_GPR[RD_FS] \
     );
@@ -213,7 +213,7 @@ void        DebugPrintPC(uint32 thePC);
         op_str, \
         "%08X: %s%s[%08X]", \
         gHWS_pc, \
-        (uint32) _op_name, \
+        _op_name, \
         r4300i_RegNames[RS_BASE_FMT], \
         (uint32) gHWS_GPR[RS_BASE_FMT] \
     );
@@ -224,7 +224,7 @@ void        DebugPrintPC(uint32 thePC);
         op_str, \
         "%08X: %s%s[%08X],%s[%08X],%04Xh", \
         gHWS_pc, \
-        (uint32) _op_name, \
+        _op_name, \
         r4300i_RegNames[RS_BASE_FMT], \
         (uint32) gHWS_GPR[RS_BASE_FMT], \
         r4300i_RegNames[RT_FT], \
@@ -237,7 +237,7 @@ void        DebugPrintPC(uint32 thePC);
         op_str, \
         "%08X: %s%s[%08X],%04Xh", \
         gHWS_pc, \
-        (uint32) _op_name, \
+        _op_name, \
         r4300i_RegNames[RS_BASE_FMT], \
         (uint32) gHWS_GPR[RS_BASE_FMT], \
         ((OFFSET_IMMEDIATE * 4) + gHWS_pc + 4) \
@@ -248,7 +248,7 @@ void        DebugPrintPC(uint32 thePC);
         op_str, \
         "%08X: %s%04Xh", \
         gHWS_pc, \
-        (uint32) _op_name, \
+        _op_name, \
         ((OFFSET_IMMEDIATE * 4) + gHWS_pc + 4) \
     );
 
@@ -259,7 +259,7 @@ void        DebugPrintPC(uint32 thePC);
         op_str, \
         "%08X: %s%2s[%08X],%s[%08X],%s[%08X]", \
         gHWS_pc, \
-        (uint32) _op_name, \
+        _op_name, \
         r4300i_RegNames[RD_FS], \
         (uint32) gHWS_GPR[RD_FS], \
         r4300i_RegNames[RT_FT], \
@@ -268,14 +268,14 @@ void        DebugPrintPC(uint32 thePC);
         (uint32) gHWS_GPR[RS_BASE_FMT] \
     );
 
-#define DBGPRINT_OPCODE(_op_name)   sprintf(op_str, "%08X: %s", gHWS_pc, (uint32) _op_name);
+#define DBGPRINT_OPCODE(_op_name) sprintf(op_str, "%08X: %s", gHWS_pc, _op_name);
 
 #define DBGPRINT_FD_FS(_op_name) \
     sprintf( \
         op_str, \
         "%08X: %s%s,%s", \
         gHWS_pc, \
-        (uint32) _op_name, \
+        _op_name, \
         r4300i_COP1_RegNames[SA_FD], \
         r4300i_COP1_RegNames[RD_FS] \
     );
@@ -285,7 +285,7 @@ void        DebugPrintPC(uint32 thePC);
         op_str, \
         "%08X: %s%s[%08X],%s[%08X],%s[%08X]", \
         gHWS_pc, \
-        (uint32) _op_name, \
+        _op_name, \
         r4300i_RegNames[SA_FD], \
         (uint32) gHWS_GPR[SA_FD], \
         r4300i_RegNames[RD_FS], \
@@ -324,7 +324,7 @@ void        DebugPrintPC(uint32 thePC);
         op_str, \
         "%08X: %s%s,%s", \
         gHWS_pc, \
-        (uint32) _op_name, \
+        _op_name, \
         r4300i_COP1_RegNames[RD_FS], \
         r4300i_COP1_RegNames[RT_FT] \
     );
@@ -334,7 +334,7 @@ void        DebugPrintPC(uint32 thePC);
         op_str, \
         "%08X: %s%s,%s", \
         gHWS_pc, \
-        (uint32) _op_name, \
+        _op_name, \
         r4300i_COP1_RegNames[RD_FS], \
         r4300i_COP1_RegNames[RT_FT] \
     );
@@ -344,7 +344,7 @@ void        DebugPrintPC(uint32 thePC);
         op_str, \
         "%08X: %s%s,%s", \
         gHWS_pc, \
-        (uint32) _op_name, \
+        _op_name, \
         r4300i_COP1_RegNames[RD_FS], \
         r4300i_COP1_RegNames[SA_FD] \
     );
@@ -354,7 +354,7 @@ void        DebugPrintPC(uint32 thePC);
         op_str, \
         "%08X: %s%s,%s,%s", \
         gHWS_pc, \
-        (uint32) _op_name, \
+        _op_name, \
         r4300i_COP1_RegNames[SA_FD], \
         r4300i_COP1_RegNames[RD_FS], \
         r4300i_COP1_RegNames[RT_FT] \

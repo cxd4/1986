@@ -1710,7 +1710,13 @@ void r4300i_COP0_mtc0(uint32 Instruction)
 
         /* Test the exception bit */
         if ((gRT & EXL) == 0 && ((gHWS_COP0Reg[STATUS] & EXL) == 1)) {
-            TRACE3("EXL Bit is cleared at PC = %8X, COMPARE=%8X , PC=0x%08X", gRT, gHWS_COP0Reg[COMPARE], gHWS_pc);
+            TRACE4(
+                "EXL Bit is cleared at PC = %8lX%8lX, COMPARE=%8X , PC=0x%08X",
+                (unsigned long)(((uint64)gRT >> 32) & 0xFFFFFFFF),
+                (unsigned long)(((uint64)gRT >>  0) & 0xFFFFFFFF),
+                gHWS_COP0Reg[COMPARE],
+                gHWS_pc
+            );
 
             /* CPU will check interrupts at the next cycle */
             if ((gHWS_COP0Reg[CAUSE] & gHWS_COP0Reg[STATUS] & 0x0000FF00)) {

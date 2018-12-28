@@ -738,8 +738,8 @@ void COMPARE_SomeErrorMessage(uint32 pc, uint32 code)
         sprintf(
             op_Str,
             "%s\n%08X: Dirty FPR mismatch.\n \
-        InterFPR[%d] = %016I64X\n \
-        DynaFPR[%d] = %016I64X\n\n",
+        InterFPR[%d] = %08X\n \
+        DynaFPR[%d] = %08X\n\n",
             DebugPrintInstr(Instruction),
             pc,
             bad_mips_reg,

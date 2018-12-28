@@ -844,9 +844,14 @@ LRESULT APIENTRY CheatAndHackDialog(HWND hDlg, unsigned message, WORD wParam, LO
                             newgroup.codelist[newgroup.codecount].val = (uint16) ConvertHexStringToInt(codebuf+8, 4);
                             newgroup.codecount++;
 
-                            if (newgroup.codecount > MAX_CHEATCODE_PER_GROUP)
-                            {
-                                sprintf(errormessage,"The maximum number of codes per cheat is %d! Please remove %s codes and create a second part for that cheat.", MAX_CHEATCODE_PER_GROUP, newgroup.codecount-MAX_CHEATCODE_PER_GROUP);
+                            if (newgroup.codecount > MAX_CHEATCODE_PER_GROUP) {
+                                sprintf(
+                                    errormessage,
+                                    "The maximum number of codes per cheat is %d!  "\
+                                    "Please remove %d codes and create a second part for that cheat.",
+                                    MAX_CHEATCODE_PER_GROUP,
+                                    newgroup.codecount - MAX_CHEATCODE_PER_GROUP
+                                );
                                 DisplayError(errormessage);
                                 break;
                             }
