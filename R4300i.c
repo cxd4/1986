@@ -36,6 +36,11 @@
 #include "win32/wingui.h"
 #include "dma.h"
 
+#ifdef DEBUG_COMMON
+#include "emulator.h"
+/* FetchInstruction(void) */
+#endif
+
 void    SPECIAL_instr(uint32 Instruction);
 void    REGIMM_instr(uint32 Instruction);
 void    COP0_instr(uint32 Instruction);
