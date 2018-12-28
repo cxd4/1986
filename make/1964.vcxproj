@@ -82,18 +82,18 @@
     <_ProjectFileVersion>15.0.28127.55</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>.\obj/Release\</OutDir>
-    <IntDir>.\obj/Release\</IntDir>
+    <OutDir>Release\</OutDir>
+    <IntDir>Release\</IntDir>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Opcode Debugger|Win32'">
-    <OutDir>.\obj/Release_Opcode_Debugger\</OutDir>
-    <IntDir>.\obj/Release_Opcode_Debugger\</IntDir>
+    <OutDir>Release_Opcode_Debugger\</OutDir>
+    <IntDir>Release_Opcode_Debugger\</IntDir>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>.\obj/Debug\</OutDir>
-    <IntDir>.\obj/Debug\</IntDir>
+    <OutDir>Debug\</OutDir>
+    <IntDir>Debug\</IntDir>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release - Pentium Pro+|Win32'">
@@ -137,7 +137,7 @@
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>ddraw.lib;zlib\zlib.lib;comctl32.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>../Release/1964.exe</OutputFile>
+      <OutputFile>./Release/1964.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ProgramDatabaseFile>.\obj/Release/1964.pdb</ProgramDatabaseFile>
       <GenerateMapFile>true</GenerateMapFile>
@@ -183,7 +183,7 @@
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>dsound.lib;zlib\zlib.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>../Release/1964-opcodedebugger.exe</OutputFile>
+      <OutputFile>./Release/1964-opcodedebugger.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ProgramDatabaseFile>.\obj/Release_Opcode_Debugger/1964-opcodedebugger.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
@@ -222,7 +222,7 @@
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>dsound.lib;dxguid.lib;dinput.lib;odbc32.lib;odbccp32.lib;comctl32.lib;opengl32.lib;zlib/zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>../Release/1964dbug.exe</OutputFile>
+      <OutputFile>./Release/1964dbug.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\obj/Debug/1964dbug.pdb</ProgramDatabaseFile>
@@ -268,7 +268,7 @@
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>zlib\zlib.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>../Release/1964.exe</OutputFile>
+      <OutputFile>./Release/1964.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ProgramDatabaseFile>.\obj/Release/1964.pdb</ProgramDatabaseFile>
       <GenerateMapFile>true</GenerateMapFile>
@@ -317,7 +317,7 @@
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>ddraw.lib;zlib\zlib.lib;comctl32.lib;dsound.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>../Release/1964_Net_Debug.exe</OutputFile>
+      <OutputFile>./Release/1964_Net_Debug.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\obj/Release/1964.pdb</ProgramDatabaseFile>
