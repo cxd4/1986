@@ -572,7 +572,7 @@ LRESULT APIENTRY CODELISTPROC(HWND hDlg, unsigned message, WORD wParam, LONG lPa
             Pause();
             break;
         case IDC_RUN_CODELIST:
-            Play(emuoptions.auto_full_screen, 0);
+            Play(emuoptions.auto_full_screen);
             break;
         case IDC_PRINT_TLB:
             PrintTLB(FALSE);
