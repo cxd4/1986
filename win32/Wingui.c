@@ -295,7 +295,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmd
 
     Rom_Loaded = FALSE;
     guistatus.block_menu = TRUE;    /* block all menu commands during startip */
-    emustatus.cpucore = DYNACOMPILER;
+    emustatus.cpucore = INTERPRETER;
     emustatus.Emu_Is_Resetting = FALSE;
     guistatus.IsFullScreen = FALSE;
 
@@ -2857,7 +2857,7 @@ void AfterStop(void)
     RomListUseSavedPos();
 
     /* Reset some of the default options */
-    defaultoptions.Emulator = DYNACOMPILER;
+    defaultoptions.Emulator = INTERPRETER;
     emustatus.cpucore = defaultoptions.Emulator;
     SendMessage (
         gui.hwnd1964main,
