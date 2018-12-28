@@ -108,7 +108,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -288,7 +288,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release with .NET Debugging|Win32'">
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -356,8 +356,8 @@
     <ClCompile Include="..\dynaRec\regcache.c" />
     <ClCompile Include="..\dynaRec\x86.c" />
     <ClCompile Include="..\emulator.c">
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release with .NET Debugging|Win32'">/Oa %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release with .NET Debugging|Win32'">%(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="..\fileio.c" />
     <ClCompile Include="..\FPU.c" />
